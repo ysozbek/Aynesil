@@ -1,0 +1,24 @@
+# Akran Platform — DDL validation harness (Docker-first, PostgreSQL 17 only)
+# Usage: bash db/validation/smoke_test.sh
+name: akran-validation
+
+services:
+  db:
+    image: postgres:17
+    container_name: akran_pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: akran
+    # Repo is mounted read-only so the container can apply the DDL/seed files.
+    # Path is relative to this compose file's directory => project root.
+    volumes:
+      - ../..:/repo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d akran"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    # No published ports: validation runs entirely via `docker compose exec`.
+    tmpfs:
+      - /var/lib/postgresql/data   # ephemeral data dir => every run is clean & fast
