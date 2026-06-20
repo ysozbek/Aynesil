@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Core.Entities;
+using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,12 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
     public DbSet<OutboxEvent> OutboxEvents => Set<OutboxEvent>();
     public DbSet<IntegrationLog> IntegrationLogs => Set<IntegrationLog>();
+
+    // ── crm schema ──────────────────────────────────────────────────────────
+    public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<LeadStatusHistory> LeadStatusHistories => Set<LeadStatusHistory>();
+    public DbSet<LeadActivity> LeadActivities => Set<LeadActivity>();
+    public DbSet<Interview> Interviews => Set<Interview>();
 
     // ── iam schema ──────────────────────────────────────────────────────────
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();

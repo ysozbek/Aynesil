@@ -101,4 +101,29 @@ public static class Permissions
         public const string Read = "integration:read";
         public const string Manage = "integration:manage";
     }
+
+    // ── CRM / Leads ───────────────────────────────────────────────────────────
+    public static class Leads
+    {
+        public const string Read = "lead:read";
+        public const string Create = "lead:create";
+        public const string Update = "lead:update";
+        public const string Delete = "lead:delete";
+        public const string Convert = "lead:convert";
+        public const string Assign = "lead:assign";
+    }
+
+    public static class LeadActivities
+    {
+        public const string Read = "lead_activity:read";
+        public const string Create = "lead_activity:create";
+    }
+
+    public static class Interviews
+    {
+        public const string Read = "interview:read";
+        public const string Create = "interview:create";
+        public const string Update = "interview:update";
+        public const string Manage = "interview:manage";
+    }
 }

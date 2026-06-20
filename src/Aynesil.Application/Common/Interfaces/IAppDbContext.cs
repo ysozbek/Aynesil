@@ -1,4 +1,5 @@
 using Aynesil.Domain.Modules.Core.Entities;
+using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,12 @@ public interface IAppDbContext
     DbSet<IntegrationProvider> IntegrationProviders { get; }
     DbSet<IntegrationConnection> IntegrationConnections { get; }
     DbSet<OutboxEvent> OutboxEvents { get; }
+
+    // ── crm schema ──────────────────────────────────────────────────────────
+    DbSet<Lead> Leads { get; }
+    DbSet<LeadStatusHistory> LeadStatusHistories { get; }
+    DbSet<LeadActivity> LeadActivities { get; }
+    DbSet<Interview> Interviews { get; }
 
     // ── iam schema ──────────────────────────────────────────────────────────
     DbSet<UserAccount> UserAccounts { get; }
