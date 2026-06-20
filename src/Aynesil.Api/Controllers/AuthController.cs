@@ -6,13 +6,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace Aynesil.Api.Controllers;
 
 /// <summary>
-/// Authentication endpoints. All are publicly accessible ([AllowAnonymous])
-/// except Logout and Revoke which require a valid access token.
+/// Authentication endpoints.
+/// Login + Refresh: [AllowAnonymous] (public)
+/// Logout: [Authorize] (requires valid access token)
+/// Note: [AllowAnonymous] is on individual actions, NOT the controller class,
+/// to prevent it from overriding [Authorize] on Logout (ASP0026).
 /// </summary>
-[AllowAnonymous]
 [Route("api/auth")]
 public class AuthController : BaseController
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
@@ -27,6 +30,7 @@ public class AuthController : BaseController
         return OkResult(result);
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest request, CancellationToken ct)

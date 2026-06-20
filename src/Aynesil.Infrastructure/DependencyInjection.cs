@@ -67,6 +67,9 @@ public static class DependencyInjection
 #endif
         });
 
+        // IAppDbContext → AynesilDbContext (aynı scoped instance, iki kez oluşturulmaz)
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AynesilDbContext>());
+
         return services;
     }
 

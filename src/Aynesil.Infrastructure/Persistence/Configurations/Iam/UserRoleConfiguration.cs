@@ -22,14 +22,9 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()").IsRequired();
         builder.Property(x => x.CreatedBy).HasColumnName("created_by");
 
-        // user_role has no updated_at/updated_by/deleted_at/row_version in DDL
-        builder.Ignore(x => x.UpdatedAt);
-        builder.Ignore(x => x.UpdatedBy);
-        builder.Ignore(x => x.DeletedAt);
-        builder.Ignore(x => x.RowVersion);
-
-        // user_role extends BaseEntity (not AuditableEntity) — no UpdatedAt/DeletedAt/RowVersion exist.
-        // No Ignore calls needed; EF Core only maps properties that are declared on the entity.
+        // UserRole extends BaseEntity only (not AuditableEntity/SoftDeleteEntity).
+        // DDL: id, corporation_id, user_id, role_id, campus_id, valid_from, valid_to, created_at, created_by
+        // No UpdatedAt/UpdatedBy/DeletedAt/RowVersion columns exist → no Ignore calls needed.
 
         builder.HasIndex(x => new { x.UserId, x.RoleId, x.CampusId })
             .IsUnique()

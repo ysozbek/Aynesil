@@ -1,6 +1,6 @@
-using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.Exceptions;
-using Aynesil.Infrastructure.Persistence;
+using Aynesil.Application.Common.Interfaces;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +24,7 @@ public record LoginResult(
     Guid CorporationId);
 
 // ── Validator ────────────────────────────────────────────────────────────────
-public class LoginCommandValidator : FluentValidation.AbstractValidator<LoginCommand>
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()
     {
@@ -33,14 +33,25 @@ public class LoginCommandValidator : FluentValidation.AbstractValidator<LoginCom
     }
 }
 
+// ── Auth result DTO (maps from iam.authenticate_user() function result) ──────
+internal record AuthUserRow(
+    Guid Id,
+    Guid CorporationId,
+    string Username,
+    string? Email,
+    string FullName,
+    string? PasswordHash,
+    string Status,
+    string? PreferredLocale);
+
 // ── Handler ──────────────────────────────────────────────────────────────────
 public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
 {
-    private readonly AynesilDbContext _db;
+    private readonly IAppDbContext _db;
     private readonly IPasswordService _passwords;
     private readonly ITokenService _tokens;
 
-    public LoginCommandHandler(AynesilDbContext db, IPasswordService passwords, ITokenService tokens)
+    public LoginCommandHandler(IAppDbContext db, IPasswordService passwords, ITokenService tokens)
     {
         _db = db;
         _passwords = passwords;
@@ -49,21 +60,35 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
 
     public async Task<LoginResult> Handle(LoginCommand req, CancellationToken ct)
     {
-        // Username is case-insensitive (citext column in DB)
-        var user = await _db.UserAccounts
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u =>
-                u.Username == req.Username &&
-                u.DeletedAt == null,
-                ct)
+        // ── Step 1: Lookup user via SECURITY DEFINER function (bypasses RLS) ──
+        // During login, tenant context (app.current_corporation_id) is not yet set.
+        // Direct table query would return 0 rows due to default-deny RLS.
+        // iam.authenticate_user() runs as the DB owner and bypasses RLS safely.
+        // EF Core subquery'de PascalCase column adı arar — alias ile eşleştir
+        var user = await _db.Database
+            .SqlQueryRaw<AuthUserRow>(
+                @"SELECT id               AS ""Id"",
+                         corporation_id   AS ""CorporationId"",
+                         username         AS ""Username"",
+                         email            AS ""Email"",
+                         full_name        AS ""FullName"",
+                         password_hash    AS ""PasswordHash"",
+                         status           AS ""Status"",
+                         preferred_locale AS ""PreferredLocale""
+                  FROM iam.authenticate_user({0}::citext)",
+                req.Username)
+            .FirstOrDefaultAsync(ct)
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
+        // ── Step 2: Status check ───────────────────────────────────────────────
         if (user.Status is "suspended" or "disabled")
             throw new UnauthorizedAccessException("Account is not active.");
 
+        // ── Step 3: Lockout check ─────────────────────────────────────────────
         if (await _passwords.IsLockedOutAsync(user.Id, ct))
             throw new UnauthorizedAccessException("Account is temporarily locked. Please try again later.");
 
+        // ── Step 4: Password verification ─────────────────────────────────────
         if (string.IsNullOrEmpty(user.PasswordHash) ||
             !_passwords.Verify(req.Password, user.PasswordHash))
         {
@@ -75,17 +100,15 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
 
         await _passwords.ResetFailedAttemptsAsync(user.Id, ct);
 
-        // Collect permissions for the token
-        var permissions = await _db.UserRoles
-            .AsNoTracking()
-            .Where(ur => ur.UserId == user.Id && ur.CorporationId == user.CorporationId)
-            .Where(ur => ur.ValidFrom == null || ur.ValidFrom <= DateTimeOffset.UtcNow)
-            .Where(ur => ur.ValidTo == null || ur.ValidTo >= DateTimeOffset.UtcNow)
-            .SelectMany(ur => ur.Role!.RolePermissions)
-            .Select(rp => rp.Permission!.Code)
-            .Distinct()
+        // ── Step 5: Load permissions via SECURITY DEFINER function ─────────────
+        var permissions = await _db.Database
+            .SqlQueryRaw<PermissionRow>(
+                @"SELECT permission_code AS ""PermissionCode"" FROM iam.get_user_permissions({0}, {1})",
+                user.Id, user.CorporationId)
+            .Select(r => r.PermissionCode)
             .ToListAsync(ct);
 
+        // ── Step 6: Issue JWT + refresh token ─────────────────────────────────
         var tokenPair = await _tokens.IssueTokensAsync(
             user.Id, user.CorporationId, permissions,
             req.IpAddress, req.UserAgent, ct);
@@ -100,4 +123,6 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             user.Id,
             user.CorporationId);
     }
+
+    private record PermissionRow(string PermissionCode);
 }

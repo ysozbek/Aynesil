@@ -2,9 +2,17 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Copy package files
-COPY frontend/aynesil-web/package.json frontend/aynesil-web/package-lock.json* ./
-RUN npm ci
+# Copy package files first (layer cache optimization)
+# npm ci: lockfile varsa kullan (CI ortamı); yoksa npm install'a düş.
+COPY frontend/aynesil-web/package.json ./
+COPY frontend/aynesil-web/package-lock.json* ./
+
+# package-lock.json varsa npm ci (reproducible), yoksa npm install
+RUN if [ -f package-lock.json ]; then \
+      echo "package-lock.json bulundu → npm ci" && npm ci; \
+    else \
+      echo "package-lock.json yok → npm install" && npm install; \
+    fi
 
 # Copy source and build
 COPY frontend/aynesil-web/ ./

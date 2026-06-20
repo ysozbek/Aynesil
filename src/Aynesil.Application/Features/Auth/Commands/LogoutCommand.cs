@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using FluentValidation;
 using MediatR;
 
 namespace Aynesil.Application.Features.Auth.Commands;

@@ -1,25 +1,19 @@
-/*
- * AyNesil — Main Stylesheet
- * Imports Metronic Tailwind design system via @keenthemes/ktui.
- * Tailwind directives must come first; Metronic utility classes extend them.
+/* Metronic 9 Tailwind — AyNesil
+ * Kaynak: /Users/ysozbek/Theme/metronic-v9.4.9/metronic-tailwind-html-starter-kit/src/css/styles.css
+ * Orijinal yapı birebir korunuyor.
  */
+
+/* 1. Tailwind core */
 @import "tailwindcss";
-@import "@keenthemes/ktui/dist/css/ktui.css";
 
-/*
- * Custom AyNesil overrides go below this line.
- * Do NOT override Metronic core variables here — use the theme config instead.
- */
-:root {
-  --aynesil-primary: var(--kt-primary);
-  --aynesil-font-sans: var(--kt-font-sans);
-}
+/* 2. Tailwind scan sources — KTui bileşenlerini tara */
+@source "../../node_modules/@keenthemes/ktui/src/";
 
-/* Loading spinner shown before Vue mounts */
-#app-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: var(--kt-body-bg, #f9fafb);
-}
+/* 3. Metronic tema config (renk tokens, radius, font boyutları) */
+@import "./ktui-config.css";
+
+/* 4. KTui component styles */
+@import "@keenthemes/ktui/styles.css";
+
+/* 5. Demo1 layout CSS (sidebar, header, wrapper boyutları) */
+@import "./demo1.css";

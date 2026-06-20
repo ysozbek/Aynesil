@@ -50,6 +50,36 @@ services:
     networks:
       - aynesil-net
 
+  # ── Flyway — Migration runner (one-shot: V1 DDL + V2 seed, then exits) ──────
+  # Çalışma sırası: aynesil-db healthy → flyway migrate → API başlar
+  # History: public.flyway_schema_history (aynesil_owner'a ait, aynesil_app okuyabilir)
+  # İkinci kez çalıştırma: checksum doğrulaması yapar, değişiklik yoksa "no-op"
+  # Yeni migration: db/migrations/V3__*.sql ekle → docker compose run aynesil-flyway
+  aynesil-flyway:
+    image: flyway/flyway:10.20-alpine
+    platform: linux/amd64   # alpine sadece amd64; Rosetta 2 ile çalışır (uyarı normal)
+    container_name: aynesil-flyway
+    depends_on:
+      aynesil-db:
+        condition: service_healthy
+    environment:
+      # Bağlantı (owner rolü — RLS bypass, DDL + seed uygular)
+      FLYWAY_URL: jdbc:postgresql://aynesil-db:5432/${POSTGRES_DB:-aynesil}
+      FLYWAY_USER: ${POSTGRES_USER:-aynesil_owner}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-changeme_owner}
+      # Custom placeholder: afterMigrate callback'inde kullanılır
+      FLYWAY_PLACEHOLDERS_APPROLE: ${AYNESIL_DB_APP_USER:-aynesil_app}
+      # Bağlantı retry (container startup race condition önleme)
+      FLYWAY_CONNECT_RETRIES: "15"
+      FLYWAY_CONNECT_RETRIES_INTERVAL: "3"
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+      - ./docker/flyway.conf:/flyway/conf/flyway.conf:ro
+    command: migrate
+    restart: "no"
+    networks:
+      - aynesil-net
+
   # ── API ───────────────────────────────────────────────────────────────────
   aynesil-api:
     build:
@@ -62,6 +92,8 @@ services:
         condition: service_healthy
       aynesil-redis:
         condition: service_healthy
+      aynesil-flyway:
+        condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5000
@@ -82,11 +114,12 @@ services:
     ports:
       - "${API_PORT:-5000}:5000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      # curl Alpine'da yok → wget kullanılır
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - aynesil-net
 
@@ -96,7 +129,9 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:${API_PORT:-5000}/api
+        # Relative path: browser → nginx → proxy → aynesil-api:5000
+        # Absolute URL kullansaydık (http://localhost:5001), nginx bypass edilirdi.
+        VITE_API_BASE_URL: /api
     container_name: aynesil-web
     restart: unless-stopped
     depends_on:

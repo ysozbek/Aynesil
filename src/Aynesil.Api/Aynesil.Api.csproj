@@ -13,7 +13,7 @@
 
     <!-- API Documentation -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
-    <PackageReference Include="Scalar.AspNetCore" Version="1.5.65" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.0.0" />
 
     <!-- EF Core Design (for migrations) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">

@@ -1,4 +1,5 @@
 using Aynesil.Domain.Common;
+using Aynesil.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
