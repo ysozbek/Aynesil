@@ -4,6 +4,7 @@ using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
+using Aynesil.Domain.Modules.Students.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aynesil.Infrastructure.Persistence;
@@ -73,6 +74,21 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<LeadStatusHistory> LeadStatusHistories => Set<LeadStatusHistory>();
     public DbSet<LeadActivity> LeadActivities => Set<LeadActivity>();
     public DbSet<Interview> Interviews => Set<Interview>();
+
+    // ── students schema ─────────────────────────────────────────────────────
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<StudentStatusHistory> StudentStatusHistories => Set<StudentStatusHistory>();
+    public DbSet<StudentCampus> StudentCampuses => Set<StudentCampus>();
+    public DbSet<Guardian> Guardians => Set<Guardian>();
+    public DbSet<StudentGuardian> StudentGuardians => Set<StudentGuardian>();
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
+    public DbSet<DevelopmentalProfile> DevelopmentalProfiles => Set<DevelopmentalProfile>();
+    public DbSet<Diagnosis> Diagnoses => Set<Diagnosis>();
+    public DbSet<MedicalReport> MedicalReports => Set<MedicalReport>();
+    public DbSet<DevelopmentReport> DevelopmentReports => Set<DevelopmentReport>();
+    public DbSet<ExternalInstitutionReport> ExternalInstitutionReports => Set<ExternalInstitutionReport>();
+    public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
+    public DbSet<GuardianPortalAccess> GuardianPortalAccesses => Set<GuardianPortalAccess>();
 
     // ── iam schema ──────────────────────────────────────────────────────────
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();

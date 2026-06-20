@@ -3,6 +3,7 @@ using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
+using Aynesil.Domain.Modules.Students.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -63,6 +64,21 @@ public interface IAppDbContext
     DbSet<LeadStatusHistory> LeadStatusHistories { get; }
     DbSet<LeadActivity> LeadActivities { get; }
     DbSet<Interview> Interviews { get; }
+
+    // ── students schema ─────────────────────────────────────────────────────
+    DbSet<Student> Students { get; }
+    DbSet<StudentStatusHistory> StudentStatusHistories { get; }
+    DbSet<StudentCampus> StudentCampuses { get; }
+    DbSet<Guardian> Guardians { get; }
+    DbSet<StudentGuardian> StudentGuardians { get; }
+    DbSet<EmergencyContact> EmergencyContacts { get; }
+    DbSet<DevelopmentalProfile> DevelopmentalProfiles { get; }
+    DbSet<Diagnosis> Diagnoses { get; }
+    DbSet<MedicalReport> MedicalReports { get; }
+    DbSet<DevelopmentReport> DevelopmentReports { get; }
+    DbSet<ExternalInstitutionReport> ExternalInstitutionReports { get; }
+    DbSet<CaseNote> CaseNotes { get; }
+    DbSet<GuardianPortalAccess> GuardianPortalAccesses { get; }
 
     // ── iam schema ──────────────────────────────────────────────────────────
     DbSet<UserAccount> UserAccounts { get; }

@@ -124,6 +124,7 @@ public static class DependencyInjection
         services.AddScoped<IMenuRepository, MenuRepository>();
         services.AddScoped<ILeadRepository, LeadRepository>();
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
+        services.AddScoped<IStudentRepository, StudentRepository>();
 
         return services;
     }

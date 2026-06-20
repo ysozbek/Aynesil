@@ -165,4 +165,36 @@ public static class Permissions
         public const string Create     = "program_recommendation:create";
         public const string Update     = "program_recommendation:update";
     }
+
+    // ── Students (Layer 2 — SPED) ─────────────────────────────────────────────
+    // DB seed: student:read + student:write already in V6.
+    // New granular codes below require migration V10__students_permissions_and_menu.sql.
+
+    public static class Students
+    {
+        public const string Read         = "student:read";
+        public const string Write        = "student:write";
+        public const string Create       = "student:create";
+        public const string Update       = "student:update";
+        public const string Delete       = "student:delete";
+        public const string ChangeStatus = "student:change_status";
+    }
+
+    public static class Guardians
+    {
+        public const string Read         = "guardian:read";
+        public const string Create       = "guardian:create";
+        public const string Update       = "guardian:update";
+        public const string Delete       = "guardian:delete";
+        public const string ManagePortal = "guardian:manage_portal";
+    }
+
+    public static class CaseNotes
+    {
+        public const string Read             = "case_note:read";
+        public const string Create           = "case_note:create";
+        public const string Update           = "case_note:update";
+        public const string Delete           = "case_note:delete";
+        public const string ReadConfidential = "case_note:read_confidential";
+    }
 }
