@@ -50,6 +50,35 @@ services:
     networks:
       - aynesil-net
 
+  # ── Flyway — Migration runner (one-shot: V1 DDL + V2 seed, then exits) ──────
+  # Çalışma sırası: aynesil-db healthy → flyway migrate → API başlar
+  # History: public.flyway_schema_history (aynesil_owner'a ait, aynesil_app okuyabilir)
+  # İkinci kez çalıştırma: checksum doğrulaması yapar, değişiklik yoksa "no-op"
+  # Yeni migration: db/migrations/V3__*.sql ekle → docker compose run aynesil-flyway
+  aynesil-flyway:
+    image: flyway/flyway:10.20-alpine
+    container_name: aynesil-flyway
+    depends_on:
+      aynesil-db:
+        condition: service_healthy
+    environment:
+      # Bağlantı (owner rolü — RLS bypass, DDL + seed uygular)
+      FLYWAY_URL: jdbc:postgresql://aynesil-db:5432/${POSTGRES_DB:-aynesil}
+      FLYWAY_USER: ${POSTGRES_USER:-aynesil_owner}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-changeme_owner}
+      # Custom placeholder: afterMigrate callback'inde kullanılır
+      FLYWAY_PLACEHOLDERS_APPROLE: ${AYNESIL_DB_APP_USER:-aynesil_app}
+      # Bağlantı retry (container startup race condition önleme)
+      FLYWAY_CONNECT_RETRIES: "15"
+      FLYWAY_CONNECT_RETRIES_INTERVAL: "3"
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+      - ./docker/flyway.conf:/flyway/conf/flyway.conf:ro
+    command: migrate
+    restart: "no"
+    networks:
+      - aynesil-net
+
   # ── API ───────────────────────────────────────────────────────────────────
   aynesil-api:
     build:
@@ -62,6 +91,8 @@ services:
         condition: service_healthy
       aynesil-redis:
         condition: service_healthy
+      aynesil-flyway:
+        condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5000
