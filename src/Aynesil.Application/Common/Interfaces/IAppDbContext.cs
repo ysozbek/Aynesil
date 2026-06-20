@@ -1,3 +1,4 @@
+using Aynesil.Domain.Modules.Assessment.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
@@ -46,6 +47,16 @@ public interface IAppDbContext
     DbSet<IntegrationProvider> IntegrationProviders { get; }
     DbSet<IntegrationConnection> IntegrationConnections { get; }
     DbSet<OutboxEvent> OutboxEvents { get; }
+
+    // ── assessment schema ────────────────────────────────────────────────────
+    DbSet<AssessmentTemplate> AssessmentTemplates { get; }
+    DbSet<AssessmentTemplateTranslation> AssessmentTemplateTranslations { get; }
+    DbSet<AssessmentSection> AssessmentSections { get; }
+    DbSet<AssessmentItem> AssessmentItems { get; }
+    DbSet<AssessmentSession> AssessmentSessions { get; }
+    DbSet<AssessmentResponse> AssessmentResponses { get; }
+    DbSet<AssessmentReport> AssessmentReports { get; }
+    DbSet<ProgramRecommendation> ProgramRecommendations { get; }
 
     // ── crm schema ──────────────────────────────────────────────────────────
     DbSet<Lead> Leads { get; }

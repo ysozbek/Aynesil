@@ -126,4 +126,43 @@ public static class Permissions
         public const string Update = "interview:update";
         public const string Manage = "interview:manage";
     }
+
+    // ── Assessment & Evaluation ───────────────────────────────────────────────
+
+    public static class AssessmentTemplates
+    {
+        public const string Read       = "assessment_template:read";
+        public const string Create     = "assessment_template:create";
+        public const string Update     = "assessment_template:update";
+        public const string Delete     = "assessment_template:delete";
+        public const string Publish    = "assessment_template:publish";
+        public const string Version    = "assessment_template:version";
+    }
+
+    public static class AssessmentSessions
+    {
+        public const string Read       = "assessment_session:read";
+        public const string Create     = "assessment_session:create";
+        public const string Update     = "assessment_session:update";
+        public const string Delete     = "assessment_session:delete";
+        public const string Start      = "assessment_session:start";
+        public const string Complete   = "assessment_session:complete";
+        public const string Cancel     = "assessment_session:cancel";
+        public const string SubmitResponses = "assessment_session:submit_responses";
+    }
+
+    public static class AssessmentReports
+    {
+        public const string Read       = "assessment_report:read";
+        public const string Create     = "assessment_report:create";
+        public const string Update     = "assessment_report:update";
+        public const string Finalize   = "assessment_report:finalize";
+    }
+
+    public static class ProgramRecommendations
+    {
+        public const string Read       = "program_recommendation:read";
+        public const string Create     = "program_recommendation:create";
+        public const string Update     = "program_recommendation:update";
+    }
 }

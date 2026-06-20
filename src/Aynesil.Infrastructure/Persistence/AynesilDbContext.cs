@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Domain.Modules.Assessment.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
@@ -56,6 +57,16 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
     public DbSet<OutboxEvent> OutboxEvents => Set<OutboxEvent>();
     public DbSet<IntegrationLog> IntegrationLogs => Set<IntegrationLog>();
+
+    // ── assessment schema ────────────────────────────────────────────────────
+    public DbSet<AssessmentTemplate> AssessmentTemplates => Set<AssessmentTemplate>();
+    public DbSet<AssessmentTemplateTranslation> AssessmentTemplateTranslations => Set<AssessmentTemplateTranslation>();
+    public DbSet<AssessmentSection> AssessmentSections => Set<AssessmentSection>();
+    public DbSet<AssessmentItem> AssessmentItems => Set<AssessmentItem>();
+    public DbSet<AssessmentSession> AssessmentSessions => Set<AssessmentSession>();
+    public DbSet<AssessmentResponse> AssessmentResponses => Set<AssessmentResponse>();
+    public DbSet<AssessmentReport> AssessmentReports => Set<AssessmentReport>();
+    public DbSet<ProgramRecommendation> ProgramRecommendations => Set<ProgramRecommendation>();
 
     // ── crm schema ──────────────────────────────────────────────────────────
     public DbSet<Lead> Leads => Set<Lead>();
