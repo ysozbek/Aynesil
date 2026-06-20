@@ -1,0 +1,118 @@
+---
+# AyNesil Platform — Docker Compose
+# Primary local development & single-server deployment workflow.
+# Usage: docker compose up
+# All services use the AYNESIL_ env prefix — see .env.example.
+
+name: aynesil
+
+services:
+  # ── PostgreSQL 17 ─────────────────────────────────────────────────────────
+  aynesil-db:
+    image: postgres:17-alpine
+    container_name: aynesil-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aynesil}
+      POSTGRES_USER: ${POSTGRES_USER:-aynesil_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_owner}
+      AYNESIL_DB_APP_USER: ${AYNESIL_DB_APP_USER:-aynesil_app}
+      AYNESIL_DB_APP_PASSWORD: ${AYNESIL_DB_APP_PASSWORD:-changeme_app}
+    volumes:
+      - aynesil-db-data:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aynesil_owner} -d ${POSTGRES_DB:-aynesil}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - aynesil-net
+
+  # ── Redis 7 ───────────────────────────────────────────────────────────────
+  aynesil-redis:
+    image: redis:7-alpine
+    container_name: aynesil-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - aynesil-redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - aynesil-net
+
+  # ── API ───────────────────────────────────────────────────────────────────
+  aynesil-api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: aynesil-api
+    restart: unless-stopped
+    depends_on:
+      aynesil-db:
+        condition: service_healthy
+      aynesil-redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5000
+      AYNESIL_ConnectionStrings__DefaultConnection: >-
+        Host=aynesil-db;Port=5432;Database=${POSTGRES_DB:-aynesil};
+        Username=${AYNESIL_DB_APP_USER:-aynesil_app};
+        Password=${AYNESIL_DB_APP_PASSWORD:-changeme_app};
+        Application Name=AynesilApi
+      AYNESIL_ConnectionStrings__Redis: aynesil-redis:6379,abortConnect=false
+      AYNESIL_Jwt__Secret: ${AYNESIL_Jwt__Secret:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_64_CHARACTERS}
+      AYNESIL_Jwt__Issuer: ${AYNESIL_Jwt__Issuer:-https://api.aynesil.com}
+      AYNESIL_Jwt__Audience: ${AYNESIL_Jwt__Audience:-aynesil-web}
+      AYNESIL_Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-5173}
+      AYNESIL_Storage__Local__RootPath: /app/uploads
+    volumes:
+      - aynesil-uploads:/app/uploads
+      - aynesil-logs:/app/logs
+    ports:
+      - "${API_PORT:-5000}:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - aynesil-net
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  aynesil-web:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:${API_PORT:-5000}/api
+    container_name: aynesil-web
+    restart: unless-stopped
+    depends_on:
+      aynesil-api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    networks:
+      - aynesil-net
+
+networks:
+  aynesil-net:
+    driver: bridge
+
+volumes:
+  aynesil-db-data:
+  aynesil-redis-data:
+  aynesil-uploads:
+  aynesil-logs:

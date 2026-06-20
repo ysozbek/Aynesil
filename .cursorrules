@@ -1,0 +1,431 @@
+# PROJECT RULES
+
+## NAMING
+
+Product/marketing name: **AyNesil** (UI display text, landing page,
+README title, marketing copy only).
+
+Technical/code identifier: **Aynesil** (PascalCase, no internal
+capitalization) — use consistently for:
+
+- Solution name: Aynesil.sln
+- Project namespaces: Aynesil.Domain, Aynesil.Application,
+  Aynesil.Infrastructure, Aynesil.Api, Aynesil.Shared, Aynesil.Tests
+- Database name: aynesil (lowercase)
+- Docker container/service names: aynesil-api, aynesil-db, aynesil-redis
+- Environment variable prefixes: AYNESIL_
+- Frontend package name: aynesil-web
+
+Never use "AyNesil" (mixed case) in code, namespaces, file paths,
+database identifiers, or config keys.
+
+"Akran Hareket" is a tenant/customer name (a row in
+`core.corporation`), not the platform name — never used in code,
+namespaces, or technical identifiers.
+
+---
+
+## TECHNOLOGY STACK
+
+Backend
+
+* .NET 9
+* ASP.NET Core Web API
+* Entity Framework Core
+* PostgreSQL
+* MediatR
+* FluentValidation
+* AutoMapper
+* Serilog
+
+Frontend
+
+* Vue 3
+* Composition API
+* Pinia
+* Vue Router
+* Axios
+* Vue I18n
+* Metronic 9 Tailwind
+
+Architecture
+
+* Clean Architecture
+* CQRS
+* Modular Monolith
+* Domain Driven Design
+* Event Driven Ready
+
+---
+
+## GENERAL RULES
+
+Always follow:
+
+* DDL.md
+* ARCHITECTURE.md
+
+Never invent:
+
+* Tables
+* Columns
+* Foreign Keys
+* Relationships
+
+Use only structures defined in DDL.md.
+
+If a required structure is missing:
+
+* Stop
+* Explain what is missing
+* Wait for user decision
+
+Do not create alternative schemas.
+
+Do not implement any table, service, or business rule for a future
+OrganizationGroup tier — it does not exist in DDL.md yet. However,
+new code must not assume Corporation is the system's absolute and
+permanent top level (e.g. avoid hardcoded "Corporation has no
+parent" logic baked deep into business rules). OrganizationGroup
+will be added via migration when a real business need arises.
+
+Do not implement ABAC/Care-Team authorization logic now — no table,
+service, or business rule for it exists in DDL.md yet. RBAC is the
+current and only authorization model. However, new code must not
+assume role-based checks are the permanent, only mechanism for
+clinical-data access (student records, assessments, case notes,
+reports) — ABAC/Care-Team may be introduced later for these.
+
+Do not implement tenant subscription, feature licensing, or usage
+metering tables/logic now — none exist in DDL.md yet. However, new
+code must not hardcode the assumption that every tenant has
+unlimited access to every module; `menu_item.feature_flag` already
+exists as the seam this will eventually plug into.
+
+---
+
+## DATABASE RULES
+
+All entities must:
+
+* Inherit BaseEntity
+* Support Audit Fields
+* Support Soft Delete where applicable
+
+Required audit fields:
+
+* CreatedAt
+* CreatedBy
+* UpdatedAt
+* UpdatedBy
+* DeletedAt
+* DeletedBy
+* IsDeleted
+
+Use EF Core Fluent Configuration.
+
+Do not use DataAnnotations for database design.
+
+---
+
+## MULTI TENANT RULES
+
+All business data must be tenant-aware.
+
+Corporation boundaries must always be respected.
+
+Branch boundaries must always be respected.
+
+No cross-corporation data leakage is allowed.
+
+Queries must always respect tenant context.
+
+---
+
+## CONFIGURABLE REFERENCE DATA RULES
+
+Business classifications must never be hardcoded.
+
+Use configurable reference data for:
+
+* Session Types
+* Therapy Types
+* Program Types
+* Assessment Types
+* Goal Categories
+* Development Areas
+* Educator Types
+* Meeting Types
+* Leave Types
+* Attendance Reasons
+* Lead Sources
+* Lead Statuses
+* Payment Methods
+* Discount Types
+* Contract Types
+* Consent Types
+* KPI Categories
+* Notification Types
+* Student Statuses
+* Enrollment Statuses
+
+If a classification may change in the future:
+
+Use reference data.
+
+Do not use enums.
+
+---
+
+## REFERENCE DATA SAFETY
+
+Reference data values must never be physically deleted.
+
+If business records already reference a value:
+
+* Prevent deletion
+* Allow deactivation only
+
+Historical records must remain valid.
+
+---
+
+## LOCALIZATION RULES
+
+All user-facing content must support localization.
+
+Do not hardcode display text.
+
+Support:
+
+* Turkish
+* Future additional languages
+
+Menus, notifications, templates and reference data must be translatable.
+
+Use translation infrastructure defined in the architecture.
+
+---
+
+## AUTHORIZATION RULES
+
+Never authorize by role name directly.
+
+Use permission-based authorization.
+
+Roles are configurable.
+
+Permissions are the source of truth.
+
+Support:
+
+* Dynamic Roles
+* Dynamic Permissions
+* Tenant-specific Roles
+
+---
+
+## API RULES
+
+Controllers must remain thin.
+
+No business logic inside controllers.
+
+Use:
+
+* MediatR
+* CQRS
+* FluentValidation
+
+All responses must use:
+
+ApiResponse<T>
+
+Support:
+
+* Pagination
+* Filtering
+* Sorting
+
+Global exception middleware must be used.
+
+---
+
+## APPLICATION LAYER RULES
+
+Business logic belongs in:
+
+* Commands
+* Command Handlers
+* Domain Services
+
+Queries must never modify data.
+
+Commands must never return large datasets.
+
+---
+
+## DOMAIN RULES
+
+Domain entities must remain persistence-ignorant.
+
+Protect invariants inside domain entities.
+
+Avoid anemic domain models.
+
+Use Value Objects where appropriate.
+
+---
+
+## EVENT RULES
+
+Prefer Domain Events when:
+
+* Student Enrolled
+* Assessment Completed
+* Session Completed
+* Package Purchased
+* Contract Signed
+* Leave Approved
+
+Avoid direct coupling between modules.
+
+Future distributed events must be possible.
+
+---
+
+## WORKFLOW RULES
+
+Workflow transitions must be validated.
+
+Invalid transitions must be rejected.
+
+Examples:
+
+Completed -> Draft
+Rejected
+
+Cancelled -> Approved
+Rejected
+
+Rules must be enforced consistently.
+
+---
+
+## FILE MANAGEMENT RULES
+
+Use file metadata records.
+
+Never store business files directly in entities.
+
+Use file references.
+
+Support:
+
+* Local Storage
+* Future S3 Storage
+
+File access must be permission controlled.
+
+---
+
+## FINANCIAL DATA RULES
+
+Financial records are immutable.
+
+Never physically delete:
+
+* Payments
+* Invoices
+* Credit Usage History
+* Refund History
+
+Corrections must use:
+
+* Reversal Records
+* Adjustment Records
+
+Audit history must remain intact.
+
+---
+
+## CONTRACT & CONSENT RULES
+
+Signed documents are immutable.
+
+Contract history must be preserved.
+
+Consent history must be preserved.
+
+Never overwrite accepted consent records.
+
+Version history is mandatory.
+
+---
+
+## AUDIT RULES
+
+All critical business actions must be auditable.
+
+Examples:
+
+* Student Created
+* Student Updated
+* Assessment Completed
+* Session Completed
+* Package Purchased
+* Contract Signed
+* Leave Approved
+
+Audit history must never be deleted.
+
+---
+
+## SECURITY RULES
+
+Follow OWASP recommendations.
+
+Never expose:
+
+* Internal IDs unnecessarily
+* Sensitive medical information
+* Financial information
+* Tenant data belonging to another corporation
+
+Validate all inputs.
+
+Use least privilege principle.
+
+---
+
+## PERFORMANCE RULES
+
+Avoid N+1 queries.
+
+Use projections for list screens.
+
+Use caching for:
+
+* Permissions
+* Menus
+* Settings
+* Reference Data
+* Translations
+
+Design for future scalability.
+
+---
+
+## OUTPUT RULES
+
+Generate code incrementally.
+
+After each major layer:
+
+* Stop
+* Explain generated files
+* Wait for confirmation
+
+Do not generate multiple business modules at once.
+
+Generate only the requested module.

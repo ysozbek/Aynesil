@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Aynesil.Domain</AssemblyName>
+    <RootNamespace>Aynesil.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aynesil.Shared\Aynesil.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

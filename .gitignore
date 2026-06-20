@@ -1,0 +1,66 @@
+## .NET
+bin/
+obj/
+publish/
+releases/
+*.user
+.vs/
+*.suo
+*.DotSettings.user
+appsettings.Development.json
+**/appsettings.Production.json
+**/UserSecrets/
+
+## EF Core migrations output
+# (keep migrations in source control)
+
+## Test results
+TestResults/
+*.trx
+coverage/
+
+## Node / Frontend
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/.env.local
+frontend/**/.env.*.local
+frontend/**/dist-ssr/
+
+## Logs
+logs/
+*.log
+
+## Secrets / Environment
+.env
+*.env
+!.env.example
+**/secrets/
+
+## Uploads
+uploads/
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Windows
+Thumbs.db
+desktop.ini
+
+## JetBrains
+.idea/
+*.iml
+
+## Rider
+.editorconfig~
+
+## Docker
+docker/postgres-data/
+
+## Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/

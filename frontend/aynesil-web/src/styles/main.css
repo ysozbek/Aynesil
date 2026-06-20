@@ -1,0 +1,25 @@
+/*
+ * AyNesil — Main Stylesheet
+ * Imports Metronic Tailwind design system via @keenthemes/ktui.
+ * Tailwind directives must come first; Metronic utility classes extend them.
+ */
+@import "tailwindcss";
+@import "@keenthemes/ktui/dist/css/ktui.css";
+
+/*
+ * Custom AyNesil overrides go below this line.
+ * Do NOT override Metronic core variables here — use the theme config instead.
+ */
+:root {
+  --aynesil-primary: var(--kt-primary);
+  --aynesil-font-sans: var(--kt-font-sans);
+}
+
+/* Loading spinner shown before Vue mounts */
+#app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--kt-body-bg, #f9fafb);
+}

@@ -1,0 +1,65 @@
+// Turkish base translations. Extended/overridden by the backend i18n_message catalog.
+const tr = {
+  common: {
+    save: 'Kaydet',
+    cancel: 'İptal',
+    delete: 'Sil',
+    edit: 'Düzenle',
+    add: 'Ekle',
+    search: 'Ara',
+    filter: 'Filtrele',
+    loading: 'Yükleniyor...',
+    noData: 'Veri bulunamadı',
+    confirm: 'Onayla',
+    yes: 'Evet',
+    no: 'Hayır',
+    back: 'Geri',
+    next: 'İleri',
+    submit: 'Gönder',
+    close: 'Kapat',
+    actions: 'İşlemler',
+    status: 'Durum',
+    active: 'Aktif',
+    passive: 'Pasif',
+    createdAt: 'Oluşturma Tarihi',
+    updatedAt: 'Güncelleme Tarihi',
+  },
+  auth: {
+    login: 'Giriş Yap',
+    logout: 'Çıkış Yap',
+    username: 'Kullanıcı Adı',
+    password: 'Şifre',
+    forgotPassword: 'Şifremi Unuttum',
+    loginError: 'Kullanıcı adı veya şifre hatalı.',
+    lockedOut: 'Hesabınız geçici olarak kilitlendi. Lütfen daha sonra tekrar deneyin.',
+    welcomeBack: 'Tekrar Hoşgeldiniz',
+    signInTo: 'AyNesil\'e giriş yapın',
+  },
+  navigation: {
+    dashboard: 'Kontrol Paneli',
+    settings: 'Ayarlar',
+    profile: 'Profil',
+  },
+  validation: {
+    required: '{field} alanı zorunludur.',
+    minLength: '{field} en az {min} karakter olmalıdır.',
+    maxLength: '{field} en fazla {max} karakter olabilir.',
+    email: 'Geçerli bir e-posta adresi giriniz.',
+    numeric: '{field} sayısal bir değer olmalıdır.',
+  },
+  errors: {
+    notFound: 'Kayıt bulunamadı.',
+    forbidden: 'Bu işlem için yetkiniz bulunmamaktadır.',
+    serverError: 'Sunucu hatası oluştu. Lütfen tekrar deneyin.',
+    networkError: 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.',
+  },
+  pagination: {
+    showing: '{from}-{to} / {total} kayıt gösteriliyor',
+    perPage: 'Sayfa başına',
+    previous: 'Önceki',
+    next: 'Sonraki',
+  },
+}
+
+export type MessageSchema = typeof tr
+export default tr
