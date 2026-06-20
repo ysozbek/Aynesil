@@ -43,4 +43,14 @@ public static class CacheKeys
 
     // ── Tenant prefix for bulk invalidation ──────────────────────────────
     public static string TenantPrefix(Guid corporationId) => $"corp{Sep}{corporationId}";
+
+    // ── Auth one-time tokens (TTL-backed, stored as token-hash → payload) ─
+    public static string EmailVerificationToken(string tokenHash) =>
+        $"auth{Sep}email-verify{Sep}{tokenHash}";
+
+    public static string PasswordResetToken(string tokenHash) =>
+        $"auth{Sep}pwd-reset{Sep}{tokenHash}";
+
+    public static string AccountLockout(Guid userId) =>
+        ForUser(userId, "lockout");
 }

@@ -118,6 +118,9 @@ public static class DependencyInjection
         // ── Typed repositories ───────────────────────────────────────────────────
         services.AddScoped<ICorporationRepository, CorporationRepository>();
         services.AddScoped<ICampusRepository, CampusRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
 
         return services;
     }

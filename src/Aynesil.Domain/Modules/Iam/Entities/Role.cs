@@ -1,3 +1,5 @@
+using Aynesil.Domain.Modules.Iam.Events;
+
 namespace Aynesil.Domain.Modules.Iam.Entities;
 
 /// <summary>
@@ -30,4 +32,51 @@ public class Role : BaseEntity
 
     public ICollection<RolePermission> RolePermissions { get; set; } = [];
     public ICollection<UserRole> UserRoles { get; set; } = [];
+
+    // ── Factory ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Creates a new tenant role. Pass corporationId=null only for platform-level system templates.
+    /// </summary>
+    public static Role Create(
+        Guid? corporationId,
+        string code,
+        string name,
+        string? description = null,
+        bool isSystem = false)
+    {
+        var role = new Role
+        {
+            CorporationId = corporationId,
+            Code = code.ToLowerInvariant(),
+            Name = name,
+            Description = description,
+            IsSystem = isSystem
+        };
+        role.AddDomainEvent(new RoleCreatedEvent(role.Id, corporationId, role.Code));
+        return role;
+    }
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
+    /// <summary>Updates the display name and description.</summary>
+    public void Update(string name, string? description)
+    {
+        Name = name;
+        Description = description;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Soft-deletes the role. System roles cannot be deleted.
+    /// All user_role grants referencing this role will be orphaned — revoke them before deleting.
+    /// </summary>
+    public void SoftDelete()
+    {
+        if (IsSystem)
+            throw new InvalidOperationException("System roles cannot be deleted.");
+
+        DeletedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
