@@ -62,8 +62,11 @@ Architecture
 
 Always follow:
 
-* DDL.md
-* ARCHITECTURE.md
+* The approved PostgreSQL schema under `db/` (`db/layer1_core/`,
+  `db/layer2_sped/`, `db/99_triggers_rls_policies.sql`, `db/seed/`)
+  as the authoritative source of database design.
+* `ARCHITECTURE.md` as the authoritative source of architecture
+  decisions.
 
 Never invent:
 
@@ -72,7 +75,7 @@ Never invent:
 * Foreign Keys
 * Relationships
 
-Use only structures defined in DDL.md.
+Use only structures defined under `db/`.
 
 If a required structure is missing:
 
@@ -82,25 +85,43 @@ If a required structure is missing:
 
 Do not create alternative schemas.
 
+The schema under `db/` has already been validated successfully
+against PostgreSQL 17 (Green Build, see `db/validation/`). The
+architecture has already been reviewed and approved. This is NOT a
+redesign phase — do not redesign the database, bounded contexts, or
+modules; do not rename schemas, tables, or entities; do not
+introduce alternative architectures or replace approved decisions.
+
 Do not implement any table, service, or business rule for a future
-OrganizationGroup tier — it does not exist in DDL.md yet. However,
+OrganizationGroup tier — it does not exist under `db/` yet. However,
 new code must not assume Corporation is the system's absolute and
 permanent top level (e.g. avoid hardcoded "Corporation has no
 parent" logic baked deep into business rules). OrganizationGroup
 will be added via migration when a real business need arises.
 
 Do not implement ABAC/Care-Team authorization logic now — no table,
-service, or business rule for it exists in DDL.md yet. RBAC is the
+service, or business rule for it exists under `db/` yet. RBAC is the
 current and only authorization model. However, new code must not
 assume role-based checks are the permanent, only mechanism for
 clinical-data access (student records, assessments, case notes,
 reports) — ABAC/Care-Team may be introduced later for these.
 
 Do not implement tenant subscription, feature licensing, or usage
-metering tables/logic now — none exist in DDL.md yet. However, new
+metering tables/logic now — none exist under `db/` yet. However, new
 code must not hardcode the assumption that every tenant has
 unlimited access to every module; `menu_item.feature_flag` already
 exists as the seam this will eventually plug into.
+
+If `ARCHITECTURE.md` documents a deferred decision (e.g.
+OrganizationGroup, ABAC/Care-Team Authorization, SaaS Licensing /
+Feature Management), treat it as intentionally deferred — do not
+implement it now, and do not assume the opposite of what it says
+either.
+
+All generated code, project structure and architecture must align
+with `ARCHITECTURE.md`, `db/`, and `docs/`. These artifacts are
+frozen and authoritative for this command — only add files belonging
+to the requested module; do not modify platform infrastructure.
 
 ---
 
