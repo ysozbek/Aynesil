@@ -23,14 +23,17 @@ RUN dotnet publish -c Release -o /publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
 WORKDIR /app
 
-# Security: run as non-root
+# Security: create non-root user
 RUN addgroup -S aynesil && adduser -S -G aynesil aynesil
-USER aynesil
 
+# Create runtime directories and set ownership BEFORE switching user
+RUN mkdir -p uploads logs && chown -R aynesil:aynesil /app
+
+# Copy published output (owned by aynesil)
 COPY --from=build --chown=aynesil:aynesil /publish ./
 
-# Create uploads directory
-RUN mkdir -p uploads logs
+# Switch to non-root user AFTER directory setup
+USER aynesil
 
 EXPOSE 5000
 ENV ASPNETCORE_URLS=http://+:5000

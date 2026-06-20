@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
@@ -18,7 +19,7 @@ namespace Aynesil.Infrastructure.Persistence;
 /// Business modules (Layer 2) extend this context via partial configurations or register
 /// their own DbContexts that use the same underlying connection.
 /// </summary>
-public class AynesilDbContext : DbContext
+public class AynesilDbContext : DbContext, IAppDbContext
 {
     public AynesilDbContext(DbContextOptions<AynesilDbContext> options) : base(options) { }
 

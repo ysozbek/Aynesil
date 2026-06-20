@@ -15,22 +15,12 @@ namespace Aynesil.Infrastructure.Services.Auth;
 /// <summary>
 /// Issues and rotates JWT access tokens + opaque refresh tokens.
 ///
-/// Access token claims:
-///   sub       = user_account.id
-///   corp      = corporation.id
-///   name      = full_name
-///   email     = email
-///   perms     = ["student:read","session:create",...] (permission codes)
-///   jti       = unique token id
-///
-/// Refresh token:
-///   - 32-byte cryptographically random value, base64url-encoded
-///   - SHA-256 hash stored in iam.auth_session.refresh_token_hash
-///   - Token rotation: each refresh creates a new session, revokes old one
-///
-/// Security considerations:
-///   - Refresh token hash comparison uses constant-time equality (CryptographicOperations.FixedTimeEquals)
-///   - Expired/revoked sessions return generic error messages (avoid oracle attacks)
+/// RLS notu: Bu servis authentication akışında kullanılır — JWT henüz yok,
+/// tenant context (app.current_corporation_id GUC) henüz set edilmemiş.
+/// Doğrudan tablo sorgusu yerine SECURITY DEFINER DB fonksiyonları kullanılır:
+///   iam.find_user_by_id(uuid)          → user bilgisi
+///   iam.find_session_by_token(text)    → refresh token doğrulama
+///   iam.get_user_permissions(uuid,uuid)→ permission listesi
 /// </summary>
 public sealed class JwtTokenService : ITokenService
 {
@@ -51,28 +41,46 @@ public sealed class JwtTokenService : ITokenService
         string? userAgent = null,
         CancellationToken cancellationToken = default)
     {
-        var user = await _db.UserAccounts
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
-            ?? throw new InvalidOperationException("User not found.");
+        // Kullanıcı bilgisini SECURITY DEFINER fonksiyon ile getir (RLS bypass)
+        var userRow = await _db.Database
+            .SqlQueryRaw<UserInfoRow>(
+                @"SELECT id               AS ""Id"",
+                         corporation_id   AS ""CorporationId"",
+                         full_name        AS ""FullName"",
+                         email            AS ""Email"",
+                         preferred_locale AS ""PreferredLocale""
+                  FROM iam.find_user_by_id({0})",
+                userId)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException($"User {userId} not found.");
 
         var (rawRefresh, hashRefresh) = GenerateRefreshToken();
         var expiresAt = DateTimeOffset.UtcNow.AddDays(_opts.RefreshTokenExpiryDays);
 
-        var session = new AuthSession
+        // EnableRetryOnFailure + user transaction: CreateExecutionStrategy() wrapper gerekir.
+        // Transaction içinde SET GUC + INSERT aynı connection'da kalır → RLS WITH CHECK geçer.
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
-            CorporationId = corporationId,
-            UserId = userId,
-            IssuedAt = DateTimeOffset.UtcNow,
-            ExpiresAt = expiresAt,
-            RefreshTokenHash = hashRefresh,
-            IpAddress = ipAddress,
-            UserAgent = userAgent
-        };
-        _db.AuthSessions.Add(session);
-        await _db.SaveChangesAsync(cancellationToken);
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await SetTenantGucAsync(corporationId, userId, cancellationToken);
 
-        var accessToken = BuildAccessToken(user, corporationId, permissionCodes);
+            var session = new AuthSession
+            {
+                CorporationId = corporationId,
+                UserId = userId,
+                IssuedAt = DateTimeOffset.UtcNow,
+                ExpiresAt = expiresAt,
+                RefreshTokenHash = hashRefresh,
+                IpAddress = ipAddress,
+                UserAgent = userAgent
+            };
+            _db.AuthSessions.Add(session);
+            await _db.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+        });
+
+        var accessToken = BuildAccessToken(userRow, corporationId, permissionCodes);
         var accessExpiry = DateTimeOffset.UtcNow.AddMinutes(_opts.AccessTokenExpiryMinutes);
 
         return new TokenPair(accessToken, rawRefresh, accessExpiry);
@@ -86,49 +94,67 @@ public sealed class JwtTokenService : ITokenService
     {
         var tokenHash = Hash(refreshToken);
 
-        var session = await _db.AuthSessions
-            .Include(s => s.User)
-            .FirstOrDefaultAsync(s =>
-                s.RefreshTokenHash == tokenHash &&
-                s.RevokedAt == null &&
-                s.ExpiresAt > DateTimeOffset.UtcNow,
-                cancellationToken)
+        // Session'ı SECURITY DEFINER fonksiyon ile bul (RLS bypass — corp context yok henüz)
+        var session = await _db.Database
+            .SqlQueryRaw<SessionRow>(
+                @"SELECT id                              AS ""Id"",
+                         corporation_id                  AS ""CorporationId"",
+                         user_id                         AS ""UserId"",
+                         issued_at                       AS ""IssuedAt"",
+                         expires_at                      AS ""ExpiresAt"",
+                         revoked_at                      AS ""RevokedAt"",
+                         refresh_token_hash              AS ""RefreshTokenHash"",
+                         ip_address::text                AS ""IpAddress"",
+                         user_agent                      AS ""UserAgent""
+                  FROM iam.find_session_by_token({0})",
+                tokenHash)
+            .FirstOrDefaultAsync(cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid or expired refresh token.");
 
-        // Revoke current session (rotation)
-        session.Revoke();
+        // Session'ı revoke et (rotation)
+        await SetTenantGucAsync(session.CorporationId, session.UserId, cancellationToken);
 
-        var permissions = await GetPermissionCodesAsync(session.UserId, session.CorporationId, cancellationToken);
-        var result = await IssueTokensAsync(session.UserId, session.CorporationId, permissions, ipAddress, userAgent, cancellationToken);
+        await _db.Database.ExecuteSqlRawAsync(
+            "UPDATE iam.auth_session SET revoked_at = now() WHERE id = {0}",
+            session.Id);
 
-        await _db.SaveChangesAsync(cancellationToken);
-        return result;
+        // Permissions yükle ve yeni token çıkar
+        var permissions = await _db.Database
+            .SqlQueryRaw<PermissionRow>(
+                @"SELECT permission_code AS ""PermissionCode"" FROM iam.get_user_permissions({0}, {1})",
+                session.UserId, session.CorporationId)
+            .Select(r => r.PermissionCode)
+            .ToListAsync(cancellationToken);
+
+        return await IssueTokensAsync(session.UserId, session.CorporationId, permissions, ipAddress, userAgent, cancellationToken);
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         var tokenHash = Hash(refreshToken);
-        var session = await _db.AuthSessions
-            .FirstOrDefaultAsync(s => s.RefreshTokenHash == tokenHash && s.RevokedAt == null, cancellationToken);
-
-        if (session is not null)
-        {
-            session.Revoke();
-            await _db.SaveChangesAsync(cancellationToken);
-        }
+        await _db.Database.ExecuteSqlRawAsync(
+            "UPDATE iam.auth_session SET revoked_at = now() WHERE refresh_token_hash = {0} AND revoked_at IS NULL",
+            tokenHash);
     }
 
     public async Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var sessions = await _db.AuthSessions
-            .Where(s => s.UserId == userId && s.RevokedAt == null)
-            .ToListAsync(cancellationToken);
-
-        foreach (var s in sessions) s.Revoke();
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.Database.ExecuteSqlRawAsync(
+            "UPDATE iam.auth_session SET revoked_at = now() WHERE user_id = {0} AND revoked_at IS NULL",
+            userId);
     }
 
-    private string BuildAccessToken(UserAccount user, Guid corporationId, IEnumerable<string> permissions)
+    // ── Private helpers ────────────────────────────────────────────────────────
+
+    private async Task SetTenantGucAsync(Guid corporationId, Guid userId, CancellationToken ct)
+    {
+        // RLS with-check ve audit_trigger için GUC'u set et
+        await _db.Database.ExecuteSqlRawAsync(
+            "SELECT set_config('app.current_corporation_id', {0}, false), set_config('app.current_user_id', {1}, false)",
+            corporationId.ToString(), userId.ToString());
+    }
+
+    private string BuildAccessToken(UserInfoRow user, Guid corporationId, IEnumerable<string> permissions)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opts.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -159,20 +185,6 @@ public sealed class JwtTokenService : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private async Task<IEnumerable<string>> GetPermissionCodesAsync(
-        Guid userId, Guid corporationId, CancellationToken ct)
-    {
-        return await _db.UserRoles
-            .AsNoTracking()
-            .Where(ur => ur.UserId == userId && ur.CorporationId == corporationId)
-            .Where(ur => ur.ValidFrom == null || ur.ValidFrom <= DateTimeOffset.UtcNow)
-            .Where(ur => ur.ValidTo == null || ur.ValidTo >= DateTimeOffset.UtcNow)
-            .SelectMany(ur => ur.Role!.RolePermissions)
-            .Select(rp => rp.Permission!.Code)
-            .Distinct()
-            .ToListAsync(ct);
-    }
-
     private static (string raw, string hash) GenerateRefreshToken()
     {
         var bytes = new byte[32];
@@ -184,7 +196,12 @@ public sealed class JwtTokenService : ITokenService
     private static string Hash(string value)
     {
         var bytes = Encoding.UTF8.GetBytes(value);
-        var hash = System.Security.Cryptography.SHA256.HashData(bytes);
+        var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
+
+    // ── Private DTO records (EF Core raw SQL mapping) ─────────────────────────
+    private record UserInfoRow(Guid Id, Guid CorporationId, string FullName, string? Email, string? PreferredLocale);
+    private record SessionRow(Guid Id, Guid CorporationId, Guid UserId, DateTimeOffset IssuedAt, DateTimeOffset ExpiresAt, DateTimeOffset? RevokedAt, string? RefreshTokenHash, string? IpAddress, string? UserAgent);
+    private record PermissionRow(string PermissionCode);
 }

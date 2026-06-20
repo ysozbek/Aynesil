@@ -1,14 +1,9 @@
 <script setup lang="ts">
 /**
- * DefaultLayout — Metronic Demo1 shell
- * Implements the Demo1 layout pattern from Metronic 9 Tailwind:
- *  - Sidebar navigation (collapsible, desktop + mobile)
- *  - Top header bar (breadcrumb, user menu, notifications)
- *  - Main content area (router-view)
- *  - Footer
- *
- * Layout uses Metronic's CSS classes from @keenthemes/ktui.
- * The sidebar menu is driven by the menuStore (dynamic, permission-filtered).
+ * DefaultLayout — Metronic Demo1 Shell
+ * Metronic'in orijinal Demo1 layout class'larını kullanır:
+ *   demo1  kt-header-fixed  kt-sidebar-fixed
+ *   kt-header  kt-sidebar  kt-wrapper  kt-content
  */
 import { onMounted, ref } from 'vue'
 import { RouterView } from 'vue-router'
@@ -21,7 +16,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 const auth = useAuthStore()
 const menu = useMenuStore()
 const settings = useSettingsStore()
-const sidebarOpen = ref(true)
+const sidebarCollapsed = ref(false)
 
 onMounted(async () => {
   await Promise.all([menu.load(), settings.load()])
@@ -29,28 +24,43 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-[--kt-body-bg]" :class="{ 'sidebar-collapse': !sidebarOpen }">
-    <!-- Sidebar -->
-    <AppSidebar :items="menu.tree" :open="sidebarOpen" @toggle="sidebarOpen = !sidebarOpen" />
+  <!--
+    Metronic Demo1 body classes:
+    - demo1           : Demo1 teması etkinleştir
+    - kt-header-fixed : Header sabit kalır
+    - kt-sidebar-fixed: Sidebar sabit kalır
+  -->
+  <div
+    class="demo1 kt-header-fixed kt-sidebar-fixed"
+    :class="{ 'kt-sidebar-collapse': sidebarCollapsed }"
+  >
+    <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+    <AppSidebar
+      :items="menu.tree"
+      :collapsed="sidebarCollapsed"
+      @toggle="sidebarCollapsed = !sidebarCollapsed"
+    />
 
-    <!-- Main column -->
-    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+    <!-- ── Main wrapper ─────────────────────────────────────────────────── -->
+    <div class="kt-wrapper flex flex-col min-h-screen">
+
       <!-- Header -->
       <AppHeader
         :user="auth.user"
-        @toggle-sidebar="sidebarOpen = !sidebarOpen"
+        @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
         @logout="auth.logout()"
       />
 
       <!-- Page content -->
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="kt-content grow p-6">
         <RouterView />
       </main>
 
       <!-- Footer -->
-      <footer class="px-6 py-3 text-xs text-gray-400 border-t border-[--kt-border-color]">
+      <footer class="px-6 py-3 text-xs text-muted-foreground border-t border-border">
         © {{ new Date().getFullYear() }} AyNesil — Tüm hakları saklıdır.
       </footer>
+
     </div>
   </div>
 </template>

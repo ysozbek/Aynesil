@@ -57,6 +57,7 @@ services:
   # Yeni migration: db/migrations/V3__*.sql ekle → docker compose run aynesil-flyway
   aynesil-flyway:
     image: flyway/flyway:10.20-alpine
+    platform: linux/amd64   # alpine sadece amd64; Rosetta 2 ile çalışır (uyarı normal)
     container_name: aynesil-flyway
     depends_on:
       aynesil-db:
@@ -113,11 +114,12 @@ services:
     ports:
       - "${API_PORT:-5000}:5000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      # curl Alpine'da yok → wget kullanılır
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - aynesil-net
 
@@ -127,7 +129,9 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:${API_PORT:-5000}/api
+        # Relative path: browser → nginx → proxy → aynesil-api:5000
+        # Absolute URL kullansaydık (http://localhost:5001), nginx bypass edilirdi.
+        VITE_API_BASE_URL: /api
     container_name: aynesil-web
     restart: unless-stopped
     depends_on:

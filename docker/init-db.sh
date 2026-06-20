@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 # Creates the least-privilege application role (subject to RLS).
+# Alpine Linux'ta /bin/bash yoktur — /bin/sh kullanılır.
 # Run by the PostgreSQL Docker container on first startup.
 # The owner role (POSTGRES_USER) is created automatically by the postgres image.
 set -e

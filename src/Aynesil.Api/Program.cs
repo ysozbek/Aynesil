@@ -21,6 +21,14 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // ── AYNESIL_ prefix env var support ──────────────────────────────────────
+    // Varsayılan CreateBuilder() tüm env var'ları prefix olmadan okur.
+    // Bu satır ile "AYNESIL_ConnectionStrings__DefaultConnection" →
+    //   "ConnectionStrings:DefaultConnection" olarak map'lenir.
+    // Docker Compose env section'daki AYNESIL_ prefix'li değerler böylece
+    // GetConnectionString("DefaultConnection") ile doğru okunur.
+    builder.Configuration.AddEnvironmentVariables("AYNESIL_");
+
     // ── Serilog ───────────────────────────────────────────────────────────────
     builder.Host.UseSerilog((ctx, lc) =>
         lc.ReadFrom.Configuration(ctx.Configuration));
@@ -105,8 +113,7 @@ try
     app.UseAuthorization();
     app.UseMiddleware<ActivityLoggingMiddleware>();
 
-    app.MapControllers();
-    app.MapGet("/health", () => Results.Ok(new { status = "healthy" })).AllowAnonymous();
+    app.MapControllers(); // HealthController GET /health dahil
 
     Log.Information("AyNesil API starting on {Env}", app.Environment.EnvironmentName);
     await app.RunAsync();

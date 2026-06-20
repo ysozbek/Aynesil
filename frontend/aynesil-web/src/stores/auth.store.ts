@@ -12,7 +12,14 @@ import type { AuthUser, LoginRequest, LoginResult } from '@/types/auth.types'
 function parseJwt(token: string): Record<string, unknown> {
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    return JSON.parse(atob(base64))
+    // atob() binary string döndürür — Türkçe/Unicode için UTF-8 decode gerekir
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    )
+    return JSON.parse(jsonPayload)
   } catch {
     return {}
   }
