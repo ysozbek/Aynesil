@@ -56,4 +56,53 @@ public class Corporation : BaseEntity
         corp.AddDomainEvent(new CorporationCreatedEvent(corp.Id, corp.Code));
         return corp;
     }
+
+    /// <summary>Transitions the corporation to 'active' status.</summary>
+    public void Activate(Guid? updatedBy = null)
+    {
+        var previous = Status;
+        Status = "active";
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy ?? UpdatedBy;
+        if (previous != Status)
+            AddDomainEvent(new CorporationStatusChangedEvent(Id, Code, previous, Status));
+    }
+
+    /// <summary>Transitions the corporation to 'suspended' status.</summary>
+    public void Suspend(Guid? updatedBy = null)
+    {
+        var previous = Status;
+        Status = "suspended";
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy ?? UpdatedBy;
+        if (previous != Status)
+            AddDomainEvent(new CorporationStatusChangedEvent(Id, Code, previous, Status));
+    }
+
+    /// <summary>Transitions the corporation to 'closed' status. Irreversible in the domain.</summary>
+    public void Close(Guid? updatedBy = null)
+    {
+        var previous = Status;
+        Status = "closed";
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy ?? UpdatedBy;
+        if (previous != Status)
+            AddDomainEvent(new CorporationStatusChangedEvent(Id, Code, previous, Status));
+    }
+
+    /// <summary>Soft-deletes the corporation. Use with extreme care — all tenant data becomes inaccessible.</summary>
+    public void SoftDelete(Guid? deletedBy = null)
+    {
+        DeletedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = deletedBy ?? UpdatedBy;
+    }
+
+    /// <summary>Replaces the free-form settings JSON blob.</summary>
+    public void UpdateSettings(string settingsJson, Guid? updatedBy = null)
+    {
+        Settings = settingsJson;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy ?? UpdatedBy;
+    }
 }

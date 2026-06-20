@@ -1,8 +1,10 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Domain.Interfaces.Repositories;
 using Aynesil.Infrastructure.Events;
 using Aynesil.Infrastructure.Options;
 using Aynesil.Infrastructure.Persistence;
 using Aynesil.Infrastructure.Persistence.Interceptors;
+using Aynesil.Infrastructure.Persistence.Repositories;
 using Aynesil.Infrastructure.Services;
 using Aynesil.Infrastructure.Services.Auth;
 using Aynesil.Infrastructure.Services.Cache;
@@ -112,6 +114,10 @@ public static class DependencyInjection
         services.AddScoped<IStorageProvider, LocalStorageProvider>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IEventBus, InProcessEventBus>();
+
+        // ── Typed repositories ───────────────────────────────────────────────────
+        services.AddScoped<ICorporationRepository, CorporationRepository>();
+        services.AddScoped<ICampusRepository, CampusRepository>();
 
         return services;
     }
