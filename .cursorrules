@@ -437,21 +437,24 @@ Design for future scalability.
 
 ---
 
-## BUILD / SANDBOX CONSTRAINTS
+## UILD / SANDBOX CONSTRAINTS
 
 The sandbox network is restricted — NuGet restore over the network
-is unreliable/blocked and causes ~5 minute timeouts on every build.
+is unreliable/blocked and causes ~5 minute timeouts, and build
+processes inside the sandbox can be killed/interrupted.
 
-When building or running the .NET solution:
-
-* Always use `--no-restore` for `dotnet build` / `dotnet run` once
-  packages have been restored at least once successfully.
-* Do not repeatedly attempt `dotnet restore` as a way to "fix" a
-  build error — if restore is genuinely needed (new package added),
-  say so explicitly and run it once, deliberately, not as a retry
-  loop.
-* If a build fails for a reason unrelated to packages, do not
-  re-trigger a full restore as a troubleshooting step by default.
+* Do NOT run `dotnet build`, `dotnet run`, or `dotnet restore`
+  yourself as a way to verify code correctness.
+* After generating or modifying code, do NOT silently fall back to
+  "linter checks only" and declare the work done — instead, state
+  clearly that you have not verified the build, and list exactly
+  which files/projects need to be built to verify this change.
+* The user runs all .NET builds locally outside the sandbox. When
+  the user reports a build error, treat the exact error message as
+  ground truth and fix it — do not guess at unseen compiler errors,
+  and do not re-run a build yourself to "see if it's fixed."
+* The same applies to `npm run build` / `npm run dev` for the
+  frontend unless the user explicitly asks you to run it.
 
 ---
 

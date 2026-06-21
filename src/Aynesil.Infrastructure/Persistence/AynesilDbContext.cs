@@ -91,6 +91,19 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<StudentProgram> StudentPrograms => Set<StudentProgram>();
 
+    // goals & plan sub-domain
+    public DbSet<GoalLibrary> GoalLibraries => Set<GoalLibrary>();
+    public DbSet<GoalTemplate> GoalTemplates => Set<GoalTemplate>();
+    public DbSet<GoalTemplateTranslation> GoalTemplateTranslations => Set<GoalTemplateTranslation>();
+    public DbSet<StudentGoal> StudentGoals => Set<StudentGoal>();
+    public DbSet<GoalProgress> GoalProgressRecords => Set<GoalProgress>();
+    public DbSet<AcademicPeriod> AcademicPeriods => Set<AcademicPeriod>();
+    public DbSet<EducationPlan> EducationPlans => Set<EducationPlan>();
+    public DbSet<EducationPlanGoal> EducationPlanGoals => Set<EducationPlanGoal>();
+    public DbSet<EducationPlanReview> EducationPlanReviews => Set<EducationPlanReview>();
+    public DbSet<EducationPlanApproval> EducationPlanApprovals => Set<EducationPlanApproval>();
+    public DbSet<EducationPlanRevision> EducationPlanRevisions => Set<EducationPlanRevision>();
+
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudentStatusHistory> StudentStatusHistories => Set<StudentStatusHistory>();

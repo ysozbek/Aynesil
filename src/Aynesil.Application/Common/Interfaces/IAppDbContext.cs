@@ -81,6 +81,19 @@ public interface IAppDbContext
     DbSet<Enrollment> Enrollments { get; }
     DbSet<StudentProgram> StudentPrograms { get; }
 
+    // goals & plan sub-domain
+    DbSet<GoalLibrary> GoalLibraries { get; }
+    DbSet<GoalTemplate> GoalTemplates { get; }
+    DbSet<GoalTemplateTranslation> GoalTemplateTranslations { get; }
+    DbSet<StudentGoal> StudentGoals { get; }
+    DbSet<GoalProgress> GoalProgressRecords { get; }
+    DbSet<AcademicPeriod> AcademicPeriods { get; }
+    DbSet<EducationPlan> EducationPlans { get; }
+    DbSet<EducationPlanGoal> EducationPlanGoals { get; }
+    DbSet<EducationPlanReview> EducationPlanReviews { get; }
+    DbSet<EducationPlanApproval> EducationPlanApprovals { get; }
+    DbSet<EducationPlanRevision> EducationPlanRevisions { get; }
+
     // ── students schema ─────────────────────────────────────────────────────
     DbSet<Student> Students { get; }
     DbSet<StudentStatusHistory> StudentStatusHistories { get; }

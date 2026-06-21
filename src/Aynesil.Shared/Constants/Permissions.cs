@@ -228,4 +228,69 @@ public static class Permissions
         public const string Update        = "enrollment:update";
         public const string ManagePrograms = "enrollment:manage_programs";
     }
+
+    // ── Goal Library ──────────────────────────────────────────────────────────
+    public static class GoalLibraries
+    {
+        public const string Read   = "goal_library:read";
+        public const string Create = "goal_library:create";
+        public const string Update = "goal_library:update";
+        public const string Delete = "goal_library:delete";
+    }
+
+    // ── Goal Templates ────────────────────────────────────────────────────────
+    public static class GoalTemplates
+    {
+        public const string Read      = "goal_template:read";
+        public const string Create    = "goal_template:create";
+        public const string Update    = "goal_template:update";
+        public const string Delete    = "goal_template:delete";
+        public const string Translate = "goal_template:translate";
+    }
+
+    // ── Student Goals ─────────────────────────────────────────────────────────
+    public static class StudentGoals
+    {
+        public const string Read         = "student_goal:read";
+        public const string Create       = "student_goal:create";
+        public const string Update       = "student_goal:update";
+        public const string Delete       = "student_goal:delete";
+        public const string ChangeStatus = "student_goal:change_status";
+    }
+
+    // ── Goal Progress ─────────────────────────────────────────────────────────
+    public static class GoalProgress
+    {
+        public const string Read   = "goal_progress:read";
+        public const string Record = "goal_progress:record";
+    }
+
+    // ── Academic Periods ──────────────────────────────────────────────────────
+    public static class AcademicPeriods
+    {
+        public const string Read   = "academic_period:read";
+        public const string Manage = "academic_period:manage";
+    }
+
+    // ── Education Plans (BEP/IEP) ─────────────────────────────────────────────
+    public static class EducationPlans
+    {
+        public const string Read          = "education_plan:read";
+        public const string Create        = "education_plan:create";
+        public const string Update        = "education_plan:update";
+        public const string Delete        = "education_plan:delete";
+        public const string Submit        = "education_plan:submit";
+        public const string Approve       = "education_plan:approve";
+        public const string Revise        = "education_plan:revise";
+        public const string ManageGoals   = "education_plan:manage_goals";
+        public const string AddReview     = "education_plan:add_review";
+        public const string GuardianView  = "education_plan:guardian_view";
+    }
+
+    // ── Goal Reports ──────────────────────────────────────────────────────────
+    public static class GoalReports
+    {
+        public const string Read   = "goal_report:read";
+        public const string Export = "goal_report:export";
+    }
 }

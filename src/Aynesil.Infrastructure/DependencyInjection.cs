@@ -127,6 +127,8 @@ public static class DependencyInjection
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IEducatorRepository, EducatorRepository>();
         services.AddScoped<IProgramRepository, ProgramRepository>();
+        services.AddScoped<IGoalRepository, GoalRepository>();
+        services.AddScoped<IEducationPlanRepository, EducationPlanRepository>();
 
         return services;
     }
