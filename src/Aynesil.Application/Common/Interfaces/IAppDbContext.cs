@@ -3,6 +3,7 @@ using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
+using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -107,6 +108,18 @@ public interface IAppDbContext
     DbSet<SessionNote> SessionNotes { get; }
     DbSet<Attendance> Attendances { get; }
     DbSet<MakeupRequest> MakeupRequests { get; }
+
+    // ── finance schema ──────────────────────────────────────────────────────
+    DbSet<PackageDefinition> PackageDefinitions { get; }
+    DbSet<StudentPackage> StudentPackages { get; }
+    DbSet<CreditLedger> CreditLedgerEntries { get; }
+    DbSet<Invoice> Invoices { get; }
+    DbSet<InvoiceLine> InvoiceLines { get; }
+    DbSet<Payment> Payments { get; }
+    DbSet<Refund> Refunds { get; }
+    DbSet<Discount> Discounts { get; }
+    DbSet<Scholarship> Scholarships { get; }
+    DbSet<Promotion> Promotions { get; }
 
     // ── students schema ─────────────────────────────────────────────────────
     DbSet<Student> Students { get; }

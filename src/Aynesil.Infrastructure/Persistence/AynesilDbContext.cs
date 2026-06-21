@@ -4,6 +4,7 @@ using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
+using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -117,6 +118,18 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<SessionNote> SessionNotes => Set<SessionNote>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<MakeupRequest> MakeupRequests => Set<MakeupRequest>();
+
+    // ── finance schema ──────────────────────────────────────────────────────
+    public DbSet<PackageDefinition> PackageDefinitions => Set<PackageDefinition>();
+    public DbSet<StudentPackage> StudentPackages => Set<StudentPackage>();
+    public DbSet<CreditLedger> CreditLedgerEntries => Set<CreditLedger>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Refund> Refunds => Set<Refund>();
+    public DbSet<Discount> Discounts => Set<Discount>();
+    public DbSet<Scholarship> Scholarships => Set<Scholarship>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
 
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();

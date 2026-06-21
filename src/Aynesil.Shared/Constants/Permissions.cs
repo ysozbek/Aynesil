@@ -343,4 +343,85 @@ public static class Permissions
         public const string Request = "makeup_request:request";
         public const string Manage  = "makeup_request:manage";
     }
+
+    // ── Package Definitions ───────────────────────────────────────────────────
+    public static class PackageDefinitions
+    {
+        public const string Read   = "package_definition:read";
+        public const string Create = "package_definition:create";
+        public const string Update = "package_definition:update";
+        public const string Delete = "package_definition:delete";
+    }
+
+    // ── Student Packages ──────────────────────────────────────────────────────
+    public static class StudentPackages
+    {
+        public const string Read     = "student_package:read";
+        public const string Purchase = "student_package:purchase";
+        public const string Cancel   = "student_package:cancel";
+    }
+
+    // ── Credit Ledger ─────────────────────────────────────────────────────────
+    public static class CreditLedger
+    {
+        public const string Read    = "credit_ledger:read";
+        public const string Consume = "credit_ledger:consume";
+        public const string Grant   = "credit_ledger:grant";
+        public const string Adjust  = "credit_ledger:adjust";
+    }
+
+    // ── Invoices ──────────────────────────────────────────────────────────────
+    public static class Invoices
+    {
+        public const string Read   = "invoice:read";
+        public const string Create = "invoice:create";
+        public const string Update = "invoice:update";
+        public const string Void   = "invoice:void";
+    }
+
+    // ── Finance Payments ──────────────────────────────────────────────────────
+    // Named FinancePayments to avoid confusion with the domain entity class Payment.
+    public static class FinancePayments
+    {
+        public const string Read    = "finance_payment:read";
+        public const string Record  = "finance_payment:record";
+        public const string Capture = "finance_payment:capture";
+    }
+
+    // ── Refunds ───────────────────────────────────────────────────────────────
+    public static class Refunds
+    {
+        public const string Read    = "refund:read";
+        public const string Request = "refund:request";
+        public const string Process = "refund:process";
+    }
+
+    // ── Discounts ─────────────────────────────────────────────────────────────
+    public static class Discounts
+    {
+        public const string Read  = "discount:read";
+        public const string Apply = "discount:apply";
+    }
+
+    // ── Scholarships ──────────────────────────────────────────────────────────
+    public static class Scholarships
+    {
+        public const string Read   = "scholarship:read";
+        public const string Grant  = "scholarship:grant";
+        public const string Update = "scholarship:update";
+    }
+
+    // ── Promotions ────────────────────────────────────────────────────────────
+    public static class Promotions
+    {
+        public const string Read   = "promotion:read";
+        public const string Create = "promotion:create";
+        public const string Update = "promotion:update";
+    }
+
+    // ── Finance Reports ───────────────────────────────────────────────────────
+    public static class FinanceReports
+    {
+        public const string Read = "finance_report:read";
+    }
 }
