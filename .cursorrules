@@ -437,6 +437,24 @@ Design for future scalability.
 
 ---
 
+## BUILD / SANDBOX CONSTRAINTS
+
+The sandbox network is restricted — NuGet restore over the network
+is unreliable/blocked and causes ~5 minute timeouts on every build.
+
+When building or running the .NET solution:
+
+* Always use `--no-restore` for `dotnet build` / `dotnet run` once
+  packages have been restored at least once successfully.
+* Do not repeatedly attempt `dotnet restore` as a way to "fix" a
+  build error — if restore is genuinely needed (new package added),
+  say so explicitly and run it once, deliberately, not as a retry
+  loop.
+* If a build fails for a reason unrelated to packages, do not
+  re-trigger a full restore as a troubleshooting step by default.
+
+---
+
 ## OUTPUT RULES
 
 Generate code incrementally.
