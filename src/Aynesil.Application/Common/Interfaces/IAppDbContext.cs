@@ -1,6 +1,8 @@
 using Aynesil.Domain.Modules.Assessment.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
+using Aynesil.Domain.Modules.Education.Entities;
+using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -64,6 +66,20 @@ public interface IAppDbContext
     DbSet<LeadStatusHistory> LeadStatusHistories { get; }
     DbSet<LeadActivity> LeadActivities { get; }
     DbSet<Interview> Interviews { get; }
+
+    // ── educators schema ────────────────────────────────────────────────────
+    DbSet<Educator> Educators { get; }
+    DbSet<EducatorCampus> EducatorCampuses { get; }
+    DbSet<EducatorSpecialty> EducatorSpecialties { get; }
+    DbSet<EducatorCertification> EducatorCertifications { get; }
+    DbSet<EducatorHierarchy> EducatorHierarchies { get; }
+
+    // ── education schema ────────────────────────────────────────────────────
+    DbSet<EducationProgram> EducationPrograms { get; }
+    DbSet<ProgramTranslation> ProgramTranslations { get; }
+    DbSet<ProgramService> ProgramServices { get; }
+    DbSet<Enrollment> Enrollments { get; }
+    DbSet<StudentProgram> StudentPrograms { get; }
 
     // ── students schema ─────────────────────────────────────────────────────
     DbSet<Student> Students { get; }

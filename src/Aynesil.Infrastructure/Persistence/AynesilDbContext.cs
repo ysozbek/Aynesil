@@ -2,6 +2,8 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Assessment.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
+using Aynesil.Domain.Modules.Education.Entities;
+using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -74,6 +76,20 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<LeadStatusHistory> LeadStatusHistories => Set<LeadStatusHistory>();
     public DbSet<LeadActivity> LeadActivities => Set<LeadActivity>();
     public DbSet<Interview> Interviews => Set<Interview>();
+
+    // ── educators schema ────────────────────────────────────────────────────
+    public DbSet<Educator> Educators => Set<Educator>();
+    public DbSet<EducatorCampus> EducatorCampuses => Set<EducatorCampus>();
+    public DbSet<EducatorSpecialty> EducatorSpecialties => Set<EducatorSpecialty>();
+    public DbSet<EducatorCertification> EducatorCertifications => Set<EducatorCertification>();
+    public DbSet<EducatorHierarchy> EducatorHierarchies => Set<EducatorHierarchy>();
+
+    // ── education schema ────────────────────────────────────────────────────
+    public DbSet<EducationProgram> EducationPrograms => Set<EducationProgram>();
+    public DbSet<ProgramTranslation> ProgramTranslations => Set<ProgramTranslation>();
+    public DbSet<ProgramService> ProgramServices => Set<ProgramService>();
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<StudentProgram> StudentPrograms => Set<StudentProgram>();
 
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();

@@ -197,4 +197,35 @@ public static class Permissions
         public const string Delete           = "case_note:delete";
         public const string ReadConfidential = "case_note:read_confidential";
     }
+
+    // ── Educators ─────────────────────────────────────────────────────────────
+    public static class Educators
+    {
+        public const string Read             = "educator:read";
+        public const string Create           = "educator:create";
+        public const string Update           = "educator:update";
+        public const string Delete           = "educator:delete";
+        public const string ManageSpecialties = "educator:manage_specialties";
+        public const string ManageCampuses   = "educator:manage_campuses";
+        public const string ManageCertifications = "educator:manage_certifications";
+        public const string ManageHierarchy  = "educator:manage_hierarchy";
+    }
+
+    // ── Programs (Education) ──────────────────────────────────────────────────
+    public static class Programs
+    {
+        public const string Read   = "program:read";
+        public const string Create = "program:create";
+        public const string Update = "program:update";
+        public const string Delete = "program:delete";
+    }
+
+    // ── Enrollments ───────────────────────────────────────────────────────────
+    public static class Enrollments
+    {
+        public const string Read          = "enrollment:read";
+        public const string Create        = "enrollment:create";
+        public const string Update        = "enrollment:update";
+        public const string ManagePrograms = "enrollment:manage_programs";
+    }
 }
