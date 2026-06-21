@@ -5,6 +5,7 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
+using Aynesil.Domain.Modules.Scheduling.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -93,6 +94,19 @@ public interface IAppDbContext
     DbSet<EducationPlanReview> EducationPlanReviews { get; }
     DbSet<EducationPlanApproval> EducationPlanApprovals { get; }
     DbSet<EducationPlanRevision> EducationPlanRevisions { get; }
+
+    // ── scheduling schema ───────────────────────────────────────────────────
+    DbSet<Room> Rooms { get; }
+    DbSet<CalendarEntry> CalendarEntries { get; }
+    DbSet<RecurringSchedule> RecurringSchedules { get; }
+    DbSet<RecurrenceException> RecurrenceExceptions { get; }
+    DbSet<Session> Sessions { get; }
+    DbSet<SessionParticipant> SessionParticipants { get; }
+    DbSet<SessionEducator> SessionEducators { get; }
+    DbSet<SessionGoal> SessionGoals { get; }
+    DbSet<SessionNote> SessionNotes { get; }
+    DbSet<Attendance> Attendances { get; }
+    DbSet<MakeupRequest> MakeupRequests { get; }
 
     // ── students schema ─────────────────────────────────────────────────────
     DbSet<Student> Students { get; }

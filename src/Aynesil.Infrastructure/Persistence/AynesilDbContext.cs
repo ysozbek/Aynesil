@@ -6,6 +6,7 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
+using Aynesil.Domain.Modules.Scheduling.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -103,6 +104,19 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<EducationPlanReview> EducationPlanReviews => Set<EducationPlanReview>();
     public DbSet<EducationPlanApproval> EducationPlanApprovals => Set<EducationPlanApproval>();
     public DbSet<EducationPlanRevision> EducationPlanRevisions => Set<EducationPlanRevision>();
+
+    // ── scheduling schema ───────────────────────────────────────────────────
+    public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
+    public DbSet<RecurringSchedule> RecurringSchedules => Set<RecurringSchedule>();
+    public DbSet<RecurrenceException> RecurrenceExceptions => Set<RecurrenceException>();
+    public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<SessionParticipant> SessionParticipants => Set<SessionParticipant>();
+    public DbSet<SessionEducator> SessionEducators => Set<SessionEducator>();
+    public DbSet<SessionGoal> SessionGoals => Set<SessionGoal>();
+    public DbSet<SessionNote> SessionNotes => Set<SessionNote>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<MakeupRequest> MakeupRequests => Set<MakeupRequest>();
 
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();

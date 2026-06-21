@@ -293,4 +293,54 @@ public static class Permissions
         public const string Read   = "goal_report:read";
         public const string Export = "goal_report:export";
     }
+
+    // ── Rooms ─────────────────────────────────────────────────────────────────
+    public static class Rooms
+    {
+        public const string Read   = "room:read";
+        public const string Create = "room:create";
+        public const string Update = "room:update";
+        public const string Delete = "room:delete";
+    }
+
+    // ── Sessions ──────────────────────────────────────────────────────────────
+    public static class Sessions
+    {
+        public const string Read               = "session:read";
+        public const string Create             = "session:create";
+        public const string Update             = "session:update";
+        public const string Delete             = "session:delete";
+        public const string Reschedule         = "session:reschedule";
+        public const string Complete           = "session:complete";
+        public const string Cancel             = "session:cancel";
+        public const string ManageParticipants = "session:manage_participants";
+        public const string ManageEducators    = "session:manage_educators";
+        public const string ManageGoals        = "session:manage_goals";
+        public const string ManageCalendar     = "session:manage_calendar";
+        public const string BulkGenerate       = "session:bulk_generate";
+        public const string BulkCancel         = "session:bulk_cancel";
+        public const string BulkReassign       = "session:bulk_reassign";
+    }
+
+    // ── Session Notes ─────────────────────────────────────────────────────────
+    public static class SessionNotes
+    {
+        public const string Write  = "session_note:write";
+        public const string Delete = "session_note:delete";
+    }
+
+    // ── Attendance ────────────────────────────────────────────────────────────
+    public static class Attendance
+    {
+        public const string Read   = "attendance:read";
+        public const string Record = "attendance:record";
+    }
+
+    // ── Makeup Requests ───────────────────────────────────────────────────────
+    public static class MakeupRequests
+    {
+        public const string Read    = "makeup_request:read";
+        public const string Request = "makeup_request:request";
+        public const string Manage  = "makeup_request:manage";
+    }
 }
