@@ -145,6 +145,7 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<ExternalInstitutionReport> ExternalInstitutionReports => Set<ExternalInstitutionReport>();
     public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
     public DbSet<GuardianPortalAccess> GuardianPortalAccesses => Set<GuardianPortalAccess>();
+    public DbSet<StudentCareAssignment> StudentCareAssignments => Set<StudentCareAssignment>();
 
     // ── iam schema ──────────────────────────────────────────────────────────
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();

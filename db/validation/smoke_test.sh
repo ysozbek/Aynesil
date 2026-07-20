@@ -2,7 +2,7 @@
 # =====================================================================
 # Akran Platform :: DDL smoke test (Docker-first, PostgreSQL 17 only)
 # Spins up a clean PG17 container, applies all DDL + seed in dependency
-# order, then verifies extensions / schemas / 136 tables / RLS /
+# order, then verifies extensions / schemas / 137 tables / RLS /
 # exclusion constraints. Exits non-zero with the exact failing file on error.
 #
 # Usage:   bash db/validation/smoke_test.sh
@@ -37,7 +37,9 @@ FILES=(
   db/layer2_sped/11_camps.sql
   db/layer2_sped/12_consultancy.sql
   db/layer2_sped/13_parent_portal.sql
+  db/layer2_sped/14_care_team.sql
   db/99_triggers_rls_policies.sql
+  db/layer2_sped/15_care_team_rls.sql
   db/seed/01_reference_data_seed.sql
   db/seed/02_akran_bootstrap.sql
 )

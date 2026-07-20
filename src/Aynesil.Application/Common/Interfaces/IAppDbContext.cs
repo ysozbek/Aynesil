@@ -135,6 +135,8 @@ public interface IAppDbContext
     DbSet<ExternalInstitutionReport> ExternalInstitutionReports { get; }
     DbSet<CaseNote> CaseNotes { get; }
     DbSet<GuardianPortalAccess> GuardianPortalAccesses { get; }
+    /// <summary>Care-team assignments (ABAC Phase 2/4). Used by user_can_access_student() and clinical pre-filters.</summary>
+    DbSet<StudentCareAssignment> StudentCareAssignments { get; }
 
     // ── iam schema ──────────────────────────────────────────────────────────
     DbSet<UserAccount> UserAccounts { get; }

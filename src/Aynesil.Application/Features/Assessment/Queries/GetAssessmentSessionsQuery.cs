@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Shared;
@@ -28,12 +29,25 @@ public sealed class GetAssessmentSessionsQueryHandler
     : IRequestHandler<GetAssessmentSessionsQuery, PaginatedResult<AssessmentSessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetAssessmentSessionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetAssessmentSessionsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<PaginatedResult<AssessmentSessionListItemDto>> Handle(
         GetAssessmentSessionsQuery req, CancellationToken ct)
     {
+        // Care-team pre-filter: when a specific enrolled student is requested,
+        // verify the user can access that student's clinical data.
+        // Lead-stage sessions (StudentId = null) are RBAC-only — no care-team check.
+        if (req.StudentId.HasValue &&
+            !CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId.Value, ct))
+            return PaginatedResult<AssessmentSessionListItemDto>.Create([], 0, req.Page, req.PageSize);
+
         var query = AssessmentProjection.BuildSessionListQuery(_db);
 
         if (req.CorporationId.HasValue)

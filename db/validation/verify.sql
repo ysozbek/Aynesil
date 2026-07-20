@@ -48,7 +48,7 @@ select conrelid::regclass as table, conname from pg_constraint where contype='x'
 \echo '== Assertions =='
 do $$
 declare
-  v_ext int; v_sch int; v_tab int; v_excl int; v_rls boolean; v_types int;
+  v_ext int; v_sch int; v_tab int; v_excl int; v_rls boolean; v_types int; v_pol int;
 begin
   select count(*) into v_ext from pg_extension
     where extname in ('pgcrypto','btree_gist','pg_trgm','unaccent','citext');
@@ -63,7 +63,7 @@ begin
     where n.nspname in ('core','iam','ref','crm','students','assessment','educators',
                         'education','scheduling','finance','legal','media','ops','camps','consultancy')
       and c.relkind in ('r','p') and not c.relispartition;
-  if v_tab <> 136 then raise exception 'FAIL tables: expected 136, got %', v_tab; end if;
+  if v_tab <> 137 then raise exception 'FAIL tables: expected 137, got %', v_tab; end if;
 
   select count(*) into v_excl from pg_constraint where contype='x';
   if v_excl <> 2 then raise exception 'FAIL exclusion constraints: expected 2, got %', v_excl; end if;
@@ -78,8 +78,23 @@ begin
   end if;
 
   select count(*) into v_types from ref.ref_type;
-  if v_types < 40 then raise exception 'FAIL: expected >= 40 seeded ref_types, got %', v_types; end if;
+  if v_types < 42 then raise exception 'FAIL: expected >= 42 seeded ref_types, got %', v_types; end if;
 
-  raise notice 'ALL ASSERTIONS PASSED (extensions=%, schemas=%, tables=%, exclusion=%, ref_types=%)',
-    v_ext, v_sch, v_tab, v_excl, v_types;
+  -- Phase 3: user_can_access_student() must exist as the real production function
+  if not exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'students' and p.proname = 'user_can_access_student'
+  ) then
+    raise exception 'FAIL: students.user_can_access_student() function missing (Phase 3 not applied?)';
+  end if;
+
+  -- Phase 3: at least 17 RESTRICTIVE care_team_isolation policies must exist
+  select count(*) into v_pol from pg_policies where policyname = 'care_team_isolation';
+  if v_pol < 17 then
+    raise exception 'FAIL: expected >= 17 care_team_isolation policies, got % (Phase 3 not applied?)', v_pol;
+  end if;
+
+  raise notice 'ALL ASSERTIONS PASSED (extensions=%, schemas=%, tables=%, exclusion=%, ref_types=%, care_team_policies=%)',
+    v_ext, v_sch, v_tab, v_excl, v_types, v_pol;
 end $$;

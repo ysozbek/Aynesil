@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using MediatR;
@@ -87,11 +88,22 @@ public sealed class GetDiagnosesQueryHandler
     : IRequestHandler<GetDiagnosesQuery, IReadOnlyList<DiagnosisDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetDiagnosesQueryHandler(IAppDbContext db) => _db = db;
+    public GetDiagnosesQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<DiagnosisDto>> Handle(GetDiagnosesQuery req, CancellationToken ct)
     {
+        // App-layer care-team pre-filter (UX performance only — RLS is the security backstop).
+        // Returns empty list fast if user is not assigned to this student and lacks bypass.
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return [];
+
         return await (
             from d in _db.Diagnoses.AsNoTracking()
             join cat in _db.RefValues.AsNoTracking()
@@ -117,12 +129,21 @@ public sealed class GetDevelopmentalProfilesQueryHandler
     : IRequestHandler<GetDevelopmentalProfilesQuery, IReadOnlyList<DevelopmentalProfileDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetDevelopmentalProfilesQueryHandler(IAppDbContext db) => _db = db;
+    public GetDevelopmentalProfilesQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<DevelopmentalProfileDto>> Handle(
         GetDevelopmentalProfilesQuery req, CancellationToken ct)
     {
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return [];
+
         return await (
             from p in _db.DevelopmentalProfiles.AsNoTracking()
             join area in _db.RefValues.AsNoTracking()
@@ -152,11 +173,20 @@ public sealed class GetCaseNotesQueryHandler
     : IRequestHandler<GetCaseNotesQuery, PaginatedResult<CaseNoteDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetCaseNotesQueryHandler(IAppDbContext db) => _db = db;
+    public GetCaseNotesQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<PaginatedResult<CaseNoteDto>> Handle(GetCaseNotesQuery req, CancellationToken ct)
     {
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return PaginatedResult<CaseNoteDto>.Create([], 0, req.Page, req.PageSize);
+
         var query = _db.CaseNotes
             .AsNoTracking()
             .Where(n => n.StudentId == req.StudentId);
@@ -192,17 +222,28 @@ public sealed class GetMedicalReportsQueryHandler
     : IRequestHandler<GetMedicalReportsQuery, IReadOnlyList<MedicalReportDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetMedicalReportsQueryHandler(IAppDbContext db) => _db = db;
+    public GetMedicalReportsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<MedicalReportDto>> Handle(GetMedicalReportsQuery req, CancellationToken ct)
-        => await _db.MedicalReports.AsNoTracking()
+    {
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return [];
+
+        return await _db.MedicalReports.AsNoTracking()
             .Where(r => r.StudentId == req.StudentId)
             .OrderByDescending(r => r.ReportDate)
             .Select(r => new MedicalReportDto(
                 r.Id, r.StudentId, r.Title, r.ReportDate, r.Issuer,
                 r.Summary, r.FileId, r.CreatedAt, r.RowVersion))
             .ToListAsync(ct);
+    }
 }
 
 // ── GetDevelopmentReportsQuery ────────────────────────────────────────────────
@@ -214,18 +255,29 @@ public sealed class GetDevelopmentReportsQueryHandler
     : IRequestHandler<GetDevelopmentReportsQuery, IReadOnlyList<DevelopmentReportDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetDevelopmentReportsQueryHandler(IAppDbContext db) => _db = db;
+    public GetDevelopmentReportsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<DevelopmentReportDto>> Handle(
         GetDevelopmentReportsQuery req, CancellationToken ct)
-        => await _db.DevelopmentReports.AsNoTracking()
+    {
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return [];
+
+        return await _db.DevelopmentReports.AsNoTracking()
             .Where(r => r.StudentId == req.StudentId)
             .OrderByDescending(r => r.ReportDate)
             .Select(r => new DevelopmentReportDto(
                 r.Id, r.StudentId, r.PeriodLabel, r.ReportDate,
                 r.AuthoredBy, r.Content, r.FileId, r.CreatedAt, r.RowVersion))
             .ToListAsync(ct);
+    }
 }
 
 // ── GetExternalInstitutionReportsQuery ────────────────────────────────────────
@@ -237,12 +289,21 @@ public sealed class GetExternalInstitutionReportsQueryHandler
     : IRequestHandler<GetExternalInstitutionReportsQuery, IReadOnlyList<ExternalInstitutionReportDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetExternalInstitutionReportsQueryHandler(IAppDbContext db) => _db = db;
+    public GetExternalInstitutionReportsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<ExternalInstitutionReportDto>> Handle(
         GetExternalInstitutionReportsQuery req, CancellationToken ct)
     {
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return [];
+
         return await (
             from r in _db.ExternalInstitutionReports.AsNoTracking()
             join it in _db.RefValues.AsNoTracking()

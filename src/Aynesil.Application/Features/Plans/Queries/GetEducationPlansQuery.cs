@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Shared;
@@ -22,12 +23,23 @@ public sealed class GetEducationPlansQueryHandler
     : IRequestHandler<GetEducationPlansQuery, PaginatedResult<EducationPlanListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetEducationPlansQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducationPlansQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<PaginatedResult<EducationPlanListItemDto>> Handle(
         GetEducationPlansQuery req, CancellationToken ct)
     {
+        // When querying for a specific student, apply care-team pre-filter.
+        if (req.StudentId.HasValue &&
+            !CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId.Value, ct))
+            return PaginatedResult<EducationPlanListItemDto>.Create([], 0, req.Page, req.PageSize);
+
         var q = _db.EducationPlans.AsNoTracking();
 
         if (req.CorporationId.HasValue)
@@ -102,12 +114,27 @@ public sealed class GetGuardianVisiblePlanQueryHandler
     : IRequestHandler<GetGuardianVisiblePlanQuery, EducationPlanDto?>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetGuardianVisiblePlanQueryHandler(IAppDbContext db) => _db = db;
+    public GetGuardianVisiblePlanQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<EducationPlanDto?> Handle(
         GetGuardianVisiblePlanQuery req, CancellationToken ct)
     {
+        // Care-team pre-filter for the educator access path.
+        // NOTE: Guardian portal users (authenticated via guardian.user_id) are NOT educators
+        // and will not have a care-team assignment. When care_team_abac_enabled = true,
+        // guardians would be blocked here. Verify that guardian portal flows use a separate
+        // endpoint or bypass path before enabling ABAC for any tenant.
+        // TODO Phase 5: split guardian and educator access paths to avoid this conflict.
+        if (!CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId, ct))
+            return null;
+
         var plan = await _db.EducationPlans
             .AsNoTracking()
             .Where(p => p.CorporationId == req.CorporationId

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using MediatR;
@@ -17,12 +18,31 @@ public sealed class GetGoalProgressQueryHandler
     : IRequestHandler<GetGoalProgressQuery, IReadOnlyList<GoalProgressDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetGoalProgressQueryHandler(IAppDbContext db) => _db = db;
+    public GetGoalProgressQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<GoalProgressDto>> Handle(
         GetGoalProgressQuery req, CancellationToken ct)
     {
+        // Resolve the parent student_goal to get the student_id for care-team check.
+        // If the goal is not visible (RLS hides it), this returns null → empty list.
+        if (!CareTeamFilter.HasBypass(_currentUser))
+        {
+            var studentId = await _db.StudentGoals.AsNoTracking()
+                .Where(g => g.Id == req.StudentGoalId)
+                .Select(g => (Guid?)g.StudentId)
+                .FirstOrDefaultAsync(ct);
+
+            if (!studentId.HasValue ||
+                !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, studentId.Value, ct))
+                return [];
+        }
+
         var q = _db.GoalProgressRecords.AsNoTracking()
             .Where(p => p.StudentGoalId == req.StudentGoalId);
 

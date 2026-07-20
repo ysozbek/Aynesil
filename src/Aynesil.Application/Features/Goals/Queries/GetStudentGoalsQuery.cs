@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Shared;
@@ -22,12 +23,23 @@ public sealed class GetStudentGoalsQueryHandler
     : IRequestHandler<GetStudentGoalsQuery, PaginatedResult<StudentGoalListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetStudentGoalsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentGoalsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<PaginatedResult<StudentGoalListItemDto>> Handle(
         GetStudentGoalsQuery req, CancellationToken ct)
     {
+        // When filtering by a specific student, apply care-team pre-filter.
+        if (req.StudentId.HasValue &&
+            !CareTeamFilter.HasBypass(_currentUser) &&
+            !await CareTeamFilter.CanAccessStudentAsync(_db, _currentUser, req.StudentId.Value, ct))
+            return PaginatedResult<StudentGoalListItemDto>.Create([], 0, req.Page, req.PageSize);
+
         var q = _db.StudentGoals.AsNoTracking();
 
         if (req.CorporationId.HasValue)

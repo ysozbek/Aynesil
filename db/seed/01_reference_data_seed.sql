@@ -54,7 +54,10 @@ insert into ref.ref_type(code, name, is_system, is_hierarchical, allows_tenant_v
   ('academic_term','Academic Terms',false,false,true),
   ('kpi_category','KPI Categories',false,true,true),
   ('report_category','Report Categories',false,true,true),
-  ('integration_kind','Integration Kinds',true,false,false)
+  ('integration_kind','Integration Kinds',true,false,false),
+  -- ABAC Phase 2 — care-team authorization (ABAC_CARE_TEAM_DESIGN.md §2.2 & §7)
+  ('care_team_role',       'Care Team Roles',       false, false, true),
+  ('care_team_grant_type', 'Care Team Grant Types', false, false, true)
 on conflict (code) do nothing;
 
 -- ---------------------------------------------------------------------
@@ -216,7 +219,21 @@ from (values
   ('integration_kind','streaming',4,false,true),
   ('integration_kind','erp',5,false,true),
   ('integration_kind','government',6,false,true),
-  ('integration_kind','identity',7,false,true)
+  ('integration_kind','identity',7,false,true),
+  -- care_team_role — configurable clinical roles (ABAC Phase 2)
+  ('care_team_role','primary_therapist',1,true,false),
+  ('care_team_role','secondary_therapist',2,false,false),
+  ('care_team_role','coordinator',3,false,false),
+  ('care_team_role','psychologist',4,false,false),
+  ('care_team_role','consultant',5,false,false),
+  ('care_team_role','observer',6,false,false),
+  ('care_team_role','supervisor',7,false,false),
+  -- care_team_grant_type — structural access patterns; platform-owned (is_system=true)
+  ('care_team_grant_type','permanent',1,true,true),
+  ('care_team_grant_type','temporary',2,false,true),
+  ('care_team_grant_type','delegated',3,false,true),
+  ('care_team_grant_type','substitute',4,false,true),
+  ('care_team_grant_type','emergency',5,false,true)
 ) as v(type_code, code, sort_order, is_default, is_system)
 on conflict do nothing;
 
@@ -269,7 +286,21 @@ from (values
   ('notification_channel','email','tr','E-posta'),  ('notification_channel','email','en','Email'),
   ('notification_channel','sms','tr','SMS'),        ('notification_channel','sms','en','SMS'),
   ('notification_channel','push','tr','Anlık Bildirim'), ('notification_channel','push','en','Push'),
-  ('notification_channel','in_app','tr','Uygulama İçi'), ('notification_channel','in_app','en','In-App')
+  ('notification_channel','in_app','tr','Uygulama İçi'), ('notification_channel','in_app','en','In-App'),
+
+  ('care_team_role','primary_therapist','tr','Birincil Terapist'),   ('care_team_role','primary_therapist','en','Primary Therapist'),
+  ('care_team_role','secondary_therapist','tr','İkincil Terapist'),  ('care_team_role','secondary_therapist','en','Secondary Therapist'),
+  ('care_team_role','coordinator','tr','Koordinatör'),               ('care_team_role','coordinator','en','Coordinator'),
+  ('care_team_role','psychologist','tr','Psikolog'),                 ('care_team_role','psychologist','en','Psychologist'),
+  ('care_team_role','consultant','tr','Danışman'),                   ('care_team_role','consultant','en','Consultant'),
+  ('care_team_role','observer','tr','Gözlemci'),                     ('care_team_role','observer','en','Observer'),
+  ('care_team_role','supervisor','tr','Süpervizör'),                 ('care_team_role','supervisor','en','Supervisor'),
+
+  ('care_team_grant_type','permanent','tr','Kalıcı'),               ('care_team_grant_type','permanent','en','Permanent'),
+  ('care_team_grant_type','temporary','tr','Geçici'),               ('care_team_grant_type','temporary','en','Temporary'),
+  ('care_team_grant_type','delegated','tr','Devredilen'),           ('care_team_grant_type','delegated','en','Delegated'),
+  ('care_team_grant_type','substitute','tr','Vekil'),               ('care_team_grant_type','substitute','en','Substitute'),
+  ('care_team_grant_type','emergency','tr','Acil Erişim'),          ('care_team_grant_type','emergency','en','Emergency')
 ) as t(type_code, value_code, locale, label)
 join ref.ref_value rv
   on rv.ref_type_id = ref.type_id(t.type_code)

@@ -424,4 +424,16 @@ public static class Permissions
     {
         public const string Read = "finance_report:read";
     }
+
+    // ── Care Team (ABAC Phase 2–4) ────────────────────────────────────────────
+    // Seeded in V15 (Phase 2 DDL migration).
+    // care_team:bypass → GUC app.care_team_bypass = 'true' set by TenantConnectionInterceptor.
+    // care_team:assign → manage care-team assignment records.
+    // care_team:read   → read care-team assignments.
+    public static class CareTeam
+    {
+        public const string Read   = "care_team:read";
+        public const string Assign = "care_team:assign";
+        public const string Bypass = "care_team:bypass";
+    }
 }
