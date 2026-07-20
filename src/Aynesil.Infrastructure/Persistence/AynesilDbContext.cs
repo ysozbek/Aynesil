@@ -139,6 +139,9 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
     public DbSet<MeetingOutcome> MeetingOutcomes => Set<MeetingOutcome>();
     public DbSet<MeetingFollowUp> MeetingFollowUps => Set<MeetingFollowUp>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<LeaveApproval> LeaveApprovals => Set<LeaveApproval>();
+    public DbSet<LeaveBalance> LeaveBalances => Set<LeaveBalance>();
     public DbSet<SurveyDefinition> SurveyDefinitions => Set<SurveyDefinition>();
     public DbSet<SurveyQuestion> SurveyQuestions => Set<SurveyQuestion>();
     public DbSet<SurveyAnswerOption> SurveyAnswerOptions => Set<SurveyAnswerOption>();

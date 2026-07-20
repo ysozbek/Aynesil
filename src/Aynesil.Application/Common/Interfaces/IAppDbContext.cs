@@ -130,6 +130,9 @@ public interface IAppDbContext
     DbSet<MeetingParticipant> MeetingParticipants { get; }
     DbSet<MeetingOutcome> MeetingOutcomes { get; }
     DbSet<MeetingFollowUp> MeetingFollowUps { get; }
+    DbSet<LeaveRequest> LeaveRequests { get; }
+    DbSet<LeaveApproval> LeaveApprovals { get; }
+    DbSet<LeaveBalance> LeaveBalances { get; }
     DbSet<SurveyDefinition> SurveyDefinitions { get; }
     DbSet<SurveyQuestion> SurveyQuestions { get; }
     DbSet<SurveyAnswerOption> SurveyAnswerOptions { get; }

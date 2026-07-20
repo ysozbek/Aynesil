@@ -490,4 +490,27 @@ public static class Permissions
         public const string Assign = "care_team:assign";
         public const string Bypass = "care_team:bypass";
     }
+
+    // ── Leave Management ──────────────────────────────────────────────────────
+    // Seeded in V19 (leave management migration).
+    public static class LeaveRequests
+    {
+        public const string Read    = "leave_request:read";
+        public const string Submit  = "leave_request:submit";
+        public const string Update  = "leave_request:update";
+        public const string Cancel  = "leave_request:cancel";
+        public const string Approve = "leave_request:approve";
+        public const string Reject  = "leave_request:reject";
+    }
+
+    public static class LeaveBalances
+    {
+        public const string Read     = "leave_balance:read";
+        public const string Manage   = "leave_balance:manage";
+    }
+
+    public static class LeaveReports
+    {
+        public const string Read = "leave_report:read";
+    }
 }
