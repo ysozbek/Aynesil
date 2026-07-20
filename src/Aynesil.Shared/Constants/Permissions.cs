@@ -464,6 +464,21 @@ public static class Permissions
         public const string Read = "finance_report:read";
     }
 
+    // ── Meetings ──────────────────────────────────────────────────────────────
+    public static class Meetings
+    {
+        public const string Read                = "meeting:read";
+        public const string Create              = "meeting:create";
+        public const string Update              = "meeting:update";
+        public const string Delete              = "meeting:delete";
+        public const string Complete            = "meeting:complete";
+        public const string Cancel              = "meeting:cancel";
+        public const string ManageParticipants  = "meeting:manage_participants";
+        public const string RecordAttendance    = "meeting:record_attendance";
+        public const string RecordOutcome       = "meeting:record_outcome";
+        public const string ManageFollowUps     = "meeting:manage_follow_ups";
+    }
+
     // ── Care Team (ABAC Phase 2–4) ────────────────────────────────────────────
     // Seeded in V15 (Phase 2 DDL migration).
     // care_team:bypass → GUC app.care_team_bypass = 'true' set by TenantConnectionInterceptor.

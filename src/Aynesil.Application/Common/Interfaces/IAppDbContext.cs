@@ -128,6 +128,8 @@ public interface IAppDbContext
     // ── ops schema ──────────────────────────────────────────────────────────
     DbSet<Meeting> Meetings { get; }
     DbSet<MeetingParticipant> MeetingParticipants { get; }
+    DbSet<MeetingOutcome> MeetingOutcomes { get; }
+    DbSet<MeetingFollowUp> MeetingFollowUps { get; }
     DbSet<SurveyDefinition> SurveyDefinitions { get; }
     DbSet<SurveyQuestion> SurveyQuestions { get; }
     DbSet<SurveyAnswerOption> SurveyAnswerOptions { get; }

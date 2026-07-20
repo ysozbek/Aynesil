@@ -137,6 +137,8 @@ public class AynesilDbContext : DbContext, IAppDbContext
     // ── ops schema ──────────────────────────────────────────────────────────
     public DbSet<Meeting> Meetings => Set<Meeting>();
     public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
+    public DbSet<MeetingOutcome> MeetingOutcomes => Set<MeetingOutcome>();
+    public DbSet<MeetingFollowUp> MeetingFollowUps => Set<MeetingFollowUp>();
     public DbSet<SurveyDefinition> SurveyDefinitions => Set<SurveyDefinition>();
     public DbSet<SurveyQuestion> SurveyQuestions => Set<SurveyQuestion>();
     public DbSet<SurveyAnswerOption> SurveyAnswerOptions => Set<SurveyAnswerOption>();
