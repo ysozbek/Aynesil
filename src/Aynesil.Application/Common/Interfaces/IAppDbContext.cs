@@ -5,6 +5,8 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
+using Aynesil.Domain.Modules.Legal.Entities;
+using Aynesil.Domain.Modules.Media.Entities;
 using Aynesil.Domain.Modules.Ops.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -124,6 +126,16 @@ public interface IAppDbContext
     DbSet<Discount> Discounts { get; }
     DbSet<Scholarship> Scholarships { get; }
     DbSet<Promotion> Promotions { get; }
+
+    // ── media schema ────────────────────────────────────────────────────────
+    DbSet<Camera> Cameras { get; }
+    DbSet<RoomCamera> RoomCameras { get; }
+    DbSet<SessionCamera> SessionCameras { get; }
+    DbSet<ViewingAuthorization> ViewingAuthorizations { get; }
+    DbSet<ViewingLog> ViewingLogs { get; }
+
+    // ── legal schema (minimal read model for consent validation) ─────────────
+    DbSet<StudentConsent> StudentConsents { get; }
 
     // ── ops schema ──────────────────────────────────────────────────────────
     DbSet<Meeting> Meetings { get; }

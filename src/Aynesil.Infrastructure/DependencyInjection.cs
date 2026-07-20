@@ -131,6 +131,11 @@ public static class DependencyInjection
         services.AddScoped<IEducationPlanRepository, EducationPlanRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
 
+        // ── Media / Camera repositories ──────────────────────────────────────
+        services.AddScoped<ICameraRepository, CameraRepository>();
+        services.AddScoped<IViewingAuthorizationRepository, ViewingAuthorizationRepository>();
+        services.AddScoped<IViewingLogRepository, ViewingLogRepository>();
+
         return services;
     }
 

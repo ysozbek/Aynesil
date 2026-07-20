@@ -513,4 +513,38 @@ public static class Permissions
     {
         public const string Read = "leave_report:read";
     }
+
+    // ── Camera Management ─────────────────────────────────────────────────────
+    // Seeded in V20 (camera media schema extension migration).
+    public static class Camera
+    {
+        public const string Read   = "camera:read";
+        public const string Create = "camera:create";
+        public const string Update = "camera:update";
+        public const string Delete = "camera:delete";
+    }
+
+    public static class CameraAssignment
+    {
+        public const string Read   = "camera_assignment:read";
+        public const string Manage = "camera_assignment:manage";
+    }
+
+    public static class ViewingAuthorization
+    {
+        public const string Read   = "viewing_authorization:read";
+        public const string Grant  = "viewing_authorization:grant";
+        public const string Revoke = "viewing_authorization:revoke";
+    }
+
+    public static class ViewingSession
+    {
+        public const string Start = "viewing_session:start";
+        public const string End   = "viewing_session:end";
+    }
+
+    public static class ViewingLog
+    {
+        public const string Read = "viewing_log:read";
+    }
 }

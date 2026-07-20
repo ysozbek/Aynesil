@@ -6,6 +6,8 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
+using Aynesil.Domain.Modules.Legal.Entities;
+using Aynesil.Domain.Modules.Media.Entities;
 using Aynesil.Domain.Modules.Ops.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -133,6 +135,16 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<Scholarship> Scholarships => Set<Scholarship>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
+
+    // ── media schema ────────────────────────────────────────────────────────
+    public DbSet<Camera> Cameras => Set<Camera>();
+    public DbSet<RoomCamera> RoomCameras => Set<RoomCamera>();
+    public DbSet<SessionCamera> SessionCameras => Set<SessionCamera>();
+    public DbSet<ViewingAuthorization> ViewingAuthorizations => Set<ViewingAuthorization>();
+    public DbSet<ViewingLog> ViewingLogs => Set<ViewingLog>();
+
+    // ── legal schema (minimal read model for consent validation) ─────────────
+    public DbSet<StudentConsent> StudentConsents => Set<StudentConsent>();
 
     // ── ops schema ──────────────────────────────────────────────────────────
     public DbSet<Meeting> Meetings => Set<Meeting>();
