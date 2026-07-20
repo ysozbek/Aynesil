@@ -6,6 +6,7 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
+using Aynesil.Domain.Modules.Ops.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -52,6 +53,8 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<AppNotification> Notifications => Set<AppNotification>();
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<NotificationTriggerConfig> NotificationTriggerConfigs => Set<NotificationTriggerConfig>();
+    public DbSet<NotificationTriggerChannel> NotificationTriggerChannels => Set<NotificationTriggerChannel>();
     public DbSet<ReportDefinition> ReportDefinitions => Set<ReportDefinition>();
     public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
     public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
@@ -130,6 +133,16 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<Scholarship> Scholarships => Set<Scholarship>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
+
+    // ── ops schema ──────────────────────────────────────────────────────────
+    public DbSet<Meeting> Meetings => Set<Meeting>();
+    public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
+    public DbSet<SurveyDefinition> SurveyDefinitions => Set<SurveyDefinition>();
+    public DbSet<SurveyQuestion> SurveyQuestions => Set<SurveyQuestion>();
+    public DbSet<SurveyAnswerOption> SurveyAnswerOptions => Set<SurveyAnswerOption>();
+    public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
+    public DbSet<SurveyQuestionResponse> SurveyQuestionResponses => Set<SurveyQuestionResponse>();
+    public DbSet<ParentFeedback> ParentFeedbacks => Set<ParentFeedback>();
 
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();

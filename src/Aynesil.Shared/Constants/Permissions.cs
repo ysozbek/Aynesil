@@ -72,6 +72,45 @@ public static class Permissions
         public const string Send = "notification:send";
     }
 
+    // ── Notification Templates ────────────────────────────────────────────
+    public static class NotificationTemplates
+    {
+        public const string Read   = "notification_template:read";
+        public const string Create = "notification_template:create";
+        public const string Update = "notification_template:update";
+        public const string Delete = "notification_template:delete";
+    }
+
+    // ── Notification Triggers ─────────────────────────────────────────────
+    public static class NotificationTriggers
+    {
+        public const string Manage = "notification_trigger:manage";
+    }
+
+    // ── Surveys ───────────────────────────────────────────────────────────
+    public static class Surveys
+    {
+        public const string Read    = "survey:read";
+        public const string Create  = "survey:create";
+        public const string Update  = "survey:update";
+        public const string Delete  = "survey:delete";
+        public const string Respond = "survey:respond";
+    }
+
+    // ── Parent Feedback ───────────────────────────────────────────────────
+    public static class ParentFeedback
+    {
+        public const string Read   = "parent_feedback:read";
+        public const string Create = "parent_feedback:create";
+    }
+
+    // ── Parent Portal ─────────────────────────────────────────────────────
+    public static class Portal
+    {
+        /// <summary>Assigned to guardian user accounts when portal access is granted.</summary>
+        public const string Access = "portal:access";
+    }
+
     // ── Files ────────────────────────────────────────────────────────────
     public static class Files
     {

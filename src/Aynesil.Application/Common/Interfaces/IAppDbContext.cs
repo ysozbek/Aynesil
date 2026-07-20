@@ -5,6 +5,7 @@ using Aynesil.Domain.Modules.Education.Entities;
 using Aynesil.Domain.Modules.Educators.Entities;
 using Aynesil.Domain.Modules.Finance.Entities;
 using Aynesil.Domain.Modules.Iam.Entities;
+using Aynesil.Domain.Modules.Ops.Entities;
 using Aynesil.Domain.Modules.Ref.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -45,6 +46,9 @@ public interface IAppDbContext
     DbSet<NotificationDelivery> NotificationDeliveries { get; }
     DbSet<NotificationPreference> NotificationPreferences { get; }
     DbSet<NotificationTemplate> NotificationTemplates { get; }
+    DbSet<NotificationTemplateTranslation> NotificationTemplateTranslations { get; }
+    DbSet<NotificationTriggerConfig> NotificationTriggerConfigs { get; }
+    DbSet<NotificationTriggerChannel> NotificationTriggerChannels { get; }
     DbSet<ReportDefinition> ReportDefinitions { get; }
     DbSet<ReportRun> ReportRuns { get; }
     DbSet<KpiDefinition> KpiDefinitions { get; }
@@ -120,6 +124,16 @@ public interface IAppDbContext
     DbSet<Discount> Discounts { get; }
     DbSet<Scholarship> Scholarships { get; }
     DbSet<Promotion> Promotions { get; }
+
+    // ── ops schema ──────────────────────────────────────────────────────────
+    DbSet<Meeting> Meetings { get; }
+    DbSet<MeetingParticipant> MeetingParticipants { get; }
+    DbSet<SurveyDefinition> SurveyDefinitions { get; }
+    DbSet<SurveyQuestion> SurveyQuestions { get; }
+    DbSet<SurveyAnswerOption> SurveyAnswerOptions { get; }
+    DbSet<SurveyResponse> SurveyResponses { get; }
+    DbSet<SurveyQuestionResponse> SurveyQuestionResponses { get; }
+    DbSet<ParentFeedback> ParentFeedbacks { get; }
 
     // ── students schema ─────────────────────────────────────────────────────
     DbSet<Student> Students { get; }
