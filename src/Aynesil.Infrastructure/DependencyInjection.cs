@@ -116,19 +116,9 @@ public static class DependencyInjection
         services.AddScoped<IEventBus, InProcessEventBus>();
 
         // ── Typed repositories ───────────────────────────────────────────────────
-        services.AddScoped<ICorporationRepository, CorporationRepository>();
-        services.AddScoped<ICampusRepository, CampusRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        // Repository is used only where a handler needs reusable, complex query logic
+        // (menu tree building, session conflict detection). Simple CRUD uses IAppDbContext.
         services.AddScoped<IMenuRepository, MenuRepository>();
-        services.AddScoped<ILeadRepository, LeadRepository>();
-        services.AddScoped<IAssessmentRepository, AssessmentRepository>();
-        services.AddScoped<IStudentRepository, StudentRepository>();
-        services.AddScoped<IEducatorRepository, EducatorRepository>();
-        services.AddScoped<IProgramRepository, ProgramRepository>();
-        services.AddScoped<IGoalRepository, GoalRepository>();
-        services.AddScoped<IEducationPlanRepository, EducationPlanRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
 
         return services;

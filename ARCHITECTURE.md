@@ -147,6 +147,13 @@ exists as the seam this will eventually plug into.
 - **Modüler monolith**: her bounded context kendi PostgreSQL
   schema'sı; mikroservise geçiş outbox event'leri üzerinden,
   şimdilik gerekmiyor.
+- **Persistence erişimi**: `IAppDbContext`-öncelikli. CQRS
+  handler'ları veritabanına doğrudan `IAppDbContext` üzerinden
+  erişir. Repository (`IRepository<T>` + `GenericRepository<T>`)
+  yalnızca bir handler'a sığmayan, tekrar kullanılan **karmaşık
+  sorgu mantığı** için eklenir (ör. `ISessionRepository` çakışma
+  tespiti, `IMenuRepository` recursive menü ağacı). Basit CRUD
+  için repository yazılmaz — yeni modüller de bu deseni izler.
 
 Detay: `docs/08_risks_recommendations.md`, Opus mimari analizi
 (tam rapor — composer geçmişinde / ayrıca dosyalanacaksa
