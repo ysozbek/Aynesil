@@ -1,5 +1,6 @@
 using Aynesil.Domain.Modules.Assessment.Entities;
 using Aynesil.Domain.Modules.Camps.Entities;
+using Aynesil.Domain.Modules.Consultancy.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -153,6 +154,13 @@ public interface IAppDbContext
     DbSet<SurveyQuestionResponse> SurveyQuestionResponses { get; }
     DbSet<ParentFeedback> ParentFeedbacks { get; }
     DbSet<EducatorPerformanceSnapshot> EducatorPerformanceSnapshots { get; }
+
+    // ── consultancy schema ───────────────────────────────────────────────────
+    DbSet<Institution> Institutions { get; }
+    DbSet<ConsultancyPlan> ConsultancyPlans { get; }
+    DbSet<SchoolVisit> SchoolVisits { get; }
+    DbSet<ObservationRecord> ObservationRecords { get; }
+    DbSet<ConsultancyReport> ConsultancyReports { get; }
 
     // ── camps schema ─────────────────────────────────────────────────────────
     DbSet<Camp> Camps { get; }

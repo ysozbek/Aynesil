@@ -102,6 +102,7 @@ public static class Permissions
     {
         public const string Read   = "parent_feedback:read";
         public const string Create = "parent_feedback:create";
+        public const string Submit = "parent_feedback:submit";
     }
 
     // ── Parent Portal ─────────────────────────────────────────────────────
@@ -583,12 +584,6 @@ public static class Permissions
         public const string Manage = "kpi_snapshot:manage";
     }
 
-    public static class ParentFeedback
-    {
-        public const string Read   = "parent_feedback:read";
-        public const string Submit = "parent_feedback:submit";
-    }
-
     public static class KpiReports
     {
         public const string Read = "kpi_report:read";
@@ -597,6 +592,52 @@ public static class Permissions
     public static class KpiDashboard
     {
         public const string Read = "kpi_dashboard:read";
+    }
+
+    // ── School Consultancy Management ─────────────────────────────────────────
+    // Seeded in V24 (school consultancy management migration).
+    public static class Institutions
+    {
+        public const string Read   = "institution:read";
+        public const string Create = "institution:create";
+        public const string Update = "institution:update";
+        public const string Delete = "institution:delete";
+    }
+
+    public static class ConsultancyPlans
+    {
+        public const string Read     = "consultancy_plan:read";
+        public const string Create   = "consultancy_plan:create";
+        public const string Update   = "consultancy_plan:update";
+        public const string Delete   = "consultancy_plan:delete";
+        public const string Activate = "consultancy_plan:activate";
+        public const string Complete = "consultancy_plan:complete";
+        public const string Cancel   = "consultancy_plan:cancel";
+    }
+
+    public static class SchoolVisits
+    {
+        public const string Read     = "school_visit:read";
+        public const string Create   = "school_visit:create";
+        public const string Update   = "school_visit:update";
+        public const string Delete   = "school_visit:delete";
+        public const string Complete = "school_visit:complete";
+        public const string Cancel   = "school_visit:cancel";
+    }
+
+    public static class Observations
+    {
+        public const string Read   = "observation:read";
+        public const string Create = "observation:create";
+        public const string Update = "observation:update";
+        public const string Delete = "observation:delete";
+    }
+
+    public static class ConsultancyReports
+    {
+        public const string Read   = "consultancy_report:read";
+        public const string Create = "consultancy_report:create";
+        public const string Delete = "consultancy_report:delete";
     }
 
     // ── Camera Management ─────────────────────────────────────────────────────

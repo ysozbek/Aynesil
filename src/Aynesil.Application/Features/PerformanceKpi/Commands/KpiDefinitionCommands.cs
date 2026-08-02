@@ -75,7 +75,7 @@ public sealed class CreateKpiDefinitionCommandHandler
                 .FirstOrDefaultAsync(ct)
             : null;
 
-        return ToDto(kpi, categoryCode);
+        return kpi.ToDto(categoryCode);
     }
 }
 
@@ -130,7 +130,7 @@ public sealed class UpdateKpiDefinitionCommandHandler
                 .FirstOrDefaultAsync(ct)
             : null;
 
-        return ToDto(kpi, categoryCode);
+        return kpi.ToDto(categoryCode);
     }
 }
 
@@ -190,7 +190,7 @@ public sealed class DeactivateKpiDefinitionCommandHandler
 
 file static class KpiDefinitionCommandExtensions
 {
-    internal static KpiDefinitionDto ToDto(KpiDefinition kpi, string? categoryCode) =>
+    internal static KpiDefinitionDto ToDto(this KpiDefinition kpi, string? categoryCode) =>
         new(kpi.Id, kpi.CorporationId, kpi.Code, kpi.Name,
             kpi.CategoryId, categoryCode, kpi.Unit, kpi.Spec, kpi.IsActive,
             kpi.CreatedAt, kpi.UpdatedAt, kpi.RowVersion);

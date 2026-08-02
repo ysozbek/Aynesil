@@ -105,7 +105,10 @@ public sealed class PerformanceKpiController : BaseController
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<KpiValueDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEducatorKpiValues(
         Guid educatorId, [FromQuery] GetEducatorKpiValuesQuery query, CancellationToken ct)
-        => OkResult(await Sender.Send(query with { EducatorId = educatorId }, ct));
+    {
+        query.EducatorId = educatorId;
+        return OkResult(await Sender.Send(query, ct));
+    }
 
     /// <summary>Generic paginated KPI value list. Supports all subject types and periods.</summary>
     [HttpGet("kpi-values")]

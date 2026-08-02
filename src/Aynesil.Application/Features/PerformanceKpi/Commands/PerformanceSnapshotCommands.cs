@@ -65,10 +65,10 @@ public sealed class ComputePerformanceSnapshotCommandHandler
                 $"Educator {req.EducatorId} not found in this corporation.");
 
         // Inclusive UTC bounds for the period
-        var from = new DateTimeOffset(
+        var periodFrom = new DateTimeOffset(
             req.PeriodStart.Year, req.PeriodStart.Month, req.PeriodStart.Day,
             0, 0, 0, TimeSpan.Zero);
-        var to = new DateTimeOffset(
+        var periodTo = new DateTimeOffset(
             req.PeriodEnd.Year, req.PeriodEnd.Month, req.PeriodEnd.Day,
             23, 59, 59, 999, TimeSpan.Zero);
 
@@ -78,7 +78,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
             join s in _db.Sessions on se.SessionId equals s.Id
             where se.EducatorId == req.EducatorId
                && s.CorporationId == req.CorporationId
-               && s.StartsAt >= from && s.StartsAt <= to
+               && s.StartsAt >= periodFrom && s.StartsAt <= periodTo
                && s.DeletedAt == null
             select new { s.Id, s.Status }
         ).ToListAsync(ct);
@@ -135,7 +135,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
             .AsNoTracking()
             .Where(pf => pf.EducatorId == req.EducatorId
                       && pf.CorporationId == req.CorporationId
-                      && pf.CreatedAt >= from && pf.CreatedAt <= to
+                      && pf.CreatedAt >= periodFrom && pf.CreatedAt <= periodTo
                       && pf.Rating.HasValue)
             .Select(pf => (decimal)pf.Rating!.Value)
             .ToListAsync(ct);
