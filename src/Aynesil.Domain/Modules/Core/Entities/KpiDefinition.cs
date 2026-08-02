@@ -23,6 +23,9 @@ public class KpiDefinition : BaseEntity
     /// <summary>Formula/aggregation definition as JSON.</summary>
     public string Spec { get; set; } = "{}";
 
+    /// <summary>Active KPIs are included in computation runs and dashboard queries. Added in V23.</summary>
+    public bool IsActive { get; set; } = true;
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public int RowVersion { get; set; } = 1;

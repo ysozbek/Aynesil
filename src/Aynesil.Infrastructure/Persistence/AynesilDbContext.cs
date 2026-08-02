@@ -161,6 +161,7 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
     public DbSet<SurveyQuestionResponse> SurveyQuestionResponses => Set<SurveyQuestionResponse>();
     public DbSet<ParentFeedback> ParentFeedbacks => Set<ParentFeedback>();
+    public DbSet<EducatorPerformanceSnapshot> EducatorPerformanceSnapshots => Set<EducatorPerformanceSnapshot>();
 
     // ── camps schema ─────────────────────────────────────────────────────────
     public DbSet<Camp> Camps => Set<Camp>();

@@ -568,6 +568,37 @@ public static class Permissions
         public const string Record = "camp_participation:record";
     }
 
+    // ── Educator Performance & KPI ────────────────────────────────────────────
+    // Seeded in V23 (educator KPI permissions and menu).
+    public static class Kpi
+    {
+        public const string Read    = "kpi:read";
+        public const string Manage  = "kpi:manage";
+        public const string Compute = "kpi:compute";
+    }
+
+    public static class KpiSnapshots
+    {
+        public const string Read   = "kpi_snapshot:read";
+        public const string Manage = "kpi_snapshot:manage";
+    }
+
+    public static class ParentFeedback
+    {
+        public const string Read   = "parent_feedback:read";
+        public const string Submit = "parent_feedback:submit";
+    }
+
+    public static class KpiReports
+    {
+        public const string Read = "kpi_report:read";
+    }
+
+    public static class KpiDashboard
+    {
+        public const string Read = "kpi_dashboard:read";
+    }
+
     // ── Camera Management ─────────────────────────────────────────────────────
     // Seeded in V20 (camera media schema extension migration).
     public static class Camera
