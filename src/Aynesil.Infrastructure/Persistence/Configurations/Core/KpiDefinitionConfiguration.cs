@@ -19,6 +19,7 @@ public class KpiDefinitionConfiguration : IEntityTypeConfiguration<KpiDefinition
         builder.Property(x => x.CategoryId).HasColumnName("category_id");
         builder.Property(x => x.Unit).HasColumnName("unit").HasMaxLength(20);
         builder.Property(x => x.Spec).HasColumnName("spec").HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb").IsRequired();
+        builder.Property(x => x.IsActive).HasColumnName("is_active").HasDefaultValue(true).IsRequired();
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()").IsRequired();
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()").IsRequired();
         builder.Property(x => x.RowVersion).HasColumnName("row_version").HasDefaultValue(1).IsConcurrencyToken();

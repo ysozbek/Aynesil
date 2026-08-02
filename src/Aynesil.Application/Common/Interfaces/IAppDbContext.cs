@@ -152,6 +152,7 @@ public interface IAppDbContext
     DbSet<SurveyResponse> SurveyResponses { get; }
     DbSet<SurveyQuestionResponse> SurveyQuestionResponses { get; }
     DbSet<ParentFeedback> ParentFeedbacks { get; }
+    DbSet<EducatorPerformanceSnapshot> EducatorPerformanceSnapshots { get; }
 
     // ── camps schema ─────────────────────────────────────────────────────────
     DbSet<Camp> Camps { get; }
