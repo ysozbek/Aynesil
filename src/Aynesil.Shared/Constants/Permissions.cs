@@ -514,6 +514,60 @@ public static class Permissions
         public const string Read = "leave_report:read";
     }
 
+    // ── Camp Management ───────────────────────────────────────────────────────
+    // Seeded in V21 (camp management permissions and menu).
+    public static class Camps
+    {
+        public const string Read          = "camp:read";
+        public const string Create        = "camp:create";
+        public const string Update        = "camp:update";
+        public const string Delete        = "camp:delete";
+        public const string Activate      = "camp:activate";
+        public const string ManagePeriods = "camp:manage_periods";
+    }
+
+    public static class CampEnrollments
+    {
+        public const string Read     = "camp_enrollment:read";
+        public const string Enroll   = "camp_enrollment:enroll";
+        public const string Manage   = "camp_enrollment:manage";
+        public const string Withdraw = "camp_enrollment:withdraw";
+        public const string Complete = "camp_enrollment:complete";
+    }
+
+    public static class CampAttendance
+    {
+        public const string Read   = "camp_attendance:read";
+        public const string Record = "camp_attendance:record";
+    }
+
+    public static class CampReports
+    {
+        public const string Read   = "camp_report:read";
+        public const string Create = "camp_report:create";
+    }
+
+    // Seeded in V22 (camp activity / educator / participation).
+    public static class CampActivities
+    {
+        public const string Read   = "camp_activity:read";
+        public const string Create = "camp_activity:create";
+        public const string Update = "camp_activity:update";
+        public const string Delete = "camp_activity:delete";
+    }
+
+    public static class CampEducators
+    {
+        public const string Read   = "camp_educator:read";
+        public const string Manage = "camp_educator:manage";
+    }
+
+    public static class CampParticipation
+    {
+        public const string Read   = "camp_participation:read";
+        public const string Record = "camp_participation:record";
+    }
+
     // ── Camera Management ─────────────────────────────────────────────────────
     // Seeded in V20 (camera media schema extension migration).
     public static class Camera

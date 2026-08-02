@@ -50,6 +50,7 @@ insert into ref.ref_type(code, name, is_system, is_hierarchical, allows_tenant_v
   ('institution_type','Institution Types',false,false,true),
   ('room_type','Room Types',false,false,true),
   ('camp_type','Camp Types',false,false,true),
+  ('camp_activity_type','Camp Activity Types',false,false,true),
   ('activity_type','Activity Types',false,false,true),
   ('academic_term','Academic Terms',false,false,true),
   ('kpi_category','KPI Categories',false,true,true),
@@ -196,6 +197,12 @@ from (values
   ('camp_type','winter',2,false,false),
   ('camp_type','weekend',3,false,false),
   ('camp_type','day',4,false,false),
+  ('camp_type','intensive',5,false,false),
+  -- camp_activity_type
+  ('camp_activity_type','therapy',1,true,false),
+  ('camp_activity_type','sports',2,false,false),
+  ('camp_activity_type','social',3,false,false),
+  ('camp_activity_type','educational',4,false,false),
   -- institution_type
   ('institution_type','kindergarten',1,false,false),
   ('institution_type','primary_school',2,false,false),
@@ -300,7 +307,18 @@ from (values
   ('care_team_grant_type','temporary','tr','Geçici'),               ('care_team_grant_type','temporary','en','Temporary'),
   ('care_team_grant_type','delegated','tr','Devredilen'),           ('care_team_grant_type','delegated','en','Delegated'),
   ('care_team_grant_type','substitute','tr','Vekil'),               ('care_team_grant_type','substitute','en','Substitute'),
-  ('care_team_grant_type','emergency','tr','Acil Erişim'),          ('care_team_grant_type','emergency','en','Emergency')
+  ('care_team_grant_type','emergency','tr','Acil Erişim'),          ('care_team_grant_type','emergency','en','Emergency'),
+
+  ('camp_type','summer','tr','Yaz Kampı'),       ('camp_type','summer','en','Summer Camp'),
+  ('camp_type','winter','tr','Kış Kampı'),       ('camp_type','winter','en','Winter Camp'),
+  ('camp_type','weekend','tr','Hafta Sonu Kampı'), ('camp_type','weekend','en','Weekend Camp'),
+  ('camp_type','day','tr','Gündüz Kampı'),       ('camp_type','day','en','Day Camp'),
+  ('camp_type','intensive','tr','Yoğun Kamp'),   ('camp_type','intensive','en','Intensive Camp'),
+
+  ('camp_activity_type','therapy','tr','Terapi Aktivitesi'),     ('camp_activity_type','therapy','en','Therapy Activity'),
+  ('camp_activity_type','sports','tr','Spor Aktivitesi'),        ('camp_activity_type','sports','en','Sports Activity'),
+  ('camp_activity_type','social','tr','Sosyal Aktivite'),        ('camp_activity_type','social','en','Social Activity'),
+  ('camp_activity_type','educational','tr','Eğitsel Aktivite'),  ('camp_activity_type','educational','en','Educational Activity')
 ) as t(type_code, value_code, locale, label)
 join ref.ref_value rv
   on rv.ref_type_id = ref.type_id(t.type_code)

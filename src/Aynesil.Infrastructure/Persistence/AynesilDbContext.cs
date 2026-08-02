@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Assessment.Entities;
+using Aynesil.Domain.Modules.Camps.Entities;
 using Aynesil.Domain.Modules.Core.Entities;
 using Aynesil.Domain.Modules.Crm.Entities;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -160,6 +161,16 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
     public DbSet<SurveyQuestionResponse> SurveyQuestionResponses => Set<SurveyQuestionResponse>();
     public DbSet<ParentFeedback> ParentFeedbacks => Set<ParentFeedback>();
+
+    // ── camps schema ─────────────────────────────────────────────────────────
+    public DbSet<Camp> Camps => Set<Camp>();
+    public DbSet<CampPeriod> CampPeriods => Set<CampPeriod>();
+    public DbSet<CampEnrollment> CampEnrollments => Set<CampEnrollment>();
+    public DbSet<CampAttendance> CampAttendances => Set<CampAttendance>();
+    public DbSet<CampReport> CampReports => Set<CampReport>();
+    public DbSet<CampActivity> CampActivities => Set<CampActivity>();
+    public DbSet<CampEducator> CampEducators => Set<CampEducator>();
+    public DbSet<CampActivityParticipation> CampActivityParticipations => Set<CampActivityParticipation>();
 
     // ── students schema ─────────────────────────────────────────────────────
     public DbSet<Student> Students => Set<Student>();
