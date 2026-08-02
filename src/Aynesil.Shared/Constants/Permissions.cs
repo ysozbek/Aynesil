@@ -640,6 +640,53 @@ public static class Permissions
         public const string Delete = "consultancy_report:delete";
     }
 
+    // ── Contract & Consent Management ────────────────────────────────────────
+    // Seeded in V25 (contract consent permissions and menu).
+
+    public static class ContractTemplates
+    {
+        public const string Read    = "contract_template:read";
+        public const string Create  = "contract_template:create";
+        public const string Update  = "contract_template:update";
+        public const string Delete  = "contract_template:delete";
+        public const string Version = "contract_template:version";
+    }
+
+    public static class StudentContracts
+    {
+        public const string Read      = "student_contract:read";
+        public const string Generate  = "student_contract:generate";
+        public const string Update    = "student_contract:update";
+        public const string Delete    = "student_contract:delete";
+        public const string Send      = "student_contract:send";
+        public const string Sign      = "student_contract:sign";
+        public const string Activate  = "student_contract:activate";
+        public const string Expire    = "student_contract:expire";
+        public const string Terminate = "student_contract:terminate";
+    }
+
+    public static class ConsentTemplates
+    {
+        public const string Read    = "consent_template:read";
+        public const string Create  = "consent_template:create";
+        public const string Update  = "consent_template:update";
+        public const string Delete  = "consent_template:delete";
+        public const string Version = "consent_template:version";
+    }
+
+    public static class StudentConsents
+    {
+        public const string Read          = "student_consent:read";
+        public const string Grant         = "student_consent:grant";
+        public const string Withdraw      = "student_consent:withdraw";
+        public const string AttachEvidence = "student_consent:attach_evidence";
+    }
+
+    public static class LegalReports
+    {
+        public const string Read = "legal_report:read";
+    }
+
     // ── Camera Management ─────────────────────────────────────────────────────
     // Seeded in V20 (camera media schema extension migration).
     public static class Camera

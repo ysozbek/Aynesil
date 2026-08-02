@@ -145,7 +145,12 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<ViewingAuthorization> ViewingAuthorizations => Set<ViewingAuthorization>();
     public DbSet<ViewingLog> ViewingLogs => Set<ViewingLog>();
 
-    // ── legal schema (minimal read model for consent validation) ─────────────
+    // ── legal schema ────────────────────────────────────────────────────────────
+    public DbSet<ContractTemplate> ContractTemplates => Set<ContractTemplate>();
+    public DbSet<ContractTemplateTranslation> ContractTemplateTranslations => Set<ContractTemplateTranslation>();
+    public DbSet<ConsentTemplate> ConsentTemplates => Set<ConsentTemplate>();
+    public DbSet<ConsentTemplateTranslation> ConsentTemplateTranslations => Set<ConsentTemplateTranslation>();
+    public DbSet<StudentContract> StudentContracts => Set<StudentContract>();
     public DbSet<StudentConsent> StudentConsents => Set<StudentConsent>();
 
     // ── ops schema ──────────────────────────────────────────────────────────

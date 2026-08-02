@@ -136,7 +136,12 @@ public interface IAppDbContext
     DbSet<ViewingAuthorization> ViewingAuthorizations { get; }
     DbSet<ViewingLog> ViewingLogs { get; }
 
-    // ── legal schema (minimal read model for consent validation) ─────────────
+    // ── legal schema ────────────────────────────────────────────────────────────
+    DbSet<ContractTemplate> ContractTemplates { get; }
+    DbSet<ContractTemplateTranslation> ContractTemplateTranslations { get; }
+    DbSet<ConsentTemplate> ConsentTemplates { get; }
+    DbSet<ConsentTemplateTranslation> ConsentTemplateTranslations { get; }
+    DbSet<StudentContract> StudentContracts { get; }
     DbSet<StudentConsent> StudentConsents { get; }
 
     // ── ops schema ──────────────────────────────────────────────────────────
