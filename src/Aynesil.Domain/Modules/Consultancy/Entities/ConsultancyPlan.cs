@@ -33,6 +33,8 @@ public class ConsultancyPlan : TenantEntity
     public Institution Institution { get; private set; } = null!;
     public ICollection<SchoolVisit> Visits { get; private set; } = [];
     public ICollection<ConsultancyReport> Reports { get; private set; } = [];
+    public ICollection<ConsultancyAgreement> Agreements { get; private set; } = [];
+    public ICollection<FollowUpActivity> FollowUps { get; private set; } = [];
 
     // ── Factory ────────────────────────────────────────────────────────────────
 

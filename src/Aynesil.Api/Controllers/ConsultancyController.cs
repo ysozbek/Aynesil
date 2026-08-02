@@ -9,7 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Aynesil.Api.Controllers;
 
 /// <summary>
-/// School Consultancy Management: institutions, plans, visits, observations, reports.
+/// School Consultancy Management: institutions, plans, visits, observations, reports,
+/// agreements, and follow-up activities.
 /// Route: /api/consultancy
 /// </summary>
 [Route("api/consultancy")]
@@ -380,5 +381,221 @@ public sealed class ConsultancyController : BaseController
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<VisitHistoryItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetVisitHistory(
         [FromQuery] GetVisitHistoryQuery query, CancellationToken ct)
+        => OkResult(await Sender.Send(query, ct));
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONSULTANCY AGREEMENTS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>Paginated agreement list. Filterable by plan, institution, status, type.</summary>
+    [HttpGet("agreements")]
+    [HasPermission(Permissions.ConsultancyAgreements.Read)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedResult<ConsultancyAgreementListItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAgreements(
+        [FromQuery] GetConsultancyAgreementsQuery query, CancellationToken ct)
+        => OkResult(await Sender.Send(query, ct));
+
+    /// <summary>Full agreement detail.</summary>
+    [HttpGet("agreements/{id:guid}")]
+    [HasPermission(Permissions.ConsultancyAgreements.Read)]
+    [ProducesResponseType(typeof(ApiResponse<ConsultancyAgreementDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAgreement(Guid id, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetConsultancyAgreementQuery(id), ct));
+
+    /// <summary>Create a draft consultancy agreement for a plan.</summary>
+    [HttpPost("agreements")]
+    [HasPermission(Permissions.ConsultancyAgreements.Create)]
+    [ProducesResponseType(typeof(ApiResponse<ConsultancyAgreementDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateAgreement(
+        [FromBody] CreateConsultancyAgreementCommand command, CancellationToken ct)
+    {
+        var result = await Sender.Send(command, ct);
+        return CreatedResult(result, $"/api/consultancy/agreements/{result.Id}");
+    }
+
+    /// <summary>Update agreement details. Only draft agreements can be modified.</summary>
+    [HttpPut("agreements/{id:guid}")]
+    [HasPermission(Permissions.ConsultancyAgreements.Update)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateAgreement(
+        Guid id, [FromBody] UpdateConsultancyAgreementCommand command, CancellationToken ct)
+    {
+        await Sender.Send(command with { Id = id }, ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Send agreement to the institution for signing (draft → sent).</summary>
+    [HttpPost("agreements/{id:guid}/send")]
+    [HasPermission(Permissions.ConsultancyAgreements.Send)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendAgreement(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new SendConsultancyAgreementCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Record that the institution has signed the agreement (sent → signed).</summary>
+    [HttpPost("agreements/{id:guid}/sign")]
+    [HasPermission(Permissions.ConsultancyAgreements.Sign)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SignAgreement(
+        Guid id, [FromBody] SignConsultancyAgreementCommand command, CancellationToken ct)
+    {
+        await Sender.Send(command with { Id = id }, ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Mark a signed agreement as expired.</summary>
+    [HttpPost("agreements/{id:guid}/expire")]
+    [HasPermission(Permissions.ConsultancyAgreements.Expire)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExpireAgreement(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new ExpireConsultancyAgreementCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Cancel a draft or sent agreement.</summary>
+    [HttpPost("agreements/{id:guid}/cancel")]
+    [HasPermission(Permissions.ConsultancyAgreements.Cancel)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CancelAgreement(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new CancelConsultancyAgreementCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Soft-delete a draft or sent agreement.</summary>
+    [HttpDelete("agreements/{id:guid}")]
+    [HasPermission(Permissions.ConsultancyAgreements.Delete)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteAgreement(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new DeleteConsultancyAgreementCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Agreement status summary grouped by consultancy plan.</summary>
+    [HttpGet("reporting/agreements")]
+    [HasPermission(Permissions.ConsultancyAgreements.Read)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<AgreementSummaryDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAgreementSummary(
+        [FromQuery] GetAgreementSummaryQuery query, CancellationToken ct)
+        => OkResult(await Sender.Send(query, ct));
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOLLOW-UP ACTIVITIES
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>Paginated follow-up list. Filterable by plan, visit, assignee, status, due date range.</summary>
+    [HttpGet("follow-ups")]
+    [HasPermission(Permissions.FollowUps.Read)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedResult<FollowUpActivityListItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFollowUps(
+        [FromQuery] GetFollowUpActivitiesQuery query, CancellationToken ct)
+        => OkResult(await Sender.Send(query, ct));
+
+    /// <summary>Full follow-up activity detail.</summary>
+    [HttpGet("follow-ups/{id:guid}")]
+    [HasPermission(Permissions.FollowUps.Read)]
+    [ProducesResponseType(typeof(ApiResponse<FollowUpActivityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFollowUp(Guid id, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetFollowUpActivityQuery(id), ct));
+
+    /// <summary>Create a follow-up activity linked to a plan and/or visit.</summary>
+    [HttpPost("follow-ups")]
+    [HasPermission(Permissions.FollowUps.Create)]
+    [ProducesResponseType(typeof(ApiResponse<FollowUpActivityDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateFollowUp(
+        [FromBody] CreateFollowUpActivityCommand command, CancellationToken ct)
+    {
+        var result = await Sender.Send(command, ct);
+        return CreatedResult(result, $"/api/consultancy/follow-ups/{result.Id}");
+    }
+
+    /// <summary>Update a follow-up activity (title, description, due date, assignee, notes).</summary>
+    [HttpPut("follow-ups/{id:guid}")]
+    [HasPermission(Permissions.FollowUps.Update)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateFollowUp(
+        Guid id, [FromBody] UpdateFollowUpActivityCommand command, CancellationToken ct)
+    {
+        await Sender.Send(command with { Id = id }, ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Start work on a follow-up activity (pending → in_progress).</summary>
+    [HttpPost("follow-ups/{id:guid}/start")]
+    [HasPermission(Permissions.FollowUps.Start)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> StartFollowUp(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new StartFollowUpActivityCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Mark a follow-up activity as completed.</summary>
+    [HttpPost("follow-ups/{id:guid}/complete")]
+    [HasPermission(Permissions.FollowUps.Complete)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CompleteFollowUp(
+        Guid id, [FromBody] CompleteFollowUpActivityCommand command, CancellationToken ct)
+    {
+        await Sender.Send(command with { Id = id }, ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Cancel a follow-up activity.</summary>
+    [HttpPost("follow-ups/{id:guid}/cancel")]
+    [HasPermission(Permissions.FollowUps.Cancel)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CancelFollowUp(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new CancelFollowUpActivityCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Delete a non-completed follow-up activity.</summary>
+    [HttpDelete("follow-ups/{id:guid}")]
+    [HasPermission(Permissions.FollowUps.Delete)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteFollowUp(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new DeleteFollowUpActivityCommand(id), ct);
+        return NoContentResult();
+    }
+
+    /// <summary>Open Follow-up Report: pending/in_progress activities, highlighting overdue.</summary>
+    [HttpGet("reporting/follow-ups/open")]
+    [HasPermission(Permissions.FollowUps.Read)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpenFollowUpReportItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOpenFollowUps(
+        [FromQuery] GetOpenFollowUpsReportQuery query, CancellationToken ct)
         => OkResult(await Sender.Send(query, ct));
 }

@@ -640,6 +640,29 @@ public static class Permissions
         public const string Delete = "consultancy_report:delete";
     }
 
+    public static class ConsultancyAgreements
+    {
+        public const string Read   = "consultancy_agreement:read";
+        public const string Create = "consultancy_agreement:create";
+        public const string Update = "consultancy_agreement:update";
+        public const string Delete = "consultancy_agreement:delete";
+        public const string Send   = "consultancy_agreement:send";
+        public const string Sign   = "consultancy_agreement:sign";
+        public const string Expire = "consultancy_agreement:expire";
+        public const string Cancel = "consultancy_agreement:cancel";
+    }
+
+    public static class FollowUps
+    {
+        public const string Read     = "follow_up:read";
+        public const string Create   = "follow_up:create";
+        public const string Update   = "follow_up:update";
+        public const string Delete   = "follow_up:delete";
+        public const string Start    = "follow_up:start";
+        public const string Complete = "follow_up:complete";
+        public const string Cancel   = "follow_up:cancel";
+    }
+
     // ── Contract & Consent Management ────────────────────────────────────────
     // Seeded in V25 (contract consent permissions and menu).
 

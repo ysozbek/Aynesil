@@ -32,6 +32,7 @@ public class SchoolVisit : BaseEntity
     public ConsultancyPlan? Plan { get; private set; }
     public ICollection<ObservationRecord> Observations { get; private set; } = [];
     public ICollection<ConsultancyReport> Reports { get; private set; } = [];
+    public ICollection<FollowUpActivity> FollowUps { get; private set; } = [];
 
     // ── Factory ────────────────────────────────────────────────────────────────
 

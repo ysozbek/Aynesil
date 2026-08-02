@@ -59,5 +59,15 @@ public class ConsultancyPlanConfiguration : IEntityTypeConfiguration<Consultancy
             .WithOne(r => r.Plan)
             .HasForeignKey(r => r.ConsultancyPlanId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasMany(x => x.Agreements)
+            .WithOne(a => a.Plan)
+            .HasForeignKey(a => a.ConsultancyPlanId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(x => x.FollowUps)
+            .WithOne()
+            .HasForeignKey(f => f.ConsultancyPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -40,5 +40,10 @@ public class SchoolVisitConfiguration : IEntityTypeConfiguration<SchoolVisit>
             .WithOne(r => r.Visit)
             .HasForeignKey(r => r.SchoolVisitId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasMany(x => x.FollowUps)
+            .WithOne()
+            .HasForeignKey(f => f.SchoolVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

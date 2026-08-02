@@ -166,6 +166,8 @@ public interface IAppDbContext
     DbSet<SchoolVisit> SchoolVisits { get; }
     DbSet<ObservationRecord> ObservationRecords { get; }
     DbSet<ConsultancyReport> ConsultancyReports { get; }
+    DbSet<ConsultancyAgreement> ConsultancyAgreements { get; }
+    DbSet<FollowUpActivity> FollowUpActivities { get; }
 
     // ── camps schema ─────────────────────────────────────────────────────────
     DbSet<Camp> Camps { get; }

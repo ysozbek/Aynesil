@@ -175,6 +175,8 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<SchoolVisit> SchoolVisits => Set<SchoolVisit>();
     public DbSet<ObservationRecord> ObservationRecords => Set<ObservationRecord>();
     public DbSet<ConsultancyReport> ConsultancyReports => Set<ConsultancyReport>();
+    public DbSet<ConsultancyAgreement> ConsultancyAgreements => Set<ConsultancyAgreement>();
+    public DbSet<FollowUpActivity> FollowUpActivities => Set<FollowUpActivity>();
 
     // ── camps schema ─────────────────────────────────────────────────────────
     public DbSet<Camp> Camps => Set<Camp>();
