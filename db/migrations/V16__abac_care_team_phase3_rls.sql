@@ -40,6 +40,22 @@
 -- =============================================================================
 
 
+-- ── Step -1: Repair V11–V15 role_permission grants ────────────────────────────
+-- V11–V15 all filtered with `r.name = 'admin'` but the role seeded by
+-- 02_akran_bootstrap.sql has name = 'Administrator' and code = 'admin'.
+-- Every role_permission insert in those migrations produced 0 rows silently.
+-- Backfill ALL current permissions to every role whose code = 'admin' here,
+-- idempotently (ON CONFLICT DO NOTHING), before the preflight check so that
+-- the V16 preflight and all subsequent migrations find the rows they expect.
+
+insert into iam.role_permission (role_id, permission_id)
+select r.id, p.id
+from iam.permission p
+cross join iam.role r
+where r.code = 'admin'
+on conflict do nothing;
+
+
 -- ── Step 0: Pre-flight assertions ─────────────────────────────────────────────
 -- Abort immediately if Phase 2 objects are missing.
 

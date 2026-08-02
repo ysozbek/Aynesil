@@ -130,5 +130,5 @@ where p.code in (
   'meeting:manage_participants', 'meeting:record_attendance',
   'meeting:record_outcome', 'meeting:manage_follow_ups'
 )
-  and r.name = 'admin'
+  and r.code = 'admin'
 on conflict do nothing;

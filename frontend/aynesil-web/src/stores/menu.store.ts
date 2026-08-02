@@ -8,8 +8,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { apiService } from '@/services/api.service'
+import { menuAdminService } from '@/services/menu-admin.service'
 import { usePermissionStore } from './permission.store'
 import { useLocaleStore } from './locale.store'
+import type { MenuItemListItemDto, CreateMenuItemRequest, UpdateMenuItemRequest, SetMenuItemTranslationsRequest } from '@/types/menu-admin.types'
 
 export interface MenuItem {
   id: string
@@ -75,4 +77,61 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   return { items, tree, loading, load }
+
+  // ── Admin management (Menu Tree Editor) ────────────────────────────────────
+  // Admin actions are defined outside the consumer state above so they don't
+  // pollute the sidebar's items/tree refs.
 })
+
+/** Separate composable for admin menu management to avoid coupling with the sidebar store. */
+export function useMenuAdminActions() {
+  const adminTree = ref<MenuItemListItemDto[]>([])
+  const adminLoading = ref(false)
+
+  async function loadAdminTree() {
+    adminLoading.value = true
+    try {
+      const res = await menuAdminService.tree(true)
+      if (res.success && res.data) adminTree.value = res.data
+    } finally {
+      adminLoading.value = false
+    }
+  }
+
+  async function createItem(request: CreateMenuItemRequest) {
+    const res = await menuAdminService.create(request)
+    if (!res.success) throw new Error(res.message)
+    await loadAdminTree()
+    return res.data!
+  }
+
+  async function updateItem(id: string, request: UpdateMenuItemRequest) {
+    const res = await menuAdminService.update(id, request)
+    if (!res.success) throw new Error(res.message)
+    await loadAdminTree()
+    return res.data!
+  }
+
+  async function removeItem(id: string) {
+    await menuAdminService.remove(id)
+    await loadAdminTree()
+  }
+
+  async function setTranslations(id: string, request: SetMenuItemTranslationsRequest) {
+    const res = await menuAdminService.setTranslations(id, request)
+    if (!res.success) throw new Error(res.message)
+    await loadAdminTree()
+  }
+
+  async function activateItem(id: string) {
+    await menuAdminService.activate(id)
+    await loadAdminTree()
+  }
+
+  async function deactivateItem(id: string) {
+    await menuAdminService.deactivate(id)
+    await loadAdminTree()
+  }
+
+  return { adminTree, adminLoading, loadAdminTree, createItem, updateItem, removeItem, setTranslations, activateItem, deactivateItem }
+}

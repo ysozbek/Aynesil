@@ -48,6 +48,34 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/settings/SettingsView.vue'),
         meta: { permission: 'settings:read' },
       },
+
+      // ── Corporation & Campus ───────────────────────────────────────────────
+      {
+        path: 'corporations',
+        name: 'corporations',
+        component: () => import('@/views/corporations/CorporationListView.vue'),
+        meta: { permission: 'corporation:read' },
+      },
+      {
+        path: 'corporations/:id',
+        name: 'corporation-detail',
+        component: () => import('@/views/corporations/CorporationDetailView.vue'),
+        meta: { permission: 'corporation:read' },
+      },
+      {
+        path: 'corporations/:id/settings',
+        name: 'corporation-settings',
+        component: () => import('@/views/corporations/CorporationSettingsView.vue'),
+        meta: { permission: 'corporation:read' },
+      },
+      {
+        path: 'campuses',
+        name: 'campuses',
+        component: () => import('@/views/campuses/CampusListView.vue'),
+        meta: { permission: 'campus:read' },
+      },
+
+      // ── User Management ───────────────────────────────────────────────────
       {
         path: 'users',
         name: 'users',
@@ -55,11 +83,41 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'user:read' },
       },
       {
+        path: 'users/:id',
+        name: 'user-detail',
+        component: () => import('@/views/users/UserDetailView.vue'),
+        meta: { permission: 'user:read' },
+      },
+
+      // ── Role & Permission Management ──────────────────────────────────────
+      {
         path: 'roles',
         name: 'roles',
         component: () => import('@/views/roles/RolesView.vue'),
         meta: { permission: 'role:read' },
       },
+      {
+        path: 'roles/:id',
+        name: 'role-detail',
+        component: () => import('@/views/roles/RoleDetailView.vue'),
+        meta: { permission: 'role:read' },
+      },
+      {
+        path: 'permissions',
+        name: 'permissions',
+        component: () => import('@/views/permissions/PermissionsView.vue'),
+        meta: { permission: 'role:read' },
+      },
+
+      // ── Dynamic Menu Management ───────────────────────────────────────────
+      {
+        path: 'menus',
+        name: 'menus',
+        component: () => import('@/views/menus/MenusView.vue'),
+        meta: { permission: 'menu:read' },
+      },
+
+      // ── Reference Data ────────────────────────────────────────────────────
       {
         path: 'reference-data',
         name: 'reference-data',

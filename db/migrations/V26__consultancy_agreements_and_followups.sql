@@ -1,5 +1,5 @@
 -- =============================================================================
--- AyNesil Platform :: Flyway V25 — Consultancy Agreements & Follow-up Activities
+-- AyNesil Platform :: Flyway V26 — Consultancy Agreements & Follow-up Activities
 -- =============================================================================
 -- ADDITIVE + backward-compatible. Objects created / seeded:
 --   0. DDL: consultancy.consultancy_agreement

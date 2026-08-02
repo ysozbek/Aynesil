@@ -158,5 +158,5 @@ where p.code in (
   'leave_balance:read',  'leave_balance:manage',
   'leave_report:read'
 )
-  and r.name = 'admin'
+  and r.code = 'admin'
 on conflict do nothing;

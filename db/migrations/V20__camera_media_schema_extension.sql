@@ -174,5 +174,5 @@ where p.code in (
   'viewing_session:start',        'viewing_session:end',
   'viewing_log:read'
 )
-  and r.name = 'admin'
+  and r.code = 'admin'
 on conflict do nothing;

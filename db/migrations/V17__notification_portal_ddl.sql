@@ -449,5 +449,5 @@ where p.code in (
   'parent_feedback:read', 'parent_feedback:create',
   'portal:access'
 )
-  and r.name = 'admin'
+  and r.code = 'admin'
 on conflict do nothing;
