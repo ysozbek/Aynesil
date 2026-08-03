@@ -124,6 +124,118 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/refdata/RefDataView.vue'),
         meta: { permission: 'ref_data:read' },
       },
+
+      // ── CRM & Lead Management ──────────────────────────────────────────────
+      {
+        path: 'crm',
+        name: 'crm-dashboard',
+        component: () => import('@/views/crm/CrmDashboardView.vue'),
+        meta: { permission: 'lead:read' },
+      },
+      {
+        path: 'crm/leads',
+        name: 'leads',
+        component: () => import('@/views/crm/LeadsView.vue'),
+        meta: { permission: 'lead:read' },
+      },
+      {
+        path: 'crm/leads/new',
+        name: 'leads-new',
+        component: () => import('@/views/crm/LeadFormView.vue'),
+        meta: { permission: 'lead:create' },
+      },
+      {
+        path: 'crm/leads/:id',
+        name: 'lead-detail',
+        component: () => import('@/views/crm/LeadDetailView.vue'),
+        meta: { permission: 'lead:read' },
+      },
+      {
+        path: 'crm/leads/:id/edit',
+        name: 'lead-edit',
+        component: () => import('@/views/crm/LeadFormView.vue'),
+        meta: { permission: 'lead:update' },
+      },
+      {
+        path: 'crm/leads/:id/convert',
+        name: 'lead-convert',
+        component: () => import('@/views/crm/LeadConvertView.vue'),
+        meta: { permission: 'lead:convert' },
+      },
+      {
+        path: 'crm/pipeline',
+        name: 'crm-pipeline',
+        component: () => import('@/views/crm/PipelineView.vue'),
+        meta: { permission: 'lead:read' },
+      },
+      {
+        path: 'crm/activities',
+        name: 'crm-activities',
+        component: () => import('@/views/crm/ActivitiesView.vue'),
+        meta: { permission: 'lead_activity:read' },
+      },
+      {
+        path: 'crm/reports',
+        name: 'crm-reports',
+        component: () => import('@/views/crm/ReportsView.vue'),
+        meta: { permission: 'lead:read' },
+      },
+
+      // ── Assessment & Evaluation ────────────────────────────────────────────
+      {
+        path: 'assessment',
+        name: 'assessment-dashboard',
+        component: () => import('@/views/assessment/AssessmentDashboardView.vue'),
+        meta: { permission: 'assessment_session:read' },
+      },
+      {
+        path: 'assessment/templates',
+        name: 'assessment-templates',
+        component: () => import('@/views/assessment/TemplateListView.vue'),
+        meta: { permission: 'assessment_template:read' },
+      },
+      {
+        path: 'assessment/templates/new',
+        name: 'assessment-template-new',
+        component: () => import('@/views/assessment/TemplateFormView.vue'),
+        meta: { permission: 'assessment_template:create' },
+      },
+      {
+        path: 'assessment/templates/:id',
+        name: 'assessment-template-detail',
+        component: () => import('@/views/assessment/TemplateDetailView.vue'),
+        meta: { permission: 'assessment_template:read' },
+      },
+      {
+        path: 'assessment/templates/:id/edit',
+        name: 'assessment-template-edit',
+        component: () => import('@/views/assessment/TemplateFormView.vue'),
+        meta: { permission: 'assessment_template:update' },
+      },
+      {
+        path: 'assessment/sessions',
+        name: 'assessment-sessions',
+        component: () => import('@/views/assessment/SessionListView.vue'),
+        meta: { permission: 'assessment_session:read' },
+      },
+      {
+        path: 'assessment/sessions/new',
+        name: 'assessment-sessions-new',
+        component: () => import('@/views/assessment/SessionFormView.vue'),
+        meta: { permission: 'assessment_session:create' },
+      },
+      {
+        path: 'assessment/sessions/:id',
+        name: 'assessment-session-detail',
+        component: () => import('@/views/assessment/SessionDetailView.vue'),
+        meta: { permission: 'assessment_session:read' },
+      },
+      {
+        path: 'assessment/sessions/:id/edit',
+        name: 'assessment-session-edit',
+        component: () => import('@/views/assessment/SessionFormView.vue'),
+        meta: { permission: 'assessment_session:update' },
+      },
     ],
   },
 

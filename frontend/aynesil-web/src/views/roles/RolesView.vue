@@ -104,7 +104,7 @@ async function doDelete() {
 
 <template>
   <div>
-    <PageHeader :title="t('role.title')" :description="t('role.description')">
+    <PageHeader :title="t('role.title')" :description="t('role.subtitle')">
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
           <input type="checkbox" v-model="query.includeSystem" class="rounded border-border" @change="query.page = 1" />
