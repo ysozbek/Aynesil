@@ -236,6 +236,216 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/assessment/SessionFormView.vue'),
         meta: { permission: 'assessment_session:update' },
       },
+
+      // ── Student Lifecycle ──────────────────────────────────────────────────────
+      {
+        path: 'students',
+        name: 'students',
+        component: () => import('@/views/students/StudentListView.vue'),
+        meta: { permission: 'student:read' },
+      },
+      {
+        path: 'students/new',
+        name: 'student-new',
+        component: () => import('@/views/students/StudentFormView.vue'),
+        meta: { permission: 'student:create' },
+      },
+      {
+        path: 'students/:id',
+        name: 'student-detail',
+        component: () => import('@/views/students/StudentDetailView.vue'),
+        meta: { permission: 'student:read' },
+      },
+      {
+        path: 'students/:id/edit',
+        name: 'student-edit',
+        component: () => import('@/views/students/StudentFormView.vue'),
+        meta: { permission: 'student:update' },
+      },
+      {
+        path: 'students/:id/dashboard',
+        name: 'student-dashboard',
+        component: () => import('@/views/students/StudentDashboardView.vue'),
+        meta: { permission: 'student:read' },
+      },
+      {
+        path: 'students/:id/timeline',
+        name: 'student-timeline',
+        component: () => import('@/views/students/StudentTimelineView.vue'),
+        meta: { permission: 'student:read' },
+      },
+
+      // ── Guardian Management ────────────────────────────────────────────────────
+      {
+        path: 'guardians',
+        name: 'guardians',
+        component: () => import('@/views/guardians/GuardianListView.vue'),
+        meta: { permission: 'guardian:read' },
+      },
+      {
+        path: 'guardians/new',
+        name: 'guardian-new',
+        component: () => import('@/views/guardians/GuardianFormView.vue'),
+        meta: { permission: 'guardian:create' },
+      },
+      {
+        path: 'guardians/:id',
+        name: 'guardian-detail',
+        component: () => import('@/views/guardians/GuardianDetailView.vue'),
+        meta: { permission: 'guardian:read' },
+      },
+      {
+        path: 'guardians/:id/edit',
+        name: 'guardian-edit',
+        component: () => import('@/views/guardians/GuardianFormView.vue'),
+        meta: { permission: 'guardian:update' },
+      },
+
+      // ── Educator Management ────────────────────────────────────────────────────
+      {
+        path: 'educators',
+        name: 'educators',
+        component: () => import('@/views/educators/EducatorListView.vue'),
+        meta: { permission: 'educator:read' },
+      },
+      {
+        path: 'educators/new',
+        name: 'educator-new',
+        component: () => import('@/views/educators/EducatorFormView.vue'),
+        meta: { permission: 'educator:create' },
+      },
+      {
+        path: 'educators/:id',
+        name: 'educator-detail',
+        component: () => import('@/views/educators/EducatorDetailView.vue'),
+        meta: { permission: 'educator:read' },
+      },
+      {
+        path: 'educators/:id/edit',
+        name: 'educator-edit',
+        component: () => import('@/views/educators/EducatorFormView.vue'),
+        meta: { permission: 'educator:update' },
+      },
+      {
+        path: 'educators/:id/availability',
+        name: 'educator-availability',
+        component: () => import('@/views/educators/EducatorDashboardView.vue'),
+        meta: { permission: 'educator:read' },
+      },
+
+      // ── Program Management ─────────────────────────────────────────────────────
+      {
+        path: 'programs',
+        name: 'programs',
+        component: () => import('@/views/programs/ProgramListView.vue'),
+        meta: { permission: 'program:read' },
+      },
+      {
+        path: 'programs/new',
+        name: 'program-new',
+        component: () => import('@/views/programs/ProgramFormView.vue'),
+        meta: { permission: 'program:create' },
+      },
+      {
+        path: 'programs/:id',
+        name: 'program-detail',
+        component: () => import('@/views/programs/ProgramDetailView.vue'),
+        meta: { permission: 'program:read' },
+      },
+      {
+        path: 'programs/:id/edit',
+        name: 'program-edit',
+        component: () => import('@/views/programs/ProgramFormView.vue'),
+        meta: { permission: 'program:update' },
+      },
+
+      // ── BEP / IEP (Education Plans) ────────────────────────────────────────────
+      {
+        path: 'bep',
+        name: 'bep-list',
+        component: () => import('@/views/bep/EducationPlanListView.vue'),
+        meta: { permission: 'education_plan:read' },
+      },
+      {
+        path: 'bep/new',
+        name: 'bep-new',
+        component: () => import('@/views/bep/EducationPlanFormView.vue'),
+        meta: { permission: 'education_plan:create' },
+      },
+      {
+        path: 'bep/:id',
+        name: 'bep-detail',
+        component: () => import('@/views/bep/EducationPlanDetailView.vue'),
+        meta: { permission: 'education_plan:read' },
+      },
+      {
+        path: 'bep/:id/edit',
+        name: 'bep-edit',
+        component: () => import('@/views/bep/EducationPlanFormView.vue'),
+        meta: { permission: 'education_plan:update' },
+      },
+
+      // ── Goal Management ────────────────────────────────────────────────────────
+      {
+        path: 'goals',
+        name: 'goal-dashboard',
+        component: () => import('@/views/goals/GoalDashboardView.vue'),
+        meta: { permission: 'student_goal:read' },
+      },
+      {
+        path: 'goals/libraries',
+        name: 'goal-libraries',
+        component: () => import('@/views/goals/GoalLibraryListView.vue'),
+        meta: { permission: 'goal_library:read' },
+      },
+      {
+        path: 'goals/templates',
+        name: 'goal-template-list',
+        component: () => import('@/views/goals/GoalTemplateListView.vue'),
+        meta: { permission: 'goal_template:read' },
+      },
+      {
+        path: 'goals/templates/new',
+        name: 'goal-template-new',
+        component: () => import('@/views/goals/GoalTemplateFormView.vue'),
+        meta: { permission: 'goal_template:create' },
+      },
+      {
+        path: 'goals/templates/:id',
+        name: 'goal-template-detail',
+        component: () => import('@/views/goals/GoalTemplateDetailView.vue'),
+        meta: { permission: 'goal_template:read' },
+      },
+      {
+        path: 'goals/templates/:id/edit',
+        name: 'goal-template-edit',
+        component: () => import('@/views/goals/GoalTemplateFormView.vue'),
+        meta: { permission: 'goal_template:update' },
+      },
+      {
+        path: 'goals/student-goals',
+        name: 'student-goal-list',
+        component: () => import('@/views/goals/StudentGoalListView.vue'),
+        meta: { permission: 'student_goal:read' },
+      },
+      {
+        path: 'goals/student-goals/new',
+        name: 'student-goal-new',
+        component: () => import('@/views/goals/StudentGoalFormView.vue'),
+        meta: { permission: 'student_goal:create' },
+      },
+      {
+        path: 'goals/student-goals/:id',
+        name: 'student-goal-detail',
+        component: () => import('@/views/goals/StudentGoalDetailView.vue'),
+        meta: { permission: 'student_goal:read' },
+      },
+      {
+        path: 'goals/student-goals/:id/edit',
+        name: 'student-goal-edit',
+        component: () => import('@/views/goals/StudentGoalFormView.vue'),
+        meta: { permission: 'student_goal:update' },
+      },
     ],
   },
 
