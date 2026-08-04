@@ -695,6 +695,312 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'portal:access' },
       },
 
+      // ── Leave Management ───────────────────────────────────────────────────────
+      {
+        path: 'leave',
+        name: 'leave-dashboard',
+        component: () => import('@/views/leave/LeaveDashboardView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+      {
+        path: 'leave/requests',
+        name: 'leave-list',
+        component: () => import('@/views/leave/LeaveListView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+      {
+        path: 'leave/requests/new',
+        name: 'leave-new',
+        component: () => import('@/views/leave/LeaveFormView.vue'),
+        meta: { permission: 'leave_request:submit' },
+      },
+      {
+        path: 'leave/requests/:id',
+        name: 'leave-detail',
+        component: () => import('@/views/leave/LeaveDetailView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+      {
+        path: 'leave/requests/:id/edit',
+        name: 'leave-edit',
+        component: () => import('@/views/leave/LeaveFormView.vue'),
+        meta: { permission: 'leave_request:update' },
+      },
+      {
+        path: 'leave/calendar',
+        name: 'leave-calendar',
+        component: () => import('@/views/leave/LeaveCalendarView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+      {
+        path: 'leave/balances',
+        name: 'leave-balances',
+        component: () => import('@/views/leave/LeaveBalanceView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+      {
+        path: 'leave/reports',
+        name: 'leave-reports',
+        component: () => import('@/views/leave/LeaveReportsView.vue'),
+        meta: { permission: 'leave_request:read' },
+      },
+
+      // ── Camera Management ──────────────────────────────────────────────────────
+      {
+        path: 'cameras',
+        name: 'camera-dashboard',
+        component: () => import('@/views/cameras/CameraDashboardView.vue'),
+        meta: { permission: 'camera:read' },
+      },
+      {
+        path: 'cameras/list',
+        name: 'cameras',
+        component: () => import('@/views/cameras/CameraListView.vue'),
+        meta: { permission: 'camera:read' },
+      },
+      {
+        path: 'cameras/new',
+        name: 'camera-new',
+        component: () => import('@/views/cameras/CameraFormView.vue'),
+        meta: { permission: 'camera:create' },
+      },
+      {
+        path: 'cameras/authorizations',
+        name: 'camera-authorizations',
+        component: () => import('@/views/cameras/ViewingAuthorizationsView.vue'),
+        meta: { permission: 'viewing_authorization:read' },
+      },
+      {
+        path: 'cameras/viewing-history',
+        name: 'camera-viewing-history',
+        component: () => import('@/views/cameras/ViewingHistoryView.vue'),
+        meta: { permission: 'viewing_log:read' },
+      },
+      {
+        path: 'cameras/:id',
+        name: 'camera-detail',
+        component: () => import('@/views/cameras/CameraDetailView.vue'),
+        meta: { permission: 'camera:read' },
+      },
+      {
+        path: 'cameras/:id/edit',
+        name: 'camera-edit',
+        component: () => import('@/views/cameras/CameraFormView.vue'),
+        meta: { permission: 'camera:update' },
+      },
+
+      // ── Camp Management ────────────────────────────────────────────────────────
+      {
+        path: 'camps',
+        name: 'camp-dashboard',
+        component: () => import('@/views/camps/CampDashboardView.vue'),
+        meta: { permission: 'camp:read' },
+      },
+      {
+        path: 'camps/list',
+        name: 'camps',
+        component: () => import('@/views/camps/CampListView.vue'),
+        meta: { permission: 'camp:read' },
+      },
+      {
+        path: 'camps/new',
+        name: 'camp-new',
+        component: () => import('@/views/camps/CampFormView.vue'),
+        meta: { permission: 'camp:create' },
+      },
+      {
+        path: 'camps/:id',
+        name: 'camp-detail',
+        component: () => import('@/views/camps/CampDetailView.vue'),
+        meta: { permission: 'camp:read' },
+      },
+      {
+        path: 'camps/:id/edit',
+        name: 'camp-edit',
+        component: () => import('@/views/camps/CampFormView.vue'),
+        meta: { permission: 'camp:update' },
+      },
+      {
+        path: 'camps/periods/:periodId/enrollments',
+        name: 'camp-enrollment',
+        component: () => import('@/views/camps/CampEnrollmentView.vue'),
+        meta: { permission: 'camp_enrollment:read' },
+      },
+
+      // ── School Consultancy Management ──────────────────────────────────────────
+      {
+        path: 'consultancy',
+        name: 'consultancy-dashboard',
+        component: () => import('@/views/consultancy/ConsultancyDashboardView.vue'),
+        meta: { permission: 'institution:read' },
+      },
+      {
+        path: 'consultancy/institutions',
+        name: 'institutions',
+        component: () => import('@/views/consultancy/InstitutionListView.vue'),
+        meta: { permission: 'institution:read' },
+      },
+      {
+        path: 'consultancy/institutions/new',
+        name: 'institution-new',
+        component: () => import('@/views/consultancy/InstitutionFormView.vue'),
+        meta: { permission: 'institution:create' },
+      },
+      {
+        path: 'consultancy/institutions/:id',
+        name: 'institution-detail',
+        component: () => import('@/views/consultancy/InstitutionFormView.vue'),
+        meta: { permission: 'institution:read' },
+      },
+      {
+        path: 'consultancy/institutions/:id/edit',
+        name: 'institution-edit',
+        component: () => import('@/views/consultancy/InstitutionFormView.vue'),
+        meta: { permission: 'institution:update' },
+      },
+      {
+        path: 'consultancy/visits',
+        name: 'consultancy-visits',
+        component: () => import('@/views/consultancy/VisitListView.vue'),
+        meta: { permission: 'school_visit:read' },
+      },
+      {
+        path: 'consultancy/visits/:id',
+        name: 'consultancy-visit-detail',
+        component: () => import('@/views/consultancy/VisitListView.vue'),
+        meta: { permission: 'school_visit:read' },
+      },
+      {
+        path: 'consultancy/agreements',
+        name: 'consultancy-agreements',
+        component: () => import('@/views/consultancy/AgreementListView.vue'),
+        meta: { permission: 'consultancy_agreement:read' },
+      },
+      {
+        path: 'consultancy/agreements/new',
+        name: 'agreement-new',
+        component: () => import('@/views/consultancy/AgreementFormView.vue'),
+        meta: { permission: 'consultancy_agreement:create' },
+      },
+      {
+        path: 'consultancy/agreements/:id',
+        name: 'agreement-detail',
+        component: () => import('@/views/consultancy/AgreementDetailView.vue'),
+        meta: { permission: 'consultancy_agreement:read' },
+      },
+      {
+        path: 'consultancy/agreements/:id/edit',
+        name: 'agreement-edit',
+        component: () => import('@/views/consultancy/AgreementFormView.vue'),
+        meta: { permission: 'consultancy_agreement:update' },
+      },
+      {
+        path: 'consultancy/follow-ups',
+        name: 'consultancy-follow-ups',
+        component: () => import('@/views/consultancy/FollowUpListView.vue'),
+        meta: { permission: 'follow_up:read' },
+      },
+      {
+        path: 'consultancy/follow-ups/open',
+        name: 'follow-ups-open-report',
+        component: () => import('@/views/consultancy/OpenFollowUpReportView.vue'),
+        meta: { permission: 'follow_up:read' },
+      },
+      {
+        path: 'consultancy/follow-ups/new',
+        name: 'follow-up-new',
+        component: () => import('@/views/consultancy/FollowUpFormView.vue'),
+        meta: { permission: 'follow_up:create' },
+      },
+      {
+        path: 'consultancy/follow-ups/:id',
+        name: 'follow-up-detail',
+        component: () => import('@/views/consultancy/FollowUpDetailView.vue'),
+        meta: { permission: 'follow_up:read' },
+      },
+      {
+        path: 'consultancy/follow-ups/:id/edit',
+        name: 'follow-up-edit',
+        component: () => import('@/views/consultancy/FollowUpFormView.vue'),
+        meta: { permission: 'follow_up:update' },
+      },
+
+      // ── KPI & Performance Management ───────────────────────────────────────────
+      {
+        path: 'kpi',
+        name: 'kpi-dashboard',
+        component: () => import('@/views/kpi/KpiDashboardView.vue'),
+        meta: { permission: 'kpi_dashboard:read' },
+      },
+      {
+        path: 'kpi/definitions',
+        name: 'kpi-definitions',
+        component: () => import('@/views/kpi/KpiDefinitionListView.vue'),
+        meta: { permission: 'kpi:read' },
+      },
+      {
+        path: 'kpi/definitions/:id',
+        name: 'kpi-definition-detail',
+        component: () => import('@/views/kpi/KpiDefinitionListView.vue'),
+        meta: { permission: 'kpi:read' },
+      },
+      {
+        path: 'kpi/snapshots',
+        name: 'kpi-snapshots',
+        component: () => import('@/views/kpi/PerformanceSnapshotListView.vue'),
+        meta: { permission: 'kpi_snapshot:read' },
+      },
+
+      // ── Legal (Contract & Consent) Management ──────────────────────────────────
+      {
+        path: 'legal',
+        name: 'legal-dashboard',
+        component: () => import('@/views/legal/LegalDashboardView.vue'),
+        meta: { permission: 'student_contract:read' },
+      },
+      {
+        path: 'legal/contracts',
+        name: 'contracts',
+        component: () => import('@/views/legal/ContractListView.vue'),
+        meta: { permission: 'student_contract:read' },
+      },
+      {
+        path: 'legal/contracts/new',
+        name: 'contract-new',
+        component: () => import('@/views/legal/ContractListView.vue'),
+        meta: { permission: 'student_contract:generate' },
+      },
+      {
+        path: 'legal/contracts/:id',
+        name: 'contract-detail',
+        component: () => import('@/views/legal/ContractDetailView.vue'),
+        meta: { permission: 'student_contract:read' },
+      },
+      {
+        path: 'legal/contract-templates',
+        name: 'contract-templates',
+        component: () => import('@/views/legal/ContractTemplateListView.vue'),
+        meta: { permission: 'contract_template:read' },
+      },
+      {
+        path: 'legal/consents',
+        name: 'consents',
+        component: () => import('@/views/legal/ConsentListView.vue'),
+        meta: { permission: 'student_consent:read' },
+      },
+      {
+        path: 'legal/consents/:id',
+        name: 'consent-detail',
+        component: () => import('@/views/legal/ConsentListView.vue'),
+        meta: { permission: 'student_consent:read' },
+      },
+      {
+        path: 'legal/reports',
+        name: 'legal-reports',
+        component: () => import('@/views/legal/LegalReportsView.vue'),
+        meta: { permission: 'legal_report:read' },
+      },
+
       // ── Goal Management ────────────────────────────────────────────────────────
       {
         path: 'goals',
