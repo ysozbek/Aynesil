@@ -385,6 +385,178 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'education_plan:update' },
       },
 
+      // ── Scheduling & Sessions ──────────────────────────────────────────────────
+      {
+        path: 'scheduling',
+        name: 'scheduling-dashboard',
+        component: () => import('@/views/scheduling/SchedulingDashboardView.vue'),
+        meta: { permission: 'session:read' },
+      },
+      {
+        path: 'scheduling/calendar',
+        name: 'scheduling-calendar',
+        component: () => import('@/views/scheduling/CalendarView.vue'),
+        meta: { permission: 'session:read' },
+      },
+      {
+        path: 'scheduling/sessions',
+        name: 'sessions',
+        component: () => import('@/views/scheduling/SessionListView.vue'),
+        meta: { permission: 'session:read' },
+      },
+      {
+        path: 'scheduling/sessions/new',
+        name: 'session-new',
+        component: () => import('@/views/scheduling/SessionFormView.vue'),
+        meta: { permission: 'session:create' },
+      },
+      {
+        path: 'scheduling/sessions/:id',
+        name: 'session-detail',
+        component: () => import('@/views/scheduling/SessionDetailView.vue'),
+        meta: { permission: 'session:read' },
+      },
+      {
+        path: 'scheduling/sessions/:id/edit',
+        name: 'session-edit',
+        component: () => import('@/views/scheduling/SessionFormView.vue'),
+        meta: { permission: 'session:update' },
+      },
+      {
+        path: 'scheduling/rooms',
+        name: 'rooms',
+        component: () => import('@/views/scheduling/RoomListView.vue'),
+        meta: { permission: 'room:read' },
+      },
+      {
+        path: 'scheduling/recurring-schedules',
+        name: 'recurring-schedules',
+        component: () => import('@/views/scheduling/RecurringScheduleListView.vue'),
+        meta: { permission: 'recurring_schedule:read' },
+      },
+      {
+        path: 'scheduling/recurring-schedules/new',
+        name: 'recurring-schedule-new',
+        component: () => import('@/views/scheduling/RecurringScheduleFormView.vue'),
+        meta: { permission: 'recurring_schedule:create' },
+      },
+      {
+        path: 'scheduling/attendance',
+        name: 'attendance-dashboard',
+        component: () => import('@/views/scheduling/AttendanceDashboardView.vue'),
+        meta: { permission: 'attendance:read' },
+      },
+      {
+        path: 'scheduling/makeup-requests',
+        name: 'makeup-requests',
+        component: () => import('@/views/scheduling/MakeupRequestListView.vue'),
+        meta: { permission: 'makeup_request:read' },
+      },
+      {
+        path: 'scheduling/makeup-requests/:id',
+        name: 'makeup-request-detail',
+        component: () => import('@/views/scheduling/MakeupRequestListView.vue'),
+        meta: { permission: 'makeup_request:read' },
+      },
+
+      // ── Finance & Payments ─────────────────────────────────────────────────────
+      {
+        path: 'finance',
+        name: 'finance-dashboard',
+        component: () => import('@/views/finance/FinanceDashboardView.vue'),
+        meta: { permission: 'payment:read' },
+      },
+      {
+        path: 'finance/packages',
+        name: 'packages',
+        component: () => import('@/views/finance/PackageDefinitionListView.vue'),
+        meta: { permission: 'package_definition:read' },
+      },
+      {
+        path: 'finance/packages/new',
+        name: 'package-new',
+        component: () => import('@/views/finance/PackageDefinitionFormView.vue'),
+        meta: { permission: 'package_definition:create' },
+      },
+      {
+        path: 'finance/packages/:id',
+        name: 'package-detail',
+        component: () => import('@/views/finance/PackageDefinitionListView.vue'),
+        meta: { permission: 'package_definition:read' },
+      },
+      {
+        path: 'finance/packages/:id/edit',
+        name: 'package-edit',
+        component: () => import('@/views/finance/PackageDefinitionFormView.vue'),
+        meta: { permission: 'package_definition:update' },
+      },
+      {
+        path: 'finance/student-packages',
+        name: 'student-packages',
+        component: () => import('@/views/finance/StudentPackageListView.vue'),
+        meta: { permission: 'student_package:read' },
+      },
+      {
+        path: 'finance/student-packages/:id',
+        name: 'student-package-detail',
+        component: () => import('@/views/finance/StudentPackageListView.vue'),
+        meta: { permission: 'student_package:read' },
+      },
+      {
+        path: 'finance/credits',
+        name: 'credit-ledger',
+        component: () => import('@/views/finance/CreditLedgerView.vue'),
+        meta: { permission: 'credit:read' },
+      },
+      {
+        path: 'finance/invoices',
+        name: 'invoices',
+        component: () => import('@/views/finance/InvoiceListView.vue'),
+        meta: { permission: 'invoice:read' },
+      },
+      {
+        path: 'finance/invoices/new',
+        name: 'invoice-new',
+        component: () => import('@/views/finance/InvoiceDetailView.vue'),
+        meta: { permission: 'invoice:create' },
+      },
+      {
+        path: 'finance/invoices/:id',
+        name: 'invoice-detail',
+        component: () => import('@/views/finance/InvoiceDetailView.vue'),
+        meta: { permission: 'invoice:read' },
+      },
+      {
+        path: 'finance/payments',
+        name: 'payments',
+        component: () => import('@/views/finance/PaymentListView.vue'),
+        meta: { permission: 'payment:read' },
+      },
+      {
+        path: 'finance/payments/new',
+        name: 'payment-new',
+        component: () => import('@/views/finance/PaymentFormView.vue'),
+        meta: { permission: 'payment:create' },
+      },
+      {
+        path: 'finance/payments/:id',
+        name: 'payment-detail',
+        component: () => import('@/views/finance/PaymentDetailView.vue'),
+        meta: { permission: 'payment:read' },
+      },
+      {
+        path: 'finance/scholarships',
+        name: 'scholarships',
+        component: () => import('@/views/finance/ScholarshipListView.vue'),
+        meta: { permission: 'scholarship:read' },
+      },
+      {
+        path: 'finance/promotions',
+        name: 'promotions',
+        component: () => import('@/views/finance/PromotionListView.vue'),
+        meta: { permission: 'promotion:read' },
+      },
+
       // ── Goal Management ────────────────────────────────────────────────────────
       {
         path: 'goals',
