@@ -9,9 +9,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { apiService } from '@/services/api.service'
 import { menuAdminService } from '@/services/menu-admin.service'
-import { usePermissionStore } from './permission.store'
 import { useLocaleStore } from './locale.store'
-import type { MenuItemListItemDto, CreateMenuItemRequest, UpdateMenuItemRequest, SetMenuItemTranslationsRequest } from '@/types/menu-admin.types'
+import type { MenuTreeNodeDto, MenuItemListItemDto, CreateMenuItemRequest, UpdateMenuItemRequest, SetMenuItemTranslationsRequest } from '@/types/menu-admin.types'
 
 export interface MenuItem {
   id: string
@@ -21,8 +20,6 @@ export interface MenuItem {
   route?: string
   icon?: string
   sortOrder: number
-  requiredPermission?: string
-  featureFlag?: string
   children?: MenuItem[]
 }
 
@@ -36,44 +33,33 @@ export const useMenuStore = defineStore('menu', () => {
     loading.value = true
     try {
       const locale = useLocaleStore().current
-      const response = await apiService.get<MenuItem[]>(`/menus?locale=${locale}`)
+      // /menus/me returns the current user's filtered+translated tree from the backend.
+      // Permission filtering and feature-flag gating happen server-side.
+      const response = await apiService.get<MenuTreeNodeDto[]>(`/menus/me?locale=${locale}`)
       if (response.success && response.data) {
-        items.value = filterByPermission(response.data)
-        tree.value = buildTree(items.value)
+        tree.value = mapTree(response.data)
+        items.value = flattenTree(tree.value)
       }
     } finally {
       loading.value = false
     }
   }
 
-  function filterByPermission(flatItems: MenuItem[]): MenuItem[] {
-    const perms = usePermissionStore()
-    return flatItems.filter((item) =>
-      !item.requiredPermission || perms.can(item.requiredPermission)
-    )
+  function mapTree(nodes: MenuTreeNodeDto[], parentId?: string): MenuItem[] {
+    return nodes.map((node) => ({
+      id: node.id,
+      parentId,
+      code: node.code,
+      label: node.label,
+      route: node.route,
+      icon: node.icon,
+      sortOrder: node.sortOrder,
+      children: mapTree(node.children ?? [], node.id),
+    }))
   }
 
-  function buildTree(flatItems: MenuItem[]): MenuItem[] {
-    const map = new Map<string, MenuItem>()
-    const roots: MenuItem[] = []
-
-    flatItems.forEach((item) => map.set(item.id, { ...item, children: [] }))
-
-    map.forEach((item) => {
-      if (item.parentId && map.has(item.parentId)) {
-        map.get(item.parentId)!.children!.push(item)
-      } else {
-        roots.push(item)
-      }
-    })
-
-    const sort = (arr: MenuItem[]) => {
-      arr.sort((a, b) => a.sortOrder - b.sortOrder)
-      arr.forEach((item) => item.children && sort(item.children))
-    }
-    sort(roots)
-
-    return roots
+  function flattenTree(nodes: MenuItem[]): MenuItem[] {
+    return nodes.flatMap((n) => [n, ...flattenTree(n.children ?? [])])
   }
 
   return { items, tree, loading, load }
