@@ -557,6 +557,144 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'promotion:read' },
       },
 
+      // ── Notification Management ───────────────────────────────────────────────
+      {
+        path: 'notifications',
+        name: 'notification-dashboard',
+        component: () => import('@/views/notifications/NotificationDashboardView.vue'),
+        meta: { permission: 'notification:read' },
+      },
+      {
+        path: 'notifications/inbox',
+        name: 'notification-list',
+        component: () => import('@/views/notifications/NotificationListView.vue'),
+        meta: { permission: 'notification:read' },
+      },
+      {
+        path: 'notifications/inbox/:id',
+        name: 'notification-detail',
+        component: () => import('@/views/notifications/NotificationDetailView.vue'),
+        meta: { permission: 'notification:read' },
+      },
+      {
+        path: 'notifications/templates',
+        name: 'notification-templates',
+        component: () => import('@/views/notifications/NotificationTemplateListView.vue'),
+        meta: { permission: 'notification_template:read' },
+      },
+      {
+        path: 'notifications/templates/new',
+        name: 'notification-template-new',
+        component: () => import('@/views/notifications/NotificationTemplateFormView.vue'),
+        meta: { permission: 'notification_template:create' },
+      },
+      {
+        path: 'notifications/templates/:id/edit',
+        name: 'notification-template-edit',
+        component: () => import('@/views/notifications/NotificationTemplateFormView.vue'),
+        meta: { permission: 'notification_template:update' },
+      },
+      {
+        path: 'notifications/preferences',
+        name: 'notification-preferences',
+        component: () => import('@/views/notifications/NotificationPreferencesView.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      // ── Meeting Management ─────────────────────────────────────────────────────
+      {
+        path: 'meetings',
+        name: 'meeting-dashboard',
+        component: () => import('@/views/meetings/MeetingDashboardView.vue'),
+        meta: { permission: 'meeting:read' },
+      },
+      {
+        path: 'meetings/list',
+        name: 'meetings',
+        component: () => import('@/views/meetings/MeetingListView.vue'),
+        meta: { permission: 'meeting:read' },
+      },
+      {
+        path: 'meetings/new',
+        name: 'meeting-new',
+        component: () => import('@/views/meetings/MeetingFormView.vue'),
+        meta: { permission: 'meeting:create' },
+      },
+      {
+        path: 'meetings/calendar',
+        name: 'meeting-calendar',
+        component: () => import('@/views/meetings/MeetingCalendarView.vue'),
+        meta: { permission: 'meeting:read' },
+      },
+      {
+        path: 'meetings/follow-ups',
+        name: 'follow-ups',
+        component: () => import('@/views/meetings/FollowUpListView.vue'),
+        meta: { permission: 'meeting:read' },
+      },
+      {
+        path: 'meetings/:id',
+        name: 'meeting-detail',
+        component: () => import('@/views/meetings/MeetingDetailView.vue'),
+        meta: { permission: 'meeting:read' },
+      },
+      {
+        path: 'meetings/:id/edit',
+        name: 'meeting-edit',
+        component: () => import('@/views/meetings/MeetingFormView.vue'),
+        meta: { permission: 'meeting:update' },
+      },
+
+      // ── Parent Portal ──────────────────────────────────────────────────────────
+      {
+        path: 'portal',
+        name: 'portal-dashboard',
+        component: () => import('@/views/portal/PortalDashboardView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children',
+        name: 'portal-children',
+        component: () => import('@/views/portal/MyChildrenView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children/:studentId',
+        name: 'portal-child-detail',
+        component: () => import('@/views/portal/ChildDetailView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children/:studentId/sessions',
+        name: 'portal-sessions',
+        component: () => import('@/views/portal/ChildDetailView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children/:studentId/goals',
+        name: 'portal-goals',
+        component: () => import('@/views/portal/ChildDetailView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children/:studentId/packages',
+        name: 'portal-packages',
+        component: () => import('@/views/portal/ChildDetailView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/children/:studentId/documents',
+        name: 'portal-documents',
+        component: () => import('@/views/portal/ChildDetailView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+      {
+        path: 'portal/notifications',
+        name: 'portal-notifications',
+        component: () => import('@/views/portal/PortalNotificationsView.vue'),
+        meta: { permission: 'portal:access' },
+      },
+
       // ── Goal Management ────────────────────────────────────────────────────────
       {
         path: 'goals',
