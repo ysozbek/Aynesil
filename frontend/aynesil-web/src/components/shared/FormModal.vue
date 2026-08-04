@@ -22,14 +22,14 @@ const { t } = useI18n()
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/40" @click="emit('close')" />
+    <div v-if="open" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <!-- Backdrop — z-[9999] ensures Safari native <select> elements don't bleed through -->
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="emit('close')" />
 
       <!-- Modal panel -->
       <div
         :class="[
-          'relative z-10 w-full rounded-xl bg-[--color-card] shadow-xl flex flex-col max-h-[90vh]',
+          'relative z-10 w-full rounded-2xl bg-white dark:bg-[--color-card] shadow-2xl flex flex-col max-h-[90vh] border border-gray-100',
           wide ? 'max-w-3xl' : 'max-w-lg',
         ]"
       >

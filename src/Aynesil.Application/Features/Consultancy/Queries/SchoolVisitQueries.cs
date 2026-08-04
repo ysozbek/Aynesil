@@ -51,37 +51,34 @@ public sealed class GetSchoolVisitsQueryHandler
             q = q.Where(v => v.Purpose != null && v.Purpose.ToLower().Contains(term));
         }
 
-        var query =
+        var baseQ =
             from v in q
             join i in _db.Institutions.AsNoTracking()
                 on v.InstitutionId equals i.Id
             join p in _db.ConsultancyPlans.AsNoTracking()
                 on v.ConsultancyPlanId equals p.Id into planGrp
             from p in planGrp.DefaultIfEmpty()
-            select new SchoolVisitListItemDto(
-                v.Id,
-                v.CorporationId,
-                v.ConsultancyPlanId,
-                p != null ? p.Name : null,
-                v.InstitutionId,
-                i.Name,
-                v.VisitDate,
-                v.VisitorId,
-                v.Purpose,
-                v.Status,
-                v.Observations.Count,
-                v.CreatedAt);
+            select new { v, i, p };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "visitdate"   => req.IsDescending ? query.OrderByDescending(x => x.VisitDate)   : query.OrderBy(x => x.VisitDate),
-            "institution" => req.IsDescending ? query.OrderByDescending(x => x.InstitutionName) : query.OrderBy(x => x.InstitutionName),
-            "status"      => req.IsDescending ? query.OrderByDescending(x => x.Status)     : query.OrderBy(x => x.Status),
-            _             => query.OrderByDescending(x => x.VisitDate)
+            "visitdate"   => req.IsDescending ? baseQ.OrderByDescending(x => x.v.VisitDate) : baseQ.OrderBy(x => x.v.VisitDate),
+            "institution" => req.IsDescending ? baseQ.OrderByDescending(x => x.i.Name)      : baseQ.OrderBy(x => x.i.Name),
+            "status"      => req.IsDescending ? baseQ.OrderByDescending(x => x.v.Status)    : baseQ.OrderBy(x => x.v.Status),
+            _             => baseQ.OrderByDescending(x => x.v.VisitDate)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new SchoolVisitListItemDto(
+                x.v.Id, x.v.CorporationId,
+                x.v.ConsultancyPlanId, x.p != null ? x.p.Name : null,
+                x.v.InstitutionId, x.i.Name,
+                x.v.VisitDate, x.v.VisitorId, x.v.Purpose, x.v.Status,
+                x.v.Observations.Count,
+                x.v.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<SchoolVisitListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

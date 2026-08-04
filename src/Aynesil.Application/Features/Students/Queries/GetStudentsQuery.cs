@@ -57,7 +57,7 @@ public sealed class GetStudentsQueryHandler
                 (s.StudentNo != null && s.StudentNo.ToLower().Contains(search)));
         }
 
-        var query =
+        var baseQ =
             from s in baseQuery
             join campus in _db.Campuses.AsNoTracking()
                 on s.PrimaryCampusId equals campus.Id into campusGrp
@@ -65,24 +65,27 @@ public sealed class GetStudentsQueryHandler
             join status in _db.RefValues.AsNoTracking()
                 on s.StatusId equals status.Id into statusGrp
             from status in statusGrp.DefaultIfEmpty()
-            select new StudentListItemDto(
-                s.Id, s.StudentNo, s.FirstName, s.LastName,
-                s.FirstName + " " + s.LastName,
-                s.BirthDate, s.Gender,
-                s.PrimaryCampusId, campus != null ? campus.Name : null,
-                s.StatusId, status != null ? status.Code : null,
-                s.CreatedAt);
+            select new { s, campus, status };
 
-        query = req.SortBy?.ToLower() switch
+        var sortedQ = req.SortBy?.ToLower() switch
         {
-            "lastname"  => req.IsDescending ? query.OrderByDescending(s => s.LastName)  : query.OrderBy(s => s.LastName),
-            "createdat" => req.IsDescending ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.CreatedAt),
-            "birthdate" => req.IsDescending ? query.OrderByDescending(s => s.BirthDate) : query.OrderBy(s => s.BirthDate),
-            _           => req.IsDescending ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.LastName)
+            "lastname"  => req.IsDescending ? baseQ.OrderByDescending(x => x.s.LastName)  : baseQ.OrderBy(x => x.s.LastName),
+            "createdat" => req.IsDescending ? baseQ.OrderByDescending(x => x.s.CreatedAt) : baseQ.OrderBy(x => x.s.CreatedAt),
+            "birthdate" => req.IsDescending ? baseQ.OrderByDescending(x => x.s.BirthDate) : baseQ.OrderBy(x => x.s.BirthDate),
+            _           => req.IsDescending ? baseQ.OrderByDescending(x => x.s.CreatedAt) : baseQ.OrderBy(x => x.s.LastName)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new StudentListItemDto(
+                x.s.Id, x.s.StudentNo, x.s.FirstName, x.s.LastName,
+                x.s.FirstName + " " + x.s.LastName,
+                x.s.BirthDate, x.s.Gender,
+                x.s.PrimaryCampusId, x.campus != null ? x.campus.Name : null,
+                x.s.StatusId, x.status != null ? x.status.Code : null,
+                x.s.CreatedAt))
+            .ToListAsync(ct);
 
         return PaginatedResult<StudentListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

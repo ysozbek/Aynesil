@@ -40,33 +40,32 @@ public sealed class GetInstitutionsQueryHandler
                            || (i.District != null && i.District.ToLower().Contains(term)));
         }
 
-        var query =
+        var baseQ =
             from i in q
             join typ in _db.RefValues.AsNoTracking()
                 on i.InstitutionTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new InstitutionListItemDto(
-                i.Id,
-                i.CorporationId,
-                i.InstitutionTypeId,
-                typ != null ? typ.Code : null,
-                i.Name,
-                i.City,
-                i.District,
-                i.Plans.Count(p => p.Status != "cancelled"),
-                i.Visits.Count,
-                i.CreatedAt);
+            select new { i, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "name"     => req.IsDescending ? query.OrderByDescending(x => x.Name)   : query.OrderBy(x => x.Name),
-            "city"     => req.IsDescending ? query.OrderByDescending(x => x.City)   : query.OrderBy(x => x.City),
-            "createdat"=> req.IsDescending ? query.OrderByDescending(x => x.CreatedAt): query.OrderBy(x => x.CreatedAt),
-            _          => query.OrderBy(x => x.Name)
+            "name"     => req.IsDescending ? baseQ.OrderByDescending(x => x.i.Name)      : baseQ.OrderBy(x => x.i.Name),
+            "city"     => req.IsDescending ? baseQ.OrderByDescending(x => x.i.City)      : baseQ.OrderBy(x => x.i.City),
+            "createdat"=> req.IsDescending ? baseQ.OrderByDescending(x => x.i.CreatedAt) : baseQ.OrderBy(x => x.i.CreatedAt),
+            _          => baseQ.OrderBy(x => x.i.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new InstitutionListItemDto(
+                x.i.Id, x.i.CorporationId,
+                x.i.InstitutionTypeId, x.typ != null ? x.typ.Code : null,
+                x.i.Name, x.i.City, x.i.District,
+                x.i.Plans.Count(p => p.Status != "cancelled"),
+                x.i.Visits.Count,
+                x.i.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<InstitutionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

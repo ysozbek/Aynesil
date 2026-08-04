@@ -39,6 +39,15 @@ export const useMenuStore = defineStore('menu', () => {
       if (response.success && response.data) {
         tree.value = mapTree(response.data)
         items.value = flattenTree(tree.value)
+      } else {
+        console.warn('[MenuStore] /menus/me returned success=false:', response)
+      }
+    } catch (err: unknown) {
+      // Log full error details to browser console for debugging
+      console.error('[MenuStore] /menus/me failed:', err)
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { status?: number; data?: unknown } }
+        console.error('[MenuStore] Status:', axiosErr.response?.status, 'Body:', axiosErr.response?.data)
       }
     } finally {
       loading.value = false

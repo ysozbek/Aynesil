@@ -47,35 +47,30 @@ public sealed class GetCampsQueryHandler
                            || c.Code.ToLower().Contains(term));
         }
 
-        var query =
+        var baseQ =
             from c in q
             join typ in _db.RefValues.AsNoTracking()
                 on c.CampTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new CampListItemDto(
-                c.Id,
-                c.CorporationId,
-                c.CampusId,
-                c.CampTypeId,
-                typ != null ? typ.Code : null,
-                c.Code,
-                c.Name,
-                c.Location,
-                c.Capacity,
-                c.IsActive,
-                c.Periods.Count,
-                c.UpdatedAt);
+            select new { c, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "name"   => req.IsDescending ? query.OrderByDescending(x => x.Name)   : query.OrderBy(x => x.Name),
-            "code"   => req.IsDescending ? query.OrderByDescending(x => x.Code)   : query.OrderBy(x => x.Code),
-            "active" => req.IsDescending ? query.OrderByDescending(x => x.IsActive): query.OrderBy(x => x.IsActive),
-            _        => query.OrderBy(x => x.Name)
+            "name"   => req.IsDescending ? baseQ.OrderByDescending(x => x.c.Name)    : baseQ.OrderBy(x => x.c.Name),
+            "code"   => req.IsDescending ? baseQ.OrderByDescending(x => x.c.Code)    : baseQ.OrderBy(x => x.c.Code),
+            "active" => req.IsDescending ? baseQ.OrderByDescending(x => x.c.IsActive) : baseQ.OrderBy(x => x.c.IsActive),
+            _        => baseQ.OrderBy(x => x.c.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new CampListItemDto(
+                x.c.Id, x.c.CorporationId, x.c.CampusId,
+                x.c.CampTypeId, x.typ != null ? x.typ.Code : null,
+                x.c.Code, x.c.Name, x.c.Location, x.c.Capacity,
+                x.c.IsActive, x.c.Periods.Count, x.c.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<CampListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

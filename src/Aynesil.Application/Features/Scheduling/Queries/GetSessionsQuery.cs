@@ -49,26 +49,29 @@ public sealed class GetSessionsQueryHandler
             q = q.Where(x => x.Title != null && x.Title.ToLower().Contains(s));
         }
 
-        var query =
+        var baseQ =
             from s in q
             join r in _db.Rooms.AsNoTracking()
                 on s.RoomId equals r.Id into roomGrp
             from r in roomGrp.DefaultIfEmpty()
-            select new SessionListItemDto(
-                s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
-                s.RoomId, r != null ? r.Name : null,
-                s.Title, s.StartsAt, s.EndsAt, s.Status, s.IsMakeup,
-                s.Participants.Count(), s.Educators.Count());
+            select new { s, r };
 
-        query = req.SortBy?.ToLower() switch
+        var sortedQ = req.SortBy?.ToLower() switch
         {
-            "startsat" => req.IsDescending ? query.OrderByDescending(s => s.StartsAt) : query.OrderBy(s => s.StartsAt),
-            "status"   => req.IsDescending ? query.OrderByDescending(s => s.Status)   : query.OrderBy(s => s.Status),
-            _          => query.OrderBy(s => s.StartsAt)
+            "startsat" => req.IsDescending ? baseQ.OrderByDescending(x => x.s.StartsAt) : baseQ.OrderBy(x => x.s.StartsAt),
+            "status"   => req.IsDescending ? baseQ.OrderByDescending(x => x.s.Status)   : baseQ.OrderBy(x => x.s.Status),
+            _          => baseQ.OrderByDescending(x => x.s.StartsAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new SessionListItemDto(
+                x.s.Id, x.s.CorporationId, x.s.CampusId, x.s.SessionTypeId,
+                x.s.RoomId, x.r != null ? x.r.Name : null,
+                x.s.Title, x.s.StartsAt, x.s.EndsAt, x.s.Status, x.s.IsMakeup,
+                x.s.Participants.Count(), x.s.Educators.Count()))
+            .ToListAsync(ct);
         return PaginatedResult<SessionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

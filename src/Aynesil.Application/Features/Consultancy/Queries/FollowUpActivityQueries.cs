@@ -52,7 +52,9 @@ public sealed class GetFollowUpActivitiesQueryHandler
             q = q.Where(a => a.Title.ToLower().Contains(term));
         }
 
-        var query =
+        // Build base join query with anonymous type — sort BEFORE projection so EF Core
+        // can translate OrderBy to SQL. Sorting on a projected DTO causes translation failure.
+        var baseQ =
             from a in q
             join p in _db.ConsultancyPlans.AsNoTracking()
                 on a.ConsultancyPlanId equals p.Id into planGrp
@@ -60,24 +62,27 @@ public sealed class GetFollowUpActivitiesQueryHandler
             join v in _db.SchoolVisits.AsNoTracking()
                 on a.SchoolVisitId equals v.Id into visitGrp
             from v in visitGrp.DefaultIfEmpty()
-            select new FollowUpActivityListItemDto(
-                a.Id, a.CorporationId,
-                a.ConsultancyPlanId, p != null ? p.Name : null,
-                a.SchoolVisitId, v != null ? v.VisitDate : (DateOnly?)null,
-                a.ObservationRecordId,
-                a.Title, a.DueDate, a.AssignedTo,
-                a.Status, a.CompletedAt, a.CreatedAt);
+            select new { a, p, v };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "title"   => req.IsDescending ? query.OrderByDescending(x => x.Title)   : query.OrderBy(x => x.Title),
-            "duedate" => req.IsDescending ? query.OrderByDescending(x => x.DueDate) : query.OrderBy(x => x.DueDate),
-            "status"  => req.IsDescending ? query.OrderByDescending(x => x.Status)  : query.OrderBy(x => x.Status),
-            _         => query.OrderBy(x => x.DueDate).ThenBy(x => x.CreatedAt)
+            "title"   => req.IsDescending ? baseQ.OrderByDescending(x => x.a.Title)   : baseQ.OrderBy(x => x.a.Title),
+            "duedate" => req.IsDescending ? baseQ.OrderByDescending(x => x.a.DueDate) : baseQ.OrderBy(x => x.a.DueDate),
+            "status"  => req.IsDescending ? baseQ.OrderByDescending(x => x.a.Status)  : baseQ.OrderBy(x => x.a.Status),
+            _         => baseQ.OrderBy(x => x.a.DueDate).ThenBy(x => x.a.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new FollowUpActivityListItemDto(
+                x.a.Id, x.a.CorporationId,
+                x.a.ConsultancyPlanId, x.p != null ? x.p.Name : null,
+                x.a.SchoolVisitId, x.v != null ? x.v.VisitDate : (DateOnly?)null,
+                x.a.ObservationRecordId,
+                x.a.Title, x.a.DueDate, x.a.AssignedTo,
+                x.a.Status, x.a.CompletedAt, x.a.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<FollowUpActivityListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

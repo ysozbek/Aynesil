@@ -1079,7 +1079,12 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  // Use to.matched.some() so that parent-level meta.requiresAuth is inherited by all children.
+  // A plain to.meta.requiresAuth check only reads the deepest matched route's meta,
+  // causing child routes to bypass the auth guard when only the parent has requiresAuth.
+  const requiresAuth = to.matched.some((r) => r.meta.requiresAuth)
+
+  if (requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 

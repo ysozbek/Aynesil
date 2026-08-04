@@ -65,33 +65,30 @@ public sealed class GetPerformanceSnapshotsQueryHandler
                 (x.e.FirstName + " " + x.e.LastName).ToLower().Contains(term));
         }
 
-        var projection = q.Select(x => new EducatorPerformanceSnapshotListItemDto(
-            x.s.Id,
-            x.s.EducatorId,
-            x.e.FirstName + " " + x.e.LastName,
-            x.s.PeriodStart,
-            x.s.PeriodEnd,
-            x.s.SessionCount,
-            x.s.AttendanceRate,
-            x.s.GoalAchievementRate,
-            x.s.ParentFeedbackAvg,
-            x.s.UtilizationRate,
-            x.s.ComputedAt));
-
-        projection = req.SortBy?.ToLowerInvariant() switch
+        // Sort BEFORE projection on entity properties to allow EF Core SQL translation.
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "name"        => req.IsDescending ? projection.OrderByDescending(x => x.EducatorFullName) : projection.OrderBy(x => x.EducatorFullName),
-            "period"      => req.IsDescending ? projection.OrderByDescending(x => x.PeriodStart) : projection.OrderBy(x => x.PeriodStart),
-            "sessions"    => req.IsDescending ? projection.OrderByDescending(x => x.SessionCount) : projection.OrderBy(x => x.SessionCount),
-            "attendance"  => req.IsDescending ? projection.OrderByDescending(x => x.AttendanceRate) : projection.OrderBy(x => x.AttendanceRate),
-            "goal"        => req.IsDescending ? projection.OrderByDescending(x => x.GoalAchievementRate) : projection.OrderBy(x => x.GoalAchievementRate),
-            "feedback"    => req.IsDescending ? projection.OrderByDescending(x => x.ParentFeedbackAvg) : projection.OrderBy(x => x.ParentFeedbackAvg),
-            "utilization" => req.IsDescending ? projection.OrderByDescending(x => x.UtilizationRate) : projection.OrderBy(x => x.UtilizationRate),
-            _             => projection.OrderByDescending(x => x.PeriodEnd).ThenBy(x => x.EducatorFullName)
+            "name"        => req.IsDescending ? q.OrderByDescending(x => x.e.LastName).ThenByDescending(x => x.e.FirstName) : q.OrderBy(x => x.e.LastName).ThenBy(x => x.e.FirstName),
+            "period"      => req.IsDescending ? q.OrderByDescending(x => x.s.PeriodStart) : q.OrderBy(x => x.s.PeriodStart),
+            "sessions"    => req.IsDescending ? q.OrderByDescending(x => x.s.SessionCount) : q.OrderBy(x => x.s.SessionCount),
+            "attendance"  => req.IsDescending ? q.OrderByDescending(x => x.s.AttendanceRate) : q.OrderBy(x => x.s.AttendanceRate),
+            "goal"        => req.IsDescending ? q.OrderByDescending(x => x.s.GoalAchievementRate) : q.OrderBy(x => x.s.GoalAchievementRate),
+            "feedback"    => req.IsDescending ? q.OrderByDescending(x => x.s.ParentFeedbackAvg) : q.OrderBy(x => x.s.ParentFeedbackAvg),
+            "utilization" => req.IsDescending ? q.OrderByDescending(x => x.s.UtilizationRate) : q.OrderBy(x => x.s.UtilizationRate),
+            _             => q.OrderByDescending(x => x.s.PeriodEnd).ThenBy(x => x.e.LastName)
         };
 
-        var total = await projection.CountAsync(ct);
-        var items = await projection.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new EducatorPerformanceSnapshotListItemDto(
+                x.s.Id, x.s.EducatorId,
+                x.e.FirstName + " " + x.e.LastName,
+                x.s.PeriodStart, x.s.PeriodEnd,
+                x.s.SessionCount, x.s.AttendanceRate,
+                x.s.GoalAchievementRate, x.s.ParentFeedbackAvg,
+                x.s.UtilizationRate, x.s.ComputedAt))
+            .ToListAsync(ct);
         return PaginatedResult<EducatorPerformanceSnapshotListItemDto>.Create(
             items, total, req.Page, req.PageSize);
     }

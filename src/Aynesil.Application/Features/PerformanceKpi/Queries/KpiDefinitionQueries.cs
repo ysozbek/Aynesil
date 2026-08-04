@@ -51,26 +51,30 @@ public sealed class GetKpiDefinitionsQueryHandler
                            || k.Code.ToLower().Contains(term));
         }
 
-        var query =
+        // Build base join with anonymous type — sort on entity properties BEFORE projection.
+        var baseQ =
             from k in q
             join cat in _db.RefValues.AsNoTracking()
                 on k.CategoryId equals cat.Id into catGrp
             from cat in catGrp.DefaultIfEmpty()
-            select new KpiDefinitionListItemDto(
-                k.Id, k.CorporationId, k.Code, k.Name,
-                k.CategoryId, cat != null ? cat.Code : null,
-                k.Unit, k.IsActive, k.UpdatedAt);
+            select new { k, cat };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sortedQ = req.SortBy?.ToLowerInvariant() switch
         {
-            "name"   => req.IsDescending ? query.OrderByDescending(x => x.Name)   : query.OrderBy(x => x.Name),
-            "code"   => req.IsDescending ? query.OrderByDescending(x => x.Code)   : query.OrderBy(x => x.Code),
-            "active" => req.IsDescending ? query.OrderByDescending(x => x.IsActive): query.OrderBy(x => x.IsActive),
-            _        => query.OrderBy(x => x.Code)
+            "name"   => req.IsDescending ? baseQ.OrderByDescending(x => x.k.Name)    : baseQ.OrderBy(x => x.k.Name),
+            "code"   => req.IsDescending ? baseQ.OrderByDescending(x => x.k.Code)    : baseQ.OrderBy(x => x.k.Code),
+            "active" => req.IsDescending ? baseQ.OrderByDescending(x => x.k.IsActive) : baseQ.OrderBy(x => x.k.IsActive),
+            _        => baseQ.OrderBy(x => x.k.Code)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sortedQ.CountAsync(ct);
+        var items = await sortedQ
+            .Skip(req.Skip).Take(req.PageSize)
+            .Select(x => new KpiDefinitionListItemDto(
+                x.k.Id, x.k.CorporationId, x.k.Code, x.k.Name,
+                x.k.CategoryId, x.cat != null ? x.cat.Code : null,
+                x.k.Unit, x.k.IsActive, x.k.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<KpiDefinitionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

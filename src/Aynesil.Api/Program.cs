@@ -65,7 +65,10 @@ try
         });
 
     // ── Permission-based Authorization ────────────────────────────────────────
+    // PermissionPolicyProvider: [HasPermission("x:y")] → transient policy with PermissionRequirement
+    // PermissionAuthorizationHandler: evaluates PermissionRequirement against JWT 'perm' claims
     builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+    builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
     builder.Services.AddAuthorizationBuilder()
         .SetDefaultPolicy(new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
