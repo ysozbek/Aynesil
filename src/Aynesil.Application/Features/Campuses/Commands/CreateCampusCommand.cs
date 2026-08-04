@@ -66,8 +66,10 @@ public sealed class CreateCampusCommandHandler : IRequestHandler<CreateCampusCom
             .FirstOrDefaultAsync(c => c.Id == req.CorporationId, ct)
             ?? throw new NotFoundException("Corporation", req.CorporationId);
 
-        var codeNormalized = req.Code.ToUpperInvariant();
+        var codeNormalized = req.Code.Trim().ToUpperInvariant();
+        // Unique (corporation_id, code) applies to soft-deleted rows too.
         var codeExists = await _db.Campuses
+            .IgnoreQueryFilters()
             .AnyAsync(c => c.CorporationId == req.CorporationId && c.Code == codeNormalized, ct);
         if (codeExists)
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(

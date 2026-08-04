@@ -56,40 +56,47 @@ public sealed class GetLeaveRequestsQueryHandler
         if (req.To.HasValue)
             q = q.Where(lr => lr.StartsAt <= req.To.Value);
 
-        var query =
+        // Sort/join before projecting to DTO — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from lr in q
             join ed in _db.Educators.AsNoTracking()
                 on lr.EducatorId equals ed.Id
             join typ in _db.RefValues.AsNoTracking()
                 on lr.LeaveTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new LeaveRequestListItemDto(
-                lr.Id,
-                lr.CorporationId,
-                lr.EducatorId,
-                ed.FirstName + " " + ed.LastName,
-                lr.LeaveTypeId,
-                typ != null ? typ.Code : null,
-                lr.Unit,
-                lr.StartsAt,
-                lr.EndsAt,
-                lr.Quantity,
-                lr.Status,
-                lr.CreatedAt,
-                lr.UpdatedAt);
+            select new { lr, ed, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
-            "startsat"  => req.IsDescending ? query.OrderByDescending(x => x.StartsAt)  : query.OrderBy(x => x.StartsAt),
-            "endsat"    => req.IsDescending ? query.OrderByDescending(x => x.EndsAt)    : query.OrderBy(x => x.EndsAt),
-            "status"    => req.IsDescending ? query.OrderByDescending(x => x.Status)    : query.OrderBy(x => x.Status),
-            "educator"  => req.IsDescending ? query.OrderByDescending(x => x.EducatorFullName) : query.OrderBy(x => x.EducatorFullName),
-            "createdat" => req.IsDescending ? query.OrderByDescending(x => x.CreatedAt) : query.OrderBy(x => x.CreatedAt),
-            _           => query.OrderByDescending(x => x.StartsAt)
+            "startsat"  => req.IsDescending ? joined.OrderByDescending(x => x.lr.StartsAt) : joined.OrderBy(x => x.lr.StartsAt),
+            "endsat"    => req.IsDescending ? joined.OrderByDescending(x => x.lr.EndsAt)   : joined.OrderBy(x => x.lr.EndsAt),
+            "status"    => req.IsDescending ? joined.OrderByDescending(x => x.lr.Status)   : joined.OrderBy(x => x.lr.Status),
+            "educator"  => req.IsDescending
+                ? joined.OrderByDescending(x => x.ed.FirstName + " " + x.ed.LastName)
+                : joined.OrderBy(x => x.ed.FirstName + " " + x.ed.LastName),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.lr.CreatedAt) : joined.OrderBy(x => x.lr.CreatedAt),
+            _           => joined.OrderByDescending(x => x.lr.StartsAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new LeaveRequestListItemDto(
+                x.lr.Id,
+                x.lr.CorporationId,
+                x.lr.EducatorId,
+                x.ed.FirstName + " " + x.ed.LastName,
+                x.lr.LeaveTypeId,
+                x.typ != null ? x.typ.Code : null,
+                x.lr.Unit,
+                x.lr.StartsAt,
+                x.lr.EndsAt,
+                x.lr.Quantity,
+                x.lr.Status,
+                x.lr.CreatedAt,
+                x.lr.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<LeaveRequestListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

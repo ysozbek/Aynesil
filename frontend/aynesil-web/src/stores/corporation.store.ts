@@ -94,10 +94,6 @@ export const useCorporationStore = defineStore('corporation', () => {
     }
   }
 
-  async function remove(id: string) {
-    await corporationService.remove(id)
-  }
-
   async function activate(id: string) {
     await corporationService.activate(id)
     const item = list.value.items.find((c) => c.id === id)
@@ -131,7 +127,6 @@ export const useCorporationStore = defineStore('corporation', () => {
     create,
     update,
     updateSettings,
-    remove,
     activate,
     deactivate,
     clear,

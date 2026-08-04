@@ -1,91 +1,50 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <RouterLink to="/cameras" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </RouterLink>
-    </div>
-    <div class="card mw-750px mx-auto">
-      <div class="card-header border-0 pt-6">
-        <h2 class="card-title fw-bold">{{ isEdit ? $t('camera.form.editTitle') : $t('camera.form.newTitle') }}</h2>
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="handleSubmit">
-          <div class="row g-4">
-            <div class="col-sm-6">
-              <label class="form-label required">{{ $t('camera.fields.code') }}</label>
-              <input v-model="form.code" type="text" class="form-control" required />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label required">{{ $t('camera.fields.name') }}</label>
-              <input v-model="form.name" type="text" class="form-control" required />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('camera.fields.type') }}</label>
-              <select v-model="form.cameraTypeId" class="form-select">
-                <option value="">{{ $t('common.select') }}</option>
-                <option v-for="ct in cameraTypes" :key="ct.id" :value="ct.id">{{ ct.label || ct.code }}</option>
-              </select>
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('camera.fields.streamRef') }}</label>
-              <input v-model="form.streamRef" type="text" class="form-control" placeholder="rtsp://..." />
-            </div>
-          </div>
-          <div v-if="errorMsg" class="alert alert-danger mt-5">{{ errorMsg }}</div>
-          <div class="d-flex justify-content-end gap-3 mt-6">
-            <RouterLink to="/cameras" class="btn btn-light">{{ $t('common.cancel') }}</RouterLink>
-            <button type="submit" class="btn btn-primary" :disabled="cameraStore.saving">
-              <span v-if="cameraStore.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
 import { useAuthStore } from '@/stores/auth.store'
-import { useRefDataStore } from '@/stores/refdata.store'
+import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const cameraStore = useCameraStore()
-const authStore = useAuthStore()
-const refDataStore = useRefDataStore()
+const auth = useAuthStore()
+const refData = useRefDataStore()
+
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
 const errorMsg = ref('')
-const cameraTypes = computed(() => refDataStore.getByCategory?.('camera_type') ?? [])
+const cameraTypes = ref<RefValueItem[]>([])
 
 const form = reactive({ code: '', name: '', cameraTypeId: '', streamRef: '' })
 
 async function handleSubmit() {
   errorMsg.value = ''
-  const corp = authStore.user?.corporationId ?? ''
+  const corp = auth.user?.corporationId ?? ''
   try {
     if (isEdit.value && id) {
       const cur = cameraStore.currentCamera
       if (!cur) return
       await cameraStore.updateCamera(id, {
-        code: form.code, name: form.name,
+        code: form.code,
+        name: form.name,
         cameraTypeId: form.cameraTypeId || undefined,
         streamRef: form.streamRef || undefined,
         rowVersion: cur.rowVersion,
       })
-      router.push(`/cameras/${id}`)
+      router.push({ name: 'camera-detail', params: { id } })
     } else {
       const result = await cameraStore.createCamera({
-        corporationId: corp, code: form.code, name: form.name,
+        corporationId: corp,
+        code: form.code,
+        name: form.name,
         cameraTypeId: form.cameraTypeId || undefined,
         streamRef: form.streamRef || undefined,
       })
-      router.push(`/cameras/${result.id}`)
+      router.push({ name: 'camera-detail', params: { id: result.id } })
     }
   } catch (e: unknown) {
     errorMsg.value = (e as Error).message
@@ -93,7 +52,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('camera_type')
+  cameraTypes.value = await refData.getValues('camera_type')
   if (isEdit.value && id) {
     await cameraStore.fetchCamera(id)
     const c = cameraStore.currentCamera
@@ -106,3 +65,82 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader
+      :title="isEdit ? t('camera.form.editTitle') : t('camera.form.newTitle')"
+    >
+      <button
+        @click="router.push({ name: 'cameras' })"
+        class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+      >
+        {{ t('common.back') }}
+      </button>
+    </PageHeader>
+
+    <form
+      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      @submit.prevent="handleSubmit"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.fields.code') }} *</label>
+          <input
+            v-model="form.code"
+            type="text"
+            required
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.fields.name') }} *</label>
+          <input
+            v-model="form.name"
+            type="text"
+            required
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.fields.type') }}</label>
+          <select
+            v-model="form.cameraTypeId"
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent"
+          >
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="ct in cameraTypes" :key="ct.id" :value="ct.id">{{ ct.label || ct.code }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.fields.streamRef') }}</label>
+          <input
+            v-model="form.streamRef"
+            type="text"
+            placeholder="rtsp://..."
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+      </div>
+
+      <p v-if="errorMsg" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ errorMsg }}</p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          @click="router.push({ name: 'cameras' })"
+          class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+        >
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          :disabled="cameraStore.saving"
+          class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {{ cameraStore.saving ? t('common.saving') : t('common.save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>

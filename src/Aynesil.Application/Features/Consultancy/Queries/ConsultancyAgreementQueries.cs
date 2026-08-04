@@ -47,33 +47,37 @@ public sealed class GetConsultancyAgreementsQueryHandler
             q = q.Where(a => a.Title.ToLower().Contains(term));
         }
 
-        var query =
+        var joined =
             from a in q
             join p  in _db.ConsultancyPlans.AsNoTracking() on a.ConsultancyPlanId equals p.Id
             join i  in _db.Institutions.AsNoTracking()      on a.InstitutionId      equals i.Id
             join typ in _db.RefValues.AsNoTracking()
                 on a.AgreementTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new ConsultancyAgreementListItemDto(
-                a.Id, a.CorporationId,
-                a.ConsultancyPlanId, p.Name,
-                a.InstitutionId, i.Name,
-                a.AgreementTypeId, typ != null ? typ.Code : null,
-                a.Title, a.StartDate, a.EndDate, a.SignedDate,
-                a.Status, a.FileId != null,
-                a.CreatedAt, a.UpdatedAt);
+            select new { a, p, i, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
-            "title"       => req.IsDescending ? query.OrderByDescending(x => x.Title)       : query.OrderBy(x => x.Title),
-            "status"      => req.IsDescending ? query.OrderByDescending(x => x.Status)      : query.OrderBy(x => x.Status),
-            "institution" => req.IsDescending ? query.OrderByDescending(x => x.InstitutionName) : query.OrderBy(x => x.InstitutionName),
-            "startdate"   => req.IsDescending ? query.OrderByDescending(x => x.StartDate)   : query.OrderBy(x => x.StartDate),
-            _             => query.OrderByDescending(x => x.CreatedAt)
+            "title"       => req.IsDescending ? joined.OrderByDescending(x => x.a.Title)     : joined.OrderBy(x => x.a.Title),
+            "status"      => req.IsDescending ? joined.OrderByDescending(x => x.a.Status)    : joined.OrderBy(x => x.a.Status),
+            "institution" => req.IsDescending ? joined.OrderByDescending(x => x.i.Name)      : joined.OrderBy(x => x.i.Name),
+            "startdate"   => req.IsDescending ? joined.OrderByDescending(x => x.a.StartDate) : joined.OrderBy(x => x.a.StartDate),
+            _             => joined.OrderByDescending(x => x.a.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new ConsultancyAgreementListItemDto(
+                x.a.Id, x.a.CorporationId,
+                x.a.ConsultancyPlanId, x.p.Name,
+                x.a.InstitutionId, x.i.Name,
+                x.a.AgreementTypeId, x.typ != null ? x.typ.Code : null,
+                x.a.Title, x.a.StartDate, x.a.EndDate, x.a.SignedDate,
+                x.a.Status, x.a.FileId != null,
+                x.a.CreatedAt, x.a.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<ConsultancyAgreementListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

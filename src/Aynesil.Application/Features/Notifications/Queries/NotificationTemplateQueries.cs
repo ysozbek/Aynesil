@@ -27,55 +27,54 @@ public sealed class GetNotificationTemplatesQueryHandler
     public async Task<PaginatedResult<NotificationTemplateListItemDto>> Handle(
         GetNotificationTemplatesQuery req, CancellationToken ct)
     {
-        var query =
-            from t in _db.NotificationTemplates.AsNoTracking()
+        // Filter/sort on entity first — EF cannot translate Where/OrderBy on DTO projection.
+        var templates = _db.NotificationTemplates.AsNoTracking();
+
+        if (req.CorporationId.HasValue)
+            templates = templates.Where(t => t.CorporationId == req.CorporationId.Value || t.CorporationId == null);
+
+        if (req.IsActive.HasValue)
+            templates = templates.Where(t => t.IsActive == req.IsActive.Value);
+
+        if (req.CategoryId.HasValue)
+            templates = templates.Where(t => t.CategoryId == req.CategoryId.Value);
+
+        if (req.TypeId.HasValue)
+            templates = templates.Where(t => t.TypeId == req.TypeId.Value);
+
+        if (!string.IsNullOrWhiteSpace(req.Search))
+        {
+            var s = req.Search.Trim().ToLower();
+            templates = templates.Where(t => t.Code.ToLower().Contains(s));
+        }
+
+        var joined =
+            from t in templates
             join cat in _db.RefValues.AsNoTracking()
                 on t.CategoryId equals cat.Id into catGrp
             from cat in catGrp.DefaultIfEmpty()
             join typ in _db.RefValues.AsNoTracking()
                 on t.TypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new NotificationTemplateListItemDto(
-                t.Id, t.CorporationId, t.Code,
-                cat != null ? cat.Code : null,
-                typ != null ? typ.Code : null,
-                t.IsActive, t.UpdatedAt);
+            select new { t, cat, typ };
 
-        if (req.CorporationId.HasValue)
-            query = query.Where(x => x.CorporationId == req.CorporationId.Value || x.CorporationId == null);
-
-        if (req.IsActive.HasValue)
-            query = query.Where(x => x.IsActive == req.IsActive.Value);
-
-        if (req.CategoryId.HasValue)
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
-            var catId = req.CategoryId.Value;
-            query = query.Where(x =>
-                _db.NotificationTemplates.Any(t => t.Id == x.Id && t.CategoryId == catId));
-        }
-
-        if (req.TypeId.HasValue)
-        {
-            var typeId = req.TypeId.Value;
-            query = query.Where(x =>
-                _db.NotificationTemplates.Any(t => t.Id == x.Id && t.TypeId == typeId));
-        }
-
-        if (!string.IsNullOrWhiteSpace(req.Search))
-        {
-            var s = req.Search.Trim().ToLower();
-            query = query.Where(x => x.Code.ToLower().Contains(s));
-        }
-
-        query = req.SortBy?.ToLowerInvariant() switch
-        {
-            "code"      => req.IsDescending ? query.OrderByDescending(x => x.Code) : query.OrderBy(x => x.Code),
-            "updatedat" => req.IsDescending ? query.OrderByDescending(x => x.UpdatedAt) : query.OrderBy(x => x.UpdatedAt),
-            _           => query.OrderBy(x => x.Code)
+            "code"      => req.IsDescending ? joined.OrderByDescending(x => x.t.Code)      : joined.OrderBy(x => x.t.Code),
+            "updatedat" => req.IsDescending ? joined.OrderByDescending(x => x.t.UpdatedAt) : joined.OrderBy(x => x.t.UpdatedAt),
+            _           => joined.OrderBy(x => x.t.Code)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new NotificationTemplateListItemDto(
+                x.t.Id, x.t.CorporationId, x.t.Code,
+                x.cat != null ? x.cat.Code : null,
+                x.typ != null ? x.typ.Code : null,
+                x.t.IsActive, x.t.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<NotificationTemplateListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

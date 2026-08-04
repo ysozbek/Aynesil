@@ -67,6 +67,10 @@ public class ExceptionMiddleware
                 StatusCodes.Status409Conflict,
                 ApiResponse.Fail("The record was modified by another user. Please refresh and try again.")),
 
+            DbUpdateException dbe when IsUniqueViolation(dbe) => (
+                StatusCodes.Status409Conflict,
+                ApiResponse.Fail("A record with the same unique key already exists.")),
+
             OperationCanceledException => (
                 StatusCodes.Status499ClientClosedRequest,
                 ApiResponse.Fail("The request was cancelled.")),
@@ -90,5 +94,17 @@ public class ExceptionMiddleware
 
         var payload = response with { TraceId = traceId };
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload, _jsonOptions));
+    }
+
+    /// <summary>Postgres unique_violation (23505) surfaced through EF SaveChanges.</summary>
+    private static bool IsUniqueViolation(DbUpdateException ex)
+    {
+        for (var inner = ex.InnerException; inner is not null; inner = inner.InnerException)
+        {
+            var sqlState = inner.GetType().GetProperty("SqlState")?.GetValue(inner) as string;
+            if (sqlState == "23505")
+                return true;
+        }
+        return false;
     }
 }

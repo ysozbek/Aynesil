@@ -43,19 +43,21 @@ public sealed class GetPromotionsQueryHandler
             q = q.Where(p => p.Code.ToLower().Contains(s) || p.Name.ToLower().Contains(s));
         }
 
-        var query = q.Select(p => new PromotionListItemDto(
-            p.Id, p.Code, p.Name, p.IsPercentage, p.Value,
-            p.ValidFrom, p.ValidTo, p.IsActive));
-
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "code"      => req.IsDescending ? query.OrderByDescending(p => p.Code)  : query.OrderBy(p => p.Code),
-            "validfrom" => req.IsDescending ? query.OrderByDescending(p => p.ValidFrom) : query.OrderBy(p => p.ValidFrom),
-            _           => query.OrderBy(p => p.Code)
+            "code"      => req.IsDescending ? q.OrderByDescending(p => p.Code)      : q.OrderBy(p => p.Code),
+            "validfrom" => req.IsDescending ? q.OrderByDescending(p => p.ValidFrom) : q.OrderBy(p => p.ValidFrom),
+            _           => q.OrderBy(p => p.Code)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(p => new PromotionListItemDto(
+                p.Id, p.Code, p.Name, p.IsPercentage, p.Value,
+                p.ValidFrom, p.ValidTo, p.IsActive))
+            .ToListAsync(ct);
 
         return PaginatedResult<PromotionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

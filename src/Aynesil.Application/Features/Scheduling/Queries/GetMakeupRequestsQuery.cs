@@ -31,25 +31,29 @@ public sealed class GetMakeupRequestsQueryHandler
         if (req.StudentId.HasValue)     q = q.Where(m => m.StudentId == req.StudentId.Value);
         if (req.Status is not null)     q = q.Where(m => m.Status == req.Status);
 
-        var query =
+        var joined =
             from m in q
             join s in _db.Students.AsNoTracking()
                 on m.StudentId equals s.Id
-            select new MakeupRequestListItemDto(
-                m.Id, m.StudentId,
-                s.FirstName + " " + s.LastName,
-                m.MissedSessionId, m.Status,
-                m.RequestedAt, m.ExpiresOn);
+            select new { m, s };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "status"      => req.IsDescending ? query.OrderByDescending(m => m.Status) : query.OrderBy(m => m.Status),
-            "requestedat" => req.IsDescending ? query.OrderByDescending(m => m.RequestedAt) : query.OrderBy(m => m.RequestedAt),
-            _             => query.OrderByDescending(m => m.RequestedAt)
+            "status"      => req.IsDescending ? joined.OrderByDescending(x => x.m.Status)      : joined.OrderBy(x => x.m.Status),
+            "requestedat" => req.IsDescending ? joined.OrderByDescending(x => x.m.RequestedAt) : joined.OrderBy(x => x.m.RequestedAt),
+            _             => joined.OrderByDescending(x => x.m.RequestedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new MakeupRequestListItemDto(
+                x.m.Id, x.m.StudentId,
+                x.s.FirstName + " " + x.s.LastName,
+                x.m.MissedSessionId, x.m.Status,
+                x.m.RequestedAt, x.m.ExpiresOn))
+            .ToListAsync(ct);
         return PaginatedResult<MakeupRequestListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

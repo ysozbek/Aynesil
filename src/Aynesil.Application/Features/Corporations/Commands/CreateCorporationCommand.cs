@@ -55,15 +55,18 @@ public sealed class CreateCorporationCommandHandler : IRequestHandler<CreateCorp
 
     public async Task<CorporationDto> Handle(CreateCorporationCommand req, CancellationToken ct)
     {
-        var codeNormalized = req.Code.ToLowerInvariant();
+        var codeNormalized = req.Code.Trim().ToLowerInvariant();
 
+        // Unique index applies to soft-deleted rows too — ignore the query filter.
         var codeExists = await _db.Corporations
+            .IgnoreQueryFilters()
             .AnyAsync(c => c.Code == codeNormalized, ct);
         if (codeExists)
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.Code), $"Corporation code '{codeNormalized}' is already taken.")]);
+                nameof(CreateCorporationCommand.Code),
+                $"Corporation code '{codeNormalized}' is already taken.")]);
 
-        var corp = Corporation.Create(codeNormalized, req.LegalName, req.DisplayName, req.DefaultLocale);
+        var corp = Corporation.Create(codeNormalized, req.LegalName.Trim(), req.DisplayName.Trim(), req.DefaultLocale);
         corp.DefaultCurrency = req.DefaultCurrency;
         corp.Timezone = req.Timezone;
         corp.TaxOffice = req.TaxOffice;
@@ -72,8 +75,25 @@ public sealed class CreateCorporationCommandHandler : IRequestHandler<CreateCorp
         corp.UpdatedBy = _currentUser.UserId;
 
         _db.Corporations.Add(corp);
-        await _db.SaveChangesAsync(ct);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
+                nameof(CreateCorporationCommand.Code),
+                $"Corporation code '{codeNormalized}' is already taken.")]);
+        }
 
         return corp.ToDto(campusCount: 0);
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex)
+    {
+        // Npgsql: 23505 unique_violation — avoid hard dependency on Npgsql in Application.
+        var inner = ex.InnerException;
+        return inner?.GetType().Name == "PostgresException"
+               && inner.GetType().GetProperty("SqlState")?.GetValue(inner) as string == "23505";
     }
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Notifications.Commands;
 using Aynesil.Application.Features.Notifications.Dtos;
@@ -76,8 +77,10 @@ public sealed class NotificationsController : BaseController
 
     private Guid GetCurrentUserId()
     {
-        var claim = HttpContext.User.FindFirst("sub")?.Value
-                 ?? HttpContext.User.FindFirst("userId")?.Value;
+        // JWT "sub" is mapped to ClaimTypes.NameIdentifier by the ASP.NET JWT handler.
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                 ?? User.FindFirst("sub")?.Value
+                 ?? User.FindFirst("userId")?.Value;
         if (!Guid.TryParse(claim, out var id))
             throw new UnauthorizedAccessException("Authenticated user identity not found.");
         return id;

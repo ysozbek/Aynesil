@@ -37,10 +37,6 @@ export const corporationService = {
     return apiService.put<CorporationSettingsDto>(`${BASE}/${id}/settings`, request)
   },
 
-  remove(id: string) {
-    return apiService.delete(`${BASE}/${id}`)
-  },
-
   activate(id: string) {
     return apiService.post(`${BASE}/${id}/activate`)
   },

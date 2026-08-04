@@ -38,19 +38,22 @@ public sealed class GetPackageDefinitionsQueryHandler
             q = q.Where(p => p.Name.ToLower().Contains(s) || p.Code.ToLower().Contains(s));
         }
 
-        var query = q.Select(p => new PackageDefinitionListItemDto(
-            p.Id, p.CorporationId, p.Code, p.Name,
-            p.PackageTypeId, p.TotalCredits, p.ListPrice, p.Currency, p.IsActive));
-
-        query = req.SortBy?.ToLower() switch
+        // Sort on entity fields before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "name"      => req.IsDescending ? query.OrderByDescending(p => p.Name)      : query.OrderBy(p => p.Name),
-            "listprice" => req.IsDescending ? query.OrderByDescending(p => p.ListPrice)  : query.OrderBy(p => p.ListPrice),
-            _           => query.OrderBy(p => p.Name)
+            "name"      => req.IsDescending ? q.OrderByDescending(p => p.Name)      : q.OrderBy(p => p.Name),
+            "listprice" => req.IsDescending ? q.OrderByDescending(p => p.ListPrice)  : q.OrderBy(p => p.ListPrice),
+            _           => q.OrderBy(p => p.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(p => new PackageDefinitionListItemDto(
+                p.Id, p.CorporationId, p.Code, p.Name,
+                p.PackageTypeId, p.TotalCredits, p.ListPrice, p.Currency, p.IsActive))
+            .ToListAsync(ct);
         return PaginatedResult<PackageDefinitionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

@@ -1,166 +1,80 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="d-flex align-items-center justify-content-between mb-6">
-      <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camera.auth.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('camera.auth.subtitle') }}</p>
-      </div>
-      <button
-        v-if="hasPermission('viewing_authorization:grant')"
-        class="btn btn-primary"
-        @click="showCreateModal = true"
-      >
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camera.auth.new') }}
-      </button>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.status') }}</label>
-            <select v-model="filters.isRevoked" class="form-select form-select-sm" @change="doFetch">
-              <option :value="undefined">{{ $t('common.allStatuses') }}</option>
-              <option :value="false">{{ $t('camera.auth.active') }}</option>
-              <option :value="true">{{ $t('camera.auth.revoked') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('camera.auth.currentlyValid') }}</label>
-            <select v-model="filters.isCurrentlyValid" class="form-select form-select-sm" @change="doFetch">
-              <option :value="undefined">{{ $t('common.allStatuses') }}</option>
-              <option :value="true">{{ $t('common.active') }}</option>
-              <option :value="false">{{ $t('common.passive') }}</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="cameraStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="cameraStore.authorizations.items.length === 0" class="text-center py-15 text-muted">
-          {{ $t('camera.auth.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('camera.auth.guardian') }}</th>
-                <th>{{ $t('camera.auth.student') }}</th>
-                <th>{{ $t('camera.auth.validFrom') }}</th>
-                <th>{{ $t('camera.auth.validTo') }}</th>
-                <th>{{ $t('camera.auth.accessType') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="a in cameraStore.authorizations.items" :key="a.id">
-                <td class="ps-4 fw-semibold">{{ a.guardianFullName ?? '—' }}</td>
-                <td>{{ a.studentFullName ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ formatDate(a.validFrom) }}</td>
-                <td class="text-muted fs-7">{{ formatDate(a.validTo) }}</td>
-                <td>{{ a.accessTypeCode ?? '—' }}</td>
-                <td>
-                  <span v-if="a.isRevoked" class="badge badge-light-danger">{{ $t('camera.auth.revoked') }}</span>
-                  <span v-else-if="a.isCurrentlyValid" class="badge badge-light-success">{{ $t('camera.auth.active') }}</span>
-                  <span v-else class="badge badge-light-warning">{{ $t('camera.auth.expired') }}</span>
-                </td>
-                <td class="text-end pe-4">
-                  <button
-                    v-if="!a.isRevoked && a.isCurrentlyValid && hasPermission('viewing_authorization:revoke')"
-                    class="btn btn-sm btn-light-danger"
-                    @click="doRevoke(a.id)"
-                  >
-                    {{ $t('camera.auth.revoke') }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create Modal -->
-    <div v-if="showCreateModal" class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ $t('camera.auth.new') }}</h5>
-            <button class="btn-close" @click="showCreateModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label required">{{ $t('camera.auth.guardianId') }}</label>
-                <input v-model="createForm.guardianId" type="text" class="form-control" />
-              </div>
-              <div class="col-12">
-                <label class="form-label required">{{ $t('camera.auth.studentId') }}</label>
-                <input v-model="createForm.studentId" type="text" class="form-control" />
-              </div>
-              <div class="col-6">
-                <label class="form-label required">{{ $t('camera.auth.validFrom') }}</label>
-                <input v-model="createForm.validFrom" type="datetime-local" class="form-control" />
-              </div>
-              <div class="col-6">
-                <label class="form-label required">{{ $t('camera.auth.validTo') }}</label>
-                <input v-model="createForm.validTo" type="datetime-local" class="form-control" />
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-light" @click="showCreateModal = false">{{ $t('common.cancel') }}</button>
-            <button class="btn btn-primary" :disabled="cameraStore.saving" @click="doCreate">
-              <span v-if="cameraStore.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { ViewingAuthorizationDto } from '@/types/camera.types'
 
+const { t } = useI18n()
 const cameraStore = useCameraStore()
-const authStore = useAuthStore()
-const showCreateModal = ref(false)
+const auth = useAuthStore()
+const { can } = usePermission()
 
-const filters = reactive({ isRevoked: undefined as boolean | undefined, isCurrentlyValid: undefined as boolean | undefined })
+const showCreateModal = ref(false)
+const showRevokeConfirm = ref(false)
+const revokeTargetId = ref<string | null>(null)
+
+const filters = reactive({
+  isRevoked: undefined as boolean | undefined,
+  isCurrentlyValid: undefined as boolean | undefined,
+})
+
 const createForm = reactive({ guardianId: '', studentId: '', validFrom: '', validTo: '' })
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
-function formatDate(dt: string) { return new Date(dt).toLocaleString('tr-TR') }
+const columns: Column<ViewingAuthorizationDto>[] = [
+  { key: 'guardianFullName', label: t('camera.auth.guardian') },
+  { key: 'studentFullName', label: t('camera.auth.student') },
+  { key: 'validFrom', label: t('camera.auth.validFrom'), width: '150px' },
+  { key: 'validTo', label: t('camera.auth.validTo'), width: '150px' },
+  { key: 'accessTypeCode', label: t('camera.auth.accessType'), width: '120px' },
+  { key: 'status', label: t('common.status'), width: '120px' },
+]
+
+function formatDate(dt: string) {
+  return new Date(dt).toLocaleString('tr-TR')
+}
+
+function authStatusClass(a: ViewingAuthorizationDto) {
+  if (a.isRevoked) return 'bg-red-100 text-red-700'
+  if (a.isCurrentlyValid) return 'bg-green-100 text-green-700'
+  return 'bg-amber-100 text-amber-700'
+}
+
+function authStatusLabel(a: ViewingAuthorizationDto) {
+  if (a.isRevoked) return t('camera.auth.revoked')
+  if (a.isCurrentlyValid) return t('camera.auth.active')
+  return t('camera.auth.expired')
+}
 
 async function doFetch() {
   await cameraStore.fetchAuthorizations({
-    corporationId: authStore.user?.corporationId,
+    corporationId: auth.user?.corporationId,
     isRevoked: filters.isRevoked,
     isCurrentlyValid: filters.isCurrentlyValid,
   })
 }
 
-async function doRevoke(id: string) {
-  if (confirm('Bu yetki iptal edilecek. Onaylıyor musunuz?')) {
-    await cameraStore.revokeAuthorization(id)
-  }
+function promptRevoke(id: string) {
+  revokeTargetId.value = id
+  showRevokeConfirm.value = true
+}
+
+async function doRevoke() {
+  if (!revokeTargetId.value) return
+  await cameraStore.revokeAuthorization(revokeTargetId.value)
+  showRevokeConfirm.value = false
+  revokeTargetId.value = null
+  await doFetch()
 }
 
 async function doCreate() {
   await cameraStore.createAuthorization({
-    corporationId: authStore.user?.corporationId ?? '',
     guardianId: createForm.guardianId,
     studentId: createForm.studentId,
     validFrom: new Date(createForm.validFrom).toISOString(),
@@ -173,3 +87,145 @@ async function doCreate() {
 
 onMounted(doFetch)
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('camera.auth.title')" :description="t('camera.auth.subtitle')">
+      <button
+        v-if="can('viewing_authorization:grant')"
+        @click="showCreateModal = true"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ t('camera.auth.new') }}
+      </button>
+    </PageHeader>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
+        <select
+          v-model="filters.isRevoked"
+          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
+          @change="doFetch"
+        >
+          <option :value="undefined">{{ t('common.allStatuses') }}</option>
+          <option :value="false">{{ t('camera.auth.active') }}</option>
+          <option :value="true">{{ t('camera.auth.revoked') }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('camera.auth.currentlyValid') }}</label>
+        <select
+          v-model="filters.isCurrentlyValid"
+          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
+          @change="doFetch"
+        >
+          <option :value="undefined">{{ t('common.allStatuses') }}</option>
+          <option :value="true">{{ t('common.active') }}</option>
+          <option :value="false">{{ t('common.passive') }}</option>
+        </select>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="cameraStore.authorizations.items"
+      :loading="cameraStore.loading"
+      :empty-text="t('camera.auth.noData')"
+    >
+      <template #cell-guardianFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-studentFullName="{ value }">
+        <span class="text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-validFrom="{ row }">
+        <span class="text-muted-foreground text-xs">{{ formatDate(row.validFrom) }}</span>
+      </template>
+      <template #cell-validTo="{ row }">
+        <span class="text-muted-foreground text-xs">{{ formatDate(row.validTo) }}</span>
+      </template>
+      <template #cell-accessTypeCode="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-status="{ row }">
+        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', authStatusClass(row)]">
+          {{ authStatusLabel(row) }}
+        </span>
+      </template>
+      <template #actions="{ row }">
+        <div class="flex items-center justify-end gap-1" @click.stop>
+          <button
+            v-if="!row.isRevoked && row.isCurrentlyValid && can('viewing_authorization:revoke')"
+            @click="promptRevoke(row.id)"
+            class="px-2.5 py-1 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+          >
+            {{ t('camera.auth.revoke') }}
+          </button>
+        </div>
+      </template>
+    </DataTable>
+
+    <FormModal
+      :open="showCreateModal"
+      :title="t('camera.auth.new')"
+      :saving="cameraStore.saving"
+      @close="showCreateModal = false"
+      @submit="doCreate"
+    >
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.guardianId') }} *</label>
+          <input
+            v-model="createForm.guardianId"
+            type="text"
+            required
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.studentId') }} *</label>
+          <input
+            v-model="createForm.studentId"
+            type="text"
+            required
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.validFrom') }} *</label>
+            <input
+              v-model="createForm.validFrom"
+              type="datetime-local"
+              required
+              class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.validTo') }} *</label>
+            <input
+              v-model="createForm.validTo"
+              type="datetime-local"
+              required
+              class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+      </div>
+    </FormModal>
+
+    <ConfirmModal
+      :open="showRevokeConfirm"
+      :title="t('camera.auth.revoke')"
+      message="Bu yetki iptal edilecek. Onaylıyor musunuz?"
+      :confirm-label="t('camera.auth.revoke')"
+      :loading="cameraStore.saving"
+      @confirm="doRevoke"
+      @cancel="showRevokeConfirm = false"
+    />
+  </div>
+</template>

@@ -38,27 +38,31 @@ public sealed class GetPaymentsQueryHandler
         if (req.PaidFrom.HasValue)       q = q.Where(p => p.PaidAt >= req.PaidFrom.Value);
         if (req.PaidTo.HasValue)         q = q.Where(p => p.PaidAt <= req.PaidTo.Value);
 
-        var query =
+        var joined =
             from pay in q
             join student in _db.Students.AsNoTracking()
                 on pay.StudentId equals student.Id into studentGrp
             from student in studentGrp.DefaultIfEmpty()
-            select new PaymentListItemDto(
-                pay.Id, pay.InvoiceId,
-                student != null ? student.FirstName + " " + student.LastName : null,
-                pay.PaymentMethodId, pay.Amount, pay.Currency,
-                pay.Status, pay.PaidAt, pay.CreatedAt);
+            select new { pay, student };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "amount"    => req.IsDescending ? query.OrderByDescending(p => p.Amount)    : query.OrderBy(p => p.Amount),
-            "paidat"    => req.IsDescending ? query.OrderByDescending(p => p.PaidAt)    : query.OrderBy(p => p.PaidAt),
-            "createdat" => req.IsDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
-            _           => query.OrderByDescending(p => p.CreatedAt)
+            "amount"    => req.IsDescending ? joined.OrderByDescending(x => x.pay.Amount)    : joined.OrderBy(x => x.pay.Amount),
+            "paidat"    => req.IsDescending ? joined.OrderByDescending(x => x.pay.PaidAt)    : joined.OrderBy(x => x.pay.PaidAt),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.pay.CreatedAt) : joined.OrderBy(x => x.pay.CreatedAt),
+            _           => joined.OrderByDescending(x => x.pay.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new PaymentListItemDto(
+                x.pay.Id, x.pay.InvoiceId,
+                x.student != null ? x.student.FirstName + " " + x.student.LastName : null,
+                x.pay.PaymentMethodId, x.pay.Amount, x.pay.Currency,
+                x.pay.Status, x.pay.PaidAt, x.pay.CreatedAt))
+            .ToListAsync(ct);
 
         return PaginatedResult<PaymentListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

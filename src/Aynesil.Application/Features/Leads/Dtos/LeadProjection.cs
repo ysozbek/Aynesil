@@ -18,75 +18,31 @@ internal static class LeadProjection
     /// </summary>
     internal static Task<LeadDto?> LoadAsync(
         IAppDbContext db, Guid leadId, CancellationToken ct)
-        => BuildBaseQuery(db)
-            .Where(x => x.Id == leadId)
-            .Select(x => ToLeadDto(x))
-            .FirstOrDefaultAsync(ct);
-
-    /// <summary>
-    /// Builds a queryable that can be further filtered, paged, and ordered before executing.
-    /// </summary>
-    internal static IQueryable<LeadListItemDto> BuildListQuery(IAppDbContext db)
-        => BuildBaseQuery(db).Select(x => ToLeadListItemDto(x));
-
-    // ── Internal join builder ─────────────────────────────────────────────────
-
-    private record LeadJoin(
-        Guid Id, Guid CorporationId,
-        Guid? CampusId, string? CampusName,
-        Guid? SourceId, string? SourceCode,
-        Guid? StatusId, string? StatusCode,
-        Guid? PipelineStageId, string? PipelineStageCode,
-        string? ChildName, DateOnly? ChildBirthDate,
-        string ContactName, string? ContactPhone, string? ContactEmail,
-        string? PresentingNeed, string? ReferralDetail,
-        Guid? AssignedToId, string? AssignedToName,
-        int? Score, Guid? ConvertedStudentId, DateTimeOffset? ConvertedAt,
-        DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, int RowVersion);
-
-    private static IQueryable<LeadJoin> BuildBaseQuery(IAppDbContext db)
-        => from l in db.Leads
-           join src  in db.RefValues    on l.SourceId        equals src.Id  into srcG  from src  in srcG.DefaultIfEmpty()
-           join stat in db.RefValues    on l.StatusId         equals stat.Id into statG from stat in statG.DefaultIfEmpty()
-           join stg  in db.RefValues    on l.PipelineStageId  equals stg.Id  into stgG  from stg  in stgG.DefaultIfEmpty()
-           join camp in db.Campuses     on l.CampusId         equals camp.Id into campG from camp in campG.DefaultIfEmpty()
-           join usr  in db.UserAccounts on l.AssignedToId     equals usr.Id  into usrG  from usr  in usrG.DefaultIfEmpty()
-           select new LeadJoin(
-               l.Id, l.CorporationId,
-               l.CampusId, camp == null ? null : camp.Name,
-               l.SourceId, src  == null ? null : src.Code,
-               l.StatusId, stat == null ? null : stat.Code,
-               l.PipelineStageId, stg == null ? null : stg.Code,
-               l.ChildName, l.ChildBirthDate,
-               l.ContactName, l.ContactPhone, l.ContactEmail,
-               l.PresentingNeed, l.ReferralDetail,
-               l.AssignedToId, usr == null ? null : usr.FullName,
-               l.Score, l.ConvertedStudentId, l.ConvertedAt,
-               l.CreatedAt, l.UpdatedAt, l.RowVersion);
-
-    private static LeadDto ToLeadDto(LeadJoin x)
-        => new(x.Id, x.CorporationId,
-               x.CampusId, x.CampusName,
-               x.SourceId, x.SourceCode,
-               x.StatusId, x.StatusCode,
-               x.PipelineStageId, x.PipelineStageCode,
-               x.ChildName, x.ChildBirthDate,
-               x.ContactName, x.ContactPhone, x.ContactEmail,
-               x.PresentingNeed, x.ReferralDetail,
-               x.AssignedToId, x.AssignedToName,
-               x.Score, x.ConvertedStudentId, x.ConvertedAt,
-               x.ConvertedStudentId.HasValue,
-               x.CreatedAt, x.UpdatedAt, x.RowVersion);
-
-    private static LeadListItemDto ToLeadListItemDto(LeadJoin x)
-        => new(x.Id, x.CorporationId,
-               x.CampusId, x.CampusName,
-               x.SourceId, x.SourceCode,
-               x.StatusId, x.StatusCode,
-               x.PipelineStageId, x.PipelineStageCode,
-               x.ChildName,
-               x.ContactName, x.ContactPhone, x.ContactEmail,
-               x.AssignedToId, x.AssignedToName,
-               x.Score, x.ConvertedStudentId.HasValue,
-               x.CreatedAt);
+        => (
+            from l in db.Leads.AsNoTracking()
+            where l.Id == leadId
+            join src in db.RefValues.AsNoTracking() on l.SourceId equals src.Id into srcG
+            from src in srcG.DefaultIfEmpty()
+            join stat in db.RefValues.AsNoTracking() on l.StatusId equals stat.Id into statG
+            from stat in statG.DefaultIfEmpty()
+            join stg in db.RefValues.AsNoTracking() on l.PipelineStageId equals stg.Id into stgG
+            from stg in stgG.DefaultIfEmpty()
+            join camp in db.Campuses.AsNoTracking() on l.CampusId equals camp.Id into campG
+            from camp in campG.DefaultIfEmpty()
+            join usr in db.UserAccounts.AsNoTracking() on l.AssignedToId equals usr.Id into usrG
+            from usr in usrG.DefaultIfEmpty()
+            select new LeadDto(
+                l.Id, l.CorporationId,
+                l.CampusId, camp != null ? camp.Name : null,
+                l.SourceId, src != null ? src.Code : null,
+                l.StatusId, stat != null ? stat.Code : null,
+                l.PipelineStageId, stg != null ? stg.Code : null,
+                l.ChildName, l.ChildBirthDate,
+                l.ContactName, l.ContactPhone, l.ContactEmail,
+                l.PresentingNeed, l.ReferralDetail,
+                l.AssignedToId, usr != null ? usr.FullName : null,
+                l.Score, l.ConvertedStudentId, l.ConvertedAt,
+                l.ConvertedStudentId != null,
+                l.CreatedAt, l.UpdatedAt, l.RowVersion)
+        ).FirstOrDefaultAsync(ct);
 }

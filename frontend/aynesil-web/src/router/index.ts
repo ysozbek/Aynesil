@@ -429,16 +429,19 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'room:read' },
       },
       {
+        // Alias keeps V13 menu path (/scheduling/recurring) working if V31 not applied.
         path: 'scheduling/recurring-schedules',
+        alias: ['scheduling/recurring'],
         name: 'recurring-schedules',
         component: () => import('@/views/scheduling/RecurringScheduleListView.vue'),
-        meta: { permission: 'recurring_schedule:read' },
+        // API gates recurring schedules with session:* (no recurring_schedule:* catalog).
+        meta: { permission: 'session:read' },
       },
       {
         path: 'scheduling/recurring-schedules/new',
         name: 'recurring-schedule-new',
         component: () => import('@/views/scheduling/RecurringScheduleFormView.vue'),
-        meta: { permission: 'recurring_schedule:create' },
+        meta: { permission: 'session:create' },
       },
       {
         path: 'scheduling/attendance',

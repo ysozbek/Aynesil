@@ -8,7 +8,6 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
-import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { CorporationListItemDto } from '@/types/corporation.types'
@@ -148,38 +147,25 @@ async function submitForm() {
     showForm.value = false
     store.fetchList(query)
   } catch (err: unknown) {
-    formErrors.general = (err as Error).message
+    const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; message?: string }
+    const apiErrors = axiosErr.response?.data?.errors
+    if (apiErrors) {
+      const codeMsg = apiErrors.Code?.[0] ?? apiErrors.code?.[0]
+      if (codeMsg) formErrors.code = codeMsg
+      formErrors.general = axiosErr.response?.data?.message ?? t('errors.serverError')
+    } else {
+      formErrors.general = axiosErr.response?.data?.message ?? axiosErr.message ?? t('errors.serverError')
+    }
   }
 }
 
-// ── Activate / Deactivate ─────────────────────────────────────────────────────
+// ── Activate / Deactivate (delete is not allowed — suspend only) ──────────────
 async function toggleStatus(row: CorporationListItemDto, e: Event) {
   e.stopPropagation()
   if (row.status === 'Active') {
     await store.deactivate(row.id)
   } else {
     await store.activate(row.id)
-  }
-}
-
-// ── Delete ────────────────────────────────────────────────────────────────────
-const deleteTarget = ref<CorporationListItemDto | null>(null)
-const deleteLoading = ref(false)
-
-function confirmDelete(row: CorporationListItemDto, e: Event) {
-  e.stopPropagation()
-  deleteTarget.value = row
-}
-
-async function doDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await store.remove(deleteTarget.value.id)
-    deleteTarget.value = null
-    store.fetchList(query)
-  } finally {
-    deleteLoading.value = false
   }
 }
 </script>
@@ -274,16 +260,6 @@ async function doDelete() {
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 5.636a9 9 0 1012.728 12.728M9 9l6 6" />
-            </svg>
-          </button>
-          <button
-            v-if="can('corporation:delete')"
-            @click="(e) => confirmDelete(row, e)"
-            class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-            :title="t('common.delete')"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
         </div>
@@ -388,16 +364,5 @@ async function doDelete() {
         </div>
       </div>
     </FormModal>
-
-    <!-- Delete confirm -->
-    <ConfirmModal
-      :open="!!deleteTarget"
-      :title="t('corporation.deleteTitle')"
-      :message="t('corporation.deleteMessage', { name: deleteTarget?.displayName })"
-      :confirm-label="t('common.delete')"
-      :loading="deleteLoading"
-      @confirm="doDelete"
-      @cancel="deleteTarget = null"
-    />
   </div>
 </template>

@@ -42,28 +42,32 @@ public sealed class GetProgramsQueryHandler
                 p.Code.ToLower().Contains(search));
         }
 
-        var query =
+        var joined =
             from p in q
             join pt in _db.RefValues.AsNoTracking()
                 on p.ProgramTypeId equals pt.Id into ptGrp
             from pt in ptGrp.DefaultIfEmpty()
-            select new ProgramListItemDto(
-                p.Id, p.CorporationId, p.Code, p.Name,
-                p.ProgramTypeId, pt != null ? pt.Code : null,
-                p.Description, p.IsActive,
-                p.Services.Count(),
-                p.CreatedAt);
+            select new { p, pt };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "code"      => req.IsDescending ? query.OrderByDescending(p => p.Code)      : query.OrderBy(p => p.Code),
-            "name"      => req.IsDescending ? query.OrderByDescending(p => p.Name)      : query.OrderBy(p => p.Name),
-            "createdat" => req.IsDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
-            _           => req.IsDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.Name)
+            "code"      => req.IsDescending ? joined.OrderByDescending(x => x.p.Code)      : joined.OrderBy(x => x.p.Code),
+            "name"      => req.IsDescending ? joined.OrderByDescending(x => x.p.Name)      : joined.OrderBy(x => x.p.Name),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.p.CreatedAt) : joined.OrderBy(x => x.p.CreatedAt),
+            _           => req.IsDescending ? joined.OrderByDescending(x => x.p.CreatedAt) : joined.OrderBy(x => x.p.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new ProgramListItemDto(
+                x.p.Id, x.p.CorporationId, x.p.Code, x.p.Name,
+                x.p.ProgramTypeId, x.pt != null ? x.pt.Code : null,
+                x.p.Description, x.p.IsActive,
+                x.p.Services.Count(),
+                x.p.CreatedAt))
+            .ToListAsync(ct);
 
         return PaginatedResult<ProgramListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

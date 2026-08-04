@@ -42,7 +42,7 @@ public sealed class GetCamerasQueryHandler
         if (!string.IsNullOrWhiteSpace(req.Search))
             q = q.Where(c => c.Code.Contains(req.Search) || c.Name.Contains(req.Search));
 
-        var query =
+        var joined =
             from c in q
             join campus in _db.Campuses.AsNoTracking()
                 on c.CampusId equals campus.Id into campusGrp
@@ -50,30 +50,34 @@ public sealed class GetCamerasQueryHandler
             join typ in _db.RefValues.AsNoTracking()
                 on c.CameraTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new CameraListItemDto(
-                c.Id,
-                c.CorporationId,
-                c.CampusId,
-                campus != null ? campus.Name : null,
-                c.CameraTypeId,
-                typ != null ? typ.Code : null,
-                c.Code,
-                c.Name,
-                c.StreamProviderId,
-                c.IsActive,
-                c.CreatedAt);
+            select new { c, campus, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
-            "code"      => req.IsDescending ? query.OrderByDescending(x => x.Code)      : query.OrderBy(x => x.Code),
-            "name"      => req.IsDescending ? query.OrderByDescending(x => x.Name)      : query.OrderBy(x => x.Name),
-            "createdat" => req.IsDescending ? query.OrderByDescending(x => x.CreatedAt) : query.OrderBy(x => x.CreatedAt),
-            "isactive"  => req.IsDescending ? query.OrderByDescending(x => x.IsActive)  : query.OrderBy(x => x.IsActive),
-            _           => query.OrderBy(x => x.Code)
+            "code"      => req.IsDescending ? joined.OrderByDescending(x => x.c.Code)      : joined.OrderBy(x => x.c.Code),
+            "name"      => req.IsDescending ? joined.OrderByDescending(x => x.c.Name)      : joined.OrderBy(x => x.c.Name),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.c.CreatedAt) : joined.OrderBy(x => x.c.CreatedAt),
+            "isactive"  => req.IsDescending ? joined.OrderByDescending(x => x.c.IsActive)  : joined.OrderBy(x => x.c.IsActive),
+            _           => joined.OrderBy(x => x.c.Code)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new CameraListItemDto(
+                x.c.Id,
+                x.c.CorporationId,
+                x.c.CampusId,
+                x.campus != null ? x.campus.Name : null,
+                x.c.CameraTypeId,
+                x.typ != null ? x.typ.Code : null,
+                x.c.Code,
+                x.c.Name,
+                x.c.StreamProviderId,
+                x.c.IsActive,
+                x.c.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<CameraListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

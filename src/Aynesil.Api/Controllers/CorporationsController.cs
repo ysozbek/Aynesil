@@ -132,17 +132,6 @@ public sealed class CorporationsController : BaseController
         return OkResult(result);
     }
 
-    /// <summary>Soft-deletes the corporation. All tenant data remains in the DB.</summary>
-    [HttpDelete("{id:guid}")]
-    [HasPermission(Permissions.Corporation.Delete)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        await Sender.Send(new DeleteCorporationCommand(id), ct);
-        return NoContentResult("Corporation deleted.");
-    }
-
     /// <summary>Transitions the corporation status to 'active'.</summary>
     [HttpPost("{id:guid}/activate")]
     [HasPermission(Permissions.Corporation.Update)]

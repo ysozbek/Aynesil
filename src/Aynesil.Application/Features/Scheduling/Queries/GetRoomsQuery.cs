@@ -39,20 +39,22 @@ public sealed class GetRoomsQueryHandler
             q = q.Where(r => r.Name.ToLower().Contains(s) || r.Code.ToLower().Contains(s));
         }
 
-        var query = q.Select(r => new RoomListItemDto(
-            r.Id, r.CorporationId, r.CampusId,
-            r.Code, r.Name, r.Capacity, r.IsVirtual, r.IsActive));
-
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "name"     => req.IsDescending ? query.OrderByDescending(r => r.Name) : query.OrderBy(r => r.Name),
-            "code"     => req.IsDescending ? query.OrderByDescending(r => r.Code) : query.OrderBy(r => r.Code),
-            "capacity" => req.IsDescending ? query.OrderByDescending(r => r.Capacity) : query.OrderBy(r => r.Capacity),
-            _          => query.OrderBy(r => r.Name)
+            "name"     => req.IsDescending ? q.OrderByDescending(r => r.Name)     : q.OrderBy(r => r.Name),
+            "code"     => req.IsDescending ? q.OrderByDescending(r => r.Code)     : q.OrderBy(r => r.Code),
+            "capacity" => req.IsDescending ? q.OrderByDescending(r => r.Capacity) : q.OrderBy(r => r.Capacity),
+            _          => q.OrderBy(r => r.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(r => new RoomListItemDto(
+                r.Id, r.CorporationId, r.CampusId,
+                r.Code, r.Name, r.Capacity, r.IsVirtual, r.IsActive))
+            .ToListAsync(ct);
         return PaginatedResult<RoomListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

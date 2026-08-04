@@ -1,161 +1,150 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-6">
-      <h1 class="text-gray-900 fw-bold fs-2">{{ $t('leave.reports.title') }}</h1>
-      <p class="text-muted mb-0">{{ $t('leave.reports.subtitle') }}</p>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs nav-line-tabs mb-6">
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: tab === 'usage' }" href="#" @click.prevent="tab = 'usage'">
-          {{ $t('leave.reports.usageTab') }}
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: tab === 'trend' }" href="#" @click.prevent="tab = 'trend'">
-          {{ $t('leave.reports.trendTab') }}
-        </a>
-      </li>
-    </ul>
-
-    <!-- Filters -->
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('leave.fields.periodYear') }}</label>
-            <input v-model.number="filters.periodYear" type="number" class="form-control form-control-sm" />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('leave.fields.leaveType') }}</label>
-            <select v-model="filters.leaveTypeId" class="form-select form-select-sm">
-              <option value="">{{ $t('common.allStatuses') }}</option>
-              <option v-for="lt in leaveTypes" :key="lt.id" :value="lt.id">{{ lt.label || lt.code }}</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary btn-sm w-100" @click="doFetch">
-              {{ $t('common.filter') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Usage Report -->
-    <div v-if="tab === 'usage'" class="card">
-      <div class="card-body py-3">
-        <div v-if="leaveStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="leaveStore.usageReport.length === 0" class="text-center py-15 text-muted">
-          {{ $t('leave.reports.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('leave.fields.educator') }}</th>
-                <th>{{ $t('leave.fields.leaveType') }}</th>
-                <th>{{ $t('leave.fields.periodYear') }}</th>
-                <th class="text-end">{{ $t('leave.balance.entitled') }}</th>
-                <th class="text-end">{{ $t('leave.balance.used') }}</th>
-                <th class="text-end">{{ $t('leave.balance.remaining') }}</th>
-                <th class="text-end pe-4">{{ $t('leave.reports.requestCount') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in leaveStore.usageReport" :key="r.educatorId + r.leaveTypeCode + r.periodYear">
-                <td class="ps-4 fw-semibold">{{ r.educatorFullName }}</td>
-                <td>{{ r.leaveTypeCode ?? '—' }}</td>
-                <td>{{ r.periodYear }}</td>
-                <td class="text-end">{{ r.entitled }} {{ r.unit }}</td>
-                <td class="text-end text-warning">{{ r.used }}</td>
-                <td class="text-end text-success fw-bold">{{ r.remaining }}</td>
-                <td class="text-end pe-4">{{ r.requestCount }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Trend Report -->
-    <div v-if="tab === 'trend'" class="card">
-      <div class="card-body py-3">
-        <div v-if="leaveStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="leaveStore.trendReport.length === 0" class="text-center py-15 text-muted">
-          {{ $t('leave.reports.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('leave.reports.year') }}</th>
-                <th>{{ $t('leave.reports.month') }}</th>
-                <th class="text-end">{{ $t('leave.reports.requestCount') }}</th>
-                <th class="text-end">{{ $t('leave.status.approved') }}</th>
-                <th class="text-end">{{ $t('leave.status.rejected') }}</th>
-                <th class="text-end">{{ $t('leave.status.cancelled') }}</th>
-                <th class="text-end pe-4">{{ $t('leave.reports.totalDaysApproved') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="t in leaveStore.trendReport" :key="`${t.year}-${t.month}`">
-                <td class="ps-4">{{ t.year }}</td>
-                <td>{{ monthName(t.month) }}</td>
-                <td class="text-end">{{ t.requestCount }}</td>
-                <td class="text-end text-success">{{ t.approvedCount }}</td>
-                <td class="text-end text-danger">{{ t.rejectedCount }}</td>
-                <td class="text-end text-muted">{{ t.cancelledCount }}</td>
-                <td class="text-end pe-4 fw-bold">{{ t.totalDaysApproved }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
 import { useAuthStore } from '@/stores/auth.store'
-import { useRefDataStore } from '@/stores/refdata.store'
+import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { LeaveUsageReportItemDto, LeaveTrendItemDto } from '@/types/leave.types'
 
+const { t } = useI18n()
 const leaveStore = useLeaveStore()
-const authStore = useAuthStore()
-const refDataStore = useRefDataStore()
+const auth = useAuthStore()
+const refData = useRefDataStore()
 const tab = ref<'usage' | 'trend'>('usage')
+const leaveTypes = ref<RefValueItem[]>([])
 
 const filters = reactive({
   periodYear: new Date().getFullYear(),
   leaveTypeId: '',
 })
 
-const leaveTypes = computed(() => refDataStore.getByCategory?.('leave_type') ?? [])
+const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+function monthName(m: number) {
+  return MONTHS[m - 1] ?? String(m)
+}
 
-const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']
-function monthName(m: number) { return MONTHS[m - 1] ?? m }
+const usageColumns: Column<LeaveUsageReportItemDto>[] = [
+  { key: 'educatorFullName', label: t('leave.fields.educator') },
+  { key: 'leaveTypeCode', label: t('leave.fields.leaveType'), width: '120px' },
+  { key: 'periodYear', label: t('leave.fields.periodYear'), width: '90px' },
+  { key: 'entitled', label: t('leave.balance.entitled'), width: '90px', align: 'right' },
+  { key: 'used', label: t('leave.balance.used'), width: '90px', align: 'right' },
+  { key: 'remaining', label: t('leave.balance.remaining'), width: '90px', align: 'right' },
+  { key: 'requestCount', label: t('leave.reports.requestCount'), width: '100px', align: 'right' },
+]
+
+const trendColumns: Column<LeaveTrendItemDto>[] = [
+  { key: 'year', label: t('leave.reports.year'), width: '80px' },
+  { key: 'month', label: t('leave.reports.month'), width: '100px' },
+  { key: 'requestCount', label: t('leave.reports.requestCount'), width: '100px', align: 'right' },
+  { key: 'approvedCount', label: t('leave.status.approved'), width: '100px', align: 'right' },
+  { key: 'rejectedCount', label: t('leave.status.rejected'), width: '100px', align: 'right' },
+  { key: 'cancelledCount', label: t('leave.status.cancelled'), width: '100px', align: 'right' },
+  { key: 'totalDaysApproved', label: t('leave.reports.totalDaysApproved'), width: '120px', align: 'right' },
+]
 
 async function doFetch() {
   const q = {
-    corporationId: authStore.user?.corporationId,
+    corporationId: auth.user?.corporationId,
     periodYear: filters.periodYear || undefined,
     leaveTypeId: filters.leaveTypeId || undefined,
   }
-  await Promise.all([
-    leaveStore.fetchUsageReport(q),
-    leaveStore.fetchTrendReport(q),
-  ])
+  await Promise.all([leaveStore.fetchUsageReport(q), leaveStore.fetchTrendReport(q)])
 }
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('leave_type')
+  leaveTypes.value = await refData.getValues('leave_type')
   await doFetch()
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('leave.reports.title')" :description="t('leave.reports.subtitle')" />
+
+    <div class="flex gap-1 mb-4 border-b border-border">
+      <button
+        type="button"
+        :class="[
+          'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+          tab === 'usage' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+        ]"
+        @click="tab = 'usage'"
+      >
+        {{ t('leave.reports.usageTab') }}
+      </button>
+      <button
+        type="button"
+        :class="[
+          'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+          tab === 'trend' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+        ]"
+        @click="tab = 'trend'"
+      >
+        {{ t('leave.reports.trendTab') }}
+      </button>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('leave.fields.periodYear') }}</label>
+        <input v-model.number="filters.periodYear" type="number" class="h-9 w-28 px-3 text-sm rounded-lg border border-border bg-transparent" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('leave.fields.leaveType') }}</label>
+        <select v-model="filters.leaveTypeId" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent">
+          <option value="">{{ t('common.allStatuses') }}</option>
+          <option v-for="lt in leaveTypes" :key="lt.id" :value="lt.id">{{ lt.label || lt.code }}</option>
+        </select>
+      </div>
+      <button
+        @click="doFetch"
+        class="h-9 px-4 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90"
+      >
+        {{ t('common.filter') }}
+      </button>
+    </div>
+
+    <DataTable
+      v-if="tab === 'usage'"
+      :columns="usageColumns"
+      :rows="leaveStore.usageReport"
+      :loading="leaveStore.loading"
+      :empty-text="t('leave.reports.noData')"
+      row-key="educatorId"
+    >
+      <template #cell-educatorFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-used="{ value }">
+        <span class="text-amber-600">{{ value }}</span>
+      </template>
+      <template #cell-remaining="{ value }">
+        <span class="font-semibold text-green-600">{{ value }}</span>
+      </template>
+    </DataTable>
+
+    <DataTable
+      v-else
+      :columns="trendColumns"
+      :rows="leaveStore.trendReport"
+      :loading="leaveStore.loading"
+      :empty-text="t('leave.reports.noData')"
+      row-key="year"
+    >
+      <template #cell-month="{ value }">{{ monthName(Number(value)) }}</template>
+      <template #cell-approvedCount="{ value }">
+        <span class="text-green-600">{{ value }}</span>
+      </template>
+      <template #cell-rejectedCount="{ value }">
+        <span class="text-red-600">{{ value }}</span>
+      </template>
+      <template #cell-totalDaysApproved="{ value }">
+        <span class="font-semibold">{{ value }}</span>
+      </template>
+    </DataTable>
+  </div>
+</template>

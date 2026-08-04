@@ -64,36 +64,41 @@ public sealed class GetMeetingsQueryHandler
                            || (m.Location != null && m.Location.ToLower().Contains(term)));
         }
 
-        var query =
+        // Sort on entity/join before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from m in q
             join typ in _db.RefValues.AsNoTracking()
                 on m.MeetingTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new MeetingListItemDto(
-                m.Id,
-                m.CorporationId,
-                m.CampusId,
-                m.MeetingTypeId,
-                typ != null ? typ.Code : null,
-                m.Title,
-                m.Location,
-                m.ScheduledAt,
-                m.EndsAt,
-                m.Status,
-                m.OrganizerId,
-                m.Participants.Count,
-                m.UpdatedAt);
+            select new { m, typ };
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
-            "title"       => req.IsDescending ? query.OrderByDescending(x => x.Title)       : query.OrderBy(x => x.Title),
-            "scheduledat" => req.IsDescending ? query.OrderByDescending(x => x.ScheduledAt) : query.OrderBy(x => x.ScheduledAt),
-            "status"      => req.IsDescending ? query.OrderByDescending(x => x.Status)      : query.OrderBy(x => x.Status),
-            _             => query.OrderByDescending(x => x.ScheduledAt)
+            "title"       => req.IsDescending ? joined.OrderByDescending(x => x.m.Title)       : joined.OrderBy(x => x.m.Title),
+            "scheduledat" => req.IsDescending ? joined.OrderByDescending(x => x.m.ScheduledAt) : joined.OrderBy(x => x.m.ScheduledAt),
+            "status"      => req.IsDescending ? joined.OrderByDescending(x => x.m.Status)      : joined.OrderBy(x => x.m.Status),
+            _             => joined.OrderByDescending(x => x.m.ScheduledAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new MeetingListItemDto(
+                x.m.Id,
+                x.m.CorporationId,
+                x.m.CampusId,
+                x.m.MeetingTypeId,
+                x.typ != null ? x.typ.Code : null,
+                x.m.Title,
+                x.m.Location,
+                x.m.ScheduledAt,
+                x.m.EndsAt,
+                x.m.Status,
+                x.m.OrganizerId,
+                x.m.Participants.Count,
+                x.m.UpdatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<MeetingListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

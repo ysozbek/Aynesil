@@ -94,7 +94,7 @@ async function doGenerate() {
   <div>
     <PageHeader :title="t('scheduling.recurring.title')" :description="t('scheduling.recurring.description')">
       <button
-        v-if="can('recurring_schedule:create')"
+        v-if="can('session:create')"
         @click="router.push({ name: 'recurring-schedule-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -117,7 +117,6 @@ async function doGenerate() {
       :columns="columns"
       :rows="store.recurringList.items"
       :loading="store.loading"
-      @row-click="(row) => router.push({ name: 'recurring-schedule-detail', params: { id: row.id } })"
     >
       <template #cell-roomName="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
@@ -138,7 +137,7 @@ async function doGenerate() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('recurring_schedule:update') && row.isActive"
+            v-if="can('session:update') && row.isActive"
             @click="generateTarget = row"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary"
             :title="t('scheduling.recurring.generate')"
@@ -148,7 +147,7 @@ async function doGenerate() {
             </svg>
           </button>
           <button
-            v-if="can('recurring_schedule:update') && row.isActive"
+            v-if="can('session:update') && row.isActive"
             @click="deactivateTarget = row"
             class="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600"
             :title="t('common.deactivate')"
