@@ -28,8 +28,8 @@ export const useMenuStore = defineStore('menu', () => {
   const tree = ref<MenuItem[]>([])
   const loading = ref(false)
 
-  async function load() {
-    if (loading.value) return
+  async function load(force = false) {
+    if (loading.value && !force) return
     loading.value = true
     try {
       const locale = useLocaleStore().current
@@ -82,6 +82,7 @@ export const useMenuStore = defineStore('menu', () => {
 export function useMenuAdminActions() {
   const adminTree = ref<MenuItemListItemDto[]>([])
   const adminLoading = ref(false)
+  const navStore = useMenuStore()
 
   async function loadAdminTree() {
     adminLoading.value = true
@@ -93,10 +94,16 @@ export function useMenuAdminActions() {
     }
   }
 
+  /** Reload sidebar navigation after admin mutations (server cache is already invalidated). */
+  async function refreshNav() {
+    await navStore.load(true)
+  }
+
   async function createItem(request: CreateMenuItemRequest) {
     const res = await menuAdminService.create(request)
     if (!res.success) throw new Error(res.message)
     await loadAdminTree()
+    await refreshNav()
     return res.data!
   }
 
@@ -104,28 +111,33 @@ export function useMenuAdminActions() {
     const res = await menuAdminService.update(id, request)
     if (!res.success) throw new Error(res.message)
     await loadAdminTree()
+    await refreshNav()
     return res.data!
   }
 
   async function removeItem(id: string) {
     await menuAdminService.remove(id)
     await loadAdminTree()
+    await refreshNav()
   }
 
   async function setTranslations(id: string, request: SetMenuItemTranslationsRequest) {
     const res = await menuAdminService.setTranslations(id, request)
     if (!res.success) throw new Error(res.message)
     await loadAdminTree()
+    await refreshNav()
   }
 
   async function activateItem(id: string) {
     await menuAdminService.activate(id)
     await loadAdminTree()
+    await refreshNav()
   }
 
   async function deactivateItem(id: string) {
     await menuAdminService.deactivate(id)
     await loadAdminTree()
+    await refreshNav()
   }
 
   return { adminTree, adminLoading, loadAdminTree, createItem, updateItem, removeItem, setTranslations, activateItem, deactivateItem }

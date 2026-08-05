@@ -49,6 +49,8 @@ begin
                         'education','scheduling','finance','legal','media','ops','camps','consultancy')
       and right(c.relname, 8) <> '_default'
       and not (n.nspname = 'core' and c.relname in ('outbox_event'))
+      -- Platform-default menu rows (corporation_id IS NULL) need split policies — see below.
+      and not (n.nspname = 'iam' and c.relname = 'menu_item')
       and exists (select 1 from pg_attribute a
                   where a.attrelid = c.oid and a.attname = 'corporation_id' and not a.attisdropped)
   loop
@@ -60,6 +62,28 @@ begin
          with check (corporation_id = core.current_corporation_id())', r.sch, r.tbl);
   end loop;
 end $$;
+
+-- iam.menu_item: platform defaults (corporation_id IS NULL) are readable/updatable
+-- by every tenant (reorder, activate/deactivate) but INSERT/DELETE stay tenant-scoped.
+alter table iam.menu_item enable row level security;
+drop policy if exists tenant_isolation on iam.menu_item;
+drop policy if exists menu_item_select on iam.menu_item;
+drop policy if exists menu_item_insert on iam.menu_item;
+drop policy if exists menu_item_update on iam.menu_item;
+drop policy if exists menu_item_delete on iam.menu_item;
+create policy menu_item_select on iam.menu_item
+  for select
+  using (corporation_id is null or corporation_id = core.current_corporation_id());
+create policy menu_item_insert on iam.menu_item
+  for insert
+  with check (corporation_id = core.current_corporation_id());
+create policy menu_item_update on iam.menu_item
+  for update
+  using (corporation_id is null or corporation_id = core.current_corporation_id())
+  with check (corporation_id is null or corporation_id = core.current_corporation_id());
+create policy menu_item_delete on iam.menu_item
+  for delete
+  using (corporation_id = core.current_corporation_id());
 
 -- ---------------------------------------------------------------------
 -- 3) Generic audit trigger on clinical / financial / legal / scheduling data

@@ -56,6 +56,6 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
 
         _db.MenuItems.Remove(item);
         await _db.SaveChangesAsync(ct);
-        await _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        await _cache.InvalidateMenuTreeAsync(corporationId, ct);
     }
 }

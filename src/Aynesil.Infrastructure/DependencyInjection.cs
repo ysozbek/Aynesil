@@ -89,7 +89,8 @@ public static class DependencyInjection
             services.AddStackExchangeRedisCache(opts =>
             {
                 opts.Configuration = redisConn;
-                opts.InstanceName = "aynesil:";
+                // Must stay in sync with RedisCacheService.InstanceName (prefix SCAN deletes).
+                opts.InstanceName = RedisCacheService.InstanceName;
             });
 
             services.AddScoped<ICacheService, RedisCacheService>();

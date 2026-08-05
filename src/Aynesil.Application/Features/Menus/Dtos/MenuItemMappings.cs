@@ -22,7 +22,8 @@ public static class MenuItemMappings
                 .Select(t => new MenuItemTranslationDto(t.Locale, t.Label))
                 .ToList(),
             m.CreatedAt,
-            m.UpdatedAt);
+            m.UpdatedAt,
+            m.RowVersion);
 
     public static MenuItemDto ToDto(this MenuItem m) =>
         new(m.Id,

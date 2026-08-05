@@ -135,15 +135,15 @@ watch(
             </div>
           </template>
 
-          <!-- Leaf item -->
-          <div v-else-if="item.route" class="kt-menu-item">
+          <!-- Root leaf (e.g. Ana Sayfa) — spaced so it never looks like the previous group's child -->
+          <div v-else-if="item.route" class="kt-menu-item mt-2 mb-1">
             <RouterLink
               :to="item.route"
-              class="kt-menu-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              class="kt-menu-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
               :data-menu-active="isPrimaryActive(item) ? 'true' : undefined"
               :class="isPrimaryActive(item)
-                ? 'bg-primary text-primary-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'"
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground hover:bg-accent'"
             >
               <i v-if="item.icon" :class="item.icon" class="ki-outline text-base w-5 text-center shrink-0" />
               <span class="kt-menu-title">{{ item.label }}</span>

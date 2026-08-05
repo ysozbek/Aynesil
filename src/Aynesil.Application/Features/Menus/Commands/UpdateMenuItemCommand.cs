@@ -103,7 +103,7 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
             req.FeatureFlag);
 
         await _db.SaveChangesAsync(ct);
-        await _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        await _cache.InvalidateMenuTreeAsync(corporationId, ct);
 
         return item.ToListItemDto();
     }

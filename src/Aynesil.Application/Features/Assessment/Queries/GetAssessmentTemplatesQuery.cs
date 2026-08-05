@@ -33,35 +33,37 @@ public sealed class GetAssessmentTemplatesQueryHandler
     public async Task<PaginatedResult<AssessmentTemplateListItemDto>> Handle(
         GetAssessmentTemplatesQuery req, CancellationToken ct)
     {
-        var query = AssessmentProjection.BuildTemplateListQuery(_db);
+        // Filter on the entity first — EF cannot translate Where on projected DTOs
+        // that embed collection aggregates (Sections.Count).
+        var q = _db.AssessmentTemplates.AsNoTracking();
 
-        // Platform templates (NULL corporation) + tenant's own
         if (req.CorporationId.HasValue)
-            query = query.Where(t => t.CorporationId == null || t.CorporationId == req.CorporationId);
+            q = q.Where(t => t.CorporationId == null || t.CorporationId == req.CorporationId);
 
         if (req.TypeId.HasValue)
-            query = query.Where(t => t.TypeId == req.TypeId);
+            q = q.Where(t => t.TypeId == req.TypeId);
 
         if (req.CategoryId.HasValue)
-            query = query.Where(t => t.CategoryId == req.CategoryId);
+            q = q.Where(t => t.CategoryId == req.CategoryId);
 
         if (req.IsActive.HasValue)
-            query = query.Where(t => t.IsActive == req.IsActive.Value);
+            q = q.Where(t => t.IsActive == req.IsActive.Value);
 
         if (!string.IsNullOrWhiteSpace(req.Search))
-            query = query.Where(t =>
-                t.Code.Contains(req.Search) || t.Name.Contains(req.Search));
+            q = q.Where(t => t.Code.Contains(req.Search) || t.Name.Contains(req.Search));
 
-        query = req.SortBy?.ToLowerInvariant() switch
+        q = req.SortBy?.ToLowerInvariant() switch
         {
-            "code"    => req.IsDescending ? query.OrderByDescending(t => t.Code)    : query.OrderBy(t => t.Code),
-            "name"    => req.IsDescending ? query.OrderByDescending(t => t.Name)    : query.OrderBy(t => t.Name),
-            "version" => req.IsDescending ? query.OrderByDescending(t => t.Version) : query.OrderBy(t => t.Version),
-            _         => query.OrderBy(t => t.Code).ThenByDescending(t => t.Version)
+            "code"    => req.IsDescending ? q.OrderByDescending(t => t.Code)    : q.OrderBy(t => t.Code),
+            "name"    => req.IsDescending ? q.OrderByDescending(t => t.Name)    : q.OrderBy(t => t.Name),
+            "version" => req.IsDescending ? q.OrderByDescending(t => t.Version) : q.OrderBy(t => t.Version),
+            _         => q.OrderBy(t => t.Code).ThenByDescending(t => t.Version)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await q.CountAsync(ct);
+        var items = await AssessmentProjection.ProjectTemplateList(_db, q)
+            .Skip(req.Skip).Take(req.PageSize)
+            .ToListAsync(ct);
 
         return PaginatedResult<AssessmentTemplateListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

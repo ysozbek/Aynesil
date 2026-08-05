@@ -22,6 +22,9 @@ public static class CacheKeys
     public static string MenuTree(Guid corporationId, string locale) =>
         ForTenant(corporationId, $"menu{Sep}{locale}");
 
+    /// <summary>Locales currently cached for /menus/me. Keep in sync with supported UI locales.</summary>
+    public static readonly string[] MenuLocales = ["tr", "en"];
+
     // ── Settings ─────────────────────────────────────────────────────────
     public static string CorporationSettings(Guid corporationId) =>
         ForTenant(corporationId, "settings");

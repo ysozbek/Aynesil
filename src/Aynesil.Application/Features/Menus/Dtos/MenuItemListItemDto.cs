@@ -15,4 +15,5 @@ public record MenuItemListItemDto(
     bool IsActive,
     IReadOnlyList<MenuItemTranslationDto> Translations,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    int RowVersion);

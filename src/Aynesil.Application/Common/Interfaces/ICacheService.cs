@@ -32,4 +32,10 @@ public interface ICacheService
 
     /// <summary>Invalidates all cache entries for a specific corporation.</summary>
     Task InvalidateTenantAsync(Guid corporationId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Drops the navigation tree cache for a corporation (all locales).
+    /// Prefer this over prefix SCAN — uses IDistributedCache keys so InstanceName is respected.
+    /// </summary>
+    Task InvalidateMenuTreeAsync(Guid corporationId, CancellationToken cancellationToken = default);
 }

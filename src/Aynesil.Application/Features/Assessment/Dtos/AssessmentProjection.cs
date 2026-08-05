@@ -56,11 +56,13 @@ internal static class AssessmentProjection
     }
 
     /// <summary>
-    /// Builds a queryable for the template list — further filtered and paged by callers.
-    /// Each row is a single SELECT with LEFT JOINs to ref_value (type, category).
+    /// Projects a pre-filtered template query into list DTOs.
+    /// Callers must apply Where/OrderBy on the entity queryable before projecting —
+    /// filtering after this Select cannot be translated by EF (nested Count + joins).
     /// </summary>
-    internal static IQueryable<AssessmentTemplateListItemDto> BuildTemplateListQuery(IAppDbContext db)
-        => from t in db.AssessmentTemplates
+    internal static IQueryable<AssessmentTemplateListItemDto> ProjectTemplateList(
+        IAppDbContext db, IQueryable<AssessmentTemplate> templates)
+        => from t in templates
            join typ in db.RefValues on t.TypeId     equals typ.Id into typG from typ in typG.DefaultIfEmpty()
            join cat in db.RefValues on t.CategoryId equals cat.Id into catG from cat in catG.DefaultIfEmpty()
            select new AssessmentTemplateListItemDto(
@@ -101,10 +103,12 @@ internal static class AssessmentProjection
     }
 
     /// <summary>
-    /// Builds a queryable for the session list — further filtered and paged by callers.
+    /// Projects a pre-filtered session query into list DTOs.
+    /// Callers must apply Where/OrderBy on the entity queryable before projecting.
     /// </summary>
-    internal static IQueryable<AssessmentSessionListItemDto> BuildSessionListQuery(IAppDbContext db)
-        => from s in db.AssessmentSessions
+    internal static IQueryable<AssessmentSessionListItemDto> ProjectSessionList(
+        IAppDbContext db, IQueryable<AssessmentSession> sessions)
+        => from s in sessions
            join t    in db.AssessmentTemplates on s.TemplateId equals t.Id  into tG   from t    in tG.DefaultIfEmpty()
            join camp in db.Campuses            on s.CampusId   equals camp.Id into campG from camp in campG.DefaultIfEmpty()
            select new AssessmentSessionListItemDto(

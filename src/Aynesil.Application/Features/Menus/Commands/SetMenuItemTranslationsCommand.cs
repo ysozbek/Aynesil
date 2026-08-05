@@ -92,7 +92,7 @@ public sealed class SetMenuItemTranslationsCommandHandler
         _db.MenuItemTranslations.AddRange(newTranslations);
         await _db.SaveChangesAsync(ct);
 
-        await _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        await _cache.InvalidateMenuTreeAsync(corporationId, ct);
 
         return newTranslations
             .OrderBy(t => t.Locale)

@@ -94,7 +94,10 @@ public sealed class GetUserMenuQueryHandler : IRequestHandler<GetUserMenuQuery, 
     {
         var result = new List<MenuTreeNodeDto>();
 
-        foreach (var item in visible.Where(m => m.ParentId == parentId).OrderBy(m => m.SortOrder))
+        foreach (var item in visible
+            .Where(m => m.ParentId == parentId)
+            .OrderBy(m => m.SortOrder)
+            .ThenBy(m => m.Code))
         {
             var children = BuildTree(visible, item.Id);
 

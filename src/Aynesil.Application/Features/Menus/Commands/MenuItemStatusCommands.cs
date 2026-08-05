@@ -46,7 +46,7 @@ public sealed class ActivateMenuItemCommandHandler : IRequestHandler<ActivateMen
 
         item.Activate();
         await _db.SaveChangesAsync(ct);
-        await _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        await _cache.InvalidateMenuTreeAsync(corporationId, ct);
     }
 }
 
@@ -90,6 +90,6 @@ public sealed class DeactivateMenuItemCommandHandler : IRequestHandler<Deactivat
 
         item.Deactivate();
         await _db.SaveChangesAsync(ct);
-        await _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        await _cache.InvalidateMenuTreeAsync(corporationId, ct);
     }
 }

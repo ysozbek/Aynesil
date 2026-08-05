@@ -27,15 +27,15 @@ public sealed class GetAssessmentHistoryQueryHandler
         if (!req.LeadId.HasValue && !req.StudentId.HasValue)
             throw new ArgumentException("Either LeadId or StudentId must be provided.");
 
-        var query = AssessmentProjection.BuildSessionListQuery(_db);
+        var q = _db.AssessmentSessions.AsNoTracking();
 
         if (req.LeadId.HasValue)
-            query = query.Where(s => s.LeadId == req.LeadId);
+            q = q.Where(s => s.LeadId == req.LeadId);
 
         if (req.StudentId.HasValue)
-            query = query.Where(s => s.StudentId == req.StudentId);
+            q = q.Where(s => s.StudentId == req.StudentId);
 
-        return await query
+        return await AssessmentProjection.ProjectSessionList(_db, q)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(ct);
     }

@@ -131,5 +131,5 @@ public sealed class CreateMenuItemCommandHandler : IRequestHandler<CreateMenuIte
     }
 
     private Task InvalidateMenuCacheAsync(Guid corporationId, CancellationToken ct) =>
-        _cache.RemoveByPrefixAsync(CacheKeys.ForTenant(corporationId, "menu"), ct);
+        _cache.InvalidateMenuTreeAsync(corporationId, ct);
 }

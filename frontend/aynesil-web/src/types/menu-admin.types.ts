@@ -20,11 +20,10 @@ export interface MenuItemListItemDto {
   translations: MenuItemTranslationDto[]
   createdAt: string
   updatedAt: string
-}
-
-export interface MenuItemDto extends MenuItemListItemDto {
   rowVersion: number
 }
+
+export interface MenuItemDto extends MenuItemListItemDto {}
 
 export interface MenuTreeNodeDto {
   id: string

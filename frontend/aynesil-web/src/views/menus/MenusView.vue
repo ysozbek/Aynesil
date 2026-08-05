@@ -7,27 +7,25 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import MenuTreeLevel, { type TreeNode } from './MenuTreeLevel.vue'
 import type { MenuItemListItemDto, MenuItemTranslationDto } from '@/types/menu-admin.types'
 
 const { t } = useI18n()
-const menuAdmin = useMenuAdminActions()
+const { adminTree, adminLoading, loadAdminTree, createItem, updateItem, removeItem, setTranslations, activateItem, deactivateItem } =
+  useMenuAdminActions()
 const permStore = usePermissionStore()
 const { can } = usePermission()
 
 onMounted(async () => {
-  await menuAdmin.loadAdminTree()
+  await loadAdminTree()
   await permStore.loadCatalog()
 })
-
-// ── Tree helpers ───────────────────────────────────────────────────────────────
-type TreeNode = MenuItemListItemDto & { children: TreeNode[] }
 
 const treeWithChildren = computed((): TreeNode[] => {
   const map = new Map<string, TreeNode>()
   const roots: TreeNode[] = []
-  const flat = menuAdmin.adminTree.value
 
-  flat.forEach((item) => map.set(item.id, { ...item, children: [] }))
+  adminTree.value.forEach((item) => map.set(item.id, { ...item, children: [] }))
   map.forEach((node) => {
     if (node.parentId && map.has(node.parentId)) {
       map.get(node.parentId)!.children.push(node)
@@ -37,7 +35,7 @@ const treeWithChildren = computed((): TreeNode[] => {
   })
 
   const sort = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.sortOrder - b.sortOrder)
+    nodes.sort((a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code))
     nodes.forEach((n) => sort(n.children))
   }
   sort(roots)
@@ -52,17 +50,7 @@ function toggleExpand(id: string) {
 }
 
 function getLabel(item: MenuItemListItemDto, locale = 'tr') {
-  return item.translations.find((t) => t.locale === locale)?.label ?? item.code
-}
-
-// ── Selected item ──────────────────────────────────────────────────────────────
-const selectedId = ref<string | null>(null)
-const selectedItem = computed(() =>
-  menuAdmin.adminTree.value.find((i) => i.id === selectedId.value) ?? null
-)
-
-function selectItem(item: MenuItemListItemDto) {
-  selectedId.value = selectedId.value === item.id ? null : item.id
+  return item.translations?.find((tr) => tr.locale === locale)?.label ?? item.code
 }
 
 // ── Create modal ───────────────────────────────────────────────────────────────
@@ -97,7 +85,7 @@ async function submitCreate() {
   if (createForm.labelEn.trim()) translations.push({ locale: 'en', label: createForm.labelEn })
 
   try {
-    await menuAdmin.createItem({
+    await createItem({
       parentId: createParentId.value,
       code: createForm.code,
       route: createForm.route || undefined,
@@ -138,7 +126,7 @@ function openEdit(item: MenuItemListItemDto, e: Event) {
     sortOrder: item.sortOrder,
     requiredPermissionId: item.requiredPermissionId ?? '',
     featureFlag: item.featureFlag ?? '',
-    rowVersion: (item as { rowVersion?: number }).rowVersion ?? 0,
+    rowVersion: item.rowVersion,
   })
   Object.keys(editErrors).forEach((k) => delete editErrors[k])
   showEdit.value = true
@@ -147,7 +135,7 @@ function openEdit(item: MenuItemListItemDto, e: Event) {
 async function submitEdit() {
   if (!editTargetId.value) return
   try {
-    await menuAdmin.updateItem(editTargetId.value, {
+    await updateItem(editTargetId.value, {
       parentId: editForm.parentId || undefined,
       route: editForm.route || undefined,
       icon: editForm.icon || undefined,
@@ -184,7 +172,7 @@ async function submitTranslations() {
   const translations = translationForms.value.filter((f) => f.label.trim())
   if (!translations.length) { translationErrors.general = 'En az bir çeviri gereklidir.'; return }
   try {
-    await menuAdmin.setTranslations(translationsTargetId.value, { translations })
+    await setTranslations(translationsTargetId.value, { translations })
     showTranslations.value = false
   } catch (err: unknown) {
     translationErrors.general = (err as Error).message
@@ -204,7 +192,7 @@ async function doDelete() {
   if (!deleteTarget.value) return
   deleteLoading.value = true
   try {
-    await menuAdmin.removeItem(deleteTarget.value.id)
+    await removeItem(deleteTarget.value.id)
     deleteTarget.value = null
   } finally {
     deleteLoading.value = false
@@ -214,8 +202,8 @@ async function doDelete() {
 // ── Toggle active ──────────────────────────────────────────────────────────────
 async function toggleActive(item: MenuItemListItemDto, e: Event) {
   e.stopPropagation()
-  if (item.isActive) await menuAdmin.deactivateItem(item.id)
-  else await menuAdmin.activateItem(item.id)
+  if (item.isActive) await deactivateItem(item.id)
+  else await activateItem(item.id)
 }
 
 // ── Reorder ────────────────────────────────────────────────────────────────────
@@ -224,14 +212,14 @@ async function moveUp(item: MenuItemListItemDto, siblings: TreeNode[], e: Event)
   const idx = siblings.findIndex((s) => s.id === item.id)
   if (idx === 0) return
   const prev = siblings[idx - 1]
-  await menuAdmin.updateItem(item.id, {
+  await updateItem(item.id, {
     parentId: item.parentId,
     route: item.route,
     icon: item.icon,
     sortOrder: prev.sortOrder - 1,
     requiredPermissionId: item.requiredPermissionId,
     featureFlag: item.featureFlag,
-    rowVersion: (item as { rowVersion?: number }).rowVersion ?? 0,
+    rowVersion: item.rowVersion,
   })
 }
 
@@ -240,14 +228,14 @@ async function moveDown(item: MenuItemListItemDto, siblings: TreeNode[], e: Even
   const idx = siblings.findIndex((s) => s.id === item.id)
   if (idx === siblings.length - 1) return
   const next = siblings[idx + 1]
-  await menuAdmin.updateItem(item.id, {
+  await updateItem(item.id, {
     parentId: item.parentId,
     route: item.route,
     icon: item.icon,
     sortOrder: next.sortOrder + 1,
     requiredPermissionId: item.requiredPermissionId,
     featureFlag: item.featureFlag,
-    rowVersion: (item as { rowVersion?: number }).rowVersion ?? 0,
+    rowVersion: item.rowVersion,
   })
 }
 
@@ -267,7 +255,7 @@ const allPermissions = computed(() => permStore.catalog)
     </PageHeader>
 
     <!-- Loading -->
-    <div v-if="menuAdmin.adminLoading.value" class="space-y-2">
+    <div v-if="adminLoading" class="space-y-2">
       <div v-for="i in 6" :key="i" class="bg-[--color-card] rounded-xl h-14 border border-border animate-pulse" />
     </div>
 
@@ -288,7 +276,7 @@ const allPermissions = computed(() => permStore.catalog)
   </div>
 
   <!-- Create modal -->
-  <FormModal :open="showCreate" :title="createParentId ? t('menu.createChild') : t('menu.create')" :saving="menuAdmin.adminLoading.value"
+  <FormModal :open="showCreate" :title="createParentId ? t('menu.createChild') : t('menu.create')" :saving="adminLoading"
     @submit="submitCreate" @close="showCreate = false">
     <div class="space-y-4">
       <p v-if="createErrors.general" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ createErrors.general }}</p>
@@ -346,7 +334,7 @@ const allPermissions = computed(() => permStore.catalog)
   </FormModal>
 
   <!-- Edit modal -->
-  <FormModal :open="showEdit" :title="t('menu.edit')" :saving="menuAdmin.adminLoading.value"
+  <FormModal :open="showEdit" :title="t('menu.edit')" :saving="adminLoading"
     @submit="submitEdit" @close="showEdit = false">
     <div class="space-y-4">
       <p v-if="editErrors.general" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ editErrors.general }}</p>
@@ -385,7 +373,7 @@ const allPermissions = computed(() => permStore.catalog)
   </FormModal>
 
   <!-- Translations modal -->
-  <FormModal :open="showTranslations" :title="t('menu.translations')" :saving="menuAdmin.adminLoading.value"
+  <FormModal :open="showTranslations" :title="t('menu.translations')" :saving="adminLoading"
     @submit="submitTranslations" @close="showTranslations = false">
     <div class="space-y-3">
       <p v-if="translationErrors.general" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ translationErrors.general }}</p>
@@ -405,96 +393,3 @@ const allPermissions = computed(() => permStore.catalog)
     :message="t('menu.deleteMessage', { code: deleteTarget?.code })"
     :confirm-label="t('common.delete')" :loading="deleteLoading" @confirm="doDelete" @cancel="deleteTarget = null" />
 </template>
-
-<script lang="ts">
-import { defineComponent, type PropType } from 'vue'
-import type { MenuItemListItemDto } from '@/types/menu-admin.types'
-
-// Recursive tree level component
-export const MenuTreeLevel = defineComponent({
-  name: 'MenuTreeLevel',
-  props: {
-    nodes: { type: Array as PropType<(MenuItemListItemDto & { children: unknown[] })[]>, required: true },
-    depth: { type: Number, default: 0 },
-    expanded: { type: Object as PropType<Set<string>>, required: true },
-    getLabel: { type: Function as PropType<(item: MenuItemListItemDto, locale?: string) => string>, required: true },
-    canManage: { type: Boolean, default: false },
-  },
-  emits: ['create-child', 'edit', 'translate', 'toggle-active', 'delete', 'move-up', 'move-down', 'toggle-expand'],
-  template: `
-    <div>
-      <template v-for="(node, idx) in nodes" :key="node.id">
-        <div
-          class="flex items-center gap-2 px-4 py-2.5 border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
-          :style="{ paddingLeft: (depth * 20 + 16) + 'px' }"
-          :class="!node.isActive ? 'opacity-60' : ''"
-        >
-          <!-- Expand toggle -->
-          <button v-if="node.children?.length" @click="$emit('toggle-expand', node.id)"
-            class="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0">
-            <svg class="w-3.5 h-3.5 transition-transform" :class="expanded.has(node.id) ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <div v-else class="w-5 h-5 shrink-0" />
-
-          <!-- Icon -->
-          <i v-if="node.icon" :class="node.icon" class="ki-outline w-4 text-center text-muted-foreground shrink-0" />
-          <div v-else class="w-4 h-4 rounded border border-border shrink-0" />
-
-          <!-- Label + code -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium text-foreground truncate">{{ getLabel(node) }}</span>
-              <span class="text-xs text-muted-foreground font-mono">{{ node.code }}</span>
-              <span v-if="node.requiredPermissionCode" class="text-xs text-blue-600 font-mono bg-blue-50 px-1 rounded">{{ node.requiredPermissionCode }}</span>
-            </div>
-            <p v-if="node.route" class="text-xs text-muted-foreground font-mono">{{ node.route }}</p>
-          </div>
-
-          <!-- Sort order -->
-          <span class="text-xs text-muted-foreground w-10 text-right shrink-0">{{ node.sortOrder }}</span>
-
-          <!-- Actions -->
-          <div v-if="canManage" class="flex items-center gap-0.5 shrink-0">
-            <button @click="$emit('move-up', node, nodes, $event)" :disabled="idx === 0" class="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30" title="Yukarı">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
-            </button>
-            <button @click="$emit('move-down', node, nodes, $event)" :disabled="idx === nodes.length - 1" class="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30" title="Aşağı">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            <button @click="$emit('create-child', node.id)" class="p-1 rounded hover:bg-accent text-muted-foreground" title="Alt öğe ekle">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-            </button>
-            <button @click="$emit('translate', node, $event)" class="p-1 rounded hover:bg-accent text-muted-foreground" title="Çeviriler">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
-            </button>
-            <button @click="$emit('edit', node, $event)" class="p-1 rounded hover:bg-accent text-muted-foreground" title="Düzenle">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </button>
-            <button @click="$emit('toggle-active', node, $event)" :class="node.isActive ? 'text-amber-600' : 'text-emerald-600'" class="p-1 rounded hover:bg-accent" :title="node.isActive ? 'Devre dışı bırak' : 'Aktif et'">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 5.636a9 9 0 1012.728 12.728M9 9l6 6" /></svg>
-            </button>
-            <button @click="$emit('delete', node, $event)" class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600" title="Sil">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Recursive children -->
-        <MenuTreeLevel v-if="node.children?.length && expanded.has(node.id)"
-          :nodes="node.children" :depth="depth + 1" :expanded="expanded" :get-label="getLabel" :can-manage="canManage"
-          @create-child="$emit('create-child', $event)"
-          @edit="(item, e) => $emit('edit', item, e)"
-          @translate="(item, e) => $emit('translate', item, e)"
-          @toggle-active="(item, e) => $emit('toggle-active', item, e)"
-          @delete="(item, e) => $emit('delete', item, e)"
-          @move-up="(item, siblings, e) => $emit('move-up', item, siblings, e)"
-          @move-down="(item, siblings, e) => $emit('move-down', item, siblings, e)"
-          @toggle-expand="$emit('toggle-expand', $event)"
-        />
-      </template>
-    </div>
-  `,
-})
-</script>
