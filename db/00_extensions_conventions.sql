@@ -93,11 +93,24 @@ create or replace function core.set_updated_at()
 returns trigger
 language plpgsql
 as $$
+declare
+  v_new jsonb;
+  v_old jsonb;
+  v_rv  integer;
 begin
   new.updated_at := now();
   -- Bump optimistic-lock version only when the column exists and was not changed by the caller.
-  if tg_op = 'UPDATE' and (to_jsonb(new) ? 'row_version') and new.row_version = old.row_version then
-    new.row_version := old.row_version + 1;
+  -- Must not reference new.row_version directly: PL/pgSQL errors on tables without that column
+  -- even when guarded by (to_jsonb(new) ? 'row_version') in the same IF expression.
+  if tg_op = 'UPDATE' then
+    v_new := to_jsonb(new);
+    if v_new ? 'row_version' then
+      v_old := to_jsonb(old);
+      v_rv := (v_new->>'row_version')::integer;
+      if v_rv is not distinct from (v_old->>'row_version')::integer then
+        new := jsonb_populate_record(new, jsonb_build_object('row_version', v_rv + 1));
+      end if;
+    end if;
   end if;
   return new;
 end;

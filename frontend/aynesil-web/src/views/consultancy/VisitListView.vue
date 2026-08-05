@@ -1,149 +1,58 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="d-flex align-items-center justify-content-between mb-6">
-      <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('consultancy.visit.list.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('consultancy.visit.list.subtitle') }}</p>
-      </div>
-      <button
-        v-if="hasPermission('school_visit:create')"
-        class="btn btn-primary"
-        @click="showCreateModal = true"
-      >
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('consultancy.visit.new') }}
-      </button>
-    </div>
-
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.status') }}</label>
-            <select v-model="filters.status" class="form-select form-select-sm" @change="doFetch">
-              <option value="">{{ $t('common.allStatuses') }}</option>
-              <option value="Scheduled">{{ $t('consultancy.visit.status.scheduled') }}</option>
-              <option value="Completed">{{ $t('consultancy.visit.status.completed') }}</option>
-              <option value="Cancelled">{{ $t('consultancy.visit.status.cancelled') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.from') }}</label>
-            <input v-model="filters.from" type="date" class="form-control form-control-sm" @change="doFetch" />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.to') }}</label>
-            <input v-model="filters.to" type="date" class="form-control form-control-sm" @change="doFetch" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="consultancyStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="consultancyStore.visits.items.length === 0" class="text-center py-15 text-muted">
-          {{ $t('consultancy.visit.list.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('consultancy.institution.fields.name') }}</th>
-                <th>{{ $t('consultancy.visit.fields.plan') }}</th>
-                <th>{{ $t('consultancy.visit.fields.visitDate') }}</th>
-                <th>{{ $t('consultancy.visit.fields.purpose') }}</th>
-                <th class="text-center">{{ $t('consultancy.visit.fields.observations') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="v in consultancyStore.visits.items" :key="v.id">
-                <td class="ps-4 fw-semibold">{{ v.institutionName }}</td>
-                <td class="text-muted">{{ v.planName ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ v.visitDate }}</td>
-                <td class="text-muted" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ v.purpose ?? '—' }}</td>
-                <td class="text-center">{{ v.observationCount }}</td>
-                <td>
-                  <span :class="visitStatusBadge(v.status)">{{ v.status }}</span>
-                </td>
-                <td class="text-end pe-4">
-                  <RouterLink :to="`/consultancy/visits/${v.id}`" class="btn btn-sm btn-light-primary">
-                    <i class="ki-outline ki-eye fs-4"></i>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create Visit Modal -->
-    <div v-if="showCreateModal" class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ $t('consultancy.visit.new') }}</h5>
-            <button class="btn-close" @click="showCreateModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label required">{{ $t('consultancy.institution.fields.name') }} ID</label>
-                <input v-model="createForm.institutionId" type="text" class="form-control" />
-              </div>
-              <div class="col-12">
-                <label class="form-label required">{{ $t('consultancy.visit.fields.visitDate') }}</label>
-                <input v-model="createForm.visitDate" type="date" class="form-control" />
-              </div>
-              <div class="col-12">
-                <label class="form-label">{{ $t('consultancy.visit.fields.purpose') }}</label>
-                <textarea v-model="createForm.purpose" class="form-control" rows="3"></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-light" @click="showCreateModal = false">{{ $t('common.cancel') }}</button>
-            <button class="btn btn-primary" :disabled="consultancyStore.saving" @click="doCreate">
-              <span v-if="consultancyStore.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
-import type { VisitListQuery } from '@/types/consultancy.types'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy.types'
 
+const { t } = useI18n()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
 const authStore = useAuthStore()
+const { can } = usePermission()
 const showCreateModal = ref(false)
 
 const filters = reactive<VisitListQuery>({
-  page: 1, pageSize: 20, status: '', from: '', to: '',
+  page: 1,
+  pageSize: 20,
+  status: '',
+  from: '',
+  to: '',
   corporationId: authStore.user?.corporationId,
 })
 const createForm = reactive({ institutionId: '', visitDate: '', purpose: '' })
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
+const columns: Column<SchoolVisitListItemDto>[] = [
+  { key: 'institutionName', label: t('consultancy.institution.fields.name') },
+  { key: 'planName', label: t('consultancy.visit.fields.plan') },
+  { key: 'visitDate', label: t('consultancy.visit.fields.visitDate'), width: '110px' },
+  { key: 'purpose', label: t('consultancy.visit.fields.purpose') },
+  { key: 'observationCount', label: t('consultancy.visit.fields.observations'), width: '100px' },
+  { key: 'status', label: t('common.status'), width: '110px' },
+]
 
-function visitStatusBadge(s: string) {
+function visitStatusClass(s: string) {
   const map: Record<string, string> = {
-    Scheduled: 'badge badge-light-primary', Completed: 'badge badge-light-success',
-    Cancelled: 'badge badge-light-danger',
+    Scheduled: 'bg-blue-100 text-blue-700',
+    Completed: 'bg-green-100 text-green-700',
+    Cancelled: 'bg-red-100 text-red-700',
   }
-  return map[s] ?? 'badge badge-light'
+  return map[s] ?? 'bg-gray-100 text-gray-600'
+}
+
+function visitStatusLabel(s: string) {
+  const map: Record<string, string> = {
+    Scheduled: t('consultancy.visit.status.scheduled'),
+    Completed: t('consultancy.visit.status.completed'),
+    Cancelled: t('consultancy.visit.status.cancelled'),
+  }
+  return map[s] ?? s
 }
 
 async function doFetch() {
@@ -164,3 +73,92 @@ async function doCreate() {
 
 onMounted(doFetch)
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('consultancy.visit.list.title')" :description="t('consultancy.visit.list.subtitle')">
+      <button
+        v-if="can('school_visit:create')"
+        @click="showCreateModal = true"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ t('consultancy.visit.new') }}
+      </button>
+    </PageHeader>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
+        <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
+          <option value="">{{ t('common.allStatuses') }}</option>
+          <option value="Scheduled">{{ t('consultancy.visit.status.scheduled') }}</option>
+          <option value="Completed">{{ t('consultancy.visit.status.completed') }}</option>
+          <option value="Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.from') }}</label>
+        <input v-model="filters.from" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.to') }}</label>
+        <input v-model="filters.to" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="consultancyStore.visits.items"
+      :loading="consultancyStore.loading"
+      :empty-text="t('consultancy.visit.list.noData')"
+      @row-click="(row) => router.push(`/consultancy/visits/${row.id}`)"
+    >
+      <template #cell-institutionName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-planName="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-visitDate="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-purpose="{ value }">
+        <span class="text-muted-foreground truncate block max-w-[200px]">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-observationCount="{ value }">
+        <span class="text-center block">{{ value }}</span>
+      </template>
+      <template #cell-status="{ value }">
+        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', visitStatusClass(String(value))]">
+          {{ visitStatusLabel(String(value)) }}
+        </span>
+      </template>
+    </DataTable>
+
+    <FormModal
+      :open="showCreateModal"
+      :title="t('consultancy.visit.new')"
+      :saving="consultancyStore.saving"
+      @submit="doCreate"
+      @close="showCreateModal = false"
+    >
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.name') }} ID *</label>
+          <input v-model="createForm.institutionId" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.visit.fields.visitDate') }} *</label>
+          <input v-model="createForm.visitDate" type="date" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.visit.fields.purpose') }}</label>
+          <textarea v-model="createForm.purpose" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+      </div>
+    </FormModal>
+  </div>
+</template>

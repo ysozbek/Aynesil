@@ -39,6 +39,7 @@ try
 
     // ── HTTP Context services (per-request identity & tenant context) ─────────
     builder.Services.AddHttpContextAccessor();
+    builder.Services.AddMemoryCache();
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
     builder.Services.AddScoped<ITenantContext, TenantContextService>();
 
@@ -113,6 +114,7 @@ try
     app.UseHttpsRedirection();
     app.UseCors("AynesilCors");
     app.UseAuthentication();
+    app.UseMiddleware<StaleTenantMiddleware>();
     app.UseAuthorization();
     app.UseMiddleware<ActivityLoggingMiddleware>();
 

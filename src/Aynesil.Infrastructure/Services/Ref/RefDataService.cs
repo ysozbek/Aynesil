@@ -11,25 +11,22 @@ namespace Aynesil.Infrastructure.Services.Ref;
 ///   1. System/global values (corporation_id IS NULL)
 ///   2. Tenant-specific values (corporation_id = current tenant)
 ///   3. Apply tenant overrides (ref_value_tenant_override)
-/// Cached per (corporation_id, type_code) for 30 minutes.
+/// Cached per (corporation_id, type_code) for 30 minutes (all values; activeOnly filtered after cache).
 /// </summary>
 public sealed class RefDataService : IRefDataService
 {
     private readonly AynesilDbContext _db;
     private readonly ICacheService _cache;
     private readonly ITenantContext _tenantContext;
-    private readonly ILocalizationService _localization;
 
     public RefDataService(
         AynesilDbContext db,
         ICacheService cache,
-        ITenantContext tenantContext,
-        ILocalizationService localization)
+        ITenantContext tenantContext)
     {
         _db = db;
         _cache = cache;
         _tenantContext = tenantContext;
-        _localization = localization;
     }
 
     public async Task<IReadOnlyList<RefValueDto>> GetValuesAsync(
@@ -41,7 +38,7 @@ public sealed class RefDataService : IRefDataService
         var locale = _tenantContext.Locale ?? "tr";
         var cacheKey = CacheKeys.RefValues(corpId, typeCode);
 
-        return await _cache.GetOrSetAsync(cacheKey, async _ =>
+        var all = await _cache.GetOrSetAsync(cacheKey, async _ =>
         {
             var values = await _db.RefValues
                 .AsNoTracking()
@@ -56,7 +53,6 @@ public sealed class RefDataService : IRefDataService
                 {
                     var ovr = v.TenantOverrides.FirstOrDefault();
                     var isActive = ovr?.IsActive ?? v.IsActive;
-                    if (activeOnly && !isActive) return null;
 
                     var label = v.Translations.FirstOrDefault(t => t.Locale == locale)?.Label
                         ?? v.Translations.FirstOrDefault(t => t.Locale == "tr")?.Label
@@ -69,15 +65,20 @@ public sealed class RefDataService : IRefDataService
                         ovr?.SortOrder ?? v.SortOrder,
                         ovr?.IsDefault ?? v.IsDefault,
                         v.IsSystem,
-                        v.Metadata);
+                        v.Metadata,
+                        isActive,
+                        IsTenantOwned: v.CorporationId == corpId && corpId.HasValue);
                 })
-                .Where(v => v is not null)
-                .Cast<RefValueDto>()
                 .OrderBy(v => v.SortOrder)
                 .ToList();
 
             return (IReadOnlyList<RefValueDto>)result;
         }, TimeSpan.FromMinutes(30), ct);
+
+        if (activeOnly)
+            return all.Where(v => v.IsActive).ToList();
+
+        return all;
     }
 
     public async Task<RefValueDto?> GetDefaultAsync(string typeCode, CancellationToken ct = default)
@@ -95,18 +96,28 @@ public sealed class RefDataService : IRefDataService
     public async Task<RefValueDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var locale = _tenantContext.Locale ?? "tr";
+        var corpId = _tenantContext.CorporationId;
 
         var v = await _db.RefValues
             .AsNoTracking()
             .Include(v => v.Translations)
+            .Include(v => v.TenantOverrides.Where(o => o.CorporationId == corpId))
             .FirstOrDefaultAsync(v => v.Id == id, ct);
 
         if (v is null) return null;
 
+        var ovr = v.TenantOverrides.FirstOrDefault();
         var label = v.Translations.FirstOrDefault(t => t.Locale == locale)?.Label
             ?? v.Translations.FirstOrDefault(t => t.Locale == "tr")?.Label
             ?? v.Code;
 
-        return new RefValueDto(v.Id, v.Code, label, null, null, v.SortOrder, v.IsDefault, v.IsSystem, v.Metadata);
+        return new RefValueDto(
+            v.Id, v.Code, label, null, null,
+            ovr?.SortOrder ?? v.SortOrder,
+            ovr?.IsDefault ?? v.IsDefault,
+            v.IsSystem,
+            v.Metadata,
+            ovr?.IsActive ?? v.IsActive,
+            IsTenantOwned: v.CorporationId == corpId && corpId.HasValue);
     }
 }

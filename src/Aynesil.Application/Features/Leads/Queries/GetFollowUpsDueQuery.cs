@@ -33,7 +33,8 @@ public sealed class GetFollowUpsDueQueryHandler
     {
         var dueBy = req.DueBy ?? DateTimeOffset.UtcNow;
 
-        var query =
+        // Sort on entity before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from a    in _db.LeadActivities
             join l    in _db.Leads        on a.LeadId         equals l.Id   // join for campus filter
             join act  in _db.RefValues    on a.ActivityTypeId equals act.Id into actG from act in actG.DefaultIfEmpty()
@@ -42,20 +43,21 @@ public sealed class GetFollowUpsDueQueryHandler
                && a.FollowUpAt != null
                && a.FollowUpAt <= dueBy
                && (!req.CampusId.HasValue || l.CampusId == req.CampusId)
-            select new LeadActivityDto(
-                a.Id, a.LeadId,
-                a.ActivityTypeId, act == null ? null : act.Code,
-                a.Subject, a.Body, a.Direction,
-                a.OccurredAt, a.FollowUpAt,
-                a.PerformedBy, usr == null ? null : usr.FullName,
-                a.CreatedAt);
+            select new { a, act, usr };
 
-        var totalCount = await query.CountAsync(ct);
+        var totalCount = await joined.CountAsync(ct);
 
-        var items = await query
-            .OrderBy(a => a.FollowUpAt)
+        var items = await joined
+            .OrderBy(x => x.a.FollowUpAt)
             .Skip(req.Skip)
             .Take(req.PageSize)
+            .Select(x => new LeadActivityDto(
+                x.a.Id, x.a.LeadId,
+                x.a.ActivityTypeId, x.act == null ? null : x.act.Code,
+                x.a.Subject, x.a.Body, x.a.Direction,
+                x.a.OccurredAt, x.a.FollowUpAt,
+                x.a.PerformedBy, x.usr == null ? null : x.usr.FullName,
+                x.a.CreatedAt))
             .ToListAsync(ct);
 
         return PaginatedResult<LeadActivityDto>.Create(items, totalCount, req.Page, req.PageSize);

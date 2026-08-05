@@ -123,6 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     refresh,
     logout,
+    clearTokens,
     hasPermission,
   }
 })

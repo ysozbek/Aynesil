@@ -1,104 +1,152 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="d-flex align-items-center justify-content-between mb-6">
-      <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('consultancy.institution.list.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('consultancy.institution.list.subtitle') }}</p>
-      </div>
-      <RouterLink v-if="hasPermission('institution:create')" to="/consultancy/institutions/new" class="btn btn-primary">
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('consultancy.institution.new') }}
-      </RouterLink>
-    </div>
-
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label fs-7">{{ $t('common.search') }}</label>
-            <input v-model="filters.search" type="text" class="form-control form-control-sm" @input="debouncedFetch" />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('consultancy.institution.fields.city') }}</label>
-            <input v-model="filters.city" type="text" class="form-control form-control-sm" @input="debouncedFetch" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="consultancyStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="consultancyStore.institutions.items.length === 0" class="text-center py-15 text-muted">
-          <i class="ki-outline ki-home fs-3x mb-4 d-block text-gray-300"></i>
-          {{ $t('consultancy.institution.list.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('consultancy.institution.fields.name') }}</th>
-                <th>{{ $t('consultancy.institution.fields.type') }}</th>
-                <th>{{ $t('consultancy.institution.fields.city') }}</th>
-                <th class="text-center">{{ $t('consultancy.institution.fields.planCount') }}</th>
-                <th class="text-center">{{ $t('consultancy.institution.fields.visitCount') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="inst in consultancyStore.institutions.items" :key="inst.id">
-                <td class="ps-4 fw-semibold">{{ inst.name }}</td>
-                <td class="text-muted">{{ inst.institutionTypeCode ?? '—' }}</td>
-                <td class="text-muted">{{ inst.city ?? '—' }}</td>
-                <td class="text-center">{{ inst.planCount }}</td>
-                <td class="text-center">{{ inst.visitCount }}</td>
-                <td class="text-end pe-4">
-                  <RouterLink :to="`/consultancy/institutions/${inst.id}`" class="btn btn-sm btn-light-primary me-2">
-                    <i class="ki-outline ki-eye fs-4"></i>
-                  </RouterLink>
-                  <RouterLink v-if="hasPermission('institution:update')" :to="`/consultancy/institutions/${inst.id}/edit`" class="btn btn-sm btn-light">
-                    <i class="ki-outline ki-pencil fs-4"></i>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="consultancyStore.institutions.totalPages > 1" class="d-flex justify-content-end pt-4">
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-light" :disabled="!consultancyStore.institutions.hasPreviousPage" @click="changePage(filters.page! - 1)">{{ $t('common.back') }}</button>
-            <span class="btn btn-sm btn-light-primary">{{ filters.page }} / {{ consultancyStore.institutions.totalPages }}</span>
-            <button class="btn btn-sm btn-light" :disabled="!consultancyStore.institutions.hasNextPage" @click="changePage(filters.page! + 1)">{{ $t('common.next') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
-import type { InstitutionListQuery } from '@/types/consultancy.types'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import Pagination from '@/components/shared/Pagination.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { InstitutionListItemDto, InstitutionListQuery } from '@/types/consultancy.types'
 
+const { t } = useI18n()
+const router = useRouter()
 const consultancyStore = useConsultancyStore()
 const authStore = useAuthStore()
+const { can } = usePermission()
 
 const filters = reactive<InstitutionListQuery>({
-  page: 1, pageSize: 20, search: '', city: '',
+  page: 1,
+  pageSize: 20,
+  search: '',
+  city: '',
   corporationId: authStore.user?.corporationId,
 })
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
+const columns: Column<InstitutionListItemDto>[] = [
+  { key: 'name', label: t('consultancy.institution.fields.name') },
+  { key: 'institutionTypeCode', label: t('consultancy.institution.fields.type'), width: '120px' },
+  { key: 'city', label: t('consultancy.institution.fields.city'), width: '120px' },
+  { key: 'planCount', label: t('consultancy.institution.fields.planCount'), width: '90px' },
+  { key: 'visitCount', label: t('consultancy.institution.fields.visitCount'), width: '90px' },
+]
 
 let debounceTimer: ReturnType<typeof setTimeout>
-function debouncedFetch() { clearTimeout(debounceTimer); debounceTimer = setTimeout(doFetch, 400) }
+function debouncedFetch() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(doFetch, 400)
+}
 
-async function doFetch() { filters.page = 1; await consultancyStore.fetchInstitutions(filters) }
-function changePage(page: number) { filters.page = page; consultancyStore.fetchInstitutions(filters) }
+async function doFetch() {
+  filters.page = 1
+  await consultancyStore.fetchInstitutions(filters)
+}
+
+function resetFilters() {
+  filters.search = ''
+  filters.city = ''
+  filters.page = 1
+  consultancyStore.fetchInstitutions(filters)
+}
+
+watch(
+  () => filters.page,
+  () => consultancyStore.fetchInstitutions(filters)
+)
 
 onMounted(doFetch)
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('consultancy.institution.list.title')" :description="t('consultancy.institution.list.subtitle')">
+      <button
+        v-if="can('institution:create')"
+        @click="router.push('/consultancy/institutions/new')"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ t('consultancy.institution.new') }}
+      </button>
+    </PageHeader>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.search') }}</label>
+        <input
+          v-model="filters.search"
+          type="text"
+          class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          @input="debouncedFetch"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('consultancy.institution.fields.city') }}</label>
+        <input
+          v-model="filters.city"
+          type="text"
+          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
+          @input="debouncedFetch"
+        />
+      </div>
+      <button @click="resetFilters" class="h-9 px-3 text-sm rounded-lg border border-border hover:bg-accent">
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="consultancyStore.institutions.items"
+      :loading="consultancyStore.loading"
+      :empty-text="t('consultancy.institution.list.noData')"
+      @row-click="(row) => router.push(`/consultancy/institutions/${row.id}`)"
+    >
+      <template #cell-name="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-institutionTypeCode="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-city="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-planCount="{ value }">
+        <span class="text-center block">{{ value }}</span>
+      </template>
+      <template #cell-visitCount="{ value }">
+        <span class="text-center block">{{ value }}</span>
+      </template>
+      <template #actions="{ row }">
+        <div class="flex items-center justify-end gap-1" @click.stop>
+          <button
+            v-if="can('institution:update')"
+            @click="router.push(`/consultancy/institutions/${row.id}/edit`)"
+            class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+            :title="t('common.edit')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+      </template>
+    </DataTable>
+
+    <div class="mt-4">
+      <Pagination
+        :page="consultancyStore.institutions.page"
+        :page-size="consultancyStore.institutions.pageSize"
+        :total-count="consultancyStore.institutions.totalCount"
+        :total-pages="consultancyStore.institutions.totalPages"
+        :has-previous-page="consultancyStore.institutions.hasPreviousPage"
+        :has-next-page="consultancyStore.institutions.hasNextPage"
+        @update:page="(p) => { filters.page = p }"
+        @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; consultancyStore.fetchInstitutions(filters) }"
+      />
+    </div>
+  </div>
+</template>

@@ -1,113 +1,166 @@
+<script setup lang="ts">
+import { reactive, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useContractStore } from '@/stores/contract.store'
+import { useAuthStore } from '@/stores/auth.store'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import Pagination from '@/components/shared/Pagination.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { ContractListQuery, StudentContractListItemDto } from '@/types/legal.types'
+
+const { t } = useI18n()
+const router = useRouter()
+const contractStore = useContractStore()
+const auth = useAuthStore()
+const { can } = usePermission()
+
+const filters = reactive<ContractListQuery>({
+  page: 1,
+  pageSize: 20,
+  status: '',
+  corporationId: auth.user?.corporationId,
+})
+
+const columns: Column<StudentContractListItemDto>[] = [
+  { key: 'studentFullName', label: t('legal.contract.fields.student') },
+  { key: 'templateCode', label: t('legal.contract.fields.template') },
+  { key: 'startsOn', label: t('legal.contract.fields.startsOn'), width: '110px' },
+  { key: 'endsOn', label: t('legal.contract.fields.endsOn'), width: '110px' },
+  { key: 'signedAt', label: t('legal.contract.fields.signedAt'), width: '120px' },
+  { key: 'status', label: t('common.status'), width: '120px' },
+]
+
+function formatDate(dt: unknown) {
+  if (!dt) return '—'
+  return new Date(String(dt)).toLocaleDateString('tr-TR')
+}
+
+function statusClass(s: string) {
+  const map: Record<string, string> = {
+    Draft: 'bg-gray-100 text-gray-600',
+    Sent: 'bg-amber-100 text-amber-700',
+    Active: 'bg-green-100 text-green-700',
+    Expired: 'bg-gray-100 text-gray-700',
+    Terminated: 'bg-red-100 text-red-700',
+  }
+  return map[s] ?? 'bg-gray-100 text-gray-600'
+}
+
+function statusLabel(s: string) {
+  return t(`legal.contract.status.${s.toLowerCase()}`, s)
+}
+
+function doFetch() {
+  filters.page = 1
+  contractStore.fetchContracts(filters)
+}
+
+function resetFilters() {
+  filters.status = ''
+  filters.page = 1
+  contractStore.fetchContracts(filters)
+}
+
+watch(
+  () => filters.page,
+  () => contractStore.fetchContracts(filters)
+)
+
+onMounted(() => contractStore.fetchContracts(filters))
+</script>
+
 <template>
-  <div class="container-xxl py-6">
-    <div class="d-flex align-items-center justify-content-between mb-6">
+  <div>
+    <PageHeader :title="t('legal.contract.list.title')" :description="t('legal.contract.list.subtitle')">
+      <button
+        v-if="can('student_contract:generate')"
+        @click="router.push({ name: 'contract-new' })"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ t('legal.contract.new') }}
+      </button>
+    </PageHeader>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
       <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('legal.contract.list.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('legal.contract.list.subtitle') }}</p>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
+        <select
+          v-model="filters.status"
+          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
+          @change="doFetch"
+        >
+          <option value="">{{ t('common.allStatuses') }}</option>
+          <option value="Draft">{{ t('legal.contract.status.draft') }}</option>
+          <option value="Sent">{{ t('legal.contract.status.sent') }}</option>
+          <option value="Active">{{ t('legal.contract.status.active') }}</option>
+          <option value="Expired">{{ t('legal.contract.status.expired') }}</option>
+          <option value="Terminated">{{ t('legal.contract.status.terminated') }}</option>
+        </select>
       </div>
-      <RouterLink v-if="hasPermission('student_contract:generate')" to="/legal/contracts/new" class="btn btn-primary">
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('legal.contract.new') }}
-      </RouterLink>
+      <button
+        @click="resetFilters"
+        class="h-9 px-3 text-sm rounded-lg border border-border hover:bg-accent"
+      >
+        {{ t('common.cancel') }}
+      </button>
     </div>
 
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.status') }}</label>
-            <select v-model="filters.status" class="form-select form-select-sm" @change="doFetch">
-              <option value="">{{ $t('common.allStatuses') }}</option>
-              <option value="Draft">Draft</option>
-              <option value="Sent">{{ $t('legal.contract.status.sent') }}</option>
-              <option value="Active">{{ $t('legal.contract.status.active') }}</option>
-              <option value="Expired">{{ $t('legal.contract.status.expired') }}</option>
-              <option value="Terminated">{{ $t('legal.contract.status.terminated') }}</option>
-            </select>
-          </div>
+    <DataTable
+      :columns="columns"
+      :rows="contractStore.contracts.items"
+      :loading="contractStore.loading"
+      :empty-text="t('legal.contract.list.noData')"
+      @row-click="(row) => router.push({ name: 'contract-detail', params: { id: row.id } })"
+    >
+      <template #cell-studentFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-templateCode="{ row }">
+        <span class="text-muted-foreground">
+          {{ row.templateCode ? `${row.templateCode} v${row.templateVersion}` : '—' }}
+        </span>
+      </template>
+      <template #cell-startsOn="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-endsOn="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-signedAt="{ value }">{{ formatDate(value) }}</template>
+      <template #cell-status="{ value }">
+        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
+          {{ statusLabel(String(value)) }}
+        </span>
+      </template>
+      <template #actions="{ row }">
+        <div class="flex items-center justify-end gap-1" @click.stop>
+          <button
+            @click="router.push({ name: 'contract-detail', params: { id: row.id } })"
+            class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+            :title="t('common.view')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </DataTable>
 
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="contractStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="contractStore.contracts.items.length === 0" class="text-center py-15 text-muted">
-          <i class="ki-outline ki-document fs-3x mb-4 d-block text-gray-300"></i>
-          {{ $t('legal.contract.list.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('legal.contract.fields.student') }}</th>
-                <th>{{ $t('legal.contract.fields.template') }}</th>
-                <th>{{ $t('legal.contract.fields.startsOn') }}</th>
-                <th>{{ $t('legal.contract.fields.endsOn') }}</th>
-                <th>{{ $t('legal.contract.fields.signedAt') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="c in contractStore.contracts.items" :key="c.id">
-                <td class="ps-4 fw-semibold">{{ c.studentFullName ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ c.templateCode ? `${c.templateCode} v${c.templateVersion}` : '—' }}</td>
-                <td class="text-muted fs-7">{{ c.startsOn ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ c.endsOn ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ c.signedAt ? formatDate(c.signedAt) : '—' }}</td>
-                <td><span :class="statusBadge(c.status)">{{ c.status }}</span></td>
-                <td class="text-end pe-4">
-                  <RouterLink :to="`/legal/contracts/${c.id}`" class="btn btn-sm btn-light-primary">
-                    <i class="ki-outline ki-eye fs-4"></i>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="contractStore.contracts.totalPages > 1" class="d-flex justify-content-end pt-4">
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-light" :disabled="!contractStore.contracts.hasPreviousPage" @click="changePage(filters.page! - 1)">{{ $t('common.back') }}</button>
-            <span class="btn btn-sm btn-light-primary">{{ filters.page }} / {{ contractStore.contracts.totalPages }}</span>
-            <button class="btn btn-sm btn-light" :disabled="!contractStore.contracts.hasNextPage" @click="changePage(filters.page! + 1)">{{ $t('common.next') }}</button>
-          </div>
-        </div>
-      </div>
+    <div class="mt-4">
+      <Pagination
+        :page="contractStore.contracts.page"
+        :page-size="contractStore.contracts.pageSize"
+        :total-count="contractStore.contracts.totalCount"
+        :total-pages="contractStore.contracts.totalPages"
+        :has-previous-page="contractStore.contracts.hasPreviousPage"
+        :has-next-page="contractStore.contracts.hasNextPage"
+        @update:page="(p) => { filters.page = p }"
+        @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; contractStore.fetchContracts(filters) }"
+      />
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { reactive, onMounted } from 'vue'
-import { useContractStore } from '@/stores/contract.store'
-import { useAuthStore } from '@/stores/auth.store'
-import type { ContractListQuery } from '@/types/legal.types'
-
-const contractStore = useContractStore()
-const authStore = useAuthStore()
-
-const filters = reactive<ContractListQuery>({
-  page: 1, pageSize: 20, status: '',
-  corporationId: authStore.user?.corporationId,
-})
-
-function hasPermission(p: string) { return authStore.hasPermission(p) }
-function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
-
-function statusBadge(s: string) {
-  const map: Record<string, string> = {
-    Draft: 'badge badge-light-secondary', Sent: 'badge badge-light-warning',
-    Active: 'badge badge-light-success', Expired: 'badge badge-light-dark',
-    Terminated: 'badge badge-light-danger',
-  }
-  return map[s] ?? 'badge badge-light'
-}
-
-async function doFetch() { filters.page = 1; await contractStore.fetchContracts(filters) }
-function changePage(page: number) { filters.page = page; contractStore.fetchContracts(filters) }
-
-onMounted(doFetch)
-</script>

@@ -1,139 +1,54 @@
-<template>
-  <div class="container-xxl py-6">
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-6">
-      <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('consultancyContract.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('consultancyContract.subtitle') }}</p>
-      </div>
-      <RouterLink
-        v-if="hasPermission('consultancy_agreement:create')"
-        to="/consultancy/agreements/new"
-        class="btn btn-primary"
-      >
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('consultancyContract.new') }}
-      </RouterLink>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.status') }}</label>
-            <select v-model="filters.status" class="form-select form-select-sm" @change="doFetch">
-              <option value="">{{ $t('common.allStatuses') }}</option>
-              <option value="draft">{{ $t('consultancyContract.draft') }}</option>
-              <option value="sent">{{ $t('consultancyContract.sent') }}</option>
-              <option value="signed">{{ $t('consultancyContract.signed') }}</option>
-              <option value="expired">{{ $t('consultancyContract.expired') }}</option>
-              <option value="cancelled">{{ $t('consultancyContract.cancelled') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('consultancyContract.agreementType') }}</label>
-            <select v-model="filters.agreementTypeId" class="form-select form-select-sm" @change="doFetch">
-              <option value="">{{ $t('common.allStatuses') }}</option>
-              <option v-for="t in agreementTypes" :key="t.id" :value="t.id">{{ t.label || t.code }}</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-sm btn-light w-100" @click="resetFilters">{{ $t('common.cancel') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="store.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="store.agreements.items.length === 0" class="text-center py-15 text-muted">
-          <i class="ki-outline ki-document fs-3x mb-4 d-block text-gray-300"></i>
-          {{ $t('consultancyContract.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('consultancyContract.fields.title') }}</th>
-                <th>{{ $t('consultancyContract.fields.institution') }}</th>
-                <th>{{ $t('consultancyContract.fields.plan') }}</th>
-                <th>{{ $t('consultancyContract.fields.type') }}</th>
-                <th>{{ $t('consultancyContract.fields.startDate') }}</th>
-                <th>{{ $t('consultancyContract.fields.endDate') }}</th>
-                <th>{{ $t('consultancyContract.fields.signedDate') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="a in store.agreements.items" :key="a.id">
-                <td class="ps-4 fw-semibold">{{ a.title }}</td>
-                <td class="text-muted fs-7">{{ a.institutionName }}</td>
-                <td class="text-muted fs-7">{{ a.planName }}</td>
-                <td>{{ a.agreementTypeCode ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ a.startDate ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ a.endDate ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ a.signedDate ?? '—' }}</td>
-                <td>
-                  <span :class="statusBadge(a.status)">{{ statusLabel(a.status) }}</span>
-                </td>
-                <td class="text-end pe-4">
-                  <RouterLink :to="`/consultancy/agreements/${a.id}`" class="btn btn-sm btn-light-primary">
-                    <i class="ki-outline ki-eye fs-4"></i>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="store.agreements.totalPages > 1" class="d-flex justify-content-end pt-4">
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-light" :disabled="!store.agreements.hasPreviousPage" @click="changePage(filters.page! - 1)">{{ $t('common.back') }}</button>
-            <span class="btn btn-sm btn-light-primary">{{ filters.page }} / {{ store.agreements.totalPages }}</span>
-            <button class="btn btn-sm btn-light" :disabled="!store.agreements.hasNextPage" @click="changePage(filters.page! + 1)">{{ $t('common.next') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'
+import { reactive, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
-import { useI18n } from 'vue-i18n'
-import type { AgreementListQuery } from '@/types/consultancy.types'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import Pagination from '@/components/shared/Pagination.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type { ConsultancyAgreementListItemDto, AgreementListQuery } from '@/types/consultancy.types'
 
 const { t } = useI18n()
+const router = useRouter()
 const store = useConsultancyStore()
 const authStore = useAuthStore()
 const refDataStore = useRefDataStore()
+const { can } = usePermission()
 
 const filters = reactive<AgreementListQuery>({
-  page: 1, pageSize: 20, status: '', agreementTypeId: '',
+  page: 1,
+  pageSize: 20,
+  status: '',
+  agreementTypeId: '',
   corporationId: authStore.user?.corporationId,
 })
 
 const agreementTypes = computed(() => refDataStore.getByCategory?.('agreement_type') ?? [])
-function hasPermission(p: string) { return authStore.hasPermission(p) }
 
-function statusBadge(s: string) {
+const columns: Column<ConsultancyAgreementListItemDto>[] = [
+  { key: 'title', label: t('consultancyContract.fields.title') },
+  { key: 'institutionName', label: t('consultancyContract.fields.institution') },
+  { key: 'planName', label: t('consultancyContract.fields.plan') },
+  { key: 'agreementTypeCode', label: t('consultancyContract.fields.type'), width: '100px' },
+  { key: 'startDate', label: t('consultancyContract.fields.startDate'), width: '100px' },
+  { key: 'endDate', label: t('consultancyContract.fields.endDate'), width: '100px' },
+  { key: 'signedDate', label: t('consultancyContract.fields.signedDate'), width: '100px' },
+  { key: 'status', label: t('common.status'), width: '100px' },
+]
+
+function statusClass(s: string) {
   const map: Record<string, string> = {
-    draft: 'badge badge-light-secondary',
-    sent: 'badge badge-light-primary',
-    signed: 'badge badge-light-success',
-    expired: 'badge badge-light-dark',
-    cancelled: 'badge badge-light-danger',
+    draft: 'bg-gray-100 text-gray-600',
+    sent: 'bg-blue-100 text-blue-700',
+    signed: 'bg-green-100 text-green-700',
+    expired: 'bg-gray-100 text-gray-800',
+    cancelled: 'bg-red-100 text-red-700',
   }
-  return map[s] ?? 'badge badge-light'
+  return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function statusLabel(s: string) {
@@ -159,13 +74,100 @@ function resetFilters() {
   doFetch()
 }
 
-function changePage(page: number) {
-  filters.page = page
-  store.fetchAgreements(filters)
-}
+watch(
+  () => filters.page,
+  () => store.fetchAgreements(filters)
+)
 
 onMounted(async () => {
   await refDataStore.fetchCategory?.('agreement_type')
   await doFetch()
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('consultancyContract.title')" :description="t('consultancyContract.subtitle')">
+      <button
+        v-if="can('consultancy_agreement:create')"
+        @click="router.push('/consultancy/agreements/new')"
+        class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ t('consultancyContract.new') }}
+      </button>
+    </PageHeader>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
+        <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
+          <option value="">{{ t('common.allStatuses') }}</option>
+          <option value="draft">{{ t('consultancyContract.draft') }}</option>
+          <option value="sent">{{ t('consultancyContract.sent') }}</option>
+          <option value="signed">{{ t('consultancyContract.signed') }}</option>
+          <option value="expired">{{ t('consultancyContract.expired') }}</option>
+          <option value="cancelled">{{ t('consultancyContract.cancelled') }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('consultancyContract.agreementType') }}</label>
+        <select v-model="filters.agreementTypeId" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
+          <option value="">{{ t('common.allStatuses') }}</option>
+          <option v-for="type in agreementTypes" :key="type.id" :value="type.id">{{ type.label || type.code }}</option>
+        </select>
+      </div>
+      <button @click="resetFilters" class="h-9 px-3 text-sm rounded-lg border border-border hover:bg-accent">
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.agreements.items"
+      :loading="store.loading"
+      :empty-text="t('consultancyContract.noData')"
+      @row-click="(row) => router.push(`/consultancy/agreements/${row.id}`)"
+    >
+      <template #cell-title="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-institutionName="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-planName="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-agreementTypeCode="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-startDate="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-endDate="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-signedDate="{ value }">
+        <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-status="{ value }">
+        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
+          {{ statusLabel(String(value)) }}
+        </span>
+      </template>
+    </DataTable>
+
+    <div class="mt-4">
+      <Pagination
+        :page="store.agreements.page"
+        :page-size="store.agreements.pageSize"
+        :total-count="store.agreements.totalCount"
+        :total-pages="store.agreements.totalPages"
+        :has-previous-page="store.agreements.hasPreviousPage"
+        :has-next-page="store.agreements.hasNextPage"
+        @update:page="(p) => { filters.page = p }"
+        @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; store.fetchAgreements(filters) }"
+      />
+    </div>
+  </div>
+</template>

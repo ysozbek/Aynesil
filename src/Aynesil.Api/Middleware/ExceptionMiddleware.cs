@@ -55,6 +55,10 @@ public class ExceptionMiddleware
                 StatusCodes.Status404NotFound,
                 ApiResponse.Fail(nfe.Message)),
 
+            KeyNotFoundException knf => (
+                StatusCodes.Status404NotFound,
+                ApiResponse.Fail(knf.Message)),
+
             ForbiddenAccessException => (
                 StatusCodes.Status403Forbidden,
                 ApiResponse.Fail("You do not have permission to perform this action.")),
@@ -62,6 +66,16 @@ public class ExceptionMiddleware
             UnauthorizedAccessException => (
                 StatusCodes.Status401Unauthorized,
                 ApiResponse.Fail("Authentication required.")),
+
+            ConflictException ce => (
+                StatusCodes.Status409Conflict,
+                ApiResponse.Fail(ce.Message)),
+
+            // Domain/application handlers use InvalidOperationException for business-rule
+            // violations (duplicate enrollments, invalid transitions, etc.).
+            InvalidOperationException ioe => (
+                StatusCodes.Status409Conflict,
+                ApiResponse.Fail(ioe.Message)),
 
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,

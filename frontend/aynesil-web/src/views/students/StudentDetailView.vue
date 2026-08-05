@@ -480,6 +480,19 @@ const showTransferModal = ref(false)
 const transferForm = reactive({ newCampusId: '', transferDate: '' })
 const transferError = ref('')
 
+const activeCampusIds = computed(() =>
+  new Set(store.campuses.filter(c => !c.activeTo).map(c => c.campusId))
+)
+
+const enrollableCampuses = computed(() =>
+  branchStore.list.items.filter(c => !activeCampusIds.value.has(c.id))
+)
+
+function apiErrorMessage(e: unknown, fallback: string) {
+  const ax = e as { response?: { data?: { message?: string } }; message?: string }
+  return ax.response?.data?.message || ax.message || fallback
+}
+
 function openEnrollModal() {
   enrollForm.campusId = ''
   enrollForm.isPrimary = false
@@ -498,7 +511,7 @@ async function submitEnroll() {
     })
     showEnrollModal.value = false
   } catch (e: unknown) {
-    enrollError.value = (e as Error).message
+    enrollError.value = apiErrorMessage(e, t('student.campus.alreadyEnrolled'))
   }
 }
 
@@ -1571,8 +1584,11 @@ function formatDateTime(val: string | null): string {
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.primaryCampus') }} *</label>
           <select v-model="enrollForm.campusId" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
             <option value="">{{ t('common.select') }}</option>
-            <option v-for="c in branchStore.list.items" :key="c.id" :value="c.id">{{ c.name }}</option>
+            <option v-for="c in enrollableCampuses" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
+          <p v-if="enrollableCampuses.length === 0" class="mt-1 text-xs text-muted-foreground">
+            {{ t('student.campus.noEnrollableCampuses') }}
+          </p>
         </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.campus.enroll') }} {{ t('common.from') }}</label>

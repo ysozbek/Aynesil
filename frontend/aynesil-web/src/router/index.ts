@@ -862,6 +862,18 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'institution:update' },
       },
       {
+        path: 'consultancy/plans',
+        name: 'consultancy-plans',
+        component: () => import('@/views/consultancy/PlanListView.vue'),
+        meta: { permission: 'consultancy_plan:read' },
+      },
+      {
+        path: 'consultancy/plans/:id',
+        name: 'consultancy-plan-detail',
+        component: () => import('@/views/consultancy/PlanDetailView.vue'),
+        meta: { permission: 'consultancy_plan:read' },
+      },
+      {
         path: 'consultancy/visits',
         name: 'consultancy-visits',
         component: () => import('@/views/consultancy/VisitListView.vue'),
@@ -872,6 +884,18 @@ const routes: RouteRecordRaw[] = [
         name: 'consultancy-visit-detail',
         component: () => import('@/views/consultancy/VisitListView.vue'),
         meta: { permission: 'school_visit:read' },
+      },
+      {
+        path: 'consultancy/observations',
+        name: 'consultancy-observations',
+        component: () => import('@/views/consultancy/ObservationListView.vue'),
+        meta: { permission: 'observation:read' },
+      },
+      {
+        path: 'consultancy/reports',
+        name: 'consultancy-reports',
+        component: () => import('@/views/consultancy/ReportListView.vue'),
+        meta: { permission: 'consultancy_report:read' },
       },
       {
         path: 'consultancy/agreements',

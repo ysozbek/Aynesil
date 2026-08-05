@@ -30,10 +30,31 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode !== 'production',
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['vue', 'vue-router', 'pinia'],
-            i18n: ['vue-i18n'],
-            charts: ['apexcharts', 'vue3-apexcharts'],
+          // Keep shared app code out of the entry chunk so lazy route modules
+          // do not import back into index (Safari: "Importing a module script failed").
+          manualChunks(id) {
+            const normalized = id.replace(/\\/g, '/')
+            if (normalized.includes('node_modules')) {
+              if (normalized.includes('vue-i18n')) return 'i18n'
+              if (normalized.includes('apexcharts') || normalized.includes('vue3-apexcharts')) return 'charts'
+              if (
+                normalized.includes('vue-router') ||
+                normalized.includes('pinia') ||
+                normalized.includes('@vue/') ||
+                /(?:^|\/)vue(?:\/|$)/.test(normalized)
+              ) {
+                return 'vendor'
+              }
+              return
+            }
+            if (
+              normalized.includes('/src/stores/') ||
+              normalized.includes('/src/services/') ||
+              normalized.includes('/src/composables/') ||
+              normalized.includes('/src/types/')
+            ) {
+              return 'app-core'
+            }
           },
         },
       },

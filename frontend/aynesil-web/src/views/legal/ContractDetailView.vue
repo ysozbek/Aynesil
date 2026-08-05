@@ -1,164 +1,46 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <RouterLink to="/legal/contracts" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </RouterLink>
-    </div>
-
-    <div v-if="contractStore.loading" class="text-center py-20">
-      <div class="spinner-border text-primary"></div>
-    </div>
-
-    <div v-else-if="!contract" class="text-center py-20 text-muted">{{ $t('errors.notFound') }}</div>
-
-    <div v-else>
-      <div class="d-flex align-items-center justify-content-between mb-6">
-        <div>
-          <h1 class="text-gray-900 fw-bold fs-2">{{ $t('legal.contract.detail.title') }}</h1>
-          <p class="text-muted mb-0">{{ contract.studentFullName }}</p>
-        </div>
-        <div class="d-flex gap-2">
-          <span :class="statusBadge(contract.status) + ' fs-7 px-4 py-2'">{{ contract.status }}</span>
-          <button
-            v-if="contract.status === 'Draft' && hasPermission('student_contract:send')"
-            class="btn btn-sm btn-primary"
-            :disabled="contractStore.saving"
-            @click="doSend"
-          >
-            {{ $t('legal.contract.actions.send') }}
-          </button>
-          <button
-            v-if="contract.status === 'Sent' && hasPermission('student_contract:sign')"
-            class="btn btn-sm btn-success"
-            :disabled="contractStore.saving"
-            @click="showSignModal = true"
-          >
-            {{ $t('legal.contract.actions.sign') }}
-          </button>
-          <button
-            v-if="contract.status === 'Active' && hasPermission('student_contract:terminate')"
-            class="btn btn-sm btn-light-danger"
-            :disabled="contractStore.saving"
-            @click="doTerminate"
-          >
-            {{ $t('legal.contract.actions.terminate') }}
-          </button>
-        </div>
-      </div>
-
-      <div class="row g-6">
-        <div class="col-xl-8">
-          <div class="card">
-            <div class="card-header border-0"><h3 class="card-title fw-bold">{{ $t('legal.contract.detail.info') }}</h3></div>
-            <div class="card-body pt-0">
-              <div class="row g-4">
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.student') }}</div>
-                  <div class="fw-semibold">{{ contract.studentFullName ?? '—' }}</div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.template') }}</div>
-                  <div class="fw-semibold">{{ contract.templateCode ? `${contract.templateCode} v${contract.templateVersion}` : '—' }}</div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.startsOn') }}</div>
-                  <div class="fw-semibold">{{ contract.startsOn ?? '—' }}</div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.endsOn') }}</div>
-                  <div class="fw-semibold">{{ contract.endsOn ?? '—' }}</div>
-                </div>
-                <div v-if="contract.signedAt" class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.signedAt') }}</div>
-                  <div class="fw-semibold">{{ formatDatetime(contract.signedAt) }}</div>
-                </div>
-                <div v-if="contract.signedByName" class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.signedBy') }}</div>
-                  <div class="fw-semibold">{{ contract.signedByName }}</div>
-                </div>
-                <div v-if="contract.signatureMethod" class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('legal.contract.fields.signatureMethod') }}</div>
-                  <div class="fw-semibold">{{ contract.signatureMethod }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-4">
-          <div class="card">
-            <div class="card-header border-0"><h3 class="card-title fw-bold">{{ $t('legal.contract.detail.metadata') }}</h3></div>
-            <div class="card-body pt-0">
-              <div class="mb-3"><span class="text-muted fs-7">{{ $t('common.createdAt') }}:</span> <span class="fw-semibold ms-2">{{ formatDate(contract.createdAt) }}</span></div>
-              <div class="mb-3"><span class="text-muted fs-7">{{ $t('common.updatedAt') }}:</span> <span class="fw-semibold ms-2">{{ formatDate(contract.updatedAt) }}</span></div>
-              <div v-if="contract.signedFileId" class="mb-3">
-                <span class="text-muted fs-7">{{ $t('legal.contract.fields.signedFile') }}:</span>
-                <span class="badge badge-light-success ms-2">{{ $t('legal.contract.fields.fileAttached') }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sign Modal -->
-    <div v-if="showSignModal" class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ $t('legal.contract.actions.sign') }}</h5>
-            <button class="btn-close" @click="showSignModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-4 p-4 rounded bg-light-warning text-warning fs-7">
-              <i class="ki-outline ki-information-5 fs-3 me-2"></i>
-              {{ $t('legal.contract.detail.signWarning') }}
-            </div>
-            <label class="form-label">{{ $t('legal.contract.fields.signatureMethod') }}</label>
-            <select v-model="signForm.method" class="form-select">
-              <option value="Manual">{{ $t('legal.signature.manual') }}</option>
-              <option value="Electronic">{{ $t('legal.signature.electronic') }}</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-light" @click="showSignModal = false">{{ $t('common.cancel') }}</button>
-            <button class="btn btn-success" :disabled="contractStore.saving" @click="doSign">
-              <span v-if="contractStore.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('legal.contract.actions.sign') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
-import { useAuthStore } from '@/stores/auth.store'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 
+const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const contractStore = useContractStore()
-const authStore = useAuthStore()
+const { can } = usePermission()
+
 const id = route.params.id as string
 const contract = computed(() => contractStore.currentContract)
 const showSignModal = ref(false)
+const showTerminateConfirm = ref(false)
 const signForm = reactive({ method: 'Manual' })
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
-function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
-function formatDatetime(dt: string) { return new Date(dt).toLocaleString('tr-TR') }
+function formatDate(dt: string) {
+  return new Date(dt).toLocaleDateString('tr-TR')
+}
 
-function statusBadge(s: string) {
+function formatDatetime(dt: string) {
+  return new Date(dt).toLocaleString('tr-TR')
+}
+
+function statusClass(s: string) {
   const map: Record<string, string> = {
-    Draft: 'badge badge-light-secondary', Sent: 'badge badge-light-warning',
-    Active: 'badge badge-light-success', Expired: 'badge badge-light-dark',
-    Terminated: 'badge badge-light-danger',
+    Draft: 'bg-gray-100 text-gray-600',
+    Sent: 'bg-amber-100 text-amber-700',
+    Active: 'bg-green-100 text-green-700',
+    Expired: 'bg-gray-100 text-gray-700',
+    Terminated: 'bg-red-100 text-red-700',
   }
-  return map[s] ?? 'badge badge-light'
+  return map[s] ?? 'bg-gray-100 text-gray-600'
+}
+
+function statusLabel(s: string) {
+  return t(`legal.contract.status.${s.toLowerCase()}`, s)
 }
 
 async function doSend() {
@@ -175,9 +57,8 @@ async function doSign() {
 }
 
 async function doTerminate() {
-  if (confirm('Bu sözleşme feshedilecek. Onaylıyor musunuz?')) {
-    await contractStore.terminateContract(id)
-  }
+  await contractStore.terminateContract(id)
+  showTerminateConfirm.value = false
 }
 
 onMounted(() => {
@@ -185,3 +66,165 @@ onMounted(() => {
   contractStore.fetchContract(id)
 })
 </script>
+
+<template>
+  <div>
+    <div v-if="contractStore.loading" class="py-16 text-center text-muted-foreground text-sm">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else-if="!contract" class="py-16 text-center text-muted-foreground text-sm">
+      {{ t('errors.notFound') }}
+    </div>
+    <template v-else>
+      <PageHeader :title="t('legal.contract.detail.title')" :description="contract.studentFullName">
+        <div class="flex flex-wrap items-center gap-2">
+          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(contract.status)]">
+            {{ statusLabel(contract.status) }}
+          </span>
+          <button
+            v-if="contract.status === 'Draft' && can('student_contract:send')"
+            :disabled="contractStore.saving"
+            @click="doSend"
+            class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {{ t('legal.contract.actions.send') }}
+          </button>
+          <button
+            v-if="contract.status === 'Sent' && can('student_contract:sign')"
+            :disabled="contractStore.saving"
+            @click="showSignModal = true"
+            class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+          >
+            {{ t('legal.contract.actions.sign') }}
+          </button>
+          <button
+            v-if="contract.status === 'Active' && can('student_contract:terminate')"
+            :disabled="contractStore.saving"
+            @click="showTerminateConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            {{ t('legal.contract.actions.terminate') }}
+          </button>
+        </div>
+      </PageHeader>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <h3 class="font-semibold text-foreground mb-4">{{ t('legal.contract.detail.info') }}</h3>
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.student') }}</dt>
+              <dd class="font-medium text-foreground">{{ contract.studentFullName ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.template') }}</dt>
+              <dd class="font-medium text-foreground">
+                {{ contract.templateCode ? `${contract.templateCode} v${contract.templateVersion}` : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.startsOn') }}</dt>
+              <dd class="font-medium text-foreground">{{ contract.startsOn ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.endsOn') }}</dt>
+              <dd class="font-medium text-foreground">{{ contract.endsOn ?? '—' }}</dd>
+            </div>
+            <div v-if="contract.signedAt">
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.signedAt') }}</dt>
+              <dd class="font-medium text-foreground">{{ formatDatetime(contract.signedAt) }}</dd>
+            </div>
+            <div v-if="contract.signedByName">
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.signedBy') }}</dt>
+              <dd class="font-medium text-foreground">{{ contract.signedByName }}</dd>
+            </div>
+            <div v-if="contract.signatureMethod">
+              <dt class="text-muted-foreground mb-0.5">{{ t('legal.contract.fields.signatureMethod') }}</dt>
+              <dd class="font-medium text-foreground">{{ contract.signatureMethod }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5 h-fit">
+          <h3 class="font-semibold text-foreground mb-4">{{ t('legal.contract.detail.metadata') }}</h3>
+          <dl class="space-y-3 text-sm">
+            <div>
+              <dt class="text-muted-foreground">{{ t('common.createdAt') }}</dt>
+              <dd class="font-medium text-foreground mt-0.5">{{ formatDate(contract.createdAt) }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted-foreground">{{ t('common.updatedAt') }}</dt>
+              <dd class="font-medium text-foreground mt-0.5">{{ formatDate(contract.updatedAt) }}</dd>
+            </div>
+            <div v-if="contract.signedFileId">
+              <dt class="text-muted-foreground">{{ t('legal.contract.fields.signedFile') }}</dt>
+              <dd class="mt-1">
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  {{ t('legal.contract.fields.fileAttached') }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+          <button
+            @click="router.push({ name: 'contracts' })"
+            class="mt-4 w-full px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+          >
+            {{ t('common.back') }}
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <FormModal
+      :open="showSignModal"
+      :title="t('legal.contract.actions.sign')"
+      :saving="contractStore.saving"
+      @submit="doSign"
+      @close="showSignModal = false"
+    >
+      <div class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+        {{ t('legal.contract.detail.signWarning') }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.signatureMethod') }}</label>
+        <select v-model="signForm.method" class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent">
+          <option value="Manual">{{ t('legal.signature.manual') }}</option>
+          <option value="Electronic">{{ t('legal.signature.electronic') }}</option>
+        </select>
+      </div>
+      <template #footer>
+        <button
+          @click="showSignModal = false"
+          :disabled="contractStore.saving"
+          class="px-4 py-2 rounded-lg text-sm font-medium border border-border hover:bg-accent transition-colors disabled:opacity-50"
+        >
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          @click="doSign"
+          :disabled="contractStore.saving"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+        >
+          <span v-if="contractStore.saving" class="flex items-center gap-2">
+            <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {{ t('common.loading') }}
+          </span>
+          <span v-else>{{ t('legal.contract.actions.sign') }}</span>
+        </button>
+      </template>
+    </FormModal>
+
+    <ConfirmModal
+      :open="showTerminateConfirm"
+      :title="t('legal.contract.actions.terminate')"
+      :message="t('legal.contract.detail.terminateConfirm')"
+      :confirm-label="t('legal.contract.actions.terminate')"
+      :loading="contractStore.saving"
+      @confirm="doTerminate"
+      @cancel="showTerminateConfirm = false"
+    />
+  </div>
+</template>

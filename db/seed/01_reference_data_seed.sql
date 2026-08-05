@@ -45,6 +45,7 @@ insert into ref.ref_type(code, name, is_system, is_hierarchical, allows_tenant_v
   ('certification_type','Certification Types',false,false,true),
   ('guardian_relationship','Guardian Relationships',false,false,true),
   ('student_status','Student Statuses',false,false,true),
+  ('gender','Genders',true,false,false),
   ('enrollment_status','Enrollment Statuses',false,false,true),
   ('diagnosis_category','Diagnosis Categories',false,true,true),
   ('institution_type','Institution Types',false,false,true),
@@ -117,6 +118,10 @@ from (values
   ('student_status','on_hold',3,false,false),
   ('student_status','graduated',4,false,false),
   ('student_status','terminated',5,false,false),
+  -- gender
+  ('gender','male',1,false,true),
+  ('gender','female',2,false,true),
+  ('gender','unspecified',3,true,true),
   -- enrollment_status
   ('enrollment_status','pending',1,true,false),
   ('enrollment_status','active',2,false,false),
@@ -274,6 +279,10 @@ from (values
   ('student_status','on_hold','tr','Beklemede'),   ('student_status','on_hold','en','On Hold'),
   ('student_status','graduated','tr','Mezun'),     ('student_status','graduated','en','Graduated'),
   ('student_status','terminated','tr','Ayrıldı'),  ('student_status','terminated','en','Terminated'),
+
+  ('gender','male','tr','Erkek'),              ('gender','male','en','Male'),
+  ('gender','female','tr','Kadın'),            ('gender','female','en','Female'),
+  ('gender','unspecified','tr','Belirtilmedi'),('gender','unspecified','en','Unspecified'),
 
   ('educator_title','therapist','tr','Terapist'),     ('educator_title','therapist','en','Therapist'),
   ('educator_title','educator','tr','Eğitimci'),      ('educator_title','educator','en','Educator'),

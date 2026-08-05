@@ -47,7 +47,8 @@ public sealed class GetGoalTemplatesQueryHandler
                            || (t.Code != null && t.Code.ToLower().Contains(s)));
         }
 
-        var query =
+        // Sort on entity/join before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from t in q
             join cat in _db.RefValues.AsNoTracking()
                 on t.CategoryId equals cat.Id into catGrp
@@ -58,22 +59,26 @@ public sealed class GetGoalTemplatesQueryHandler
             join lib in _db.GoalLibraries.AsNoTracking()
                 on t.LibraryId equals lib.Id into libGrp
             from lib in libGrp.DefaultIfEmpty()
-            select new GoalTemplateListItemDto(
-                t.Id, t.CorporationId,
-                t.LibraryId, lib != null ? lib.Name : null,
-                t.CategoryId, cat != null ? cat.Code : null,
-                t.DevelopmentAreaId, dev != null ? dev.Code : null,
-                t.Code, t.Statement, t.CreatedAt);
+            select new { t, cat, dev, lib };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "code"      => req.IsDescending ? query.OrderByDescending(t => t.Code) : query.OrderBy(t => t.Code),
-            "createdat" => req.IsDescending ? query.OrderByDescending(t => t.CreatedAt) : query.OrderBy(t => t.CreatedAt),
-            _           => query.OrderBy(t => t.Code).ThenBy(t => t.Statement)
+            "code"      => req.IsDescending ? joined.OrderByDescending(x => x.t.Code)      : joined.OrderBy(x => x.t.Code),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.t.CreatedAt) : joined.OrderBy(x => x.t.CreatedAt),
+            _           => joined.OrderBy(x => x.t.Code).ThenBy(x => x.t.Statement)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new GoalTemplateListItemDto(
+                x.t.Id, x.t.CorporationId,
+                x.t.LibraryId, x.lib != null ? x.lib.Name : null,
+                x.t.CategoryId, x.cat != null ? x.cat.Code : null,
+                x.t.DevelopmentAreaId, x.dev != null ? x.dev.Code : null,
+                x.t.Code, x.t.Statement, x.t.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<GoalTemplateListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

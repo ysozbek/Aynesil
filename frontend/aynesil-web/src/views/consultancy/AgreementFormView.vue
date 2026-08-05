@@ -1,112 +1,13 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <RouterLink to="/consultancy/agreements" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </RouterLink>
-    </div>
-
-    <div class="card mw-750px mx-auto">
-      <div class="card-header border-0 pt-6">
-        <h2 class="card-title fw-bold">
-          {{ isEdit ? $t('consultancyContract.form.editTitle') : $t('consultancyContract.form.newTitle') }}
-        </h2>
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="handleSubmit" novalidate>
-          <div class="row g-4">
-            <!-- Title -->
-            <div class="col-12">
-              <label class="form-label required">{{ $t('consultancyContract.fields.title') }}</label>
-              <input
-                v-model="form.title"
-                type="text"
-                class="form-control"
-                :class="{ 'is-invalid': errors.title }"
-                required
-              />
-              <div v-if="errors.title" class="invalid-feedback">{{ errors.title }}</div>
-            </div>
-
-            <!-- Agreement Type (from ref_type = agreement_type) -->
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancyContract.fields.type') }}</label>
-              <select v-model="form.agreementTypeId" class="form-select">
-                <option value="">{{ $t('common.select') }}</option>
-                <option v-for="t in agreementTypes" :key="t.id" :value="t.id">{{ t.label || t.code }}</option>
-              </select>
-            </div>
-
-            <!-- Consultancy Plan (required for create, pre-filled if from plan context) -->
-            <div v-if="!isEdit" class="col-sm-6">
-              <label class="form-label required">{{ $t('consultancyContract.fields.plan') }} ID</label>
-              <input
-                v-model="form.consultancyPlanId"
-                type="text"
-                class="form-control"
-                :class="{ 'is-invalid': errors.consultancyPlanId }"
-                :placeholder="$t('consultancyContract.form.planIdPlaceholder')"
-                required
-              />
-              <div v-if="errors.consultancyPlanId" class="invalid-feedback">{{ errors.consultancyPlanId }}</div>
-            </div>
-
-            <!-- Institution ID (for create, pre-filled) -->
-            <div v-if="!isEdit" class="col-sm-6">
-              <label class="form-label required">{{ $t('consultancyContract.fields.institution') }} ID</label>
-              <input
-                v-model="form.institutionId"
-                type="text"
-                class="form-control"
-                :class="{ 'is-invalid': errors.institutionId }"
-                required
-              />
-              <div v-if="errors.institutionId" class="invalid-feedback">{{ errors.institutionId }}</div>
-            </div>
-
-            <!-- Start Date -->
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancyContract.fields.startDate') }}</label>
-              <input v-model="form.startDate" type="date" class="form-control" />
-            </div>
-
-            <!-- End Date -->
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancyContract.fields.endDate') }}</label>
-              <input v-model="form.endDate" type="date" class="form-control" />
-            </div>
-
-            <!-- Description -->
-            <div class="col-12">
-              <label class="form-label">{{ $t('consultancyContract.fields.description') }}</label>
-              <textarea v-model="form.description" class="form-control" rows="4"></textarea>
-            </div>
-          </div>
-
-          <!-- Error message -->
-          <div v-if="errorMsg" class="alert alert-danger mt-5">{{ errorMsg }}</div>
-
-          <!-- Actions -->
-          <div class="d-flex justify-content-end gap-3 mt-6">
-            <RouterLink to="/consultancy/agreements" class="btn btn-light">{{ $t('common.cancel') }}</RouterLink>
-            <button type="submit" class="btn btn-primary" :disabled="store.saving">
-              <span v-if="store.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
@@ -194,3 +95,89 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="isEdit ? t('consultancyContract.form.editTitle') : t('consultancyContract.form.newTitle')">
+      <button
+        @click="router.push('/consultancy/agreements')"
+        class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+      >
+        {{ t('common.back') }}
+      </button>
+    </PageHeader>
+
+    <form
+      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      @submit.prevent="handleSubmit"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.title') }} *</label>
+          <input
+            v-model="form.title"
+            type="text"
+            required
+            :class="['w-full h-10 px-3 text-sm rounded-lg border bg-transparent', errors.title ? 'border-red-500' : 'border-border']"
+          />
+          <p v-if="errors.title" class="text-xs text-red-600 mt-1">{{ errors.title }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.type') }}</label>
+          <select v-model="form.agreementTypeId" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="type in agreementTypes" :key="type.id" :value="type.id">{{ type.label || type.code }}</option>
+          </select>
+        </div>
+        <div v-if="!isEdit">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.plan') }} ID *</label>
+          <input
+            v-model="form.consultancyPlanId"
+            type="text"
+            required
+            :placeholder="t('consultancyContract.form.planIdPlaceholder')"
+            :class="['w-full h-10 px-3 text-sm rounded-lg border bg-transparent', errors.consultancyPlanId ? 'border-red-500' : 'border-border']"
+          />
+          <p v-if="errors.consultancyPlanId" class="text-xs text-red-600 mt-1">{{ errors.consultancyPlanId }}</p>
+        </div>
+        <div v-if="!isEdit">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.institution') }} ID *</label>
+          <input
+            v-model="form.institutionId"
+            type="text"
+            required
+            :class="['w-full h-10 px-3 text-sm rounded-lg border bg-transparent', errors.institutionId ? 'border-red-500' : 'border-border']"
+          />
+          <p v-if="errors.institutionId" class="text-xs text-red-600 mt-1">{{ errors.institutionId }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.startDate') }}</label>
+          <input v-model="form.startDate" type="date" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.endDate') }}</label>
+          <input v-model="form.endDate" type="date" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancyContract.fields.description') }}</label>
+          <textarea v-model="form.description" rows="4" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+      </div>
+
+      <p v-if="errorMsg" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ errorMsg }}</p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" @click="router.push('/consultancy/agreements')" class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          :disabled="store.saving"
+          class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {{ store.saving ? t('common.saving') : t('common.save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>

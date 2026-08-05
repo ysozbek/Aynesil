@@ -1,248 +1,30 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <button class="btn btn-sm btn-light" @click="router.back()">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </button>
-    </div>
-
-    <div v-if="store.loading" class="text-center py-20">
-      <div class="spinner-border text-primary"></div>
-    </div>
-    <div v-else-if="!followUp" class="text-center py-20 text-muted">{{ $t('errors.notFound') }}</div>
-
-    <div v-else>
-      <!-- Overdue Banner -->
-      <div v-if="isOverdue" class="alert alert-danger d-flex align-items-center mb-6">
-        <i class="ki-outline ki-time fs-1 text-danger me-4"></i>
-        <div class="fw-bold fs-6">{{ $t('followUp.overdueAlert') }}</div>
-      </div>
-
-      <!-- Title Row -->
-      <div class="d-flex align-items-center justify-content-between mb-6">
-        <div>
-          <h1 class="text-gray-900 fw-bold fs-2">{{ followUp.title }}</h1>
-          <p class="text-muted mb-0">
-            <span v-if="followUp.planName">{{ followUp.planName }}</span>
-            <span v-if="followUp.visitDate"> · {{ followUp.visitDate }}</span>
-          </p>
-        </div>
-        <div class="d-flex gap-2 align-items-center">
-          <span :class="statusBadge(followUp.status) + ' fs-7 px-4 py-2'">{{ statusLabel(followUp.status) }}</span>
-
-          <!-- Edit (pending or in_progress) -->
-          <RouterLink
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && hasPermission('follow_up:update')"
-            :to="`/consultancy/follow-ups/${followUp.id}/edit`"
-            class="btn btn-sm btn-light"
-          >
-            <i class="ki-outline ki-pencil fs-4 me-1"></i>{{ $t('common.edit') }}
-          </RouterLink>
-
-          <!-- Start (pending → in_progress) -->
-          <button
-            v-if="followUp.status === 'pending' && hasPermission('follow_up:start')"
-            class="btn btn-sm btn-info"
-            :disabled="store.saving"
-            @click="doStart"
-          >
-            <i class="ki-outline ki-arrow-right fs-4 me-1"></i>{{ $t('followUp.start') }}
-          </button>
-
-          <!-- Complete (in_progress → completed) -->
-          <button
-            v-if="followUp.status === 'in_progress' && hasPermission('follow_up:complete')"
-            class="btn btn-sm btn-success"
-            @click="showCompleteModal = true"
-          >
-            <i class="ki-outline ki-check fs-4 me-1"></i>{{ $t('followUp.markCompleted') }}
-          </button>
-
-          <!-- Cancel -->
-          <button
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && hasPermission('follow_up:cancel')"
-            class="btn btn-sm btn-light-danger"
-            :disabled="store.saving"
-            @click="doCancel"
-          >
-            {{ $t('followUp.cancel') }}
-          </button>
-        </div>
-      </div>
-
-      <div class="row g-6">
-        <!-- Main Info -->
-        <div class="col-xl-8">
-          <div class="card mb-6">
-            <div class="card-header border-0">
-              <h3 class="card-title fw-bold">{{ $t('followUp.detail.info') }}</h3>
-            </div>
-            <div class="card-body pt-0">
-              <div class="row g-4">
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('followUp.dueDate') }}</div>
-                  <div :class="isOverdue ? 'fw-bold text-danger' : 'fw-semibold'">
-                    {{ followUp.dueDate ?? '—' }}
-                  </div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="text-muted fs-7 mb-1">{{ $t('followUp.assignedTo') }}</div>
-                  <div class="fw-semibold">{{ followUp.assignedTo ?? '—' }}</div>
-                </div>
-                <div v-if="followUp.description" class="col-12">
-                  <div class="text-muted fs-7 mb-1">{{ $t('followUp.fields.description') }}</div>
-                  <div class="text-gray-700">{{ followUp.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Completion Notes -->
-          <div v-if="followUp.status === 'completed' && followUp.notes" class="card mb-6">
-            <div class="card-header border-0">
-              <h3 class="card-title fw-bold text-success">
-                <i class="ki-outline ki-check-circle fs-2 text-success me-2"></i>
-                {{ $t('followUp.completionNote') }}
-              </h3>
-            </div>
-            <div class="card-body pt-0">
-              <p class="text-gray-700 mb-0">{{ followUp.notes }}</p>
-              <div v-if="followUp.completedAt" class="text-muted fs-7 mt-2">
-                {{ $t('followUp.detail.completedAt') }}: {{ formatDatetime(followUp.completedAt) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Status Timeline -->
-          <div class="card">
-            <div class="card-header border-0">
-              <h3 class="card-title fw-bold">{{ $t('followUp.detail.timeline') }}</h3>
-            </div>
-            <div class="card-body pt-0">
-              <div class="timeline">
-                <!-- Created -->
-                <div class="timeline-item mb-4">
-                  <div class="timeline-line w-40px"></div>
-                  <div class="timeline-icon symbol symbol-circle symbol-40px">
-                    <div class="symbol-label bg-light-primary">
-                      <i class="ki-outline ki-plus fs-2 text-primary"></i>
-                    </div>
-                  </div>
-                  <div class="timeline-content mb-5 mt-n2 ps-4">
-                    <div class="fw-semibold">{{ $t('followUp.detail.created') }}</div>
-                    <div class="text-muted fs-7">{{ formatDatetime(followUp.createdAt) }}</div>
-                  </div>
-                </div>
-                <!-- Completed -->
-                <div v-if="followUp.completedAt" class="timeline-item mb-4">
-                  <div class="timeline-line w-40px"></div>
-                  <div class="timeline-icon symbol symbol-circle symbol-40px">
-                    <div class="symbol-label bg-light-success">
-                      <i class="ki-outline ki-check fs-2 text-success"></i>
-                    </div>
-                  </div>
-                  <div class="timeline-content mb-5 mt-n2 ps-4">
-                    <div class="fw-semibold text-success">{{ $t('followUp.completed') }}</div>
-                    <div class="text-muted fs-7">{{ formatDatetime(followUp.completedAt) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sidebar: Source + Metadata -->
-        <div class="col-xl-4">
-          <div class="card mb-6">
-            <div class="card-header border-0">
-              <h3 class="card-title fw-bold">{{ $t('followUp.detail.source') }}</h3>
-            </div>
-            <div class="card-body pt-0">
-              <div v-if="followUp.planName" class="mb-3">
-                <div class="text-muted fs-7 mb-1">{{ $t('followUp.fields.plan') }}</div>
-                <RouterLink
-                  v-if="followUp.consultancyPlanId"
-                  :to="`/consultancy/plans/${followUp.consultancyPlanId}`"
-                  class="fw-semibold text-primary"
-                >
-                  {{ followUp.planName }}
-                </RouterLink>
-              </div>
-              <div v-if="followUp.visitDate" class="mb-3">
-                <div class="text-muted fs-7 mb-1">{{ $t('followUp.fields.visitDate') }}</div>
-                <div class="fw-semibold">{{ followUp.visitDate }}</div>
-              </div>
-              <div v-if="followUp.observationRecordId" class="mb-3">
-                <div class="text-muted fs-7 mb-1">{{ $t('followUp.fields.observation') }}</div>
-                <span class="badge badge-light-secondary">{{ $t('followUp.detail.linkedObservation') }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header border-0">
-              <h3 class="card-title fw-bold">{{ $t('followUp.detail.metadata') }}</h3>
-            </div>
-            <div class="card-body pt-0">
-              <div class="mb-3">
-                <span class="text-muted fs-7">{{ $t('common.createdAt') }}:</span>
-                <span class="fw-semibold ms-2">{{ formatDate(followUp.createdAt) }}</span>
-              </div>
-              <div class="mb-3">
-                <span class="text-muted fs-7">{{ $t('common.updatedAt') }}:</span>
-                <span class="fw-semibold ms-2">{{ formatDate(followUp.updatedAt) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Complete Modal -->
-    <div v-if="showCompleteModal" class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ $t('followUp.markCompleted') }}</h5>
-            <button class="btn-close" @click="showCompleteModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <label class="form-label">{{ $t('followUp.completionNote') }}</label>
-            <textarea v-model="completionNotes" class="form-control" rows="4" :placeholder="$t('followUp.completionNotePlaceholder')"></textarea>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-light" @click="showCompleteModal = false">{{ $t('common.cancel') }}</button>
-            <button class="btn btn-success" :disabled="store.saving" @click="doComplete">
-              <span v-if="store.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('followUp.markCompleted') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useI18n } from 'vue-i18n'
+import { useConsultancyStore } from '@/stores/consultancy.store'
+import { usePermission } from '@/composables/usePermission'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
+const { can } = usePermission()
 const id = route.params.id as string
 const followUp = computed(() => store.currentFollowUp)
 const showCompleteModal = ref(false)
+const showCancelConfirm = ref(false)
 const completionNotes = ref('')
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
-function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
-function formatDatetime(dt: string) { return new Date(dt).toLocaleString('tr-TR') }
+function formatDate(dt: string) {
+  return new Date(dt).toLocaleDateString('tr-TR')
+}
+function formatDatetime(dt: string) {
+  return new Date(dt).toLocaleString('tr-TR')
+}
 
 const isOverdue = computed(() => {
   const f = followUp.value
@@ -250,14 +32,23 @@ const isOverdue = computed(() => {
   return new Date(f.dueDate) < new Date()
 })
 
-function statusBadge(s: string) {
+const headerDescription = computed(() => {
+  const f = followUp.value
+  if (!f) return ''
+  const parts: string[] = []
+  if (f.planName) parts.push(f.planName)
+  if (f.visitDate) parts.push(f.visitDate)
+  return parts.join(' · ')
+})
+
+function statusClass(s: string) {
   const map: Record<string, string> = {
-    pending: 'badge badge-light-warning',
-    in_progress: 'badge badge-light-info',
-    completed: 'badge badge-light-success',
-    cancelled: 'badge badge-light-danger',
+    pending: 'bg-amber-100 text-amber-700',
+    in_progress: 'bg-sky-100 text-sky-700',
+    completed: 'bg-green-100 text-green-700',
+    cancelled: 'bg-red-100 text-red-700',
   }
-  return map[s] ?? 'badge badge-light'
+  return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function statusLabel(s: string) {
@@ -285,8 +76,8 @@ async function doComplete() {
 }
 
 async function doCancel() {
-  if (!confirm(t('followUp.cancelConfirm'))) return
   await store.cancelFollowUp(id)
+  showCancelConfirm.value = false
 }
 
 onMounted(() => {
@@ -294,3 +85,202 @@ onMounted(() => {
   store.fetchFollowUp(id)
 })
 </script>
+
+<template>
+  <div>
+    <div v-if="store.loading" class="py-16 text-center text-muted-foreground text-sm">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else-if="!followUp" class="py-16 text-center text-muted-foreground text-sm">
+      {{ t('errors.notFound') }}
+    </div>
+    <template v-else>
+      <div v-if="isOverdue" class="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50/50 p-4">
+        <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="font-semibold text-red-700">{{ t('followUp.overdueAlert') }}</p>
+      </div>
+
+      <PageHeader :title="followUp.title" :description="headerDescription">
+        <div class="flex flex-wrap items-center gap-2">
+          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(followUp.status)]">
+            {{ statusLabel(followUp.status) }}
+          </span>
+          <button
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can('follow_up:update')"
+            @click="router.push(`/consultancy/follow-ups/${followUp.id}/edit`)"
+            class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
+          >
+            {{ t('common.edit') }}
+          </button>
+          <button
+            v-if="followUp.status === 'pending' && can('follow_up:start')"
+            :disabled="store.saving"
+            @click="doStart"
+            class="px-3 py-1.5 text-sm rounded-lg bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
+          >
+            {{ t('followUp.start') }}
+          </button>
+          <button
+            v-if="followUp.status === 'in_progress' && can('follow_up:complete')"
+            @click="showCompleteModal = true"
+            class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
+          >
+            {{ t('followUp.markCompleted') }}
+          </button>
+          <button
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can('follow_up:cancel')"
+            :disabled="store.saving"
+            @click="showCancelConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+          >
+            {{ t('followUp.cancel') }}
+          </button>
+        </div>
+      </PageHeader>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+            <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.info') }}</h3>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.dueDate') }}</dt>
+                <dd :class="isOverdue ? 'font-bold text-red-600' : 'font-medium text-foreground'">
+                  {{ followUp.dueDate ?? '—' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.assignedTo') }}</dt>
+                <dd class="font-medium text-foreground">{{ followUp.assignedTo ?? '—' }}</dd>
+              </div>
+              <div v-if="followUp.description" class="sm:col-span-2">
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.fields.description') }}</dt>
+                <dd class="font-medium text-foreground">{{ followUp.description }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div v-if="followUp.status === 'completed' && followUp.notes" class="rounded-xl border border-green-200 bg-green-50/50 shadow-sm p-5">
+            <h3 class="font-semibold text-green-800 mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ t('followUp.completionNote') }}
+            </h3>
+            <p class="text-sm text-foreground">{{ followUp.notes }}</p>
+            <p v-if="followUp.completedAt" class="text-xs text-muted-foreground mt-2">
+              {{ t('followUp.detail.completedAt') }}: {{ formatDatetime(followUp.completedAt) }}
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+            <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.timeline') }}</h3>
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-foreground">{{ t('followUp.detail.created') }}</p>
+                  <p class="text-xs text-muted-foreground">{{ formatDatetime(followUp.createdAt) }}</p>
+                </div>
+              </div>
+              <div v-if="followUp.completedAt" class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-green-700">{{ t('followUp.completed') }}</p>
+                  <p class="text-xs text-muted-foreground">{{ formatDatetime(followUp.completedAt) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+            <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.source') }}</h3>
+            <dl class="space-y-3 text-sm">
+              <div v-if="followUp.planName">
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.fields.plan') }}</dt>
+                <dd>
+                  <RouterLink
+                    v-if="followUp.consultancyPlanId"
+                    :to="`/consultancy/plans/${followUp.consultancyPlanId}`"
+                    class="font-medium text-primary hover:underline"
+                  >
+                    {{ followUp.planName }}
+                  </RouterLink>
+                </dd>
+              </div>
+              <div v-if="followUp.visitDate">
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.fields.visitDate') }}</dt>
+                <dd class="font-medium text-foreground">{{ followUp.visitDate }}</dd>
+              </div>
+              <div v-if="followUp.observationRecordId">
+                <dt class="text-muted-foreground mb-0.5">{{ t('followUp.fields.observation') }}</dt>
+                <dd>
+                  <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                    {{ t('followUp.detail.linkedObservation') }}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+            <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.metadata') }}</h3>
+            <dl class="space-y-3 text-sm">
+              <div>
+                <dt class="text-muted-foreground">{{ t('common.createdAt') }}</dt>
+                <dd class="font-medium text-foreground">{{ formatDate(followUp.createdAt) }}</dd>
+              </div>
+              <div>
+                <dt class="text-muted-foreground">{{ t('common.updatedAt') }}</dt>
+                <dd class="font-medium text-foreground">{{ formatDate(followUp.updatedAt) }}</dd>
+              </div>
+            </dl>
+            <button @click="router.back()" class="mt-4 w-full px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent">
+              {{ t('common.back') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <FormModal
+      :open="showCompleteModal"
+      :title="t('followUp.markCompleted')"
+      :saving="store.saving"
+      @submit="doComplete"
+      @close="showCompleteModal = false"
+    >
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.completionNote') }}</label>
+        <textarea
+          v-model="completionNotes"
+          rows="4"
+          :placeholder="t('followUp.completionNotePlaceholder')"
+          class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent"
+        />
+      </div>
+    </FormModal>
+
+    <ConfirmModal
+      :open="showCancelConfirm"
+      :title="t('followUp.cancel')"
+      :message="t('followUp.cancelConfirm')"
+      :confirm-label="t('followUp.cancel')"
+      :loading="store.saving"
+      @confirm="doCancel"
+      @cancel="showCancelConfirm = false"
+    />
+  </div>
+</template>

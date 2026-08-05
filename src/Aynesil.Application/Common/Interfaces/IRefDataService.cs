@@ -9,7 +9,9 @@ public record RefValueDto(
     int SortOrder,
     bool IsDefault,
     bool IsSystem,
-    string Metadata);
+    string Metadata,
+    bool IsActive = true,
+    bool IsTenantOwned = false);
 
 /// <summary>
 /// Tenant-aware reference data lookup service.

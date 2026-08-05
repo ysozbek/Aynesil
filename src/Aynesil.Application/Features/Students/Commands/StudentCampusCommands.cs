@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -50,10 +51,22 @@ public sealed class EnrollStudentAtCampusCommandHandler
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
-        var duplicate = await _db.StudentCampuses
-            .AnyAsync(sc => sc.StudentId == req.StudentId && sc.CampusId == req.CampusId && sc.ActiveTo == null, ct);
-        if (duplicate)
-            throw new InvalidOperationException("Student is already actively enrolled at this campus.");
+        var existing = await _db.StudentCampuses
+            .FirstOrDefaultAsync(sc => sc.StudentId == req.StudentId && sc.CampusId == req.CampusId, ct);
+        if (existing is not null)
+        {
+            if (existing.ActiveTo is null)
+                throw new ConflictException("Öğrenci bu kampüste zaten aktif kayıtlı.");
+
+            // unique(student_id, campus_id) — reopen the closed enrollment instead of inserting.
+            existing.ActiveTo = null;
+            existing.ActiveFrom = req.ActiveFrom ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            existing.IsPrimary = req.IsPrimary;
+            existing.AddDomainEvent(new StudentEnrolledEvent(
+                req.StudentId, student.CorporationId, req.CampusId, req.IsPrimary, _currentUser.UserId));
+            await _db.SaveChangesAsync(ct);
+            return StudentProjection.ToStudentCampusDto(existing);
+        }
 
         var enrollment = new StudentCampus
         {

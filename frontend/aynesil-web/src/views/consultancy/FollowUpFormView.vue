@@ -1,92 +1,12 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <button class="btn btn-sm btn-light" @click="router.back()">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </button>
-    </div>
-
-    <div class="card mw-750px mx-auto">
-      <div class="card-header border-0 pt-6">
-        <h2 class="card-title fw-bold">
-          {{ isEdit ? $t('followUp.form.editTitle') : $t('followUp.form.newTitle') }}
-        </h2>
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="handleSubmit" novalidate>
-          <div class="row g-4">
-            <!-- Title -->
-            <div class="col-12">
-              <label class="form-label required">{{ $t('followUp.fields.title') }}</label>
-              <input
-                v-model="form.title"
-                type="text"
-                class="form-control"
-                :class="{ 'is-invalid': errors.title }"
-                required
-              />
-              <div v-if="errors.title" class="invalid-feedback">{{ errors.title }}</div>
-            </div>
-
-            <!-- Description -->
-            <div class="col-12">
-              <label class="form-label">{{ $t('followUp.fields.description') }}</label>
-              <textarea v-model="form.description" class="form-control" rows="4"></textarea>
-            </div>
-
-            <!-- Due Date -->
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('followUp.dueDate') }}</label>
-              <input v-model="form.dueDate" type="date" class="form-control" />
-            </div>
-
-            <!-- Assigned To -->
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('followUp.assignedTo') }} ID</label>
-              <input v-model="form.assignedTo" type="text" class="form-control" />
-            </div>
-
-            <!-- Source (auto-filled from context, displayed read-only) -->
-            <div v-if="contextLabel" class="col-12">
-              <label class="form-label">{{ $t('followUp.fields.source') }}</label>
-              <input type="text" class="form-control bg-light" :value="contextLabel" readonly />
-            </div>
-
-            <!-- Notes (edit only) -->
-            <div v-if="isEdit" class="col-12">
-              <label class="form-label">{{ $t('followUp.fields.notes') }}</label>
-              <textarea v-model="form.notes" class="form-control" rows="3"></textarea>
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div v-if="errorMsg" class="alert alert-danger mt-5">{{ errorMsg }}</div>
-
-          <!-- Unsaved warning -->
-          <div v-if="isDirty" class="alert alert-light-warning mt-4 fs-7">
-            <i class="ki-outline ki-information-5 fs-3 me-2"></i>
-            {{ $t('common.unsavedChanges') }}
-          </div>
-
-          <div class="d-flex justify-content-end gap-3 mt-6">
-            <button type="button" class="btn btn-light" @click="router.back()">{{ $t('common.cancel') }}</button>
-            <button type="submit" class="btn btn-primary" :disabled="store.saving">
-              <span v-if="store.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
@@ -96,7 +16,6 @@ const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
 const errorMsg = ref('')
 
-// Context from query params (pre-filled from plan/visit/observation detail page)
 const planId = route.query.planId as string | undefined
 const visitId = route.query.visitId as string | undefined
 const observationId = route.query.observationId as string | undefined
@@ -159,10 +78,10 @@ async function handleSubmit() {
   }
 }
 
-// Unsaved changes guard
 function handleBeforeUnload(e: BeforeUnloadEvent) {
   if (isDirty.value) { e.preventDefault() }
 }
+
 onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   if (isEdit.value && id) {
@@ -179,3 +98,70 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => window.removeEventListener('beforeunload', handleBeforeUnload))
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="isEdit ? t('followUp.form.editTitle') : t('followUp.form.newTitle')">
+      <button @click="router.back()" class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent">
+        {{ t('common.back') }}
+      </button>
+    </PageHeader>
+
+    <form
+      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      @submit.prevent="handleSubmit"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.fields.title') }} *</label>
+          <input
+            v-model="form.title"
+            type="text"
+            required
+            :class="['w-full h-10 px-3 text-sm rounded-lg border bg-transparent', errors.title ? 'border-red-500' : 'border-border']"
+          />
+          <p v-if="errors.title" class="text-xs text-red-600 mt-1">{{ errors.title }}</p>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.fields.description') }}</label>
+          <textarea v-model="form.description" rows="4" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.dueDate') }}</label>
+          <input v-model="form.dueDate" type="date" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.assignedTo') }} ID</label>
+          <input v-model="form.assignedTo" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div v-if="contextLabel" class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.fields.source') }}</label>
+          <input type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-accent/50" :value="contextLabel" readonly />
+        </div>
+        <div v-if="isEdit" class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('followUp.fields.notes') }}</label>
+          <textarea v-model="form.notes" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+      </div>
+
+      <p v-if="errorMsg" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ errorMsg }}</p>
+
+      <p v-if="isDirty" class="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+        {{ t('common.unsavedChanges') }}
+      </p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" @click="router.back()" class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          :disabled="store.saving"
+          class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {{ store.saving ? t('common.saving') : t('common.save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>

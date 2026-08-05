@@ -1,70 +1,13 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-5">
-      <RouterLink to="/consultancy/institutions" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-arrow-left fs-4 me-1"></i>{{ $t('common.back') }}
-      </RouterLink>
-    </div>
-    <div class="card mw-750px mx-auto">
-      <div class="card-header border-0 pt-6">
-        <h2 class="card-title fw-bold">{{ isEdit ? $t('consultancy.institution.form.editTitle') : $t('consultancy.institution.form.newTitle') }}</h2>
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="handleSubmit">
-          <div class="row g-4">
-            <div class="col-sm-6">
-              <label class="form-label required">{{ $t('consultancy.institution.fields.name') }}</label>
-              <input v-model="form.name" type="text" class="form-control" required />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancy.institution.fields.type') }}</label>
-              <select v-model="form.institutionTypeId" class="form-select">
-                <option value="">{{ $t('common.select') }}</option>
-                <option v-for="t in institutionTypes" :key="t.id" :value="t.id">{{ t.label || t.code }}</option>
-              </select>
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancy.institution.fields.city') }}</label>
-              <input v-model="form.city" type="text" class="form-control" />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancy.institution.fields.district') }}</label>
-              <input v-model="form.district" type="text" class="form-control" />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancy.institution.fields.contactName') }}</label>
-              <input v-model="form.contactName" type="text" class="form-control" />
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label">{{ $t('consultancy.institution.fields.contactPhone') }}</label>
-              <input v-model="form.contactPhone" type="tel" class="form-control" />
-            </div>
-            <div class="col-12">
-              <label class="form-label">{{ $t('consultancy.institution.fields.contactEmail') }}</label>
-              <input v-model="form.contactEmail" type="email" class="form-control" />
-            </div>
-          </div>
-          <div v-if="errorMsg" class="alert alert-danger mt-5">{{ errorMsg }}</div>
-          <div class="d-flex justify-content-end gap-3 mt-6">
-            <RouterLink to="/consultancy/institutions" class="btn btn-light">{{ $t('common.cancel') }}</RouterLink>
-            <button type="submit" class="btn btn-primary" :disabled="consultancyStore.saving">
-              <span v-if="consultancyStore.saving" class="spinner-border spinner-border-sm me-2"></span>
-              {{ $t('common.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
@@ -76,8 +19,13 @@ const errorMsg = ref('')
 const institutionTypes = computed(() => refDataStore.getByCategory?.('institution_type') ?? [])
 
 const form = reactive({
-  name: '', institutionTypeId: '', city: '', district: '',
-  contactName: '', contactPhone: '', contactEmail: '',
+  name: '',
+  institutionTypeId: '',
+  city: '',
+  district: '',
+  contactName: '',
+  contactPhone: '',
+  contactEmail: '',
 })
 
 async function handleSubmit() {
@@ -102,7 +50,9 @@ async function handleSubmit() {
       const result = await consultancyStore.createInstitution({ ...payload, corporationId: corp })
       router.push(`/consultancy/institutions/${result.id}`)
     }
-  } catch (e: unknown) { errorMsg.value = (e as Error).message }
+  } catch (e: unknown) {
+    errorMsg.value = (e as Error).message
+  }
 }
 
 onMounted(async () => {
@@ -122,3 +72,70 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="isEdit ? t('consultancy.institution.form.editTitle') : t('consultancy.institution.form.newTitle')">
+      <button
+        @click="router.push('/consultancy/institutions')"
+        class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+      >
+        {{ t('common.back') }}
+      </button>
+    </PageHeader>
+
+    <form
+      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      @submit.prevent="handleSubmit"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.name') }} *</label>
+          <input v-model="form.name" type="text" required class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.type') }}</label>
+          <select v-model="form.institutionTypeId" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="type in institutionTypes" :key="type.id" :value="type.id">{{ type.label || type.code }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.city') }}</label>
+          <input v-model="form.city" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.district') }}</label>
+          <input v-model="form.district" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.contactName') }}</label>
+          <input v-model="form.contactName" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.contactPhone') }}</label>
+          <input v-model="form.contactPhone" type="tel" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.contactEmail') }}</label>
+          <input v-model="form.contactEmail" type="email" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+        </div>
+      </div>
+
+      <p v-if="errorMsg" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ errorMsg }}</p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" @click="router.push('/consultancy/institutions')" class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          :disabled="consultancyStore.saving"
+          class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {{ consultancyStore.saving ? t('common.saving') : t('common.save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>

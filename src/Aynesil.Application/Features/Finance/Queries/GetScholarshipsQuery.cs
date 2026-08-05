@@ -39,26 +39,35 @@ public sealed class GetScholarshipsQueryHandler
                 (s.ValidTo   == null || s.ValidTo   >= today));
         }
 
-        var query =
+        // Sort on entity/join before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from sch in q
             join student in _db.Students.AsNoTracking()
                 on sch.StudentId equals student.Id
-            select new ScholarshipListItemDto(
-                sch.Id, sch.StudentId,
-                student.FirstName + " " + student.LastName,
-                sch.ScholarshipTypeId,
-                sch.Percentage, sch.Amount,
-                sch.ValidFrom, sch.ValidTo);
+            select new { sch, student };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "studentname" => req.IsDescending ? query.OrderByDescending(s => s.StudentFullName) : query.OrderBy(s => s.StudentFullName),
-            "validfrom"   => req.IsDescending ? query.OrderByDescending(s => s.ValidFrom)       : query.OrderBy(s => s.ValidFrom),
-            _             => query.OrderBy(s => s.StudentFullName)
+            "studentname" => req.IsDescending
+                ? joined.OrderByDescending(x => x.student.LastName).ThenByDescending(x => x.student.FirstName)
+                : joined.OrderBy(x => x.student.LastName).ThenBy(x => x.student.FirstName),
+            "validfrom" => req.IsDescending
+                ? joined.OrderByDescending(x => x.sch.ValidFrom)
+                : joined.OrderBy(x => x.sch.ValidFrom),
+            _ => joined.OrderBy(x => x.student.LastName).ThenBy(x => x.student.FirstName)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new ScholarshipListItemDto(
+                x.sch.Id, x.sch.StudentId,
+                x.student.FirstName + " " + x.student.LastName,
+                x.sch.ScholarshipTypeId,
+                x.sch.Percentage, x.sch.Amount,
+                x.sch.ValidFrom, x.sch.ValidTo))
+            .ToListAsync(ct);
 
         return PaginatedResult<ScholarshipListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

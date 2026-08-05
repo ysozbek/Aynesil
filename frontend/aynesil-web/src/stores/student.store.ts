@@ -148,8 +148,13 @@ export const useStudentStore = defineStore('student', () => {
     try {
       const res = await studentService.enrollAtCampus(id, payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'Kampüs kaydı başarısız.')
-      campuses.value.push(res.data)
+      const idx = campuses.value.findIndex(c => c.id === res.data!.id)
+      if (idx >= 0) campuses.value[idx] = res.data
+      else campuses.value.push(res.data)
       return res.data
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { message?: string } }; message?: string }
+      throw new Error(ax.response?.data?.message || ax.message || 'Kampüs kaydı başarısız.')
     } finally {
       saving.value = false
     }

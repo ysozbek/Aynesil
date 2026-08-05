@@ -135,6 +135,14 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     } finally { saving.value = false }
   }
 
+  async function cancelPlan(id: string) {
+    saving.value = true
+    try {
+      await consultancyService.cancelPlan(id)
+      await fetchPlan(id)
+    } finally { saving.value = false }
+  }
+
   // ── Visits ─────────────────────────────────────────────────────────────────
   async function fetchVisits(query: VisitListQuery) {
     loading.value = true; error.value = null
@@ -188,6 +196,22 @@ export const useConsultancyStore = defineStore('consultancy', () => {
       if (res.success && res.data) reports.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
+  }
+
+  async function createReport(payload: {
+    corporationId: string
+    title: string
+    consultancyPlanId?: string
+    schoolVisitId?: string
+    summary?: string
+    fileId?: string
+  }) {
+    saving.value = true
+    try {
+      const res = await consultancyService.createReport(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Rapor oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
   }
 
   // ── Agreements ─────────────────────────────────────────────────────────────
@@ -397,9 +421,9 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     followUps, currentFollowUp, openFollowUps,
     institutionReport, outcomes, loading, saving, error,
     fetchInstitutions, fetchInstitution, createInstitution, updateInstitution,
-    fetchPlans, fetchPlan, createPlan, activatePlan, completePlan,
+    fetchPlans, fetchPlan, createPlan, activatePlan, completePlan, cancelPlan,
     fetchVisits, fetchVisit, createVisit, completeVisit, addObservation,
-    fetchReports,
+    fetchReports, createReport,
     fetchAgreements, fetchAgreement, createAgreement, updateAgreement,
     sendAgreement, signAgreement, expireAgreement, cancelAgreement, deleteAgreement,
     fetchAgreementSummary,

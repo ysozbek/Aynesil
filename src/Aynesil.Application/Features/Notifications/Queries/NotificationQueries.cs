@@ -48,27 +48,30 @@ public sealed class GetMyNotificationsQueryHandler
                 query = query.Where(x => x.n.ReadAt == null);
         }
 
-        var projected = query.Select(x => new NotificationListItemDto(
-            x.n.Id,
-            x.n.CategoryId,
-            x.CategoryCode,
-            x.n.Subject,
-            x.n.Body,
-            x.n.Status,
-            x.n.CreatedAt,
-            x.n.ReadAt,
-            x.n.ReadAt != null));
-
-        projected = req.SortBy?.ToLowerInvariant() switch
+        // Sort on entity before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var sorted = req.SortBy?.ToLowerInvariant() switch
         {
             "createdat" => req.IsDescending
-                ? projected.OrderByDescending(x => x.CreatedAt)
-                : projected.OrderBy(x => x.CreatedAt),
-            _ => projected.OrderByDescending(x => x.CreatedAt)
+                ? query.OrderByDescending(x => x.n.CreatedAt)
+                : query.OrderBy(x => x.n.CreatedAt),
+            _ => query.OrderByDescending(x => x.n.CreatedAt)
         };
 
-        var total = await projected.CountAsync(ct);
-        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new NotificationListItemDto(
+                x.n.Id,
+                x.n.CategoryId,
+                x.CategoryCode,
+                x.n.Subject,
+                x.n.Body,
+                x.n.Status,
+                x.n.CreatedAt,
+                x.n.ReadAt,
+                x.n.ReadAt != null))
+            .ToListAsync(ct);
         return PaginatedResult<NotificationListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

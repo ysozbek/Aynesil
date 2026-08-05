@@ -61,7 +61,8 @@ public sealed class GetStudentGoalsQueryHandler
             q = q.Where(g => g.Statement.ToLower().Contains(s));
         }
 
-        var query =
+        // Sort on entity/join before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from g in q
             join cat in _db.RefValues.AsNoTracking()
                 on g.CategoryId equals cat.Id into catGrp
@@ -69,30 +70,38 @@ public sealed class GetStudentGoalsQueryHandler
             join dev in _db.RefValues.AsNoTracking()
                 on g.DevelopmentAreaId equals dev.Id into devGrp
             from dev in devGrp.DefaultIfEmpty()
-            let latestProgress = g.ProgressRecords
-                .Where(p => p.StudentGoalId == g.Id)
-                .OrderByDescending(p => p.MeasuredOn)
-                .FirstOrDefault()
-            select new StudentGoalListItemDto(
-                g.Id, g.StudentId,
-                g.CategoryId, cat != null ? cat.Code : null,
-                g.DevelopmentAreaId, dev != null ? dev.Code : null,
-                g.Horizon, g.Statement, g.Status,
-                g.TargetDate, g.AchievedDate,
-                latestProgress != null ? latestProgress.PercentComplete : null,
-                latestProgress != null ? latestProgress.Trend : null,
-                g.CreatedAt);
+            select new { g, cat, dev };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "status"    => req.IsDescending ? query.OrderByDescending(g => g.Status) : query.OrderBy(g => g.Status),
-            "targetdate"=> req.IsDescending ? query.OrderByDescending(g => g.TargetDate) : query.OrderBy(g => g.TargetDate),
-            "createdat" => req.IsDescending ? query.OrderByDescending(g => g.CreatedAt) : query.OrderBy(g => g.CreatedAt),
-            _           => query.OrderBy(g => g.Horizon).ThenBy(g => g.CreatedAt)
+            "status"     => req.IsDescending ? joined.OrderByDescending(x => x.g.Status)     : joined.OrderBy(x => x.g.Status),
+            "targetdate" => req.IsDescending ? joined.OrderByDescending(x => x.g.TargetDate) : joined.OrderBy(x => x.g.TargetDate),
+            "createdat"  => req.IsDescending ? joined.OrderByDescending(x => x.g.CreatedAt)  : joined.OrderBy(x => x.g.CreatedAt),
+            _            => joined.OrderBy(x => x.g.Horizon).ThenBy(x => x.g.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new StudentGoalListItemDto(
+                x.g.Id, x.g.StudentId,
+                x.g.CategoryId, x.cat != null ? x.cat.Code : null,
+                x.g.DevelopmentAreaId, x.dev != null ? x.dev.Code : null,
+                x.g.Horizon, x.g.Statement, x.g.Status,
+                x.g.TargetDate, x.g.AchievedDate,
+                x.g.ProgressRecords
+                    .Where(p => p.StudentGoalId == x.g.Id)
+                    .OrderByDescending(p => p.MeasuredOn)
+                    .Select(p => (decimal?)p.PercentComplete)
+                    .FirstOrDefault(),
+                x.g.ProgressRecords
+                    .Where(p => p.StudentGoalId == x.g.Id)
+                    .OrderByDescending(p => p.MeasuredOn)
+                    .Select(p => p.Trend)
+                    .FirstOrDefault(),
+                x.g.CreatedAt))
+            .ToListAsync(ct);
         return PaginatedResult<StudentGoalListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

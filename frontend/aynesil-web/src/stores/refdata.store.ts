@@ -17,6 +17,21 @@ export interface RefValueItem {
   isDefault: boolean
   isSystem: boolean
   metadata: string
+  isActive: boolean
+  isTenantOwned: boolean
+}
+
+export interface CreateRefValuePayload {
+  code: string
+  label: string
+  sortOrder?: number
+  isDefault?: boolean
+}
+
+export interface UpdateRefValuePayload {
+  label: string
+  sortOrder?: number
+  isDefault?: boolean
 }
 
 export const useRefDataStore = defineStore('refData', () => {
@@ -56,5 +71,31 @@ export const useRefDataStore = defineStore('refData', () => {
     cache.value = {}
   }
 
-  return { getValues, getDefault, clearCache }
+  async function createValue(typeCode: string, payload: CreateRefValuePayload): Promise<RefValueItem> {
+    const response = await apiService.post<RefValueItem>(`/reference-data/${typeCode}`, payload)
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Create failed')
+    }
+    clearCache()
+    return response.data
+  }
+
+  async function updateValue(id: string, payload: UpdateRefValuePayload): Promise<RefValueItem> {
+    const response = await apiService.put<RefValueItem>(`/reference-data/values/${id}`, payload)
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Update failed')
+    }
+    clearCache()
+    return response.data
+  }
+
+  async function setActive(id: string, isActive: boolean): Promise<void> {
+    const response = await apiService.put(`/reference-data/values/${id}/active`, { isActive })
+    if (!response.success) {
+      throw new Error(response.message || 'Status update failed')
+    }
+    clearCache()
+  }
+
+  return { getValues, getDefault, clearCache, createValue, updateValue, setActive }
 })

@@ -53,7 +53,8 @@ public sealed class GetEducatorsQueryHandler
                 (e.Email != null && e.Email.ToLower().Contains(search)));
         }
 
-        var query =
+        // Sort on entity/join before DTO projection — EF cannot translate OrderBy on DTO ctor.
+        var joined =
             from e in q
             join campus in _db.Campuses.AsNoTracking()
                 on e.PrimaryCampusId equals campus.Id into campusGrp
@@ -61,26 +62,30 @@ public sealed class GetEducatorsQueryHandler
             join title in _db.RefValues.AsNoTracking()
                 on e.TitleId equals title.Id into titleGrp
             from title in titleGrp.DefaultIfEmpty()
-            select new EducatorListItemDto(
-                e.Id, e.CorporationId,
-                e.FirstName, e.LastName,
-                e.FirstName + " " + e.LastName,
-                e.TitleId, title != null ? title.Code : null,
-                e.Email, e.Phone, e.EmploymentType, e.IsActive,
-                e.PrimaryCampusId, campus != null ? campus.Name : null,
-                e.Specialties.Count(),
-                e.CreatedAt);
+            select new { e, campus, title };
 
-        query = req.SortBy?.ToLower() switch
+        var sorted = req.SortBy?.ToLower() switch
         {
-            "lastname"  => req.IsDescending ? query.OrderByDescending(e => e.LastName)  : query.OrderBy(e => e.LastName),
-            "createdat" => req.IsDescending ? query.OrderByDescending(e => e.CreatedAt) : query.OrderBy(e => e.CreatedAt),
-            "isactive"  => req.IsDescending ? query.OrderByDescending(e => e.IsActive)  : query.OrderBy(e => e.IsActive),
-            _           => req.IsDescending ? query.OrderByDescending(e => e.CreatedAt) : query.OrderBy(e => e.LastName)
+            "lastname"  => req.IsDescending ? joined.OrderByDescending(x => x.e.LastName)  : joined.OrderBy(x => x.e.LastName),
+            "createdat" => req.IsDescending ? joined.OrderByDescending(x => x.e.CreatedAt) : joined.OrderBy(x => x.e.CreatedAt),
+            "isactive"  => req.IsDescending ? joined.OrderByDescending(x => x.e.IsActive)  : joined.OrderBy(x => x.e.IsActive),
+            _           => req.IsDescending ? joined.OrderByDescending(x => x.e.CreatedAt) : joined.OrderBy(x => x.e.LastName)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var total = await sorted.CountAsync(ct);
+        var items = await sorted
+            .Skip(req.Skip)
+            .Take(req.PageSize)
+            .Select(x => new EducatorListItemDto(
+                x.e.Id, x.e.CorporationId,
+                x.e.FirstName, x.e.LastName,
+                x.e.FirstName + " " + x.e.LastName,
+                x.e.TitleId, x.title != null ? x.title.Code : null,
+                x.e.Email, x.e.Phone, x.e.EmploymentType, x.e.IsActive,
+                x.e.PrimaryCampusId, x.campus != null ? x.campus.Name : null,
+                x.e.Specialties.Count(),
+                x.e.CreatedAt))
+            .ToListAsync(ct);
 
         return PaginatedResult<EducatorListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

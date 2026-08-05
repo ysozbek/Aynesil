@@ -1,160 +1,82 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="mb-6">
-      <h1 class="text-gray-900 fw-bold fs-2">{{ $t('legal.reports.title') }}</h1>
-      <p class="text-muted mb-0">{{ $t('legal.reports.subtitle') }}</p>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs nav-line-tabs mb-6">
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: tab === 'contracts' }" href="#" @click.prevent="tab = 'contracts'">{{ $t('legal.reports.contractsTab') }}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: tab === 'consents' }" href="#" @click.prevent="tab = 'consents'">{{ $t('legal.reports.consentsTab') }}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" :class="{ active: tab === 'signatures' }" href="#" @click.prevent="tab = 'signatures'">{{ $t('legal.reports.signaturesTab') }}</a>
-      </li>
-    </ul>
-
-    <!-- Contract Report -->
-    <div v-if="tab === 'contracts'" class="card">
-      <div class="card-body py-3">
-        <div v-if="contractStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="contractStore.contractReport.length === 0" class="text-center py-15 text-muted">{{ $t('legal.reports.noData') }}</div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('legal.contract.fields.student') }}</th>
-                <th class="text-center">{{ $t('legal.reports.total') }}</th>
-                <th class="text-center">Draft</th>
-                <th class="text-center">{{ $t('legal.contract.status.active') }}</th>
-                <th class="text-center">{{ $t('legal.contract.status.expired') }}</th>
-                <th class="text-center pe-4">{{ $t('legal.contract.status.terminated') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in contractStore.contractReport" :key="r.studentId">
-                <td class="ps-4 fw-semibold">{{ r.studentFullName }}</td>
-                <td class="text-center">{{ r.totalContracts }}</td>
-                <td class="text-center text-muted">{{ r.draftContracts }}</td>
-                <td class="text-center text-success fw-bold">{{ r.activeContracts }}</td>
-                <td class="text-center text-warning">{{ r.expiredContracts }}</td>
-                <td class="text-center text-danger pe-4">{{ r.terminatedContracts }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Consent Report -->
-    <div v-if="tab === 'consents'" class="card">
-      <div class="card-body py-3">
-        <div v-if="consentStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="consentStore.consentReport.length === 0" class="text-center py-15 text-muted">{{ $t('legal.reports.noData') }}</div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('legal.consent.fields.student') }}</th>
-                <th>{{ $t('legal.consent.fields.consentType') }}</th>
-                <th>{{ $t('legal.consent.fields.mandatory') }}</th>
-                <th>{{ $t('legal.consent.state.granted') }}</th>
-                <th>{{ $t('legal.consent.fields.grantedAt') }}</th>
-                <th class="text-end pe-4">{{ $t('legal.consent.fields.validUntil') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in consentStore.consentReport" :key="r.studentId + r.consentTypeCode">
-                <td class="ps-4 fw-semibold">{{ r.studentFullName }}</td>
-                <td>{{ r.consentTypeCode ?? '—' }}</td>
-                <td>
-                  <span v-if="r.isMandatory" class="badge badge-light-danger">{{ $t('legal.consent.mandatory') }}</span>
-                  <span v-else class="badge badge-light">{{ $t('legal.consent.optional') }}</span>
-                </td>
-                <td>
-                  <i v-if="r.hasGrantedConsent" class="ki-outline ki-check-circle fs-2 text-success"></i>
-                  <i v-else class="ki-outline ki-cross-circle fs-2 text-danger"></i>
-                </td>
-                <td class="text-muted fs-7">{{ r.grantedAt ? formatDate(r.grantedAt) : '—' }}</td>
-                <td class="text-end pe-4 text-muted fs-7">{{ r.validUntil ?? '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Signature Report -->
-    <div v-if="tab === 'signatures'" class="card">
-      <div class="card-body py-3">
-        <div v-if="contractStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="contractStore.signatureReport.length === 0" class="text-center py-15 text-muted">{{ $t('legal.reports.noData') }}</div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('legal.contract.fields.student') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th>{{ $t('legal.contract.fields.signatureMethod') }}</th>
-                <th>{{ $t('legal.contract.fields.signedBy') }}</th>
-                <th>{{ $t('legal.contract.fields.signedAt') }}</th>
-                <th class="text-end pe-4">{{ $t('legal.signature.hasFile') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in contractStore.signatureReport" :key="r.contractId">
-                <td class="ps-4 fw-semibold">{{ r.studentFullName }}</td>
-                <td><span :class="statusBadge(r.status)">{{ r.status }}</span></td>
-                <td class="text-muted">{{ r.signatureMethod ?? '—' }}</td>
-                <td class="text-muted">{{ r.signedByName ?? '—' }}</td>
-                <td class="text-muted fs-7">{{ r.signedAt ? formatDate(r.signedAt) : '—' }}</td>
-                <td class="text-end pe-4">
-                  <i v-if="r.hasSignedFile" class="ki-outline ki-check-circle fs-2 text-success"></i>
-                  <i v-else class="ki-outline ki-cross-circle fs-2 text-muted"></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
 import { useConsentStore } from '@/stores/consent.store'
 import { useAuthStore } from '@/stores/auth.store'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import type {
+  ContractReportItemDto,
+  ConsentReportItemDto,
+  SignatureReportItemDto,
+} from '@/types/legal.types'
 
+const { t } = useI18n()
 const contractStore = useContractStore()
 const consentStore = useConsentStore()
-const authStore = useAuthStore()
+const auth = useAuthStore()
 const tab = ref<'contracts' | 'consents' | 'signatures'>('contracts')
 
-function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
+type ConsentReportRow = ConsentReportItemDto & { id: string }
 
-function statusBadge(s: string) {
+const consentReportRows = computed<ConsentReportRow[]>(() =>
+  consentStore.consentReport.map((r, i) => ({
+    ...r,
+    id: `${r.studentId}-${r.consentTypeCode ?? i}`,
+  }))
+)
+
+const contractReportColumns: Column<ContractReportItemDto>[] = [
+  { key: 'studentFullName', label: t('legal.contract.fields.student') },
+  { key: 'totalContracts', label: t('legal.reports.total'), width: '90px', align: 'center' },
+  { key: 'draftContracts', label: t('legal.contract.status.draft'), width: '90px', align: 'center' },
+  { key: 'activeContracts', label: t('legal.contract.status.active'), width: '90px', align: 'center' },
+  { key: 'expiredContracts', label: t('legal.contract.status.expired'), width: '90px', align: 'center' },
+  { key: 'terminatedContracts', label: t('legal.contract.status.terminated'), width: '90px', align: 'center' },
+]
+
+const consentReportColumns: Column<ConsentReportItemDto>[] = [
+  { key: 'studentFullName', label: t('legal.consent.fields.student') },
+  { key: 'consentTypeCode', label: t('legal.consent.fields.consentType') },
+  { key: 'isMandatory', label: t('legal.consent.fields.mandatory'), width: '110px' },
+  { key: 'hasGrantedConsent', label: t('legal.consent.state.granted'), width: '100px', align: 'center' },
+  { key: 'grantedAt', label: t('legal.consent.fields.grantedAt'), width: '120px' },
+  { key: 'validUntil', label: t('legal.consent.fields.validUntil'), width: '110px', align: 'right' },
+]
+
+const signatureReportColumns: Column<SignatureReportItemDto>[] = [
+  { key: 'studentFullName', label: t('legal.contract.fields.student') },
+  { key: 'status', label: t('common.status'), width: '120px' },
+  { key: 'signatureMethod', label: t('legal.contract.fields.signatureMethod') },
+  { key: 'signedByName', label: t('legal.contract.fields.signedBy') },
+  { key: 'signedAt', label: t('legal.contract.fields.signedAt'), width: '120px' },
+  { key: 'hasSignedFile', label: t('legal.signature.hasFile'), width: '110px', align: 'right' },
+]
+
+function formatDate(dt: unknown) {
+  if (!dt) return '—'
+  return new Date(String(dt)).toLocaleDateString('tr-TR')
+}
+
+function statusClass(s: string) {
   const map: Record<string, string> = {
-    Draft: 'badge badge-light-secondary', Sent: 'badge badge-light-warning',
-    Active: 'badge badge-light-success', Expired: 'badge badge-light-dark',
-    Terminated: 'badge badge-light-danger',
+    Draft: 'bg-gray-100 text-gray-600',
+    Sent: 'bg-amber-100 text-amber-700',
+    Active: 'bg-green-100 text-green-700',
+    Expired: 'bg-gray-100 text-gray-700',
+    Terminated: 'bg-red-100 text-red-700',
   }
-  return map[s] ?? 'badge badge-light'
+  return map[s] ?? 'bg-gray-100 text-gray-600'
+}
+
+function statusLabel(s: string) {
+  return t(`legal.contract.status.${s.toLowerCase()}`, s)
 }
 
 onMounted(async () => {
-  const corp = authStore.user?.corporationId
+  const corp = auth.user?.corporationId
   const q = { corporationId: corp }
   await Promise.all([
     contractStore.fetchContractReport(q),
@@ -163,3 +85,165 @@ onMounted(async () => {
   ])
 })
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('legal.reports.title')" :description="t('legal.reports.subtitle')" />
+
+    <div class="flex gap-1 mb-4 border-b border-border">
+      <button
+        type="button"
+        :class="[
+          'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+          tab === 'contracts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+        ]"
+        @click="tab = 'contracts'"
+      >
+        {{ t('legal.reports.contractsTab') }}
+      </button>
+      <button
+        type="button"
+        :class="[
+          'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+          tab === 'consents' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+        ]"
+        @click="tab = 'consents'"
+      >
+        {{ t('legal.reports.consentsTab') }}
+      </button>
+      <button
+        type="button"
+        :class="[
+          'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+          tab === 'signatures' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+        ]"
+        @click="tab = 'signatures'"
+      >
+        {{ t('legal.reports.signaturesTab') }}
+      </button>
+    </div>
+
+    <DataTable
+      v-if="tab === 'contracts'"
+      :columns="contractReportColumns"
+      :rows="contractStore.contractReport"
+      :loading="contractStore.loading"
+      :empty-text="t('legal.reports.noData')"
+      row-key="studentId"
+    >
+      <template #cell-studentFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-totalContracts="{ value }">{{ value ?? 0 }}</template>
+      <template #cell-draftContracts="{ value }">
+        <span class="text-muted-foreground">{{ value ?? 0 }}</span>
+      </template>
+      <template #cell-activeContracts="{ value }">
+        <span class="font-semibold text-green-600">{{ value ?? 0 }}</span>
+      </template>
+      <template #cell-expiredContracts="{ value }">
+        <span class="text-amber-600">{{ value ?? 0 }}</span>
+      </template>
+      <template #cell-terminatedContracts="{ value }">
+        <span class="text-red-600">{{ value ?? 0 }}</span>
+      </template>
+    </DataTable>
+
+    <DataTable
+      v-else-if="tab === 'consents'"
+      :columns="consentReportColumns"
+      :rows="consentReportRows"
+      :loading="consentStore.loading"
+      :empty-text="t('legal.reports.noData')"
+    >
+      <template #cell-studentFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-consentTypeCode="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-isMandatory="{ value }">
+        <span
+          v-if="value"
+          class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700"
+        >
+          {{ t('legal.consent.mandatory') }}
+        </span>
+        <span v-else class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+          {{ t('legal.consent.optional') }}
+        </span>
+      </template>
+      <template #cell-hasGrantedConsent="{ value }">
+        <svg
+          v-if="value"
+          class="w-5 h-5 text-green-600 mx-auto"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <svg
+          v-else
+          class="w-5 h-5 text-red-500 mx-auto"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </template>
+      <template #cell-grantedAt="{ value }">
+        <span class="text-muted-foreground">{{ formatDate(value) }}</span>
+      </template>
+      <template #cell-validUntil="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+    </DataTable>
+
+    <DataTable
+      v-else
+      :columns="signatureReportColumns"
+      :rows="contractStore.signatureReport"
+      :loading="contractStore.loading"
+      :empty-text="t('legal.reports.noData')"
+      row-key="contractId"
+    >
+      <template #cell-studentFullName="{ value }">
+        <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-status="{ value }">
+        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
+          {{ statusLabel(String(value)) }}
+        </span>
+      </template>
+      <template #cell-signatureMethod="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-signedByName="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+      </template>
+      <template #cell-signedAt="{ value }">
+        <span class="text-muted-foreground">{{ formatDate(value) }}</span>
+      </template>
+      <template #cell-hasSignedFile="{ value }">
+        <svg
+          v-if="value"
+          class="w-5 h-5 text-green-600 ml-auto"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <svg
+          v-else
+          class="w-5 h-5 text-muted-foreground ml-auto"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </template>
+    </DataTable>
+  </div>
+</template>

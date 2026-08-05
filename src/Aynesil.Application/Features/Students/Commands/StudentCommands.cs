@@ -1,6 +1,7 @@
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
+using Aynesil.Domain.Modules.Students.Events;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -71,6 +72,23 @@ public sealed class CreateStudentCommandHandler
             _currentUser.UserId);
 
         _db.Students.Add(student);
+
+        // Keep primary_campus_id and student_campus in sync on create.
+        if (req.PrimaryCampusId.HasValue)
+        {
+            var enrollment = new StudentCampus
+            {
+                CorporationId = req.CorporationId,
+                StudentId     = student.Id,
+                CampusId      = req.PrimaryCampusId.Value,
+                IsPrimary     = true,
+                ActiveFrom    = DateOnly.FromDateTime(DateTime.UtcNow)
+            };
+            enrollment.AddDomainEvent(new StudentEnrolledEvent(
+                student.Id, req.CorporationId, req.PrimaryCampusId.Value, true, _currentUser.UserId));
+            _db.StudentCampuses.Add(enrollment);
+        }
+
         await _db.SaveChangesAsync(ct);
 
         return (await StudentProjection.LoadStudentAsync(_db, student.Id, ct))!;

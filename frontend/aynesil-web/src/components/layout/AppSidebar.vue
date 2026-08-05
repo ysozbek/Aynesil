@@ -4,20 +4,75 @@
  * Metronic CSS class'larını kullanır: kt-sidebar, kt-sidebar-header,
  * kt-sidebar-wrapper, kt-menu, kt-menu-item, kt-menu-link, kt-menu-title
  */
+import { nextTick, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import type { MenuItem } from '@/stores/menu.store'
 
-defineProps<{
+const props = defineProps<{
   items: MenuItem[]
   collapsed: boolean
 }>()
 defineEmits<{ toggle: [] }>()
 
 const route = useRoute()
+const scrollContainer = ref<HTMLElement | null>(null)
+
+function normalizePath(path: string): string {
+  return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+}
 
 function isActive(item: MenuItem): boolean {
-  return !!item.route && route.path.startsWith(item.route)
+  if (!item.route) return false
+  const menuPath = normalizePath(item.route)
+  // Root must be exact — otherwise every path matches startsWith('/').
+  if (menuPath === '/') return route.path === '/'
+  return route.path === menuPath || route.path.startsWith(`${menuPath}/`)
 }
+
+/** Prefer the longest matching route so nested pages highlight the leaf item. */
+function isPrimaryActive(item: MenuItem): boolean {
+  if (!isActive(item) || !item.route) return false
+  const menuPath = normalizePath(item.route)
+  if (menuPath === '/') return true
+
+  const allRoutes: string[] = []
+  for (const group of props.items) {
+    if (group.route) allRoutes.push(normalizePath(group.route))
+    for (const child of group.children ?? []) {
+      if (child.route) allRoutes.push(normalizePath(child.route))
+    }
+  }
+
+  const longerMatch = allRoutes.some(
+    (r) =>
+      r !== menuPath &&
+      r.length > menuPath.length &&
+      (route.path === r || route.path.startsWith(`${r}/`)),
+  )
+  return !longerMatch
+}
+
+async function scrollActiveIntoView() {
+  await nextTick()
+  const container = scrollContainer.value
+  const active = container?.querySelector<HTMLElement>('[data-menu-active="true"]')
+  if (!container || !active) return
+
+  // Scroll only the sidebar panel — avoid shifting the whole page.
+  const containerRect = container.getBoundingClientRect()
+  const activeRect = active.getBoundingClientRect()
+  const delta =
+    activeRect.top - containerRect.top
+    - (containerRect.height / 2)
+    + (activeRect.height / 2)
+  container.scrollTo({ top: container.scrollTop + delta, behavior: 'smooth' })
+}
+
+watch(
+  () => [route.path, props.items] as const,
+  () => { void scrollActiveIntoView() },
+  { immediate: true, deep: true },
+)
 </script>
 
 <template>
@@ -45,7 +100,7 @@ function isActive(item: MenuItem): boolean {
     </div>
 
     <!-- Sidebar content / navigation -->
-    <div class="kt-sidebar-content kt-sidebar-wrapper flex-1 overflow-y-auto py-4">
+    <div ref="scrollContainer" class="kt-sidebar-content kt-sidebar-wrapper flex-1 overflow-y-auto py-4">
       <nav class="kt-menu flex flex-col gap-0.5 px-3">
 
         <template v-for="item in items" :key="item.id">
@@ -67,7 +122,8 @@ function isActive(item: MenuItem): boolean {
                     v-if="child.route"
                     :to="child.route"
                     class="kt-menu-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-                    :class="isActive(child)
+                    :data-menu-active="isPrimaryActive(child) ? 'true' : undefined"
+                    :class="isPrimaryActive(child)
                       ? 'bg-primary text-primary-foreground font-medium'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'"
                   >
@@ -84,7 +140,8 @@ function isActive(item: MenuItem): boolean {
             <RouterLink
               :to="item.route"
               class="kt-menu-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-              :class="isActive(item)
+              :data-menu-active="isPrimaryActive(item) ? 'true' : undefined"
+              :class="isPrimaryActive(item)
                 ? 'bg-primary text-primary-foreground font-medium'
                 : 'text-muted-foreground hover:text-foreground hover:bg-accent'"
             >

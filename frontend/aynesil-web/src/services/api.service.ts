@@ -2,6 +2,7 @@
  * Axios instance with:
  *  - JWT Bearer token injection
  *  - Automatic refresh token rotation (401 → refresh → retry)
+ *  - Hard redirect to /login when session cannot be recovered
  *  - Tenant locale header
  *  - Centralized error handling
  *  - Request/response interceptors
@@ -32,10 +33,29 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue = []
 }
 
+function isAuthEndpoint(url?: string) {
+  if (!url) return false
+  return url.includes('/auth/login')
+    || url.includes('/auth/refresh')
+    || url.includes('/auth/logout')
+    || url.includes('/auth/register')
+}
+
+function forceLoginRedirect() {
+  const auth = useAuthStore()
+  auth.clearTokens()
+  // Hard navigate — avoids circular import with router and guarantees leaving a dead session shell.
+  const redirect = encodeURIComponent(window.location.pathname + window.location.search)
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.assign(`/login?redirect=${redirect}`)
+  }
+}
+
 // ── Request Interceptor — attach Bearer token ──────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const auth = useAuthStore()
-  if (auth.accessToken) {
+  // Refresh/login must not send a stale access token (stale-tenant middleware would 401 them).
+  if (auth.accessToken && !isAuthEndpoint(config.url)) {
     config.headers.Authorization = `Bearer ${auth.accessToken}`
   }
   if (auth.user?.locale) {
@@ -51,13 +71,26 @@ api.interceptors.response.use(
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
     const auth = useAuthStore()
 
-    if (error.response?.status === 401 && !originalRequest._retry && auth.refreshToken) {
+    if (error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    // Auth endpoints themselves failed — clear session and go to login.
+    if (isAuthEndpoint(originalRequest?.url)) {
+      forceLoginRedirect()
+      return Promise.reject(error)
+    }
+
+    if (!originalRequest._retry && auth.refreshToken) {
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then((token) => {
           originalRequest.headers = { ...originalRequest.headers, Authorization: `Bearer ${token}` }
           return api(originalRequest)
+        }).catch((queueError) => {
+          forceLoginRedirect()
+          return Promise.reject(queueError)
         })
       }
 
@@ -71,13 +104,15 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError)
-        await auth.logout()
+        forceLoginRedirect()
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false
       }
     }
 
+    // No refresh token (or already retried) — force login.
+    forceLoginRedirect()
     return Promise.reject(error)
   }
 )
