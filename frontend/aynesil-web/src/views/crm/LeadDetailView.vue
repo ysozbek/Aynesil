@@ -35,7 +35,7 @@ onMounted(async () => {
     activityStore.fetchInterviews(id.value),
     activityStore.fetchHistory(id.value),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
-    refData.getValues('LEAD_PIPELINE_STAGE').then(v => { stages.value = v }),
+    refData.getValues('pipeline_stage').then(v => { stages.value = v }),
     refData.getValues('ACTIVITY_TYPE').then(v => { activityTypes.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed, watch, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
@@ -27,7 +27,7 @@ const filters = reactive<AgreementListQuery>({
   corporationId: authStore.user?.corporationId,
 })
 
-const agreementTypes = computed(() => refDataStore.getByCategory?.('agreement_type') ?? [])
+const agreementTypes = ref<Awaited<ReturnType<typeof refDataStore.getValues>>>([])
 
 const columns: Column<ConsultancyAgreementListItemDto>[] = [
   { key: 'title', label: t('consultancyContract.fields.title') },
@@ -80,7 +80,7 @@ watch(
 )
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('agreement_type')
+  agreementTypes.value = await refDataStore.getValues('agreement_type')
   await doFetch()
 })
 </script>

@@ -36,7 +36,7 @@ const loadingStages = ref(true)
 
 onMounted(async () => {
   await Promise.all([
-    refData.getValues('LEAD_PIPELINE_STAGE').then(v => { stages.value = v }),
+    refData.getValues('pipeline_stage').then(v => { stages.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])
   await loadBoard()

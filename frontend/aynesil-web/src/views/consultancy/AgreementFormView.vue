@@ -17,7 +17,7 @@ const refDataStore = useRefDataStore()
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
 const errorMsg = ref('')
-const agreementTypes = computed(() => refDataStore.getByCategory?.('agreement_type') ?? [])
+const agreementTypes = ref<Awaited<ReturnType<typeof refDataStore.getValues>>>([])
 
 const form = reactive({
   title: '',
@@ -81,7 +81,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('agreement_type')
+  agreementTypes.value = await refDataStore.getValues('agreement_type')
   if (isEdit.value && id) {
     await store.fetchAgreement(id)
     const a = store.currentAgreement

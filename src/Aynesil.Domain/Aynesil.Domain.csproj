@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Marker only: IDomainEvent extends MediatR.INotification for post-commit dispatch. -->
+    <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Aynesil.Shared\Aynesil.Shared.csproj" />
   </ItemGroup>
 

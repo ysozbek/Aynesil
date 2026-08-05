@@ -38,7 +38,7 @@ onMounted(async () => {
   await store.fetchOne(id.value)
   await Promise.all([
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
-    refData.getValues('EDUCATOR_SPECIALTY').then(v => { specialties.value = v }),
+    refData.getValues('specialty').then(v => { specialties.value = v }),
     refData.getValues('CERTIFICATION_TYPE').then(v => { certificationTypes.value = v }),
     refData.getValues('EDUCATOR_RELATIONSHIP').then(v => { relationshipTypes.value = v }),
   ])

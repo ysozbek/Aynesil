@@ -61,7 +61,7 @@ onMounted(async () => {
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
     refData.getValues('LEAD_SOURCE').then(v => { sources.value = v }),
-    refData.getValues('LEAD_PIPELINE_STAGE').then(v => { stages.value = v }),
+    refData.getValues('pipeline_stage').then(v => { stages.value = v }),
   ])
 })
 
