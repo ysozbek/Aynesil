@@ -47,7 +47,7 @@ function alignClass(align?: string) {
 </script>
 
 <template>
-  <div class="w-full overflow-x-auto rounded-xl border border-border bg-[--color-card] shadow-sm">
+  <div class="w-full overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-border bg-accent/40">

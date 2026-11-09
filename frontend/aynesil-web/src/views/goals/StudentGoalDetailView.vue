@@ -197,7 +197,7 @@ async function submitProgress() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
           <dl class="grid grid-cols-2 md:grid-cols-3 gap-5 text-sm">
             <div class="md:col-span-3">
               <dt class="text-muted-foreground text-xs uppercase mb-1">{{ t('goal.studentGoal.statement') }}</dt>
@@ -268,7 +268,7 @@ async function submitProgress() {
           <div
             v-for="p in store.progressList"
             :key="p.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between gap-3">
               <div>
@@ -298,7 +298,7 @@ async function submitProgress() {
         </div>
         <template v-else>
           <!-- Summary card -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-6 shadow-sm mb-6">
+          <div class="rounded-xl border border-border bg-card p-6 shadow-sm mb-6">
             <div class="flex items-center gap-6">
               <div class="text-center">
                 <p class="text-4xl font-bold text-primary">
@@ -316,7 +316,7 @@ async function submitProgress() {
           </div>
 
           <!-- Progress series table -->
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+          <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-border bg-accent/50">

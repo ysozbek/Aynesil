@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCreditLedgerStore } from '@/stores/creditLedger.store'
 import { usePermission } from '@/composables/usePermission'
+import { financeService } from '@/services/finance.service'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
-import type { CreditLedgerEntryDto } from '@/types/finance.types'
+import type { CreditLedgerEntryDto, StudentPackageListItemDto } from '@/types/finance.types'
 
 const { t } = useI18n()
+const route = useRoute()
 const auth = useAuthStore()
 const store = useCreditLedgerStore()
 const { can } = usePermission()
 
 const corporationId = computed(() => auth.user?.corporationId ?? '')
 
-const studentIdInput = ref('')
+const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
+const studentPackages = ref<StudentPackageListItemDto[]>([])
 
 const query = reactive({
   corporationId: corporationId.value,
@@ -36,10 +41,6 @@ const grantForm = reactive({ studentPackageId: '', amount: 0, reason: '' })
 const adjustModal = ref(false)
 const adjustForm = reactive({ studentPackageId: '', delta: 0, reason: '' })
 
-onMounted(async () => {
-  // Load without filter initially - wait for student selection
-})
-
 async function loadData() {
   if (!loadedStudentId.value) return
   await Promise.all([
@@ -48,12 +49,32 @@ async function loadData() {
   ])
 }
 
-async function searchStudent() {
-  if (!studentIdInput.value.trim()) return
-  loadedStudentId.value = studentIdInput.value.trim()
-  query.studentId = loadedStudentId.value
-  await loadData()
+async function loadStudentPackages() {
+  studentPackages.value = []
+  if (!loadedStudentId.value) return
+  const res = await financeService.listStudentPackages({
+    corporationId: corporationId.value,
+    studentId: loadedStudentId.value,
+    status: 'active',
+    page: 1,
+    pageSize: 50,
+  })
+  if (res.success && res.data) studentPackages.value = res.data.items
 }
+
+function packageLabel(p: StudentPackageListItemDto): string {
+  const name = p.packageDefinitionName || t('finance.studentPackage.customPackage')
+  return `${name} · ${t('finance.credit.remainingShort', { count: p.remainingCredits })}`
+}
+
+watch(studentIdInput, async (id) => {
+  loadedStudentId.value = id
+  query.studentId = id
+  query.page = 1
+  grantForm.studentPackageId = ''
+  adjustForm.studentPackageId = ''
+  await Promise.all([loadData(), loadStudentPackages()])
+}, { immediate: true })
 
 watch(() => [query.entryType, query.from, query.to, query.page], () => {
   if (loadedStudentId.value) loadData()
@@ -93,14 +114,24 @@ async function doGrant() {
   await store.grantCredits(grantForm)
   grantModal.value = false
   Object.assign(grantForm, { studentPackageId: '', amount: 0, reason: '' })
-  await loadData()
+  await Promise.all([loadData(), loadStudentPackages()])
 }
 
 async function doAdjust() {
   await store.adjustCredits(adjustForm)
   adjustModal.value = false
   Object.assign(adjustForm, { studentPackageId: '', delta: 0, reason: '' })
-  await loadData()
+  await Promise.all([loadData(), loadStudentPackages()])
+}
+
+function openGrant() {
+  if (studentPackages.value.length === 1) grantForm.studentPackageId = studentPackages.value[0].id
+  grantModal.value = true
+}
+
+function openAdjust() {
+  if (studentPackages.value.length === 1) adjustForm.studentPackageId = studentPackages.value[0].id
+  adjustModal.value = true
 }
 </script>
 
@@ -110,55 +141,50 @@ async function doAdjust() {
       <div class="flex gap-2">
         <button
           v-if="can('credit:grant')"
-          @click="grantModal = true"
-          class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+          @click="openGrant"
+          :disabled="!loadedStudentId"
+          :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
         >{{ t('finance.credit.grant') }}</button>
         <button
           v-if="can('credit:adjust')"
-          @click="adjustModal = true"
-          class="px-4 py-2 border border-border rounded-lg text-sm hover:bg-accent"
+          @click="openAdjust"
+          :disabled="!loadedStudentId"
+          :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"
+          class="px-4 py-2 border border-border rounded-lg text-sm hover:bg-accent disabled:opacity-50"
         >{{ t('finance.credit.adjust') }}</button>
       </div>
     </PageHeader>
 
     <!-- Student search -->
-    <div class="mb-6 flex items-center gap-3">
-      <input
-        v-model="studentIdInput"
-        type="text"
-        :placeholder="t('finance.credit.studentIdPlaceholder')"
-        @keydown.enter="searchStudent"
-        class="flex-1 max-w-sm px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
-      <button @click="searchStudent" :disabled="store.loading || !studentIdInput.trim()" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-60">
-        {{ t('common.search') }}
-      </button>
+    <div class="mb-6 max-w-sm">
+      <StudentPicker v-model="studentIdInput" />
     </div>
 
     <div v-if="!loadedStudentId" class="text-center py-16 text-muted-foreground text-sm">
-      {{ t('finance.credit.enterStudentId') }}
+      {{ t('pickers.selectStudentFirst') }}
     </div>
 
     <template v-else>
       <!-- Summary -->
       <div v-if="store.summary" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-foreground">{{ store.summary.activePackages }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('finance.credit.activePackages') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-teal-600">{{ store.summary.totalGranted }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('finance.credit.totalGranted') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-red-600">{{ store.summary.totalConsumed }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('finance.credit.totalConsumed') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-green-600">{{ store.summary.totalRemaining }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('finance.credit.totalRemaining') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-amber-600">{{ store.summary.expiringWithin30Days }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('finance.credit.expiringIn30') }}</p>
         </div>
@@ -219,12 +245,16 @@ async function doAdjust() {
 
     <!-- Grant Modal -->
     <div v-if="grantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold text-foreground mb-4">{{ t('finance.credit.grantTitle') }}</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">{{ t('finance.studentPackage.title') }} ID</label>
-            <input v-model="grantForm.studentPackageId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
+            <label class="block text-sm font-medium mb-1">{{ t('finance.studentPackage.definition') }}</label>
+            <select v-model="grantForm.studentPackageId" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none">
+              <option value="">{{ t('common.select') }}</option>
+              <option v-for="p in studentPackages" :key="p.id" :value="p.id">{{ packageLabel(p) }}</option>
+            </select>
+            <p v-if="studentPackages.length === 0" class="text-xs text-amber-600 mt-1">{{ t('finance.credit.noActivePackage') }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('finance.credit.amount') }}</label>
@@ -246,12 +276,16 @@ async function doAdjust() {
 
     <!-- Adjust Modal -->
     <div v-if="adjustModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold text-foreground mb-4">{{ t('finance.credit.adjustTitle') }}</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">{{ t('finance.studentPackage.title') }} ID</label>
-            <input v-model="adjustForm.studentPackageId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
+            <label class="block text-sm font-medium mb-1">{{ t('finance.studentPackage.definition') }}</label>
+            <select v-model="adjustForm.studentPackageId" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none">
+              <option value="">{{ t('common.select') }}</option>
+              <option v-for="p in studentPackages" :key="p.id" :value="p.id">{{ packageLabel(p) }}</option>
+            </select>
+            <p v-if="studentPackages.length === 0" class="text-xs text-amber-600 mt-1">{{ t('finance.credit.noActivePackage') }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('finance.credit.delta') }} ({{ t('finance.credit.deltaHint') }})</label>

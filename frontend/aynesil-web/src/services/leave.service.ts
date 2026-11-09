@@ -7,6 +7,7 @@ import type { PaginatedResult } from '@/types/api.types'
 import type {
   LeaveRequestListItemDto,
   LeaveRequestDto,
+  LeaveApprovalDto,
   LeaveBalanceDto,
   LeaveCalendarItemDto,
   LeaveSessionImpactDto,
@@ -45,20 +46,26 @@ export const leaveService = {
   get: (id: string) =>
     apiService.get<LeaveRequestDto>(`/leave/requests/${id}`),
 
+  // Backend `SubmitLeaveRequestCommand` returns a Guid; use `fetchLeave` to
+  // load the full DTO after creation (see src/Aynesil.Application/Features/Leaves).
   create: (payload: CreateLeaveRequestPayload) =>
-    apiService.post<LeaveRequestDto>('/leave/requests', payload),
+    apiService.post<string>('/leave/requests', payload),
 
   update: (id: string, payload: UpdateLeaveRequestPayload) =>
     apiService.put<LeaveRequestDto>(`/leave/requests/${id}`, payload),
 
+  // Backend approve/reject return `LeaveApprovalDto` (a single approval step),
+  // not the full LeaveRequestDto — callers refetch the request after action.
   approve: (id: string, payload: ApproveLeavePayload) =>
-    apiService.post<LeaveRequestDto>(`/leave/requests/${id}/approve`, payload),
+    apiService.post<LeaveApprovalDto>(`/leave/requests/${id}/approve`, payload),
 
   reject: (id: string, payload: RejectLeavePayload) =>
-    apiService.post<LeaveRequestDto>(`/leave/requests/${id}/reject`, payload),
+    apiService.post<LeaveApprovalDto>(`/leave/requests/${id}/reject`, payload),
 
+  // Backend cancel is NoContent — body is ignored by the API but the frontend
+  // still sends rowVersion for future-proofing.
   cancel: (id: string, payload: CancelLeavePayload) =>
-    apiService.post<LeaveRequestDto>(`/leave/requests/${id}/cancel`, payload),
+    apiService.post<void>(`/leave/requests/${id}/cancel`, payload),
 
   getSessionImpact: (id: string) =>
     apiService.get<LeaveSessionImpactDto[]>(`/leave/requests/${id}/session-impact`),

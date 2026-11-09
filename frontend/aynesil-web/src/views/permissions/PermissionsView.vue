@@ -62,7 +62,7 @@ const filteredCount = computed(() => Object.values(filteredCatalog.value).reduce
 
     <!-- Loading -->
     <div v-if="permStore.catalogLoading" class="space-y-3">
-      <div v-for="i in 6" :key="i" class="bg-[--color-card] rounded-xl p-5 border border-border animate-pulse">
+      <div v-for="i in 6" :key="i" class="bg-card rounded-xl p-5 border border-border animate-pulse">
         <div class="h-4 w-28 bg-accent rounded mb-4" />
         <div class="grid grid-cols-4 gap-2">
           <div v-for="j in 4" :key="j" class="h-8 bg-accent rounded-lg" />
@@ -73,7 +73,7 @@ const filteredCount = computed(() => Object.values(filteredCatalog.value).reduce
     <!-- Permission groups by resource -->
     <div v-else class="space-y-3">
       <div v-for="(perms, resource) in filteredCatalog" :key="resource"
-        class="bg-[--color-card] rounded-xl border border-border shadow-sm overflow-hidden">
+        class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <!-- Resource header -->
         <div class="px-5 py-3 border-b border-border bg-accent/20 flex items-center justify-between">
           <div class="flex items-center gap-2">

@@ -81,7 +81,7 @@ function utilizationColor(pct: number): string {
         <!-- Availability Panel -->
         <div class="md:col-span-2 space-y-5">
           <!-- Active Campuses -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 class="font-semibold text-foreground mb-3">{{ t('educator.tab.campuses') }}</h3>
             <div v-if="!availability || availability.activeCampuses.length === 0" class="text-sm text-muted-foreground">
               {{ t('common.noData') }}
@@ -101,7 +101,7 @@ function utilizationColor(pct: number): string {
           </div>
 
           <!-- Specialties -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 class="font-semibold text-foreground mb-3">{{ t('educator.tab.specialties') }}</h3>
             <div v-if="!availability || availability.specialties.length === 0" class="text-sm text-muted-foreground">
               {{ t('common.noData') }}
@@ -118,7 +118,7 @@ function utilizationColor(pct: number): string {
           </div>
 
           <!-- Assigned Students Placeholder -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 class="font-semibold text-foreground mb-3">{{ t('common.assignedStudents') }}</h3>
             <p class="text-sm text-muted-foreground">{{ t('common.comingSoon') }}</p>
           </div>
@@ -126,7 +126,7 @@ function utilizationColor(pct: number): string {
 
         <!-- Utilization Widget -->
         <div>
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 class="font-semibold text-foreground mb-4">{{ t('common.utilization') }}</h3>
 
             <div class="space-y-4">

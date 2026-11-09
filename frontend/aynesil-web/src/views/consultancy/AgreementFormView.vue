@@ -108,7 +108,7 @@ onMounted(async () => {
     </PageHeader>
 
     <form
-      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      class="max-w-2xl rounded-xl border border-border bg-card shadow-sm p-6 space-y-4"
       @submit.prevent="handleSubmit"
     >
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -98,12 +98,15 @@ function formatDate(val: unknown): string {
   return new Date(String(val)).toLocaleDateString('tr-TR')
 }
 
+// Status tokens mirror the backend domain:
+//   draft, in_review, approved, active, revised, closed
 function statusColor(status: string): string {
   const map: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
-    pending_review: 'bg-yellow-100 text-yellow-700',
+    in_review: 'bg-yellow-100 text-yellow-700',
     approved: 'bg-green-100 text-green-700',
     active: 'bg-blue-100 text-blue-700',
+    revised: 'bg-amber-100 text-amber-700',
     closed: 'bg-slate-100 text-slate-600',
   }
   return map[status] ?? 'bg-gray-100 text-gray-700'
@@ -112,9 +115,10 @@ function statusColor(status: string): string {
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
     draft: t('bep.status.draft'),
-    pending_review: t('bep.status.pending_review'),
+    in_review: t('bep.status.in_review'),
     approved: t('bep.status.approved'),
     active: t('bep.status.active'),
+    revised: t('bep.status.revised'),
     closed: t('bep.status.closed'),
   }
   return map[status] ?? status
@@ -204,9 +208,10 @@ async function doDelete() {
       >
         <option value="">{{ t('common.allStatuses') }}</option>
         <option value="draft">{{ t('bep.status.draft') }}</option>
-        <option value="pending_review">{{ t('bep.status.pending_review') }}</option>
+        <option value="in_review">{{ t('bep.status.in_review') }}</option>
         <option value="approved">{{ t('bep.status.approved') }}</option>
         <option value="active">{{ t('bep.status.active') }}</option>
+        <option value="revised">{{ t('bep.status.revised') }}</option>
         <option value="closed">{{ t('bep.status.closed') }}</option>
       </select>
     </div>
@@ -260,7 +265,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('education_plan:update') && (row.status === 'draft' || row.status === 'returned')"
+            v-if="can('education_plan:update') && (row.status === 'draft' || row.status === 'in_review')"
             @click.stop="router.push({ name: 'bep-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"

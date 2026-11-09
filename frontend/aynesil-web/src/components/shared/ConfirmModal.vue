@@ -34,7 +34,7 @@ const { t } = useI18n()
       <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="emit('cancel')" />
 
       <!-- Modal -->
-      <div class="relative z-10 w-full max-w-md rounded-2xl bg-white dark:bg-[--color-card] p-6 shadow-2xl border border-gray-100">
+      <div class="relative z-10 w-full max-w-md rounded-2xl bg-white dark:bg-card p-6 shadow-2xl border border-gray-100">
         <h2 class="text-base font-semibold text-foreground mb-2">{{ title }}</h2>
         <p class="text-sm text-muted-foreground mb-6">{{ message }}</p>
 

@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import { campusService } from '@/services/campus.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import RoomPicker from '@/components/pickers/RoomPicker.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
+import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -20,6 +25,7 @@ const isEdit = !!sessionId
 const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const sessionTypes = ref<RefValueItem[]>([])
+const campuses = ref<CampusListItemDto[]>([])
 
 const form = reactive({
   campusId: '',
@@ -28,12 +34,23 @@ const form = reactive({
   title: '',
   startsAt: '',
   endsAt: '',
+  studentId: '',
+  educatorId: '',
 })
 
 const errors = reactive<Record<string, string>>({})
 
+watch(() => form.campusId, (_, previous) => {
+  if (previous !== undefined && previous !== '') form.roomId = ''
+})
+
 onMounted(async () => {
-  await refData.getValues('SESSION_TYPE').then(v => { sessionTypes.value = v })
+  await Promise.all([
+    refData.getValues('SESSION_TYPE').then(v => { sessionTypes.value = v }),
+    campusService.list({ page: 1, pageSize: 200 }).then((res) => {
+      if (res.success && res.data) campuses.value = res.data.items
+    }),
+  ])
   if (isEdit && sessionId) {
     await store.fetchSession(sessionId)
     const s = store.currentSession
@@ -61,9 +78,12 @@ async function submit() {
   if (!validate()) return
   try {
     if (isEdit && sessionId) {
+      // Backend `RescheduleSessionRequest` expects `NewStartsAt` / `NewEndsAt`
+      // and `RowVersion` as int — see src/Aynesil.Api/Controllers/SchedulingController.cs
+      // and src/Aynesil.Application/Features/Scheduling/Commands/SessionCommands.cs.
       await store.rescheduleSession(sessionId, {
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
+        newStartsAt: new Date(form.startsAt).toISOString(),
+        newEndsAt: new Date(form.endsAt).toISOString(),
         roomId: form.roomId || undefined,
         rowVersion: store.currentSession!.rowVersion,
       })
@@ -71,12 +91,15 @@ async function submit() {
     } else {
       const created = await store.createSession({
         corporationId: corporationId.value,
-        campusId: form.campusId,
+        campusId: form.campusId || undefined,
         roomId: form.roomId || undefined,
         sessionTypeId: form.sessionTypeId,
         title: form.title,
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
+        isMakeup: false,
+        participantStudentIds: form.studentId ? [form.studentId] : [],
+        educatorAssignments: form.educatorId ? [{ educatorId: form.educatorId, role: 'lead' }] : [],
       })
       router.push({ name: 'session-detail', params: { id: created.id } })
     }
@@ -94,7 +117,7 @@ async function submit() {
     />
 
     <div class="max-w-2xl">
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-5">
+      <div class="rounded-xl border border-border bg-card shadow-sm p-6 space-y-5">
 
         <div v-if="errors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
           {{ errors.submit }}
@@ -155,14 +178,34 @@ async function submit() {
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('scheduling.session.room') }}</label>
-          <input
-            v-model="form.roomId"
-            type="text"
-            :placeholder="t('scheduling.session.roomIdPlaceholder')"
-            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('campus.name') }}</label>
+            <select
+              v-model="form.campusId"
+              :disabled="isEdit"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            >
+              <option value="">{{ t('common.allCampuses') }}</option>
+              <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('scheduling.session.room') }}</label>
+            <RoomPicker v-model="form.roomId" :campus-id="form.campusId" />
+          </div>
+        </div>
+
+        <div v-if="!isEdit" class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('scheduling.session.student') }}</label>
+            <StudentPicker v-model="form.studentId" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('scheduling.recurring.leadEducator') }}</label>
+            <EducatorPicker v-model="form.educatorId" />
+          </div>
+          <p class="col-span-2 text-xs text-muted-foreground -mt-2">{{ t('scheduling.session.participantsLaterHint') }}</p>
         </div>
 
         <div class="flex justify-end gap-3 pt-2">

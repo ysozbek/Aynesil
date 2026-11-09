@@ -65,11 +65,15 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  async function fetchStudentAttendance(studentId: string, query?: StudentAttendanceQuery) {
+  async function fetchStudentAttendance(
+    studentId: string,
+    corporationId: string,
+    query?: StudentAttendanceQuery
+  ) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getStudentAttendance(studentId, query)
+      const res = await schedulingService.getStudentAttendance(studentId, corporationId, query)
       if (res.success && res.data) studentAttendance.value = res.data
     } catch (e: unknown) {
       error.value = (e as Error).message
@@ -78,10 +82,10 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  async function fetchAttendanceSummary(studentId: string) {
+  async function fetchAttendanceSummary(studentId: string, corporationId: string) {
     loading.value = true
     try {
-      const res = await schedulingService.getAttendanceSummary(studentId)
+      const res = await schedulingService.getAttendanceSummary(studentId, corporationId)
       if (res.success && res.data) summary.value = res.data
     } finally {
       loading.value = false

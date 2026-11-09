@@ -1,20 +1,24 @@
-// Assessment & Evaluation types — mirrors backend DTOs exactly
+// Assessment & Evaluation types — mirrors
+// `src/Aynesil.Application/Features/Assessment/Dtos/*.cs`.
+//
+// NOTE: Backend does NOT return human-readable names for type/category/assessor
+// /student/lead. UI must enrich from refdata/student/lead stores (see
+// `AssessmentProjection.cs`).
 
 export interface AssessmentTemplateListItemDto {
   id: string
+  corporationId: string | null
   code: string
   name: string
-  typeName: string | null
+  typeId: string | null
   typeCode: string | null
-  categoryName: string | null
+  categoryId: string | null
   categoryCode: string | null
   scoringModel: string | null
   version: number
   isActive: boolean
-  corporationId: string | null
   sectionCount: number
   createdAt: string
-  updatedAt: string
 }
 
 export interface AssessmentTemplateDto extends AssessmentTemplateListItemDto {
@@ -52,58 +56,63 @@ export interface AssessmentItemDto {
 
 // ── Session DTOs ───────────────────────────────────────────────────────────────
 
+/** Status tokens come from `assessment.assessment_session.status` (DB check). */
+export type AssessmentSessionStatus =
+  | 'planned'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+
 export interface AssessmentSessionListItemDto {
   id: string
-  templateId: string
-  templateName: string
-  templateCode: string
   corporationId: string
+  templateId: string
+  templateName: string | null
+  templateVersion: number
+  leadId: string | null
+  studentId: string | null
   campusId: string | null
   campusName: string | null
-  leadId: string | null
-  leadContactName: string | null
-  studentId: string | null
-  studentName: string | null
   assessorId: string | null
-  assessorName: string | null
-  status: 'planned' | 'in_progress' | 'completed' | 'cancelled'
   scheduledAt: string | null
-  startedAt: string | null
-  completedAt: string | null
+  status: AssessmentSessionStatus | string
   totalScore: number | null
   createdAt: string
 }
 
 export interface AssessmentSessionDto extends AssessmentSessionListItemDto {
+  /** Backend uses `performedAt`, not `completedAt`. */
+  performedAt: string | null
   responses: AssessmentResponseDto[]
+  updatedAt: string
   rowVersion: number
 }
 
+/** Mirrors `AssessmentResponseDto` on the API. */
 export interface AssessmentResponseDto {
   id: string
-  sessionId: string
+  /** Backend property is `AssessmentSessionId`; JSON key is `assessmentSessionId`. */
+  assessmentSessionId: string
   itemId: string
-  itemCode: string
-  itemPrompt: string
+  itemCode: string | null
   numericValue: number | null
   textValue: string | null
   choiceValue: string | null
   note: string | null
-  respondedAt: string
 }
 
 // ── Report & Recommendation DTOs ──────────────────────────────────────────────
 
 export interface AssessmentReportDto {
   id: string
-  sessionId: string
   corporationId: string
+  assessmentSessionId: string
   summary: string | null
   findings: string | null
   fileId: string | null
-  isFinalized: boolean
   finalizedAt: string | null
-  finalizedByName: string | null
+  finalizedBy: string | null
+  isFinalized: boolean
   rowVersion: number
   createdAt: string
   updatedAt: string
@@ -111,17 +120,17 @@ export interface AssessmentReportDto {
 
 export interface ProgramRecommendationDto {
   id: string
-  sessionId: string
   corporationId: string
+  assessmentSessionId: string | null
   leadId: string | null
   studentId: string | null
   recommendedProgramId: string | null
-  recommendedProgramName: string | null
   recommendedIntensity: string | null
   rationale: string | null
-  recommendedByName: string | null
+  recommendedBy: string | null
   rowVersion: number
   createdAt: string
+  updatedAt: string
 }
 
 // ── Request payloads ───────────────────────────────────────────────────────────

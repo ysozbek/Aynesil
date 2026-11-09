@@ -34,6 +34,15 @@ onMounted(async () => {
       can('assessment_report:read') ? store.fetchReport(id.value) : Promise.resolve(),
       can('program_recommendation:read') ? store.fetchRecommendations(id.value) : Promise.resolve(),
     ])
+    // Hydrate saved responses so reopening an in-progress session shows the
+    // existing values on the Scoring tab (previously only `startSession()`
+    // populated them, leaving the form blank on refresh).
+    if (session.value.status === 'in_progress' || session.value.status === 'completed') {
+      initResponses()
+      if (session.value.status === 'in_progress') {
+        activeTab.value = 'scoring'
+      }
+    }
   }
 })
 
@@ -243,8 +252,9 @@ function getChoices(item: AssessmentItemDto): string[] {
             <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(session.status)]">
               {{ t(`assessment.session.status.${session.status}`) }}
             </span>
-            <span v-if="session.leadContactName" class="text-sm text-muted-foreground">{{ session.leadContactName }}</span>
-            <span v-else-if="session.studentName" class="text-sm text-muted-foreground">{{ session.studentName }}</span>
+            <!-- Backend session DTO exposes IDs only; show a kind badge until a projection enriches names. -->
+            <span v-if="session.leadId" class="text-sm text-muted-foreground">{{ t('assessment.session.leadSubject') }}</span>
+            <span v-else-if="session.studentId" class="text-sm text-muted-foreground">{{ t('assessment.session.studentSubject') }}</span>
             <span v-if="session.totalScore !== null && session.totalScore !== undefined" class="text-sm font-mono font-bold text-primary">
               {{ t('assessment.session.score') }}: {{ session.totalScore }}
             </span>
@@ -292,7 +302,7 @@ function getChoices(item: AssessmentItemDto): string[] {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h3 class="font-semibold text-foreground mb-3">{{ t('assessment.session.details') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -301,7 +311,7 @@ function getChoices(item: AssessmentItemDto): string[] {
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('assessment.session.assessor') }}</dt>
-              <dd class="font-medium text-foreground">{{ session.assessorName ?? '—' }}</dd>
+              <dd class="font-medium text-foreground">{{ session.assessorId ? '—' : '—' }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('campus.title') }}</dt>
@@ -311,9 +321,10 @@ function getChoices(item: AssessmentItemDto): string[] {
               <dt class="text-muted-foreground">{{ t('assessment.session.scheduledAt') }}</dt>
               <dd class="font-medium text-foreground">{{ formatDateTime(session.scheduledAt) }}</dd>
             </div>
-            <div v-if="session.completedAt" class="flex justify-between">
+            <!-- Backend returns `performedAt` (not `completedAt`). -->
+            <div v-if="session.performedAt" class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('assessment.session.completedAt') }}</dt>
-              <dd class="font-medium text-foreground">{{ formatDateTime(session.completedAt) }}</dd>
+              <dd class="font-medium text-foreground">{{ formatDateTime(session.performedAt) }}</dd>
             </div>
             <div v-if="session.totalScore !== null && session.totalScore !== undefined" class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('assessment.session.totalScore') }}</dt>
@@ -347,7 +358,7 @@ function getChoices(item: AssessmentItemDto): string[] {
               <span class="text-sm font-semibold text-foreground font-mono">{{ section.code }}</span>
               <span v-if="section.developmentAreaName" class="text-xs text-muted-foreground">· {{ section.developmentAreaName }}</span>
             </div>
-            <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+            <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div v-for="(item, idx) in [...section.items].sort((a, b) => a.sortOrder - b.sortOrder)" :key="item.id"
                 :class="['p-4', idx < section.items.length - 1 ? 'border-b border-border' : '']">
                 <p class="text-sm font-medium text-foreground mb-2">{{ item.prompt }}</p>
@@ -423,7 +434,7 @@ function getChoices(item: AssessmentItemDto): string[] {
           <div v-if="!store.currentReport" class="text-center py-12 text-muted-foreground">
             {{ session.status !== 'completed' ? t('assessment.report.sessionNotComplete') : t('assessment.report.noReport') }}
           </div>
-          <div v-else class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+          <div v-else class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
             <div class="flex items-center justify-between">
               <span v-if="store.currentReport.isFinalized" class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                 {{ t('assessment.report.finalized') }} · {{ formatDate(store.currentReport.finalizedAt) }}
@@ -462,14 +473,19 @@ function getChoices(item: AssessmentItemDto): string[] {
           </div>
           <div v-else class="space-y-3">
             <div v-for="rec in store.recommendations" :key="rec.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm">
+              class="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <p class="text-sm font-medium text-foreground">{{ rec.recommendedProgramName ?? t('assessment.recommendation.noProgram') }}</p>
+                  <p class="text-sm font-medium text-foreground">
+                    <!-- Backend returns the program ID only; name lookup is deferred. -->
+                    {{ rec.recommendedProgramId ? rec.recommendedProgramId.slice(0, 8) : t('assessment.recommendation.noProgram') }}
+                  </p>
                   <p v-if="rec.recommendedIntensity" class="text-xs text-muted-foreground">{{ t('assessment.recommendation.intensity') }}: {{ rec.recommendedIntensity }}</p>
                   <p v-if="rec.rationale" class="text-xs text-foreground mt-1">{{ rec.rationale }}</p>
                 </div>
-                <span class="text-xs text-muted-foreground whitespace-nowrap">{{ rec.recommendedByName }}</span>
+                <span class="text-xs text-muted-foreground whitespace-nowrap font-mono">
+                  {{ rec.recommendedBy ? rec.recommendedBy.slice(0, 8) : '—' }}
+                </span>
               </div>
             </div>
           </div>

@@ -167,7 +167,7 @@ function typeIcon(type: TimelineEntry['type']): string {
             :class="[entry.color, 'absolute -left-[2.4rem] top-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]']"
           >{{ typeIcon(entry.type) }}</span>
 
-          <div class="bg-[--color-card] border border-border rounded-xl p-4 shadow-sm">
+          <div class="bg-card border border-border rounded-xl p-4 shadow-sm">
             <div class="flex items-start justify-between gap-4">
               <p class="font-medium text-sm text-foreground">{{ entry.title }}</p>
               <span class="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">

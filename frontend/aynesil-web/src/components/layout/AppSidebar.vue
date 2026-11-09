@@ -77,7 +77,7 @@ watch(
 
 <template>
   <!-- kt-sidebar: Metronic sidebar container -->
-  <div class="kt-sidebar fixed inset-y-0 start-0 z-20 flex flex-col bg-[--color-card] border-e border-border shadow-sm">
+  <div class="kt-sidebar fixed inset-y-0 start-0 z-20 flex flex-col bg-card border-e border-border shadow-sm">
 
     <!-- Sidebar header (logo alanı) -->
     <div class="kt-sidebar-header flex items-center justify-between px-5 shrink-0 border-b border-border">

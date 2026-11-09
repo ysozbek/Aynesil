@@ -91,12 +91,20 @@ export interface GuardianListItemDto {
   linkedStudentCount: number
 }
 
+/**
+ * Student ↔ guardian link, enriched with both sides so the same DTO can be
+ * rendered from `StudentDto.guardians` (show the guardian) and from
+ * `GuardianDto.students` (show the student). `studentId` is also required to
+ * call `/api/guardians/{id}/students/{studentId}/portal-access`.
+ */
 export interface StudentGuardianDto {
   linkId: string
   guardianId: string
   guardianFullName: string
   guardianEmail: string | null
   guardianPhone: string | null
+  studentId: string
+  studentFullName: string
   relationshipId: string | null
   relationshipLabel: string | null
   isPrimary: boolean

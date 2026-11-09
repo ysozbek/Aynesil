@@ -1,0 +1,5 @@
+{
+  "typescript.tsdk": "frontend/aynesil-web/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "vue.server.hybridMode": true
+}

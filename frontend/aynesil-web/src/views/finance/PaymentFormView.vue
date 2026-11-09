@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { usePaymentStore } from '@/stores/payment.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import { financeService } from '@/services/finance.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
+import type { InvoiceListItemDto } from '@/types/finance.types'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const store = usePaymentStore()
 const refData = useRefDataStore()
 
 const corporationId = computed(() => auth.user?.corporationId ?? '')
 const paymentMethods = ref<RefValueItem[]>([])
+const invoices = ref<InvoiceListItemDto[]>([])
 
 const form = reactive({
-  studentId: '',
+  studentId: typeof route.query.studentId === 'string' ? route.query.studentId : '',
   invoiceId: '',
   amount: 0,
   currency: 'TRY',
@@ -34,9 +39,27 @@ onMounted(async () => {
   await refData.getValues('PAYMENT_METHOD').then(v => { paymentMethods.value = v })
 })
 
+watch(() => form.studentId, async (studentId) => {
+  form.invoiceId = ''
+  invoices.value = []
+  if (!studentId) return
+  const res = await financeService.listInvoices({
+    corporationId: corporationId.value,
+    studentId,
+    page: 1,
+    pageSize: 50,
+  })
+  if (res.success && res.data) invoices.value = res.data.items.filter((i) => i.status !== 'cancelled')
+}, { immediate: true })
+
+function invoiceLabel(inv: InvoiceListItemDto): string {
+  const date = inv.issueDate ? new Date(inv.issueDate).toLocaleDateString('tr-TR') : ''
+  return [inv.invoiceNo || t('finance.payment.invoiceDraft'), date].filter(Boolean).join(' · ')
+}
+
 function validate(): boolean {
   Object.keys(errors).forEach(k => delete (errors as Record<string, string>)[k])
-  if (!form.studentId.trim()) errors.studentId = t('validation.required', { field: t('student.fullName') })
+  if (!form.studentId) errors.studentId = t('validation.required', { field: t('student.fullName') })
   if (form.amount <= 0) errors.amount = t('validation.numeric', { field: t('finance.payment.amount') })
   if (!form.paymentMethodId) errors.paymentMethodId = t('validation.required', { field: t('finance.payment.method') })
   return Object.keys(errors).length === 0
@@ -68,19 +91,27 @@ async function submit() {
     <PageHeader :title="t('finance.payment.create')" :description="t('finance.payment.createDescription')" />
 
     <div class="max-w-2xl">
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-5">
+      <div class="rounded-xl border border-border bg-card shadow-sm p-6 space-y-5">
 
         <div v-if="errors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{{ errors.submit }}</div>
 
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('student.fullName') }} ID <span class="text-red-500">*</span></label>
-          <input v-model="form.studentId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" :class="errors.studentId ? 'border-red-400' : 'border-border'" />
+          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('scheduling.session.student') }} <span class="text-red-500">*</span></label>
+          <StudentPicker v-model="form.studentId" :invalid="!!errors.studentId" />
           <p v-if="errors.studentId" class="text-xs text-red-500 mt-1">{{ errors.studentId }}</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('finance.invoice.no') }} ID</label>
-          <input v-model="form.invoiceId" type="text" :placeholder="t('finance.payment.invoiceIdHint')" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
+          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('finance.invoice.no') }}</label>
+          <select
+            v-model="form.invoiceId"
+            :disabled="!form.studentId"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          >
+            <option value="">{{ t('finance.payment.noInvoice') }}</option>
+            <option v-for="inv in invoices" :key="inv.id" :value="inv.id">{{ invoiceLabel(inv) }}</option>
+          </select>
+          <p class="text-xs text-muted-foreground mt-1">{{ t('finance.payment.invoiceIdHint') }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

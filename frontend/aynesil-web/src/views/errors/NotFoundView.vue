@@ -9,7 +9,7 @@ const router = useRouter()
       <p class="text-6xl font-bold text-gray-300">404</p>
       <h1 class="text-2xl font-semibold text-gray-800 mt-4">Sayfa Bulunamadı</h1>
       <p class="text-gray-500 mt-2">Aradığınız sayfa mevcut değil.</p>
-      <button @click="router.push('/')" class="mt-6 px-5 py-2 rounded-lg bg-[--kt-primary,#4f46e5] text-white hover:opacity-90 transition-opacity">
+      <button @click="router.push('/')" class="mt-6 px-5 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
         Ana Sayfa
       </button>
     </div>

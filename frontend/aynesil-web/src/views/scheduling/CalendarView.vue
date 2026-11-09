@@ -4,8 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCalendarStore } from '@/stores/calendar.store'
+import { campusService } from '@/services/campus.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { CalendarEventDto } from '@/types/scheduling.types'
+import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -17,6 +21,7 @@ const corporationId = computed(() => auth.user?.corporationId ?? '')
 type ViewMode = 'school' | 'campus' | 'educator' | 'student'
 const viewMode = ref<ViewMode>('school')
 const resourceId = ref('')
+const campuses = ref<CampusListItemDto[]>([])
 const currentDate = ref(new Date())
 const calendarView = ref<'week' | 'month' | 'day' | 'agenda'>('week')
 
@@ -77,24 +82,36 @@ function goToday() {
 
 async function loadCalendar() {
   const query = { from: from.value, to: to.value }
+  // Backend requires corporationId for every mode except room.
+  if (!corporationId.value) return
   switch (viewMode.value) {
     case 'school':
       await calendarStore.fetchSchoolCalendar(corporationId.value, query)
       break
     case 'campus':
-      if (resourceId.value) await calendarStore.fetchCampusCalendar(resourceId.value, query)
+      if (resourceId.value)
+        await calendarStore.fetchCampusCalendar(resourceId.value, corporationId.value, query)
       break
     case 'educator':
-      if (resourceId.value) await calendarStore.fetchEducatorCalendar(resourceId.value, query)
+      if (resourceId.value)
+        await calendarStore.fetchEducatorCalendar(resourceId.value, corporationId.value, query)
       break
     case 'student':
-      if (resourceId.value) await calendarStore.fetchStudentCalendar(resourceId.value, query)
+      if (resourceId.value)
+        await calendarStore.fetchStudentCalendar(resourceId.value, corporationId.value, query)
       break
   }
 }
 
-watch([viewMode, from, to], () => loadCalendar())
-onMounted(() => loadCalendar())
+watch([viewMode, resourceId, from, to], () => loadCalendar())
+onMounted(async () => {
+  await Promise.all([
+    loadCalendar(),
+    campusService.list({ page: 1, pageSize: 200 }).then((res) => {
+      if (res.success && res.data) campuses.value = res.data.items
+    }),
+  ])
+})
 
 function eventColor(event: CalendarEventDto): string {
   if (event.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-700'
@@ -160,15 +177,20 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
         </button>
       </div>
 
-      <!-- Resource ID input for campus/educator/student -->
-      <input
-        v-if="viewMode !== 'school'"
+      <select
+        v-if="viewMode === 'campus'"
         v-model="resourceId"
-        type="text"
-        :placeholder="t(`scheduling.calendar.${viewMode}Id`)"
-        @keydown.enter="loadCalendar"
         class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
+      >
+        <option value="">{{ t('common.select') }}</option>
+        <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
+      </select>
+      <div v-else-if="viewMode === 'educator'" class="w-64">
+        <EducatorPicker v-model="resourceId" size="sm" />
+      </div>
+      <div v-else-if="viewMode === 'student'" class="w-64">
+        <StudentPicker v-model="resourceId" size="sm" />
+      </div>
 
       <div class="flex-1" />
 
@@ -208,7 +230,7 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
     <div v-if="calendarStore.loading" class="h-96 rounded-xl bg-accent animate-pulse" />
 
     <!-- Agenda View -->
-    <div v-else-if="calendarView === 'agenda'" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else-if="calendarView === 'agenda'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div v-if="calendarStore.events.length === 0" class="py-16 text-center text-muted-foreground">
         {{ t('scheduling.calendar.noEvents') }}
       </div>
@@ -235,7 +257,7 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
     </div>
 
     <!-- Week View -->
-    <div v-else-if="calendarView === 'week'" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else-if="calendarView === 'week'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div class="grid grid-cols-8 border-b border-border bg-accent/50">
         <div class="px-2 py-2 text-xs text-muted-foreground" />
         <div
@@ -278,7 +300,7 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
     </div>
 
     <!-- Month View -->
-    <div v-else-if="calendarView === 'month'" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else-if="calendarView === 'month'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div class="grid grid-cols-7 border-b border-border bg-accent/50">
         <div v-for="d in ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']" :key="d" class="px-2 py-2 text-center text-xs font-medium text-muted-foreground">
           {{ d }}
@@ -290,7 +312,7 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
     </div>
 
     <!-- Day View -->
-    <div v-else class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div class="overflow-y-auto max-h-[600px]">
         <div
           v-for="hour in hours"

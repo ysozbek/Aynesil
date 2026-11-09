@@ -181,7 +181,8 @@ public sealed class SchedulingController : BaseController
                 req.CorporationId, req.Frequency, req.StartTime, req.DurationMinutes,
                 req.RangeStart, req.CampusId, req.StudentProgramId, req.SessionTypeId,
                 req.RoomId, req.IntervalCount, req.ByWeekday, req.ByMonthday,
-                req.RangeEnd, req.MaxOccurrences), ct);
+                req.RangeEnd, req.MaxOccurrences,
+                req.ProgramServiceId, req.Educators), ct);
         return CreatedResult(result, $"/api/scheduling/recurring-schedules/{result.Id}");
     }
 
@@ -690,7 +691,9 @@ public record CreateRecurringScheduleRequest(
     int[]? ByWeekday,
     int[]? ByMonthday,
     DateOnly? RangeEnd,
-    int? MaxOccurrences);
+    int? MaxOccurrences,
+    Guid? ProgramServiceId = null,
+    List<EducatorAssignment>? Educators = null);
 
 public record AddRecurrenceExceptionRequest(
     DateOnly ExceptionDate,

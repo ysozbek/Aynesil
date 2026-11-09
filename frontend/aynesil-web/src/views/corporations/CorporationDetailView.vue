@@ -75,7 +75,7 @@ function formatDate(val: string | undefined) {
 
     <!-- Loading skeleton -->
     <div v-if="store.loading" class="grid grid-cols-2 gap-5">
-      <div v-for="i in 4" :key="i" class="bg-[--color-card] rounded-xl p-5 border border-border animate-pulse">
+      <div v-for="i in 4" :key="i" class="bg-card rounded-xl p-5 border border-border animate-pulse">
         <div class="h-4 w-24 bg-accent rounded mb-3" />
         <div class="h-5 w-40 bg-accent rounded" />
       </div>
@@ -84,27 +84,27 @@ function formatDate(val: string | undefined) {
     <template v-else-if="store.current">
       <!-- Info cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('corporation.legalName') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.legalName }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('corporation.locale') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.defaultLocale }} / {{ store.current.defaultCurrency }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('corporation.timezone') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.timezone }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('corporation.taxOffice') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.taxOffice || '-' }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('corporation.taxNumber') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.taxNumber || '-' }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('common.createdAt') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ formatDate(store.current.createdAt) }}</p>
         </div>

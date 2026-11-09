@@ -117,6 +117,17 @@ public sealed class ReorderPlanGoalsCommandHandler
 
     public async Task<EducationPlanDto> Handle(ReorderPlanGoalsCommand req, CancellationToken ct)
     {
+        // Keep reorder consistent with Add/Remove — a plan's structure can only
+        // change while it is still draft or in_review. Once approved/active/
+        // revised/closed, ordering is frozen along with content.
+        var plan = await _db.EducationPlans
+            .FirstOrDefaultAsync(p => p.Id == req.EducationPlanId, ct)
+            ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
+
+        if (plan.Status is not ("draft" or "in_review"))
+            throw new InvalidOperationException(
+                $"Cannot reorder goals on a plan with status '{plan.Status}'.");
+
         var planGoals = await _db.EducationPlanGoals
             .Where(pg => pg.EducationPlanId == req.EducationPlanId)
             .ToListAsync(ct);

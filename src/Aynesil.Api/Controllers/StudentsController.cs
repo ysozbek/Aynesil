@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Application.Features.Students.Queries;
@@ -16,6 +17,13 @@ namespace Aynesil.Api.Controllers;
 [Route("api/students")]
 public sealed class StudentsController : BaseController
 {
+    private readonly ICurrentUserService _currentUser;
+
+    public StudentsController(ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+    }
+
     // ── Student List &amp; Detail ─────────────────────────────────────────────────
 
     [HttpGet]
@@ -132,11 +140,16 @@ public sealed class StudentsController : BaseController
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
+        // Confidential notes require an explicit opt-in by the caller *and*
+        // the ReadConfidential permission. JWT permissions are stored under the
+        // 'perm' claim (see `CurrentUserService.HasPermission`); the previous
+        // `HttpContext.User.HasClaim("permission", ...)` call always returned
+        // false and silently stripped confidential notes from every response.
         var result = await Sender.Send(new GetCaseNotesQuery
         {
             StudentId           = id,
             IncludeConfidential = includeConfidential
-                && HttpContext.User.HasClaim("permission", Permissions.CaseNotes.ReadConfidential),
+                && _currentUser.HasPermission(Permissions.CaseNotes.ReadConfidential),
             NoteType            = noteType,
             Page                = page,
             PageSize            = pageSize

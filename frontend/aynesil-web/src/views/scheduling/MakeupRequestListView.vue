@@ -4,11 +4,13 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMakeupSessionStore } from '@/stores/makeupSession.store'
+import { useStudentStore } from '@/stores/student.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { MakeupRequestListItemDto } from '@/types/scheduling.types'
 
@@ -16,6 +18,7 @@ const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const store = useMakeupSessionStore()
+const studentStore = useStudentStore()
 const { can } = usePermission()
 
 const corporationId = computed(() => auth.user?.corporationId ?? '')
@@ -24,32 +27,34 @@ const query = reactive({
   corporationId: corporationId.value,
   studentId: '',
   status: '',
-  from: '',
-  to: '',
   page: 1,
   pageSize: 20,
 })
 
-watch(() => [query.status, query.studentId, query.from, query.to, query.page], () => loadList())
-onMounted(() => loadList())
+watch(() => [query.status, query.studentId, query.page], () => loadList())
+onMounted(async () => {
+  await loadList()
+  if (studentStore.list.items.length === 0 && corporationId.value) {
+    await studentStore.fetchList({ pageSize: 200, corporationId: corporationId.value })
+  }
+})
 
 async function loadList() {
   await store.fetchMakeupRequests({
-    ...query,
     corporationId: corporationId.value,
     status: query.status || undefined,
     studentId: query.studentId || undefined,
-    from: query.from || undefined,
-    to: query.to || undefined,
+    page: query.page,
+    pageSize: query.pageSize,
   })
 }
 
+// Backend list DTO: id, studentId, studentFullName, missedSessionId, status,
+// requestedAt, expiresOn. (see Aynesil.Application.Features.Scheduling.Dtos)
 const columns: Column<MakeupRequestListItemDto>[] = [
   { key: 'studentFullName', label: t('student.fullName') },
-  { key: 'missedSessionTitle', label: t('scheduling.makeup.missedSession') },
-  { key: 'missedSessionDate', label: t('scheduling.makeup.missedDate'), width: '120px' },
+  { key: 'missedSessionId', label: t('scheduling.makeup.missedSession') },
   { key: 'status', label: t('common.status'), width: '110px' },
-  { key: 'makeupSessionDate', label: t('scheduling.makeup.makeupDate'), width: '120px' },
   { key: 'expiresOn', label: t('scheduling.makeup.expiresOn'), width: '110px' },
   { key: 'requestedAt', label: t('scheduling.makeup.requestedAt'), sortable: true, width: '120px' },
 ]
@@ -59,9 +64,11 @@ function formatDate(val: unknown): string {
   return new Date(String(val)).toLocaleDateString('tr-TR')
 }
 
+// Backend status values: `requested`, `approved`, `scheduled`, `completed`,
+// `rejected`, `expired` (MakeupRequest domain + db/layer2_sped/06_scheduling.sql).
 function statusColor(status: string): string {
   const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
+    requested: 'bg-amber-100 text-amber-700',
     approved: 'bg-blue-100 text-blue-700',
     rejected: 'bg-red-100 text-red-700',
     scheduled: 'bg-violet-100 text-violet-700',
@@ -71,6 +78,46 @@ function statusColor(status: string): string {
   return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
+// ── Create ────────────────────────────────────────────────────────────────────
+// The audit found no `/scheduling/makeup-requests/new` route; create inline.
+const showCreate = ref(false)
+const createForm = reactive({
+  studentId: '',
+  missedSessionId: '',
+  note: '',
+  expiresOn: '',
+})
+const createError = ref('')
+
+function openCreate() {
+  createForm.studentId = query.studentId || ''
+  createForm.missedSessionId = ''
+  createForm.note = ''
+  createForm.expiresOn = ''
+  createError.value = ''
+  showCreate.value = true
+}
+
+async function submitCreate() {
+  if (!createForm.studentId) {
+    createError.value = t('validation.required', { field: t('student.fullName') })
+    return
+  }
+  try {
+    await store.createMakeupRequest({
+      corporationId: corporationId.value,
+      studentId: createForm.studentId,
+      missedSessionId: createForm.missedSessionId || undefined,
+      note: createForm.note || undefined,
+      expiresOn: createForm.expiresOn || undefined,
+    })
+    showCreate.value = false
+    await loadList()
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
+}
+
 // Quick approve modal
 const approveTarget = ref<MakeupRequestListItemDto | null>(null)
 const approveLoading = ref(false)
@@ -78,9 +125,12 @@ const approveLoading = ref(false)
 async function doApprove() {
   if (!approveTarget.value) return
   approveLoading.value = true
-  const detail = await store.fetchMakeupRequest(approveTarget.value.id)
+  // Load the full DTO so we can send the current rowVersion.
+  await store.fetchMakeupRequest(approveTarget.value.id)
   try {
-    await store.approveRequest(approveTarget.value.id, { rowVersion: store.currentRequest!.rowVersion })
+    await store.approveRequest(approveTarget.value.id, {
+      rowVersion: store.currentRequest!.rowVersion,
+    })
     approveTarget.value = null
     await loadList()
   } finally {
@@ -98,7 +148,11 @@ async function doReject() {
   rejectLoading.value = true
   await store.fetchMakeupRequest(rejectTarget.value.id)
   try {
-    await store.rejectRequest(rejectTarget.value.id, { reason: rejectReason.value, rowVersion: store.currentRequest!.rowVersion })
+    // Backend `RejectMakeupRequest` body: { note, rowVersion } — `note`, not `reason`.
+    await store.rejectRequest(rejectTarget.value.id, {
+      note: rejectReason.value || undefined,
+      rowVersion: store.currentRequest!.rowVersion,
+    })
     rejectModal.value = false
     rejectTarget.value = null
     rejectReason.value = ''
@@ -113,8 +167,8 @@ async function doReject() {
   <div>
     <PageHeader :title="t('scheduling.makeup.title')" :description="t('scheduling.makeup.description')">
       <button
-        v-if="can('makeup_request:create')"
-        @click="router.push({ name: 'makeup-request-new' })"
+        v-if="can('makeup_request:request')"
+        @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,25 +181,13 @@ async function doReject() {
     <div class="mb-4 flex items-center gap-3 flex-wrap">
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="pending">{{ t('scheduling.makeup.status.pending') }}</option>
+        <option value="requested">{{ t('scheduling.makeup.status.requested') }}</option>
         <option value="approved">{{ t('scheduling.makeup.status.approved') }}</option>
         <option value="rejected">{{ t('scheduling.makeup.status.rejected') }}</option>
         <option value="scheduled">{{ t('scheduling.makeup.status.scheduled') }}</option>
         <option value="completed">{{ t('scheduling.makeup.status.completed') }}</option>
         <option value="expired">{{ t('scheduling.makeup.status.expired') }}</option>
       </select>
-      <input
-        v-model="query.from"
-        type="date"
-        @change="query.page = 1"
-        class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
-      <input
-        v-model="query.to"
-        type="date"
-        @change="query.page = 1"
-        class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
     </div>
 
     <DataTable
@@ -154,19 +196,20 @@ async function doReject() {
       :loading="store.loading"
       @row-click="(row) => router.push({ name: 'makeup-request-detail', params: { id: row.id } })"
     >
-      <template #cell-missedSessionDate="{ value }">{{ formatDate(value) }}</template>
-      <template #cell-makeupSessionDate="{ value }">{{ formatDate(value) }}</template>
+      <template #cell-missedSessionId="{ value }">
+        <span class="font-mono text-xs text-muted-foreground">{{ value ? String(value).slice(0, 8) : '—' }}</span>
+      </template>
       <template #cell-expiresOn="{ value }">{{ formatDate(value) }}</template>
       <template #cell-requestedAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-status="{ row }">
         <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ t(`scheduling.makeup.status.${row.status}`) }}
+          {{ t(`scheduling.makeup.status.${row.status}`, row.status) }}
         </span>
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('makeup_request:update') && row.status === 'pending'"
+            v-if="can('makeup_request:manage') && row.status === 'requested'"
             @click="approveTarget = row"
             class="p-1.5 rounded-lg hover:bg-green-50 text-muted-foreground hover:text-green-600"
             :title="t('scheduling.makeup.approve')"
@@ -176,7 +219,7 @@ async function doReject() {
             </svg>
           </button>
           <button
-            v-if="can('makeup_request:update') && row.status === 'pending'"
+            v-if="can('makeup_request:manage') && row.status === 'requested'"
             @click="rejectTarget = row; rejectModal = true"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('scheduling.makeup.reject')"
@@ -221,9 +264,61 @@ async function doReject() {
       @cancel="approveTarget = null"
     />
 
+    <!-- Create modal (no dedicated form view). -->
+    <FormModal
+      :open="showCreate"
+      :title="t('scheduling.makeup.createTitle')"
+      :saving="store.saving"
+      @submit="submitCreate"
+      @close="showCreate = false"
+    >
+      <div class="space-y-3">
+        <p v-if="createError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+          {{ createError }}
+        </p>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('student.fullName') }} *</label>
+          <select
+            v-model="createForm.studentId"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="s in studentStore.list.items" :key="s.id" :value="s.id">
+              {{ s.fullName }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('scheduling.makeup.missedSession') }}</label>
+          <input
+            v-model="createForm.missedSessionId"
+            type="text"
+            placeholder="UUID"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('scheduling.makeup.expiresOn') }}</label>
+          <input
+            v-model="createForm.expiresOn"
+            type="date"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('scheduling.makeup.note') }}</label>
+          <textarea
+            v-model="createForm.note"
+            rows="3"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+          />
+        </div>
+      </div>
+    </FormModal>
+
     <!-- Reject Modal -->
     <div v-if="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold text-foreground mb-4">{{ t('scheduling.makeup.rejectTitle') }}</h3>
         <textarea
           v-model="rejectReason"

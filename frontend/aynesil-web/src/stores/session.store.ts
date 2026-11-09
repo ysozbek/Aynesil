@@ -105,7 +105,7 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function noShowSession(id: string, rowVersion: string): Promise<SessionDto> {
+  async function noShowSession(id: string, rowVersion: number): Promise<SessionDto> {
     saving.value = true
     try {
       const res = await schedulingService.noShowSession(id, { rowVersion })

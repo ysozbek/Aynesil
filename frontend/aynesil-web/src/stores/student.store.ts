@@ -160,6 +160,27 @@ export const useStudentStore = defineStore('student', () => {
     }
   }
 
+  /**
+   * Mark an existing campus enrollment as ended on `endDate` (defaults to today
+   * server-side when null). Backend route: `PATCH /students/{id}/campuses/{enrollmentId}/end`.
+   */
+  async function endCampusEnrollment(
+    id: string,
+    enrollmentId: string,
+    endDate: string | null,
+  ): Promise<StudentCampusDto> {
+    saving.value = true
+    try {
+      const res = await studentService.endCampusEnrollment(id, enrollmentId, endDate)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Kampüs kaydı kapatılamadı.')
+      const idx = campuses.value.findIndex(c => c.id === res.data!.id)
+      if (idx >= 0) campuses.value[idx] = res.data
+      return res.data
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function transferStudent(id: string, payload: TransferStudentPayload): Promise<StudentDto> {
     saving.value = true
     try {
@@ -288,7 +309,7 @@ export const useStudentStore = defineStore('student', () => {
     list, current, summary, statusHistory, campuses,
     diagnoses, developmentalProfiles, loading, saving, error,
     fetchList, fetchOne, fetchSummary, fetchStatusHistory,
-    create, update, remove, changeStatus, enrollAtCampus,
+    create, update, remove, changeStatus, enrollAtCampus, endCampusEnrollment,
     transferStudent, linkGuardian, updateGuardianLink, unlinkGuardian,
     replaceEmergencyContacts, upsertDevelopmentalProfile,
     addDiagnosis, updateDiagnosis, deleteDiagnosis,

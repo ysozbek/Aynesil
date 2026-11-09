@@ -39,8 +39,12 @@ onMounted(async () => {
   await Promise.all([
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('specialty').then(v => { specialties.value = v }),
-    refData.getValues('CERTIFICATION_TYPE').then(v => { certificationTypes.value = v }),
-    refData.getValues('EDUCATOR_RELATIONSHIP').then(v => { relationshipTypes.value = v }),
+    // Ref type codes in the seed are lowercase (`certification_type`,
+    // `educator_relationship`) — see `/db/seed/*`. `ReferenceDataController`
+    // normalises, but the lookup helper does not, so pass the correct code
+    // or dropdowns stay empty.
+    refData.getValues('certification_type').then(v => { certificationTypes.value = v }),
+    refData.getValues('educator_relationship').then(v => { relationshipTypes.value = v }),
   ])
 })
 
@@ -357,7 +361,7 @@ async function doUnlinkHierarchy() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <h3 class="font-semibold text-foreground">{{ t('educator.title') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -421,7 +425,7 @@ async function doUnlinkHierarchy() {
           <div
             v-for="spec in educator.specialties"
             :key="spec.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm flex items-center justify-between"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center justify-between"
           >
             <p class="text-sm font-medium text-foreground">{{ spec.specialtyLabel ?? '—' }}</p>
             <button
@@ -456,7 +460,7 @@ async function doUnlinkHierarchy() {
           <div
             v-for="cert in educator.certifications"
             :key="cert.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between">
               <div class="space-y-1">
@@ -509,7 +513,7 @@ async function doUnlinkHierarchy() {
           <div
             v-for="campus in educator.campuses"
             :key="campus.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm flex items-center justify-between"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center justify-between"
           >
             <div class="space-y-1">
               <div class="flex items-center gap-2">
@@ -562,7 +566,7 @@ async function doUnlinkHierarchy() {
               <div
                 v-for="edge in educator.supervisors"
                 :key="edge.id"
-                class="rounded-xl border border-border bg-[--color-card] p-3 shadow-sm flex items-center justify-between"
+                class="rounded-xl border border-border bg-card p-3 shadow-sm flex items-center justify-between"
               >
                 <div>
                   <p class="text-sm font-medium text-foreground">{{ edge.supervisorFullName }}</p>
@@ -589,7 +593,7 @@ async function doUnlinkHierarchy() {
               <div
                 v-for="edge in educator.subordinates"
                 :key="edge.id"
-                class="rounded-xl border border-border bg-[--color-card] p-3 shadow-sm"
+                class="rounded-xl border border-border bg-card p-3 shadow-sm"
               >
                 <p class="text-sm font-medium text-foreground">{{ edge.educatorFullName }}</p>
                 <p class="text-xs text-muted-foreground">{{ edge.relationshipLabel ?? '—' }}</p>

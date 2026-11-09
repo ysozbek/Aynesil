@@ -101,19 +101,19 @@ onMounted(loadDashboard)
     <!-- Manager Dashboard -->
     <div v-else-if="tab === 'manager' && kpiStore.managerDashboard">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-primary">{{ kpiStore.managerDashboard.totalEducators }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.dashboard.totalEducators') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-green-600">{{ pct(kpiStore.managerDashboard.avgAttendanceRate) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.metrics.attendanceRate') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-amber-600">{{ pct(kpiStore.managerDashboard.avgGoalAchievementRate) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.metrics.goalAchievementRate') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-sky-600">{{ pct(kpiStore.managerDashboard.avgParentSatisfaction) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.metrics.parentSatisfaction') }}</p>
         </div>
@@ -143,21 +143,21 @@ onMounted(loadDashboard)
     <!-- Executive Dashboard -->
     <div v-else-if="tab === 'executive' && kpiStore.executiveDashboard">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-primary">{{ kpiStore.executiveDashboard.totalActiveEducators }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.dashboard.activeEducators') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-green-600">{{ kpiStore.executiveDashboard.totalCompletedSessions }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.dashboard.completedSessions') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-2xl font-bold text-amber-600">{{ pct(kpiStore.executiveDashboard.corpAvgParentSatisfaction) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('kpi.metrics.parentSatisfaction') }}</p>
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('kpi.dashboard.topPerformers') }}</h3>
         </div>

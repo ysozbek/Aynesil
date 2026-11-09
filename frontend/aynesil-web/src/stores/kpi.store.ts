@@ -80,15 +80,27 @@ export const useKpiStore = defineStore('kpi', () => {
     loading.value = true
     try {
       const res = await kpiService.listKpiValues(query)
-      if (res.success && res.data) kpiValues.value = res.data
+      // Backend returns PaginatedResult<KpiValueDto>; the store caches the items array.
+      if (res.success && res.data) kpiValues.value = res.data.items
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
   }
 
-  async function computeEducator(educatorId: string, periodStart: string, periodEnd: string) {
+  async function computeEducator(
+    educatorId: string,
+    corporationId: string,
+    periodStart: string,
+    periodEnd: string,
+  ) {
     saving.value = true
     try {
-      await kpiService.computeEducator(educatorId, periodStart, periodEnd)
+      // Backend requires `corporationId` on the body (see
+      // `ComputePerformanceSnapshotCommandValidator`).
+      await kpiService.computeEducator(educatorId, {
+        corporationId,
+        periodStart,
+        periodEnd,
+      })
     } finally { saving.value = false }
   }
 
@@ -96,7 +108,7 @@ export const useKpiStore = defineStore('kpi', () => {
     loading.value = true
     try {
       const res = await kpiService.listParentFeedback(query)
-      if (res.success && res.data) parentFeedback.value = res.data
+      if (res.success && res.data) parentFeedback.value = res.data.items
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
   }

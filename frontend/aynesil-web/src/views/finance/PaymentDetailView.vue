@@ -72,7 +72,7 @@ async function doRefund() {
           {{ t(`finance.payment.status.${payment.status}`) }}
         </span>
         <button
-          v-if="can('payment:update') && payment.status === 'pending'"
+          v-if="can('finance_payment:capture') && payment.status === 'pending'"
           @click="captureModal = true"
           class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
         >{{ t('finance.payment.capture') }}</button>
@@ -90,7 +90,7 @@ async function doRefund() {
     <div v-else-if="!payment" class="text-center py-16 text-muted-foreground">{{ t('errors.notFound') }}</div>
 
     <template v-else>
-      <div class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6">
+      <div class="max-w-2xl rounded-xl border border-border bg-card shadow-sm p-6">
         <dl class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('student.fullName') }}</dt>
@@ -136,7 +136,7 @@ async function doRefund() {
 
     <!-- Refund Modal -->
     <div v-if="refundModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold mb-4">{{ t('finance.payment.refundTitle') }}</h3>
         <div class="space-y-3">
           <div>

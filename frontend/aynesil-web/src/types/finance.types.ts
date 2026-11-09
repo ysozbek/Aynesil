@@ -71,29 +71,33 @@ export interface UpdatePackageDefinitionPayload {
 
 // ── Student Packages ───────────────────────────────────────────────────────────
 
+/** Mirrors StudentPackageDto on the API. */
 export interface StudentPackageDto {
   id: string
   corporationId: string
   studentId: string
   studentFullName: string
-  packageDefinitionId: string
-  packageName: string
+  packageDefinitionId?: string
+  packageDefinitionName?: string
   purchasedOn: string
   expiresOn?: string
   totalCredits: number
   remainingCredits: number
-  consumedCredits: number
   price: number
   currency: string
   status: string
-  invoiceId?: string
-  rowVersion: string
+  createdAt: string
+  updatedAt: string
+  rowVersion: number
 }
 
+/** Mirrors StudentPackageListItemDto on the API. */
 export interface StudentPackageListItemDto {
   id: string
+  studentId: string
   studentFullName: string
-  packageName: string
+  packageDefinitionId?: string
+  packageDefinitionName?: string
   purchasedOn: string
   expiresOn?: string
   totalCredits: number
@@ -116,14 +120,15 @@ export interface StudentPackageListQuery extends PagedQuery {
   packageDefinitionId?: string
 }
 
+/** Mirrors PurchasePackageRequest on the API. */
 export interface CreateStudentPackagePayload {
   corporationId: string
   studentId: string
-  packageDefinitionId: string
-  purchasedOn: string
+  totalCredits: number
   price: number
+  packageDefinitionId?: string
+  expiresOn?: string
   currency: string
-  invoiceId?: string
 }
 
 // ── Credit Ledger ──────────────────────────────────────────────────────────────

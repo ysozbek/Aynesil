@@ -281,7 +281,7 @@ function interviewStatusBadge(status: string): string {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <h3 class="font-semibold text-foreground">{{ t('crm.lead.contactInfo') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -303,7 +303,7 @@ function interviewStatusBadge(status: string): string {
           </dl>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <h3 class="font-semibold text-foreground">{{ t('crm.lead.childInfo') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -329,7 +329,7 @@ function interviewStatusBadge(status: string): string {
           </dl>
         </div>
 
-        <div v-if="lead.presentingNeed || lead.referralDetail" class="md:col-span-2 rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+        <div v-if="lead.presentingNeed || lead.referralDetail" class="md:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm">
           <h3 class="font-semibold text-foreground mb-3">{{ t('crm.lead.clinicalInfo') }}</h3>
           <div v-if="lead.presentingNeed" class="mb-3">
             <p class="text-xs font-medium text-muted-foreground uppercase mb-1">{{ t('crm.lead.presentingNeed') }}</p>
@@ -352,7 +352,7 @@ function interviewStatusBadge(status: string): string {
         </div>
         <div v-else class="space-y-3">
           <div v-for="act in activityStore.activities.items" :key="act.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm">
+            class="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-sm font-medium text-foreground">{{ act.subject ?? t('crm.activity.noSubject') }}</p>
@@ -379,7 +379,7 @@ function interviewStatusBadge(status: string): string {
         </div>
         <div v-else class="space-y-3">
           <div v-for="iv in activityStore.interviews" :key="iv.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm">
+            class="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div class="flex items-start justify-between">
               <div>
                 <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', interviewStatusBadge(iv.status)]">
@@ -418,7 +418,7 @@ function interviewStatusBadge(status: string): string {
         <div v-else class="relative pl-4 border-l-2 border-border ml-4 space-y-4">
           <div v-for="h in activityStore.history" :key="h.id" class="relative">
             <div class="absolute -left-[1.35rem] w-3 h-3 rounded-full bg-primary border-2 border-background" />
-            <div class="rounded-xl border border-border bg-[--color-card] p-3 shadow-sm ml-4">
+            <div class="rounded-xl border border-border bg-card p-3 shadow-sm ml-4">
               <p class="text-xs text-muted-foreground mb-1">{{ formatDateTime(h.changedAt) }} · {{ h.changedByName }}</p>
               <p class="text-sm text-foreground">
                 <span class="font-medium">{{ h.previousStatusCode ?? '—' }}</span>

@@ -4,11 +4,11 @@ import { RouterView } from 'vue-router'
 
 <template>
   <!-- Metronic auth page scaffold: centered card on gradient background -->
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[--kt-primary-light] to-[--kt-body-bg]">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-background">
     <div class="w-full max-w-md">
       <!-- Brand -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-[--kt-primary]">AyNesil</h1>
+        <h1 class="text-3xl font-bold text-primary">AyNesil</h1>
         <p class="text-sm text-gray-500 mt-1">Özel Eğitim & Terapi Yönetim Platformu</p>
       </div>
 

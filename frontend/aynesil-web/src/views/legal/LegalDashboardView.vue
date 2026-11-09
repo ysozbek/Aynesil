@@ -86,26 +86,26 @@ onMounted(async () => {
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-amber-600">{{ pendingSignatures }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('legal.dashboard.pendingSignatures') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-green-600">{{ activeContracts }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('legal.dashboard.activeContracts') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-sky-600">{{ grantedConsents }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('legal.dashboard.grantedConsents') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-red-600">{{ expiringContracts }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('legal.dashboard.expiringSoon') }}</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('legal.dashboard.recentContracts') }}</h3>
           <button
@@ -142,7 +142,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('legal.dashboard.consentStatus') }}</h3>
           <button

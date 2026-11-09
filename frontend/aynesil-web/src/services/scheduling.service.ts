@@ -17,6 +17,7 @@ import type {
   RecurringScheduleListQuery,
   CreateRecurringSchedulePayload,
   AddRecurringExceptionPayload,
+  BulkGeneratePayload,
   BulkCancelPayload,
   BulkReassignRoomPayload,
   SessionDto,
@@ -43,7 +44,7 @@ import type {
   ApproveMakeupRequestPayload,
   RejectMakeupRequestPayload,
   AssignMakeupSessionPayload,
-  CalendarEventDto,
+  CalendarViewDto,
   CalendarQuery,
   BulkOperationResultDto,
 } from '@/types/scheduling.types'
@@ -112,8 +113,15 @@ export const schedulingService = {
   addRecurringException: (id: string, payload: AddRecurringExceptionPayload) =>
     apiService.post(`/scheduling/recurring-schedules/${id}/exceptions`, payload),
 
-  generateSessions: (id: string) =>
-    apiService.post<BulkOperationResultDto>(`/scheduling/recurring-schedules/${id}/generate`),
+  /**
+   * Materialises concrete session rows from a recurring schedule for the given window.
+   * API requires `{ windowStart, windowEnd }` in the body.
+   */
+  generateSessions: (id: string, payload: BulkGeneratePayload) =>
+    apiService.post<BulkOperationResultDto>(
+      `/scheduling/recurring-schedules/${id}/generate`,
+      payload
+    ),
 
   bulkCancelSessions: (id: string, payload: BulkCancelPayload) =>
     apiService.post<BulkOperationResultDto>(`/scheduling/recurring-schedules/${id}/bulk-cancel`, payload),
@@ -143,7 +151,7 @@ export const schedulingService = {
   cancelSession: (id: string, payload: CancelSessionPayload) =>
     apiService.post<SessionDto>(`/scheduling/sessions/${id}/cancel`, payload),
 
-  noShowSession: (id: string, payload: { rowVersion: string }) =>
+  noShowSession: (id: string, payload: { rowVersion: number }) =>
     apiService.post<SessionDto>(`/scheduling/sessions/${id}/no-show`, payload),
 
   deleteSession: (id: string) =>
@@ -195,13 +203,26 @@ export const schedulingService = {
   bulkRecordAttendance: (sessionId: string, payload: BulkAttendancePayload) =>
     apiService.post<AttendanceDto[]>(`/scheduling/sessions/${sessionId}/attendance/bulk`, payload),
 
-  getStudentAttendance: (studentId: string, query?: StudentAttendanceQuery) =>
+  /**
+   * API requires `corporationId` on both student-attendance endpoints
+   * (`SchedulingController.cs` /scheduling/students/{id}/attendance[+/summary]).
+   */
+  getStudentAttendance: (
+    studentId: string,
+    corporationId: string,
+    query?: StudentAttendanceQuery
+  ) =>
     apiService.get<PaginatedResult<AttendanceDto>>(
-      `/scheduling/students/${studentId}/attendance${qs((query ?? {}) as Record<string, unknown>)}`
+      `/scheduling/students/${studentId}/attendance${qs({
+        corporationId,
+        ...(query ?? {}),
+      } as Record<string, unknown>)}`
     ),
 
-  getAttendanceSummary: (studentId: string) =>
-    apiService.get<AttendanceSummaryDto>(`/scheduling/students/${studentId}/attendance/summary`),
+  getAttendanceSummary: (studentId: string, corporationId: string) =>
+    apiService.get<AttendanceSummaryDto>(
+      `/scheduling/students/${studentId}/attendance/summary${qs({ corporationId })}`
+    ),
 
   // ── Makeup Requests ────────────────────────────────────────────────────────
 
@@ -225,33 +246,36 @@ export const schedulingService = {
   assignMakeupSession: (id: string, payload: AssignMakeupSessionPayload) =>
     apiService.post<MakeupRequestDto>(`/scheduling/makeup-requests/${id}/assign-session`, payload),
 
-  completeMakeupRequest: (id: string, payload: { rowVersion: string }) =>
+  completeMakeupRequest: (id: string, payload: { rowVersion: number }) =>
     apiService.post<MakeupRequestDto>(`/scheduling/makeup-requests/${id}/complete`, payload),
 
   // ── Calendar Views ─────────────────────────────────────────────────────────
+  // School + campus return `CalendarViewDto` ({ sessions, entries }).
+  // Room / educator / student return `SessionListItemDto[]`.
+  // Campus / educator / student all require `corporationId`.
 
   getSchoolCalendar: (corporationId: string, query: CalendarQuery) =>
-    apiService.get<CalendarEventDto[]>(
+    apiService.get<CalendarViewDto>(
       `/scheduling/calendar/school${qs({ corporationId, ...query } as Record<string, unknown>)}`
     ),
 
-  getCampusCalendar: (campusId: string, query: CalendarQuery) =>
-    apiService.get<CalendarEventDto[]>(
-      `/scheduling/calendar/campus/${campusId}${qs(query as Record<string, unknown>)}`
+  getCampusCalendar: (campusId: string, corporationId: string, query: CalendarQuery) =>
+    apiService.get<CalendarViewDto>(
+      `/scheduling/calendar/campus/${campusId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
     ),
 
   getRoomCalendar: (roomId: string, query: CalendarQuery) =>
-    apiService.get<CalendarEventDto[]>(
+    apiService.get<SessionListItemDto[]>(
       `/scheduling/calendar/room/${roomId}${qs(query as Record<string, unknown>)}`
     ),
 
-  getEducatorCalendar: (educatorId: string, query: CalendarQuery) =>
-    apiService.get<CalendarEventDto[]>(
-      `/scheduling/calendar/educator/${educatorId}${qs(query as Record<string, unknown>)}`
+  getEducatorCalendar: (educatorId: string, corporationId: string, query: CalendarQuery) =>
+    apiService.get<SessionListItemDto[]>(
+      `/scheduling/calendar/educator/${educatorId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
     ),
 
-  getStudentCalendar: (studentId: string, query: CalendarQuery) =>
-    apiService.get<CalendarEventDto[]>(
-      `/scheduling/calendar/student/${studentId}${qs(query as Record<string, unknown>)}`
+  getStudentCalendar: (studentId: string, corporationId: string, query: CalendarQuery) =>
+    apiService.get<SessionListItemDto[]>(
+      `/scheduling/calendar/student/${studentId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
     ),
 }

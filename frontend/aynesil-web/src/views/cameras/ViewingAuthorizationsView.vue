@@ -8,6 +8,8 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import GuardianPicker from '@/components/pickers/GuardianPicker.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { ViewingAuthorizationDto } from '@/types/camera.types'
 
@@ -74,6 +76,7 @@ async function doRevoke() {
 }
 
 async function doCreate() {
+  if (!createForm.guardianId || !createForm.studentId || !createForm.validFrom || !createForm.validTo) return
   await cameraStore.createAuthorization({
     guardianId: createForm.guardianId,
     studentId: createForm.studentId,
@@ -178,22 +181,12 @@ onMounted(doFetch)
     >
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.guardianId') }} *</label>
-          <input
-            v-model="createForm.guardianId"
-            type="text"
-            required
-            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.guardian') }} *</label>
+          <GuardianPicker v-model="createForm.guardianId" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.studentId') }} *</label>
-          <input
-            v-model="createForm.studentId"
-            type="text"
-            required
-            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.auth.student') }} *</label>
+          <StudentPicker v-model="createForm.studentId" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

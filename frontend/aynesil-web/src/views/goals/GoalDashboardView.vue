@@ -1,26 +1,33 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useBepStore } from '@/stores/bep.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const goalStore = useGoalStore()
 const bepStore = useBepStore()
 
 const corporationId = computed(() => auth.user?.corporationId ?? '')
-const studentIdInput = ref('')
+const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
 const loading = ref(false)
 
+watch(studentIdInput, () => loadStudentData(), { immediate: true })
+
 async function loadStudentData() {
-  if (!studentIdInput.value.trim()) return
-  loadedStudentId.value = studentIdInput.value.trim()
+  if (!studentIdInput.value) {
+    loadedStudentId.value = ''
+    return
+  }
+  loadedStudentId.value = studentIdInput.value
   loading.value = true
   try {
     await Promise.all([
@@ -59,25 +66,8 @@ function formatDate(val: string | null): string {
     <PageHeader :title="t('goal.dashboard.title')" :description="t('goal.dashboard.description')" />
 
     <!-- Student filter -->
-    <div class="mb-6 flex items-center gap-3">
-      <input
-        v-model="studentIdInput"
-        type="text"
-        :placeholder="t('goal.dashboard.enterStudentId')"
-        @keydown.enter="loadStudentData"
-        class="flex-1 max-w-sm px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
-      <button
-        @click="loadStudentData"
-        :disabled="loading || !studentIdInput.trim()"
-        class="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
-      >
-        <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        {{ t('goal.dashboard.load') }}
-      </button>
+    <div class="mb-6 max-w-sm">
+      <StudentPicker v-model="studentIdInput" />
     </div>
 
     <!-- Empty state -->
@@ -85,7 +75,7 @@ function formatDate(val: string | null): string {
       <svg class="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
-      <p class="text-sm">{{ t('goal.dashboard.enterStudentId') }}</p>
+      <p class="text-sm">{{ t('pickers.selectStudentFirst') }}</p>
     </div>
 
     <!-- Loading skeleton -->
@@ -100,26 +90,26 @@ function formatDate(val: string | null): string {
     <template v-else-if="summary">
       <!-- Summary cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-3xl font-bold text-foreground">{{ summary.totalGoals }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('goal.dashboard.totalGoals') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-3xl font-bold text-blue-600">{{ summary.activeGoals }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('goal.dashboard.activeGoals') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-3xl font-bold text-teal-600">{{ summary.achievedGoals }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('goal.dashboard.achievedGoals') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
           <p class="text-3xl font-bold text-emerald-600">{{ formatPct(summary.achievementRate) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('goal.dashboard.achievementRate') }}</p>
         </div>
       </div>
 
       <!-- By Development Area -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden mb-6">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-6">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('goal.dashboard.byArea') }}</h3>
         </div>
@@ -161,7 +151,7 @@ function formatDate(val: string | null): string {
       </div>
 
       <!-- Success Rates by Category -->
-      <div v-if="successRates.length > 0" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden mb-6">
+      <div v-if="successRates.length > 0" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-6">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('goal.dashboard.successRates') }}</h3>
         </div>
@@ -200,7 +190,7 @@ function formatDate(val: string | null): string {
       </div>
 
       <!-- Trend Report -->
-      <div v-if="trendReport.length > 0" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden mb-6">
+      <div v-if="trendReport.length > 0" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-6">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('goal.dashboard.trend') }}</h3>
         </div>
@@ -227,7 +217,7 @@ function formatDate(val: string | null): string {
               </td>
               <td class="px-4 py-3">
                 <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', row.horizon === 'long_term' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700']">
-                  {{ row.horizon === 'long_term' ? t('goal.studentGoal.horizon.longTerm') : t('goal.studentGoal.horizon.shortTerm') }}
+                  {{ row.horizon === 'long_term' ? t('goal.studentGoal.horizonOptions.long_term') : t('goal.studentGoal.horizonOptions.short_term') }}
                 </span>
               </td>
               <td class="px-4 py-3 text-muted-foreground">{{ formatDate(row.targetDate) }}</td>

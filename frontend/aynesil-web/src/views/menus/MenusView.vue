@@ -256,7 +256,7 @@ const allPermissions = computed(() => permStore.catalog)
 
     <!-- Loading -->
     <div v-if="adminLoading" class="space-y-2">
-      <div v-for="i in 6" :key="i" class="bg-[--color-card] rounded-xl h-14 border border-border animate-pulse" />
+      <div v-for="i in 6" :key="i" class="bg-card rounded-xl h-14 border border-border animate-pulse" />
     </div>
 
     <!-- Empty -->
@@ -265,7 +265,7 @@ const allPermissions = computed(() => permStore.catalog)
     </div>
 
     <!-- Tree -->
-    <div v-else class="bg-[--color-card] rounded-xl border border-border shadow-sm overflow-hidden">
+    <div v-else class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <MenuTreeLevel :nodes="treeWithChildren" :depth="0"
         @create-child="openCreate" @edit="openEdit" @translate="openTranslations"
         @toggle-active="toggleActive" @delete="confirmDelete"

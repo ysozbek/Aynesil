@@ -17,7 +17,7 @@ defineEmits<{
     Sabit pozisyon ve yükseklik demo1.css tarafından belirlenir
   -->
   <header class="kt-header fixed top-0 end-0 z-10 flex items-center justify-between px-5
-                  bg-[--color-card] border-b border-border shadow-sm">
+                  bg-card border-b border-border shadow-sm">
 
     <!-- Left: Toggle button + Breadcrumb slot -->
     <div class="flex items-center gap-3">

@@ -49,6 +49,7 @@ create table scheduling.recurring_schedule (
   corporation_id  uuid not null references core.corporation(id),
   campus_id       uuid references core.campus(id),
   student_program_id uuid references education.student_program(id),
+  program_service_id uuid references education.program_service(id),  -- copied to session.program_service_id (V35)
   session_type_id uuid references ref.ref_value(id),            -- ref_type 'session_type'
   room_id         uuid references scheduling.room(id),
   frequency       text not null check (frequency in ('weekly','biweekly','monthly')),
@@ -67,6 +68,17 @@ create table scheduling.recurring_schedule (
   row_version integer not null default 1
 );
 comment on table scheduling.recurring_schedule is 'Recurrence rule. A generator job materializes scheduling.session rows from this.';
+
+-- Educators assigned to a rule; copied to session_educator on generation (V35).
+create table scheduling.recurring_schedule_educator (
+  id                    uuid primary key default core.uuid_generate_v7(),
+  corporation_id        uuid not null references core.corporation(id),
+  recurring_schedule_id uuid not null references scheduling.recurring_schedule(id) on delete cascade,
+  educator_id           uuid not null references educators.educator(id),
+  role                  text not null default 'lead' check (role in ('lead','assistant','observer','supervisor')),
+  unique (recurring_schedule_id, educator_id)
+);
+create index ix_recurring_schedule_educator_educator on scheduling.recurring_schedule_educator(educator_id);
 
 create table scheduling.recurrence_exception (
   id                    uuid primary key default core.uuid_generate_v7(),

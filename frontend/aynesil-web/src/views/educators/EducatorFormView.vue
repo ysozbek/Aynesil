@@ -129,7 +129,7 @@ async function submit() {
       <p v-if="generalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{{ generalError }}</p>
 
       <!-- Personal Info -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <h3 class="font-semibold text-foreground">{{ t('educator.title') }}</h3>
 
         <div class="grid grid-cols-2 gap-3">

@@ -8,6 +8,8 @@ import { usePermission } from '@/composables/usePermission'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
@@ -46,10 +48,13 @@ function formatDateTime(val: string): string {
   return new Date(val).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
+// Backend session.status values (Aynesil.Domain.Modules.Scheduling.Entities.Session):
+//   scheduled, in_progress, rescheduled, completed, cancelled, no_show
 function statusColor(status: string): string {
   const map: Record<string, string> = {
     scheduled: 'bg-blue-100 text-blue-700',
     in_progress: 'bg-amber-100 text-amber-700',
+    rescheduled: 'bg-violet-100 text-violet-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
     no_show: 'bg-gray-100 text-gray-600',
@@ -61,12 +66,17 @@ function statusLabel(status: string): string {
   const map: Record<string, string> = {
     scheduled: t('scheduling.session.status.scheduled'),
     in_progress: t('scheduling.session.status.in_progress'),
+    rescheduled: t('scheduling.session.status.rescheduled', 'Yeniden Planlandı'),
     completed: t('scheduling.session.status.completed'),
     cancelled: t('scheduling.session.status.cancelled'),
     no_show: t('scheduling.session.status.no_show'),
   }
   return map[status] ?? status
 }
+
+/** Lifecycle actions are available while a session is `scheduled` or `rescheduled`. */
+const isLiveSession = (status: string | undefined) =>
+  status === 'scheduled' || status === 'rescheduled'
 
 function attendanceStatusColor(status: string): string {
   const map: Record<string, string> = {
@@ -136,19 +146,22 @@ function getAttendance(studentId: string) {
         <span :class="['px-3 py-1 rounded-full text-sm font-medium', statusColor(session.status)]">
           {{ statusLabel(session.status) }}
         </span>
-        <template v-if="session.status === 'scheduled'">
+        <template v-if="isLiveSession(session.status)">
+          <!-- Granular backend permissions:
+               session:reschedule, session:complete, session:cancel
+               (see src/Aynesil.Api/Controllers/SchedulingController.cs). -->
           <button
-            v-if="can('session:update')"
+            v-if="can('session:reschedule')"
             @click="router.push({ name: 'session-edit', params: { id: sessionId } })"
             class="px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-accent"
           >{{ t('common.edit') }}</button>
           <button
-            v-if="can('session:update')"
+            v-if="can('session:complete')"
             @click="completeModal = true"
             class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
           >{{ t('scheduling.session.complete') }}</button>
           <button
-            v-if="can('session:update')"
+            v-if="can('session:cancel')"
             @click="cancelModal = true"
             class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm hover:bg-red-100"
           >{{ t('scheduling.session.cancel') }}</button>
@@ -187,7 +200,7 @@ function getAttendance(studentId: string) {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5 space-y-3">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5 space-y-3">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.session.info') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.type') }}:</dt><dd>{{ session.sessionTypeLabel ?? '—' }}</dd></div>
@@ -205,7 +218,7 @@ function getAttendance(studentId: string) {
           </dl>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5">
           <h3 class="font-semibold text-foreground mb-3">{{ t('scheduling.session.participants') }}</h3>
           <div v-if="session.participants.length === 0" class="text-sm text-muted-foreground">{{ t('scheduling.session.noParticipants') }}</div>
           <ul v-else class="space-y-1">
@@ -227,20 +240,17 @@ function getAttendance(studentId: string) {
 
       <!-- Participants Tab -->
       <div v-if="activeTab === 'participants'" class="space-y-6">
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div class="flex items-center justify-between p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('scheduling.session.participants') }}</h3>
-            <div v-if="can('session:update') && session.status === 'scheduled'" class="flex gap-2">
-              <input
-                v-model="addParticipantId"
-                type="text"
-                :placeholder="t('scheduling.session.addParticipantPlaceholder')"
-                class="h-8 px-2 text-xs rounded border border-border bg-transparent focus:outline-none"
-              />
+            <div v-if="can('session:manage_participants') && isLiveSession(session.status)" class="flex gap-2 items-center">
+              <div class="w-64">
+                <StudentPicker v-model="addParticipantId" size="sm" />
+              </div>
               <button
                 @click="store.addParticipant(sessionId, { studentId: addParticipantId }).then(() => { addParticipantId = '' })"
-                :disabled="!addParticipantId.trim()"
-                class="px-3 h-8 text-xs bg-primary text-primary-foreground rounded hover:opacity-90 disabled:opacity-50"
+                :disabled="!addParticipantId"
+                class="px-3 h-9 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
               >{{ t('common.add') }}</button>
             </div>
           </div>
@@ -258,7 +268,7 @@ function getAttendance(studentId: string) {
                 <p class="text-xs text-muted-foreground">{{ p.role }}</p>
               </div>
               <button
-                v-if="can('session:update') && session.status === 'scheduled'"
+                v-if="can('session:manage_participants') && isLiveSession(session.status)"
                 @click="removeParticipant(p.studentId)"
                 class="text-xs text-red-600 hover:underline"
               >{{ t('common.delete') }}</button>
@@ -266,20 +276,17 @@ function getAttendance(studentId: string) {
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div class="flex items-center justify-between p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('scheduling.session.educators') }}</h3>
-            <div v-if="can('session:update') && session.status === 'scheduled'" class="flex gap-2">
-              <input
-                v-model="addEducatorId"
-                type="text"
-                :placeholder="t('scheduling.session.addEducatorPlaceholder')"
-                class="h-8 px-2 text-xs rounded border border-border bg-transparent focus:outline-none"
-              />
+            <div v-if="can('session:manage_educators') && isLiveSession(session.status)" class="flex gap-2 items-center">
+              <div class="w-64">
+                <EducatorPicker v-model="addEducatorId" size="sm" />
+              </div>
               <button
                 @click="store.addEducator(sessionId, { educatorId: addEducatorId }).then(() => { addEducatorId = '' })"
-                :disabled="!addEducatorId.trim()"
-                class="px-3 h-8 text-xs bg-primary text-primary-foreground rounded hover:opacity-90 disabled:opacity-50"
+                :disabled="!addEducatorId"
+                class="px-3 h-9 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
               >{{ t('common.add') }}</button>
             </div>
           </div>
@@ -297,7 +304,7 @@ function getAttendance(studentId: string) {
                 <p class="text-xs text-muted-foreground">{{ e.role }}</p>
               </div>
               <button
-                v-if="can('session:update') && session.status === 'scheduled'"
+                v-if="can('session:manage_educators') && isLiveSession(session.status)"
                 @click="removeEducator(e.educatorId)"
                 class="text-xs text-red-600 hover:underline"
               >{{ t('common.delete') }}</button>
@@ -307,7 +314,7 @@ function getAttendance(studentId: string) {
       </div>
 
       <!-- Attendance Tab -->
-      <div v-if="activeTab === 'attendance'" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div v-if="activeTab === 'attendance'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.attendance.title') }}</h3>
         </div>
@@ -320,7 +327,7 @@ function getAttendance(studentId: string) {
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.session.student') }}</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.attendance.status') }}</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.attendance.reason') }}</th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase" v-if="can('session:update')">{{ t('common.actions') }}</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase" v-if="can('attendance:record')">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -342,7 +349,7 @@ function getAttendance(studentId: string) {
               <td class="px-4 py-3 text-muted-foreground text-xs">
                 {{ getAttendance(p.studentId)?.reasonLabel ?? '—' }}
               </td>
-              <td class="px-4 py-3" v-if="can('session:update')">
+              <td class="px-4 py-3" v-if="can('attendance:record')">
                 <div class="flex gap-1">
                   <button
                     @click="doRecordAttendance(p.studentId, 'present')"
@@ -367,7 +374,7 @@ function getAttendance(studentId: string) {
       <div v-if="activeTab === 'notes'">
         <div class="flex justify-end mb-4">
           <button
-            v-if="can('session:update')"
+            v-if="can('session_note:write')"
             @click="noteModal = true"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90"
           >
@@ -386,12 +393,12 @@ function getAttendance(studentId: string) {
           <div
             v-for="note in session.notes"
             :key="note.id"
-            class="rounded-xl border border-border bg-[--color-card] shadow-sm p-4"
+            class="rounded-xl border border-border bg-card shadow-sm p-4"
           >
             <div class="flex items-start justify-between gap-4">
               <p class="text-sm text-foreground flex-1">{{ note.body }}</p>
               <button
-                v-if="can('session:update')"
+                v-if="can('session_note:delete')"
                 @click="deleteNote(note.id)"
                 class="shrink-0 text-muted-foreground hover:text-red-600 transition-colors"
               >
@@ -420,14 +427,14 @@ function getAttendance(studentId: string) {
           <div
             v-for="goal in session.goals"
             :key="goal.studentGoalId"
-            class="rounded-xl border border-border bg-[--color-card] shadow-sm p-4"
+            class="rounded-xl border border-border bg-card shadow-sm p-4"
           >
             <div class="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
                 :checked="goal.workedOn"
                 class="w-4 h-4 rounded border-border text-primary"
-                :disabled="!can('session:update')"
+                :disabled="!can('session:manage_goals')"
                 @change="store.updateSessionGoal(sessionId, goal.studentGoalId, { workedOn: !goal.workedOn, progressNote: goal.progressNote, measuredValue: goal.measuredValue })"
               />
               <p class="text-sm font-medium text-foreground">{{ goal.goalStatement }}</p>
@@ -443,7 +450,7 @@ function getAttendance(studentId: string) {
 
     <!-- Cancel Modal -->
     <div v-if="cancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold text-foreground mb-4">{{ t('scheduling.session.cancelTitle') }}</h3>
         <textarea
           v-model="cancelReason"
@@ -473,7 +480,7 @@ function getAttendance(studentId: string) {
 
     <!-- Note Modal -->
     <div v-if="noteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold text-foreground mb-4">{{ t('scheduling.session.addNote') }}</h3>
         <textarea
           v-model="newNoteBody"

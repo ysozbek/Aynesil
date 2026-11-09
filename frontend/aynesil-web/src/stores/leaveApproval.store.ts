@@ -26,7 +26,8 @@ export const useLeaveApprovalStore = defineStore('leaveApproval', () => {
     loading.value = true
     error.value = null
     try {
-      const res = await leaveService.list({ corporationId, status: 'Pending', pageSize: 50 })
+      // Backend status token is lowercase (LeaveRequest domain + db DDL).
+      const res = await leaveService.list({ corporationId, status: 'pending', pageSize: 50 })
       if (res.success && res.data) pendingRequests.value = res.data
     } catch (e: unknown) {
       error.value = (e as Error).message

@@ -4,12 +4,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useStudentStore } from '@/stores/student.store'
 import { useCaseStore } from '@/stores/case.store'
+import { useProgramStore } from '@/stores/program.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import { useBranchStore } from '@/stores/branch.store'
 import Pagination from '@/components/shared/Pagination.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import GuardianPicker from '@/components/pickers/GuardianPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import type {
   StudentGuardianDto,
@@ -17,6 +19,8 @@ import type {
   DevelopmentalProfileDto,
   CaseNoteDto,
   MedicalReportDto,
+  DevelopmentReportDto,
+  StudentCampusDto,
   EmergencyContactInput,
 } from '@/types/student.types'
 
@@ -25,6 +29,7 @@ const route = useRoute()
 const router = useRouter()
 const store = useStudentStore()
 const caseStore = useCaseStore()
+const programStore = useProgramStore()
 const refData = useRefDataStore()
 const branchStore = useBranchStore()
 const { can } = usePermission()
@@ -38,6 +43,7 @@ type CaseTab = 'case-notes' | 'medical-reports' | 'development-reports' | 'exter
 const activeTab = ref<MainTab>('overview')
 const caseTab = ref<CaseTab>('case-notes')
 const caseManagementLoaded = ref(false)
+const programsLoaded = ref(false)
 
 // ── Reference data ───────────────────────────────────────────────────────────
 const statuses = ref<RefValueItem[]>([])
@@ -95,10 +101,10 @@ function openLinkModal() {
 }
 
 async function submitLink() {
-  if (!linkForm.guardianId.trim()) { linkError.value = t('validation.required', { field: t('student.guardian.guardianId') }); return }
+  if (!linkForm.guardianId) { linkError.value = t('validation.required', { field: t('student.guardian.guardianName') }); return }
   try {
     await store.linkGuardian(id.value, {
-      guardianId: linkForm.guardianId.trim(),
+      guardianId: linkForm.guardianId,
       relationshipId: linkForm.relationshipId || null,
       isPrimary: linkForm.isPrimary,
       hasCustody: linkForm.hasCustody,
@@ -213,7 +219,14 @@ async function doDeleteNote() {
 }
 
 watch(() => noteQuery.page, () => {
-  caseStore.fetchCaseNotes({ studentId: id.value, page: noteQuery.page, pageSize: noteQuery.pageSize })
+  caseStore.fetchCaseNotes({
+    studentId: id.value,
+    page: noteQuery.page,
+    pageSize: noteQuery.pageSize,
+    // Only requested when the caller holds the extra permission — the API
+    // additionally enforces it (`StudentsController.GetCaseNotes`).
+    includeConfidential: can('case_note:read_confidential') ? true : undefined,
+  })
 })
 
 // ── Medical reports ───────────────────────────────────────────────────────────
@@ -286,29 +299,60 @@ async function doDeleteMedical() {
 
 // ── Development reports ───────────────────────────────────────────────────────
 const showDevReportModal = ref(false)
-const devReportForm = reactive({ periodLabel: '', reportDate: '', authoredBy: '', content: '' })
+const editDevReportTarget = ref<DevelopmentReportDto | null>(null)
+const devReportForm = reactive({
+  periodLabel: '',
+  reportDate: '',
+  authoredBy: '',
+  content: '',
+  rowVersion: 0,
+})
 const devReportError = ref('')
 const deleteDevReportTarget = ref<string | null>(null)
 const deleteDevReportLoading = ref(false)
 
 function openAddDevReport() {
+  editDevReportTarget.value = null
   devReportForm.periodLabel = ''
   devReportForm.reportDate = ''
   devReportForm.authoredBy = ''
   devReportForm.content = ''
+  devReportForm.rowVersion = 0
+  devReportError.value = ''
+  showDevReportModal.value = true
+}
+
+function openEditDevReport(r: DevelopmentReportDto) {
+  editDevReportTarget.value = r
+  devReportForm.periodLabel = r.periodLabel ?? ''
+  devReportForm.reportDate = r.reportDate ?? ''
+  devReportForm.authoredBy = r.authoredBy ?? ''
+  devReportForm.content = r.content ?? ''
+  devReportForm.rowVersion = r.rowVersion
   devReportError.value = ''
   showDevReportModal.value = true
 }
 
 async function submitDevReport() {
   try {
-    await caseStore.addDevelopmentReport(id.value, {
-      periodLabel: devReportForm.periodLabel.trim() || null,
-      reportDate: devReportForm.reportDate || null,
-      authoredBy: devReportForm.authoredBy.trim() || null,
-      content: devReportForm.content.trim() || null,
-      fileId: null,
-    })
+    if (editDevReportTarget.value) {
+      await caseStore.updateDevelopmentReport(id.value, editDevReportTarget.value.id, {
+        periodLabel: devReportForm.periodLabel.trim() || null,
+        reportDate: devReportForm.reportDate || null,
+        authoredBy: devReportForm.authoredBy.trim() || null,
+        content: devReportForm.content.trim() || null,
+        fileId: null,
+        rowVersion: devReportForm.rowVersion,
+      })
+    } else {
+      await caseStore.addDevelopmentReport(id.value, {
+        periodLabel: devReportForm.periodLabel.trim() || null,
+        reportDate: devReportForm.reportDate || null,
+        authoredBy: devReportForm.authoredBy.trim() || null,
+        content: devReportForm.content.trim() || null,
+        fileId: null,
+      })
+    }
     showDevReportModal.value = false
   } catch (e: unknown) {
     devReportError.value = (e as Error).message
@@ -536,6 +580,34 @@ async function submitTransfer() {
   }
 }
 
+// ── End campus enrollment ─────────────────────────────────────────────────────
+const showEndCampusModal = ref(false)
+const endCampusTarget = ref<StudentCampusDto | null>(null)
+const endCampusForm = reactive({ endDate: '' })
+const endCampusError = ref('')
+
+function openEndCampusModal(target: StudentCampusDto) {
+  endCampusTarget.value = target
+  endCampusForm.endDate = new Date().toISOString().split('T')[0]
+  endCampusError.value = ''
+  showEndCampusModal.value = true
+}
+
+async function submitEndCampus() {
+  if (!endCampusTarget.value) return
+  try {
+    await store.endCampusEnrollment(
+      id.value,
+      endCampusTarget.value.id,
+      endCampusForm.endDate || null,
+    )
+    showEndCampusModal.value = false
+    endCampusTarget.value = null
+  } catch (e: unknown) {
+    endCampusError.value = apiErrorMessage(e, t('common.error'))
+  }
+}
+
 // ── Emergency contacts edit ────────────────────────────────────────────────────
 const showContactsModal = ref(false)
 const contactsForm = ref<EmergencyContactInput[]>([])
@@ -587,13 +659,23 @@ onMounted(async () => {
 onUnmounted(() => {
   store.clearCurrent()
   caseStore.clearAll()
+  programStore.clearCurrent()
 })
 
 watch(activeTab, async (tab) => {
+  if (tab === 'programs' && !programsLoaded.value) {
+    programsLoaded.value = true
+    await programStore.fetchStudentPrograms({ studentId: id.value, page: 1, pageSize: 100 })
+  }
   if (tab === 'case-management' && !caseManagementLoaded.value) {
     caseManagementLoaded.value = true
     await Promise.all([
-      caseStore.fetchCaseNotes({ studentId: id.value, page: 1, pageSize: noteQuery.pageSize }),
+      caseStore.fetchCaseNotes({
+        studentId: id.value,
+        page: 1,
+        pageSize: noteQuery.pageSize,
+        includeConfidential: can('case_note:read_confidential') ? true : undefined,
+      }),
       caseStore.fetchMedicalReports(id.value),
       caseStore.fetchDevelopmentReports(id.value),
       caseStore.fetchExternalReports(id.value),
@@ -613,6 +695,16 @@ function formatDate(val: string | null | unknown): string {
 function formatDateTime(val: string | null): string {
   if (!val) return '—'
   return new Date(val).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function spStatusClass(status: string): string {
+  const map: Record<string, string> = {
+    active: 'bg-emerald-100 text-emerald-700',
+    paused: 'bg-amber-100 text-amber-700',
+    completed: 'bg-blue-100 text-blue-700',
+    cancelled: 'bg-gray-100 text-gray-600',
+  }
+  return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 </script>
 
@@ -690,7 +782,7 @@ function formatDateTime(val: string | null): string {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           <!-- Student info -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 class="font-semibold text-foreground mb-3">{{ t('student.fullName') }}</h3>
             <dl class="space-y-2 text-sm">
               <div class="flex justify-between">
@@ -730,7 +822,7 @@ function formatDateTime(val: string | null): string {
           </div>
 
           <!-- Emergency contacts -->
-          <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+          <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold text-foreground">{{ t('student.emergencyContact.title') }}</h3>
               <button
@@ -761,7 +853,7 @@ function formatDateTime(val: string | null): string {
         </div>
 
         <!-- Diagnoses -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.diagnosis.title') }}</h3>
             <button
@@ -806,11 +898,12 @@ function formatDateTime(val: string | null): string {
         </div>
 
         <!-- Developmental Profiles -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <!-- Backend `PUT /students/{id}/developmental-profiles` enforces `student:update`. -->
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.developmentalProfile.title') }}</h3>
             <button
-              v-if="can('student:write')"
+              v-if="can('student:update')"
               @click="openUpsertProfile()"
               class="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
             >
@@ -831,7 +924,7 @@ function formatDateTime(val: string | null): string {
             >
               <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-foreground">{{ profile.developmentAreaLabel ?? t('student.developmentalProfile.area') }}</p>
-                <button v-if="can('student:write')" @click="openUpsertProfile(profile)" class="text-xs text-primary hover:underline">
+                <button v-if="can('student:update')" @click="openUpsertProfile(profile)" class="text-xs text-primary hover:underline">
                   {{ t('common.edit') }}
                 </button>
               </div>
@@ -848,7 +941,7 @@ function formatDateTime(val: string | null): string {
         </div>
 
         <!-- Campus Enrollments -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.campus.title') }}</h3>
             <div class="flex gap-2">
@@ -872,8 +965,8 @@ function formatDateTime(val: string | null): string {
             {{ t('common.noData') }}
           </div>
           <ul v-else class="divide-y divide-border">
-            <li v-for="c in store.campuses" :key="c.id" class="flex items-center justify-between px-5 py-3 text-sm">
-              <div>
+            <li v-for="c in store.campuses" :key="c.id" class="flex items-center justify-between px-5 py-3 text-sm gap-3">
+              <div class="min-w-0 flex-1">
                 <p class="font-medium text-foreground">{{ c.campusName ?? '—' }}</p>
                 <p class="text-xs text-muted-foreground">
                   {{ formatDate(c.activeFrom) }}
@@ -881,9 +974,17 @@ function formatDateTime(val: string | null): string {
                   <span v-if="c.isPrimary" class="ml-2 text-primary">●</span>
                 </p>
               </div>
-              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', c.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700']">
+              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', c.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700']">
                 {{ c.isActive ? t('common.active') : t('common.passive') }}
               </span>
+              <!-- End the enrollment via PATCH /students/{id}/campuses/{enrollmentId}/end. -->
+              <button
+                v-if="c.isActive && can('student:update')"
+                @click="openEndCampusModal(c)"
+                class="shrink-0 text-xs text-amber-600 hover:text-amber-700 hover:underline"
+              >
+                {{ t('student.campus.end') }}
+              </button>
             </li>
           </ul>
         </div>
@@ -912,7 +1013,7 @@ function formatDateTime(val: string | null): string {
           <div
             v-for="g in student.guardians"
             :key="g.linkId"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between gap-4">
               <div>
@@ -957,11 +1058,58 @@ function formatDateTime(val: string | null): string {
       </div>
 
       <!-- ── Programs Tab ── -->
-      <div v-else-if="activeTab === 'programs'" class="text-center py-16">
-        <svg class="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <p class="text-sm text-muted-foreground">Programları yönetmek için Kayıt sayfasına gidin</p>
+      <div v-else-if="activeTab === 'programs'">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-muted-foreground">{{ t('enrollment.description') }}</p>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+            @click="router.push({ name: 'enrollments', query: { studentId: id } })"
+          >
+            {{ t('enrollment.goToEnrollments') }}
+          </button>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+            <h3 class="font-semibold text-foreground">{{ t('enrollment.programs') }}</h3>
+            <span v-if="programStore.loading" class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <span v-else class="text-xs text-muted-foreground">{{ programStore.studentProgramList.totalCount }}</span>
+          </div>
+
+          <div
+            v-if="programStore.loading && programStore.studentProgramList.items.length === 0"
+            class="p-8 text-center text-sm text-muted-foreground"
+          >
+            {{ t('common.loading') }}
+          </div>
+          <div
+            v-else-if="programStore.studentProgramList.items.length === 0"
+            class="p-10 text-center text-sm text-muted-foreground"
+          >
+            {{ t('enrollment.noPrograms') }}
+          </div>
+          <ul v-else class="divide-y divide-border">
+            <li
+              v-for="sp in programStore.studentProgramList.items"
+              :key="sp.id"
+              class="flex items-center gap-3 px-5 py-3"
+            >
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-foreground truncate">{{ sp.programName }}</p>
+                <p class="text-xs text-muted-foreground">
+                  <span class="font-mono">{{ sp.programCode }}</span>
+                  <span v-if="sp.programTypeLabel"> · {{ sp.programTypeLabel }}</span>
+                  <span v-if="sp.campusName"> · {{ sp.campusName }}</span>
+                  <span v-if="sp.startDate"> · {{ formatDate(sp.startDate) }}</span>
+                </p>
+              </div>
+              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', spStatusClass(sp.status)]">
+                {{ t(`enrollment.spStatus.${sp.status}`, sp.status) }}
+              </span>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <!-- ── Case Management Tab ── -->
@@ -984,11 +1132,12 @@ function formatDateTime(val: string | null): string {
         </div>
 
         <!-- Case Notes -->
+        <!-- Backend uses `case_note:*` permissions (StudentsController) — gate the UI the same way. -->
         <div v-if="caseTab === 'case-notes'">
           <div class="flex justify-between items-center mb-3">
             <p class="text-sm text-muted-foreground">{{ caseStore.caseNotes.totalCount }} {{ t('student.caseNote.title') }}</p>
             <button
-              v-if="can('student:write')"
+              v-if="can('case_note:create')"
               @click="openAddNote"
               class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
@@ -1009,7 +1158,7 @@ function formatDateTime(val: string | null): string {
             <div
               v-for="note in caseStore.caseNotes.items"
               :key="note.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
@@ -1021,13 +1170,24 @@ function formatDateTime(val: string | null): string {
                   <p class="text-sm text-foreground whitespace-pre-wrap">{{ note.body }}</p>
                   <p v-if="note.authoredBy" class="text-xs text-muted-foreground mt-1">{{ note.authoredBy }}</p>
                 </div>
-                <div v-if="can('student:write')" class="flex gap-1 shrink-0">
-                  <button @click="openEditNote(note)" class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                <div
+                  v-if="can('case_note:update') || can('case_note:delete')"
+                  class="flex gap-1 shrink-0"
+                >
+                  <button
+                    v-if="can('case_note:update')"
+                    @click="openEditNote(note)"
+                    class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                  <button @click="deleteNoteTarget = note.id" class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
+                  <button
+                    v-if="can('case_note:delete')"
+                    @click="deleteNoteTarget = note.id"
+                    class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                  >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -1075,7 +1235,7 @@ function formatDateTime(val: string | null): string {
             <div
               v-for="r in caseStore.medicalReports"
               :key="r.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-4">
                 <div>
@@ -1128,7 +1288,7 @@ function formatDateTime(val: string | null): string {
             <div
               v-for="r in caseStore.developmentReports"
               :key="r.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-4">
                 <div>
@@ -1139,15 +1299,25 @@ function formatDateTime(val: string | null): string {
                   </p>
                   <p v-if="r.content" class="text-xs text-foreground mt-1 line-clamp-2">{{ r.content }}</p>
                 </div>
-                <button
-                  v-if="can('student:write')"
-                  @click="deleteDevReportTarget = r.id"
-                  class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors shrink-0"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div v-if="can('student:write')" class="flex gap-1 shrink-0">
+                  <!-- Edit uses `PUT /students/{id}/development-reports/{reportId}` (student:write). -->
+                  <button
+                    @click="openEditDevReport(r)"
+                    class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="deleteDevReportTarget = r.id"
+                    class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1178,7 +1348,7 @@ function formatDateTime(val: string | null): string {
             <div
               v-for="r in caseStore.externalReports"
               :key="r.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-4">
                 <div>
@@ -1226,7 +1396,7 @@ function formatDateTime(val: string | null): string {
         <div v-else class="relative pl-4 border-l-2 border-border ml-4 space-y-4">
           <div v-for="h in store.statusHistory" :key="h.id" class="relative">
             <div class="absolute -left-[1.35rem] w-3 h-3 rounded-full bg-primary border-2 border-background" />
-            <div class="rounded-xl border border-border bg-[--color-card] p-3 shadow-sm ml-4">
+            <div class="rounded-xl border border-border bg-card p-3 shadow-sm ml-4">
               <p class="text-xs text-muted-foreground mb-1">
                 {{ formatDateTime(h.changedAt) }}
                 <span v-if="h.changedBy"> · {{ h.changedBy }}</span>
@@ -1266,8 +1436,12 @@ function formatDateTime(val: string | null): string {
       <div class="space-y-4">
         <p v-if="linkError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ linkError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.guardian.guardianId') }} *</label>
-          <input v-model="linkForm.guardianId" type="text" placeholder="UUID" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.guardian.guardianName') }} *</label>
+          <GuardianPicker v-model="linkForm.guardianId" />
+          <p class="mt-1 text-xs text-muted-foreground">
+            {{ t('student.guardian.notInListHint') }}
+            <RouterLink :to="{ name: 'guardian-new' }" class="text-primary hover:underline">{{ t('student.guardian.createNew') }}</RouterLink>
+          </p>
         </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.guardian.relationship') }}</label>
@@ -1418,8 +1592,14 @@ function formatDateTime(val: string | null): string {
       @cancel="deleteMedicalTarget = null"
     />
 
-    <!-- Add Development Report -->
-    <FormModal :open="showDevReportModal" :title="t('student.developmentReport.add')" :saving="caseStore.saving" @submit="submitDevReport" @close="showDevReportModal = false">
+    <!-- Add / Edit Development Report -->
+    <FormModal
+      :open="showDevReportModal"
+      :title="editDevReportTarget ? t('common.edit') : t('student.developmentReport.add')"
+      :saving="caseStore.saving"
+      @submit="submitDevReport"
+      @close="showDevReportModal = false"
+    >
       <div class="space-y-4">
         <p v-if="devReportError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ devReportError }}</p>
         <div class="grid grid-cols-2 gap-3">
@@ -1598,6 +1778,28 @@ function formatDateTime(val: string | null): string {
           <input type="checkbox" v-model="enrollForm.isPrimary" class="rounded border-border" />
           {{ t('student.primaryCampus') }}
         </label>
+      </div>
+    </FormModal>
+
+    <!-- End Campus Enrollment -->
+    <FormModal
+      :open="showEndCampusModal"
+      :title="t('student.campus.end')"
+      :saving="store.saving"
+      @submit="submitEndCampus"
+      @close="showEndCampusModal = false"
+    >
+      <div class="space-y-4">
+        <p v-if="endCampusError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ endCampusError }}</p>
+        <p class="text-sm text-muted-foreground">{{ endCampusTarget?.campusName ?? '—' }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.campus.end') }} {{ t('common.date') }}</label>
+          <input
+            v-model="endCampusForm.endDate"
+            type="date"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
       </div>
     </FormModal>
 

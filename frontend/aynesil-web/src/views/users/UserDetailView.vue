@@ -174,33 +174,33 @@ function getBranchName(campusId?: string) {
     <!-- Tab: Info -->
     <div v-if="activeTab === 'info'">
       <div v-if="store.loading" class="grid grid-cols-2 gap-4 animate-pulse">
-        <div v-for="i in 6" :key="i" class="bg-[--color-card] rounded-xl p-4 border border-border">
+        <div v-for="i in 6" :key="i" class="bg-card rounded-xl p-4 border border-border">
           <div class="h-3 w-20 bg-accent rounded mb-2" />
           <div class="h-4 w-36 bg-accent rounded" />
         </div>
       </div>
       <div v-else-if="store.current" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('user.email') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.email || '-' }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('user.phone') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.phone || '-' }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('user.locale') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current.preferredLocale || 'tr' }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('user.primaryCampus') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ getBranchName(store.current.primaryCampusId) }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('user.lastLogin') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ formatDate(store.current.lastLoginAt) }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('common.createdAt') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ formatDate(store.current.createdAt) }}</p>
         </div>
@@ -226,7 +226,7 @@ function getBranchName(campusId?: string) {
 
       <div class="space-y-2">
         <div v-for="ur in store.currentRoles" :key="ur.id"
-          class="flex items-center justify-between bg-[--color-card] rounded-xl border border-border px-4 py-3">
+          class="flex items-center justify-between bg-card rounded-xl border border-border px-4 py-3">
           <div>
             <p class="text-sm font-semibold text-foreground">{{ ur.roleName }}</p>
             <p class="text-xs text-muted-foreground">

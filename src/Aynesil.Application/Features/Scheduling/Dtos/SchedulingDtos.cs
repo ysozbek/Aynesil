@@ -63,7 +63,11 @@ public record RecurringScheduleDto(
     int? MaxOccurrences,
     bool IsActive,
     DateTimeOffset CreatedAt,
-    int RowVersion);
+    int RowVersion,
+    Guid? ProgramServiceId,
+    IReadOnlyList<RecurringScheduleEducatorDto> Educators);
+
+public record RecurringScheduleEducatorDto(Guid EducatorId, string Role);
 
 public record RecurringScheduleListItemDto(
     Guid Id,
@@ -75,7 +79,17 @@ public record RecurringScheduleListItemDto(
     int DurationMinutes,
     DateOnly RangeStart,
     DateOnly? RangeEnd,
-    bool IsActive);
+    bool IsActive,
+    string? CampusName,
+    Guid? RoomId,
+    string? RoomName,
+    Guid? StudentProgramId,
+    string? StudentFullName,
+    string? ProgramName,
+    string? ProgramServiceName,
+    string? LeadEducatorName,
+    int GeneratedCount,
+    int[]? ByWeekday);
 
 // ── Session DTOs ──────────────────────────────────────────────────────────────
 
@@ -215,7 +229,11 @@ public record ConflictCheckDto(
 
 // ── Bulk Operation DTOs ───────────────────────────────────────────────────────
 
-public record BulkOperationResultDto(int AffectedCount, string Message);
+public record BulkOperationResultDto(
+    int AffectedCount,
+    string Message,
+    int RoomConflictSkipped = 0,
+    int EducatorConflictSkipped = 0);
 
 // ── Projection Helper ─────────────────────────────────────────────────────────
 

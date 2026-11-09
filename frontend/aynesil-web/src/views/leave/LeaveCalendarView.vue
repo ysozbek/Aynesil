@@ -71,8 +71,9 @@ function nextMonth() {
 }
 
 function statusChip(status: string) {
-  if (status === 'Approved') return 'bg-green-100 text-green-700'
-  if (status === 'Pending') return 'bg-amber-100 text-amber-700'
+  // Backend status tokens are lowercase (LeaveRequest + DB DDL).
+  if (status === 'approved') return 'bg-green-100 text-green-700'
+  if (status === 'pending') return 'bg-amber-100 text-amber-700'
   return 'bg-primary/10 text-primary'
 }
 
@@ -101,7 +102,7 @@ onMounted(fetchCalendar)
       {{ t('common.loading') }}
     </div>
 
-    <div v-else class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div class="grid grid-cols-7 border-b border-border bg-accent/40">
         <div
           v-for="day in weekDays"

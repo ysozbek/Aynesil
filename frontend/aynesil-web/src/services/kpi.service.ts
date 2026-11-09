@@ -42,27 +42,44 @@ export const kpiService = {
     apiService.post(`/performance-kpi/definitions/${id}/deactivate`),
 
   // ── KPI Values ─────────────────────────────────────────────────────────────
+  // Backend returns PaginatedResult<KpiValueDto> (see KpiValueQueries.cs).
   listKpiValues: (query: { corporationId?: string; kpiId?: string; educatorId?: string } & Record<string, unknown>) =>
-    apiService.get<KpiValueDto[]>(`/performance-kpi/kpi-values${qs(query)}`),
+    apiService.get<PaginatedResult<KpiValueDto>>(`/performance-kpi/kpi-values${qs(query)}`),
 
-  computeEducator: (educatorId: string, periodStart: string, periodEnd: string) =>
-    apiService.post(`/performance-kpi/educator/${educatorId}/compute`, { periodStart, periodEnd }),
+  listEducatorKpiValues: (
+    educatorId: string,
+    query?: { kpiId?: string; from?: string; to?: string } & Record<string, unknown>,
+  ) =>
+    apiService.get<KpiValueDto[]>(
+      `/performance-kpi/educators/${educatorId}/kpi-values${qs((query ?? {}) as Record<string, unknown>)}`,
+    ),
 
+  // Backend route: /performance-kpi/educators/{educatorId}/compute
+  // Body: { CorporationId, PeriodStart, PeriodEnd } (CorporationId required).
+  computeEducator: (
+    educatorId: string,
+    payload: { corporationId: string; periodStart: string; periodEnd: string },
+  ) =>
+    apiService.post<EducatorPerformanceSnapshotDto>(
+      `/performance-kpi/educators/${educatorId}/compute`,
+      payload,
+    ),
+
+  // Backend route: /performance-kpi/compute/bulk
   bulkCompute: (payload: { corporationId: string; periodStart: string; periodEnd: string }) =>
-    apiService.post('/performance-kpi/bulk-compute', payload),
+    apiService.post('/performance-kpi/compute/bulk', payload),
 
   // ── Snapshots ──────────────────────────────────────────────────────────────
+  // Backend only exposes a paginated list; there is no `GET /snapshots/{id}`.
   listSnapshots: (query: SnapshotListQuery) =>
     apiService.get<PaginatedResult<EducatorPerformanceSnapshotListItemDto>>(
       `/performance-kpi/snapshots${qs(query as Record<string, unknown>)}`
     ),
 
-  getSnapshot: (id: string) =>
-    apiService.get<EducatorPerformanceSnapshotDto>(`/performance-kpi/snapshots/${id}`),
-
   // ── Parent Feedback ────────────────────────────────────────────────────────
+  // Backend returns PaginatedResult<ParentFeedbackDto>.
   listParentFeedback: (query: { corporationId?: string; educatorId?: string } & Record<string, unknown>) =>
-    apiService.get<ParentFeedbackDto[]>(`/performance-kpi/parent-feedback${qs(query)}`),
+    apiService.get<PaginatedResult<ParentFeedbackDto>>(`/performance-kpi/parent-feedback${qs(query)}`),
 
   submitFeedback: (payload: Partial<ParentFeedbackDto>) =>
     apiService.post<ParentFeedbackDto>('/performance-kpi/parent-feedback', payload),
@@ -84,8 +101,16 @@ export const kpiService = {
     ),
 
   // ── Trends & Ranking ──────────────────────────────────────────────────────
-  getTrends: (query: DashboardQuery) =>
-    apiService.get(`/performance-kpi/trends${qs(query as Record<string, unknown>)}`),
+  // Backend splits trends into `trends/educator/{id}` and `trends/corporation`.
+  getEducatorTrend: (educatorId: string, query: DashboardQuery) =>
+    apiService.get(
+      `/performance-kpi/trends/educator/${educatorId}${qs(query as Record<string, unknown>)}`,
+    ),
+
+  getCorporationTrend: (query: DashboardQuery) =>
+    apiService.get(
+      `/performance-kpi/trends/corporation${qs(query as Record<string, unknown>)}`,
+    ),
 
   getRanking: (query: { corporationId?: string; kpiId?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
     apiService.get<RankingItemDto[]>(`/performance-kpi/ranking${qs(query)}`),

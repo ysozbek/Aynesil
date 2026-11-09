@@ -71,10 +71,13 @@ async function submitPortalAccess() {
   if (!portalTarget.value) return
   portalError.value = ''
   try {
+    // Backend `GuardiansController` route is
+    //   /api/guardians/{guardianId}/students/{studentId}/portal-access
+    // — must pass the real `studentId`, not the student_guardian link id.
     if (portalMode.value === 'grant') {
-      await store.grantPortalAccess(id.value, portalTarget.value.linkId, { ...portalForm })
+      await store.grantPortalAccess(id.value, portalTarget.value.studentId, { ...portalForm })
     } else {
-      await store.updatePortalPermissions(id.value, portalTarget.value.linkId, { ...portalForm })
+      await store.updatePortalPermissions(id.value, portalTarget.value.studentId, { ...portalForm })
     }
     showPortalModal.value = false
     await store.fetchOne(id.value)
@@ -91,7 +94,7 @@ async function doRevoke() {
   if (!revokeTarget.value) return
   revokeLoading.value = true
   try {
-    await store.revokePortalAccess(id.value, revokeTarget.value.linkId)
+    await store.revokePortalAccess(id.value, revokeTarget.value.studentId)
     revokeTarget.value = null
     await store.fetchOne(id.value)
   } finally {
@@ -189,7 +192,7 @@ async function doDelete() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <h3 class="font-semibold text-foreground">{{ t('guardian.title') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -243,12 +246,13 @@ async function doDelete() {
           <div
             v-for="link in guardian.students"
             :key="link.linkId"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm cursor-pointer hover:border-primary/40 transition-colors"
+            @click="router.push({ name: 'student-detail', params: { id: link.studentId } })"
           >
             <div class="flex items-start justify-between">
               <div class="space-y-1">
                 <p class="text-sm font-semibold text-foreground">
-                  {{ link.guardianFullName }}
+                  {{ link.studentFullName }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                   {{ link.relationshipLabel ?? '—' }}
@@ -287,11 +291,11 @@ async function doDelete() {
           <div
             v-for="link in guardian.students"
             :key="link.linkId"
-            class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm"
+            class="rounded-xl border border-border bg-card p-5 shadow-sm"
           >
             <div class="flex items-center justify-between mb-4">
               <div>
-                <p class="text-sm font-semibold text-foreground">{{ link.guardianFullName }}</p>
+                <p class="text-sm font-semibold text-foreground">{{ link.studentFullName }}</p>
                 <p class="text-xs text-muted-foreground">{{ link.relationshipLabel ?? '—' }}</p>
               </div>
               <div v-if="can('guardian:manage_portal')" class="flex gap-2">
@@ -349,7 +353,7 @@ async function doDelete() {
     >
       <div class="space-y-3">
         <p v-if="portalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ portalError }}</p>
-        <p class="text-sm text-muted-foreground">{{ portalTarget?.guardianFullName }}</p>
+        <p class="text-sm text-muted-foreground">{{ portalTarget?.studentFullName }}</p>
         <div class="grid grid-cols-2 gap-3">
           <label v-for="perm in ['canViewSessions', 'canViewAttendance', 'canViewReports', 'canViewPlan', 'canViewFinance', 'canViewCamera'] as const" :key="perm"
             class="flex items-center gap-2 text-sm cursor-pointer">

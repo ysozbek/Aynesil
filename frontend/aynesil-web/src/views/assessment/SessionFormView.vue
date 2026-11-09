@@ -11,6 +11,8 @@ import { useAssessmentTemplateStore } from '@/stores/assessmentTemplate.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useUserStore } from '@/stores/user.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import LeadPicker from '@/components/pickers/LeadPicker.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -120,7 +122,7 @@ async function submit() {
     <form @submit.prevent="submit" class="space-y-6">
       <p v-if="generalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{{ generalError }}</p>
 
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <!-- Template -->
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('assessment.session.template') }} *</label>
@@ -141,17 +143,14 @@ async function submit() {
           <p v-if="errors.subject" class="mb-2 text-xs text-red-600">{{ errors.subject }}</p>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-muted-foreground mb-1">{{ t('assessment.session.leadId') }}</label>
-              <input v-model="form.leadId" type="text" :placeholder="t('assessment.session.leadIdPlaceholder')"
-                :disabled="!!form.studentId"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50" />
+              <label class="block text-xs text-muted-foreground mb-1">{{ t('assessment.session.subjectLead') }}</label>
+              <LeadPicker v-model="form.leadId" open-only :disabled="!!form.studentId" />
             </div>
             <div>
-              <label class="block text-xs text-muted-foreground mb-1">{{ t('assessment.session.studentId') }}</label>
-              <input v-model="form.studentId" type="text" :placeholder="t('assessment.session.studentIdPlaceholder')"
-                :disabled="!!form.leadId"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50" />
+              <label class="block text-xs text-muted-foreground mb-1">{{ t('assessment.session.subjectStudent') }}</label>
+              <StudentPicker v-model="form.studentId" :disabled="!!form.leadId" />
             </div>
+            <p class="col-span-2 text-xs text-muted-foreground">{{ t('assessment.session.subjectHint') }}</p>
           </div>
         </div>
 

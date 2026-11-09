@@ -247,8 +247,16 @@ export const useProgramStore = defineStore('program', () => {
   async function assignStudentToProgram(payload: AssignStudentToProgramPayload): Promise<StudentProgramDto> {
     saving.value = true
     try {
-      const res = await studentProgramService.assignStudentToProgram(payload)
+      const res = payload.enrollmentId
+        ? await enrollmentService.assignProgram(payload.enrollmentId, payload)
+        : await studentProgramService.assignStudentToProgram(payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'Program atama başarısız.')
+      if (currentEnrollment.value && payload.enrollmentId === currentEnrollment.value.id) {
+        currentEnrollment.value = {
+          ...currentEnrollment.value,
+          studentPrograms: [...currentEnrollment.value.studentPrograms, res.data],
+        }
+      }
       return res.data
     } finally {
       saving.value = false

@@ -109,6 +109,7 @@ public interface IAppDbContext
     DbSet<CalendarEntry> CalendarEntries { get; }
     DbSet<RecurringSchedule> RecurringSchedules { get; }
     DbSet<RecurrenceException> RecurrenceExceptions { get; }
+    DbSet<RecurringScheduleEducator> RecurringScheduleEducators { get; }
     DbSet<Session> Sessions { get; }
     DbSet<SessionParticipant> SessionParticipants { get; }
     DbSet<SessionEducator> SessionEducators { get; }

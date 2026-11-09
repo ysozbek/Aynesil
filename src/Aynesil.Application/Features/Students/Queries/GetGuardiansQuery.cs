@@ -98,6 +98,12 @@ public sealed class GetStudentGuardiansQueryHandler
             .Where(sg => sg.StudentId == req.StudentId)
             .ToListAsync(ct);
 
+        var studentFullName = await _db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == req.StudentId)
+            .Select(s => s.FirstName + " " + s.LastName)
+            .FirstOrDefaultAsync(ct) ?? string.Empty;
+
         var result = new List<StudentGuardianDto>();
 
         foreach (var link in links)
@@ -117,6 +123,7 @@ public sealed class GetStudentGuardiansQueryHandler
                 link.Id, link.GuardianId,
                 guardian is not null ? $"{guardian.FirstName} {guardian.LastName}" : string.Empty,
                 guardian?.Email, guardian?.Phone,
+                link.StudentId, studentFullName,
                 link.RelationshipId, relLabel,
                 link.IsPrimary, link.HasCustody, link.PortalAccess, link.FinancialResponsible));
         }

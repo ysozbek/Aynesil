@@ -82,7 +82,7 @@ async function save() {
     </div>
 
     <!-- Form card -->
-    <div class="bg-[--color-card] rounded-xl border border-border shadow-sm p-6 space-y-5">
+    <div class="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
       <p v-if="error" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ error }}</p>
       <div v-if="saved" class="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
         {{ t('common.savedSuccess') }}

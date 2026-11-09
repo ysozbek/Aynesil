@@ -6,6 +6,7 @@ import { useCameraStore } from '@/stores/camera.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import RoomPicker from '@/components/pickers/RoomPicker.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -71,7 +72,7 @@ onMounted(() => {
       </PageHeader>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5">
           <h3 class="font-semibold text-foreground mb-4">{{ t('camera.detail.info') }}</h3>
           <dl class="space-y-4 text-sm">
             <div>
@@ -93,7 +94,7 @@ onMounted(() => {
           </dl>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div class="flex items-center justify-between p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('camera.detail.roomAssignments') }}</h3>
             <button
@@ -134,7 +135,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div class="p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('camera.detail.sessionAssignments') }}</h3>
           </div>
@@ -199,12 +200,7 @@ onMounted(() => {
     >
       <div>
         <label class="block text-sm font-medium text-foreground mb-1">{{ t('camera.fields.room') }} *</label>
-        <input
-          v-model="roomIdInput"
-          type="text"
-          :placeholder="t('camera.detail.roomIdPlaceholder')"
-          class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <RoomPicker v-model="roomIdInput" :campus-id="cam?.campusId" />
       </div>
     </FormModal>
   </div>

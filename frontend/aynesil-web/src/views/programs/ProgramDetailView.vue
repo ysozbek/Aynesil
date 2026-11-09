@@ -211,7 +211,7 @@ async function submitTranslation() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <h3 class="font-semibold text-foreground">{{ t('program.title') }}</h3>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -236,7 +236,7 @@ async function submitTranslation() {
             </div>
           </dl>
         </div>
-        <div v-if="program.description" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+        <div v-if="program.description" class="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h3 class="font-semibold text-foreground mb-2">{{ t('program.description2') }}</h3>
           <p class="text-sm text-muted-foreground">{{ program.description }}</p>
         </div>
@@ -263,7 +263,7 @@ async function submitTranslation() {
           <div
             v-for="svc in program.services.slice().sort((a, b) => a.sortOrder - b.sortOrder)"
             :key="svc.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between">
               <div class="space-y-1">
@@ -311,7 +311,7 @@ async function submitTranslation() {
           <div
             v-for="tr in program.translations"
             :key="tr.locale"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm flex items-start justify-between"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm flex items-start justify-between"
           >
             <div class="space-y-1">
               <div class="flex items-center gap-2">

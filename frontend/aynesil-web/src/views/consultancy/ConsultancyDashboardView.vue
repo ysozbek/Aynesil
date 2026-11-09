@@ -66,7 +66,7 @@ onMounted(async () => {
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm flex items-center gap-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm flex items-center gap-4">
         <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -77,7 +77,7 @@ onMounted(async () => {
           <p class="text-xs text-muted-foreground mt-0.5">{{ t('consultancy.dashboard.totalInstitutions') }}</p>
         </div>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm flex items-center gap-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm flex items-center gap-4">
         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
           <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -88,7 +88,7 @@ onMounted(async () => {
           <p class="text-xs text-muted-foreground mt-0.5">{{ t('consultancy.dashboard.activePlans') }}</p>
         </div>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm flex items-center gap-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm flex items-center gap-4">
         <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
           <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -99,7 +99,7 @@ onMounted(async () => {
           <p class="text-xs text-muted-foreground mt-0.5">{{ t('consultancy.dashboard.totalVisits') }}</p>
         </div>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm flex items-center gap-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm flex items-center gap-4">
         <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
           <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -113,7 +113,7 @@ onMounted(async () => {
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('consultancy.dashboard.upcomingVisits') }}</h3>
           <button @click="router.push('/consultancy/visits')" class="text-xs text-primary hover:underline">
@@ -149,7 +149,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('consultancy.dashboard.openFollowUpsList') }}</h3>
           <button @click="router.push('/consultancy/follow-ups')" class="text-xs text-primary hover:underline">

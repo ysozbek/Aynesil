@@ -163,20 +163,20 @@ function resourceSomeAssigned(resource: string): boolean {
     <!-- Tab: Info -->
     <div v-if="activeTab === 'info'" class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('role.code') }}</p>
           <p class="text-sm font-semibold text-foreground font-mono">{{ store.current?.code }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('role.permissionCount') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current?.permissions.length ?? 0 }}</p>
         </div>
-        <div class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+        <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('common.createdAt') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ store.current ? new Date(store.current.createdAt).toLocaleDateString('tr-TR') : '-' }}</p>
         </div>
       </div>
-      <div v-if="store.current?.description" class="bg-[--color-card] rounded-xl p-4 border border-border shadow-sm">
+      <div v-if="store.current?.description" class="bg-card rounded-xl p-4 border border-border shadow-sm">
         <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('role.description') }}</p>
         <p class="text-sm text-foreground">{{ store.current.description }}</p>
       </div>
@@ -205,7 +205,7 @@ function resourceSomeAssigned(resource: string): boolean {
       <p v-if="permError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ permError }}</p>
 
       <div v-if="permStore.catalogLoading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="bg-[--color-card] rounded-xl p-4 border border-border animate-pulse">
+        <div v-for="i in 5" :key="i" class="bg-card rounded-xl p-4 border border-border animate-pulse">
           <div class="h-4 w-24 bg-accent rounded mb-3" />
           <div class="flex gap-2 flex-wrap">
             <div v-for="j in 4" :key="j" class="h-6 w-20 bg-accent rounded" />
@@ -215,7 +215,7 @@ function resourceSomeAssigned(resource: string): boolean {
 
       <div v-else class="space-y-2">
         <div v-for="(perms, resource) in filteredCatalog" :key="resource"
-          class="bg-[--color-card] rounded-xl border border-border shadow-sm overflow-hidden">
+          class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <!-- Resource header -->
           <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/30">
             <div class="flex items-center gap-2">

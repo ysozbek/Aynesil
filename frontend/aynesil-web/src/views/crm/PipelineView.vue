@@ -186,7 +186,7 @@ function stageCardColor(idx: number): string {
         @drop="onDrop($event, stage.id)"
       >
         <!-- Stage Header -->
-        <div :class="['rounded-t-xl border border-b-0 border-border bg-[--color-card] px-3 py-2.5 flex items-center justify-between', dragOverStage === stage.id ? 'ring-2 ring-primary' : '']">
+        <div :class="['rounded-t-xl border border-b-0 border-border bg-card px-3 py-2.5 flex items-center justify-between', dragOverStage === stage.id ? 'ring-2 ring-primary' : '']">
           <span class="text-sm font-semibold text-foreground">{{ stage.label }}</span>
           <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-accent text-muted-foreground">{{ stageCount(stage.id) }}</span>
         </div>
@@ -199,7 +199,7 @@ function stageCardColor(idx: number): string {
             draggable="true"
             @dragstart="onDragStart(lead, stage.id)"
             @click="router.push({ name: 'lead-detail', params: { id: lead.id } })"
-            :class="['rounded-lg border-l-4 border border-border bg-[--color-card] p-3 cursor-pointer hover:shadow-md transition-shadow', stageCardColor(idx)]"
+            :class="['rounded-lg border-l-4 border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow', stageCardColor(idx)]"
           >
             <p class="text-sm font-medium text-foreground truncate">{{ lead.contactName }}</p>
             <p v-if="lead.childName" class="text-xs text-muted-foreground truncate">{{ lead.childName }}</p>

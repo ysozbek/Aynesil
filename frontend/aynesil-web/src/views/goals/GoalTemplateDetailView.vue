@@ -128,7 +128,7 @@ async function submitTranslation() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="space-y-4">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <dt class="text-muted-foreground text-xs uppercase mb-1">{{ t('goal.template.code') }}</dt>
@@ -183,7 +183,7 @@ async function submitTranslation() {
           <div
             v-for="tr in template.translations"
             :key="tr.locale"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">

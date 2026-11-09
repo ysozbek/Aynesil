@@ -8,8 +8,11 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import { campusService } from '@/services/campus.service'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { RoomListItemDto } from '@/types/scheduling.types'
+import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -32,9 +35,22 @@ const editTarget = ref<RoomListItemDto | null>(null)
 const formData = reactive({ code: '', name: '', campusId: '', capacity: 10, isVirtual: false })
 const formErrors = reactive<Record<string, string>>({})
 
+const campuses = ref<CampusListItemDto[]>([])
+
 watch(() => [query.campusId, query.isActive, query.page], () => loadList())
 
-onMounted(() => loadList())
+watch(() => formData.isVirtual, (virtual) => {
+  if (virtual) formData.campusId = ''
+})
+
+onMounted(async () => {
+  loadList()
+  const res = await campusService.list({ page: 1, pageSize: 200 })
+  if (res.success && res.data) {
+    campuses.value = res.data.items
+    if (campuses.value.length === 1 && !query.campusId) formData.campusId = campuses.value[0].id
+  }
+})
 
 async function loadList() {
   await store.fetchRooms({
@@ -56,7 +72,9 @@ const columns: Column<RoomListItemDto>[] = [
 
 function openCreate() {
   editTarget.value = null
-  Object.assign(formData, { code: '', name: '', campusId: '', capacity: 10, isVirtual: false })
+  const defaultCampusId = query.campusId || (campuses.value.length === 1 ? campuses.value[0].id : '')
+  Object.assign(formData, { code: '', name: '', campusId: defaultCampusId, capacity: 10, isVirtual: false })
+  Object.keys(formErrors).forEach(k => delete (formErrors as Record<string, string>)[k])
   showForm.value = true
 }
 
@@ -64,6 +82,9 @@ function validateForm(): boolean {
   Object.keys(formErrors).forEach(k => delete (formErrors as Record<string, string>)[k])
   if (!formData.code.trim()) formErrors.code = t('validation.required', { field: t('scheduling.room.code') })
   if (!formData.name.trim()) formErrors.name = t('validation.required', { field: t('scheduling.room.name') })
+  if (!editTarget.value && !formData.isVirtual && !formData.campusId) {
+    formErrors.campusId = t('validation.required', { field: t('campus.name') })
+  }
   return Object.keys(formErrors).length === 0
 }
 
@@ -80,7 +101,7 @@ async function submitForm() {
     } else {
       await store.createRoom({
         corporationId: corporationId.value,
-        campusId: formData.campusId,
+        campusId: formData.isVirtual ? undefined : formData.campusId,
         code: formData.code,
         name: formData.name,
         capacity: formData.capacity,
@@ -126,6 +147,10 @@ async function doDelete() {
     </PageHeader>
 
     <div class="mb-4 flex items-center gap-3">
+      <select v-model="query.campusId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
+        <option value="">{{ t('scheduling.room.allCampuses') }}</option>
+        <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
+      </select>
       <select v-model="query.isActive" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
         <option value="true">{{ t('common.active') }}</option>
@@ -197,41 +222,52 @@ async function doDelete() {
     </div>
 
     <!-- Form Modal -->
-    <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
-        <h3 class="font-semibold text-foreground mb-4">{{ editTarget ? t('scheduling.room.edit') : t('scheduling.room.create') }}</h3>
+    <FormModal
+      :open="showForm"
+      :title="editTarget ? t('scheduling.room.edit') : t('scheduling.room.create')"
+      :saving="store.saving"
+      @submit="submitForm"
+      @close="showForm = false"
+    >
+      <div v-if="formErrors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">
+        {{ formErrors.submit }}
+      </div>
 
-        <div v-if="formErrors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">
-          {{ formErrors.submit }}
+      <div class="space-y-4">
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" v-model="formData.isVirtual" :disabled="!!editTarget" class="rounded" />
+          {{ t('scheduling.room.isVirtual') }}
+        </label>
+        <div v-if="!formData.isVirtual">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('campus.name') }} *</label>
+          <select
+            v-model="formData.campusId"
+            :disabled="!!editTarget"
+            :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60', formErrors.campusId ? 'border-red-400' : 'border-border']"
+          >
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
+          </select>
+          <p v-if="formErrors.campusId" class="mt-1 text-xs text-red-600">{{ formErrors.campusId }}</p>
+          <p v-else-if="editTarget" class="mt-1 text-xs text-muted-foreground">{{ t('scheduling.room.campusLockedHint') }}</p>
         </div>
-
-        <div class="space-y-4">
-          <div v-if="!editTarget">
-            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.code') }} *</label>
-            <input v-model="formData.code" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.name') }} *</label>
-            <input v-model="formData.name" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.capacity') }}</label>
-            <input v-model.number="formData.capacity" type="number" min="1" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
-          </div>
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" v-model="formData.isVirtual" class="rounded" />
-            {{ t('scheduling.room.isVirtual') }}
-          </label>
+        <p v-else class="text-xs text-muted-foreground">{{ t('scheduling.room.virtualHint') }}</p>
+        <div v-if="!editTarget">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.code') }} *</label>
+          <input v-model="formData.code" type="text" :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary', formErrors.code ? 'border-red-400' : 'border-border']" />
+          <p v-if="formErrors.code" class="mt-1 text-xs text-red-600">{{ formErrors.code }}</p>
         </div>
-
-        <div class="flex justify-end gap-2 mt-5">
-          <button @click="showForm = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
-          <button @click="submitForm" :disabled="store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
-            {{ store.saving ? t('common.saving') : t('common.save') }}
-          </button>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.name') }} *</label>
+          <input v-model="formData.name" type="text" :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary', formErrors.name ? 'border-red-400' : 'border-border']" />
+          <p v-if="formErrors.name" class="mt-1 text-xs text-red-600">{{ formErrors.name }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.room.capacity') }}</label>
+          <input v-model.number="formData.capacity" type="number" min="1" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
         </div>
       </div>
-    </div>
+    </FormModal>
 
     <ConfirmModal
       :open="!!deleteTarget"

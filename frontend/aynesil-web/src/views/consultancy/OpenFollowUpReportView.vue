@@ -92,19 +92,19 @@ onMounted(reload)
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
         <p class="text-2xl font-bold text-amber-600">{{ totalOpen }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('followUp.stats.openTotal') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
         <p class="text-2xl font-bold text-red-600">{{ overdueCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('followUp.stats.overdue') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
         <p class="text-2xl font-bold text-sky-600">{{ inProgressCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('followUp.inProgress') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-center">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm text-center">
         <p class="text-2xl font-bold text-primary">{{ pendingCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('followUp.pending') }}</p>
       </div>
@@ -114,7 +114,7 @@ onMounted(reload)
       {{ t('common.loading') }}
     </div>
 
-    <div v-else-if="store.openFollowUps.length === 0" class="rounded-xl border border-border bg-[--color-card] shadow-sm py-16 text-center">
+    <div v-else-if="store.openFollowUps.length === 0" class="rounded-xl border border-border bg-card shadow-sm py-16 text-center">
       <svg class="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
@@ -123,7 +123,7 @@ onMounted(reload)
     </div>
 
     <div v-else class="space-y-6">
-      <div v-if="overdueItems.length > 0" class="rounded-xl border border-red-200 bg-[--color-card] shadow-sm overflow-hidden">
+      <div v-if="overdueItems.length > 0" class="rounded-xl border border-red-200 bg-card shadow-sm overflow-hidden">
         <div class="flex items-center gap-2 px-4 py-3 border-b border-red-200 bg-red-50/50">
           <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -172,7 +172,7 @@ onMounted(reload)
         </DataTable>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="px-4 py-3 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('followUp.report.upcoming') }}</h3>
         </div>

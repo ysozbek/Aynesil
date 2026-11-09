@@ -16,6 +16,7 @@ import type {
   RecurringScheduleListQuery,
   CreateRecurringSchedulePayload,
   AddRecurringExceptionPayload,
+  BulkGeneratePayload,
   BulkCancelPayload,
   BulkReassignRoomPayload,
   BulkOperationResultDto,
@@ -198,10 +199,13 @@ export const useSchedulingStore = defineStore('scheduling', () => {
     }
   }
 
-  async function generateSessions(id: string): Promise<BulkOperationResultDto> {
+  async function generateSessions(
+    id: string,
+    payload: BulkGeneratePayload
+  ): Promise<BulkOperationResultDto> {
     saving.value = true
     try {
-      const res = await schedulingService.generateSessions(id)
+      const res = await schedulingService.generateSessions(id, payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'Seanslar oluşturulamadı.')
       return res.data
     } finally {

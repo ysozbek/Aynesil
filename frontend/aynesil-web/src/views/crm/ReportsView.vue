@@ -102,26 +102,26 @@ function barWidth(rate: number): string {
     <template v-else-if="report">
       <!-- Summary KPIs -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.totalLeads') }}</p>
           <p class="text-3xl font-bold text-foreground mt-1">{{ report.totalLeads }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.converted') }}</p>
           <p class="text-3xl font-bold text-emerald-600 mt-1">{{ report.convertedLeads }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.conversionRate') }}</p>
           <p class="text-3xl font-bold text-primary mt-1">{{ pct(report.conversionRate) }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.sources') }}</p>
           <p class="text-3xl font-bold text-foreground mt-1">{{ report.bySource.length }}</p>
         </div>
       </div>
 
       <!-- By Source -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h3 class="font-semibold text-foreground mb-4">{{ t('crm.reports.bySource') }}</h3>
         <div v-if="report.bySource.length === 0" class="text-sm text-muted-foreground text-center py-8">
           {{ t('common.noData') }}

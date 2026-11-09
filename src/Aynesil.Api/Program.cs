@@ -94,12 +94,22 @@ try
     var app = builder.Build();
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
-    app.UseMiddleware<ExceptionMiddleware>();
-
+    // Serilog's RequestLoggingMiddleware is registered OUTSIDE
+    // ExceptionMiddleware so it logs the final HTTP status (401/404/422/…)
+    // written by the exception handler, instead of seeing the raw exception
+    // first and logging a misleading [ERR] 500 for every expected business
+    // outcome (e.g. invalid login credentials, FluentValidation failures,
+    // KeyNotFoundException on sub-resources).
+    //
+    // Genuine 500s are still logged with stack traces by ExceptionMiddleware
+    // itself (`_logger.LogError(exception, …)` in its 500 branch), which pipes
+    // into Serilog via `ILogger<ExceptionMiddleware>`.
     app.UseSerilogRequestLogging(opts =>
     {
         opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
     });
+
+    app.UseMiddleware<ExceptionMiddleware>();
 
     if (app.Environment.IsDevelopment())
     {

@@ -28,12 +28,14 @@ function formatDatetime(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
 }
 
+// Backend status tokens are lowercase (`LeaveRequest.cs`):
+//   pending | approved | rejected | cancelled
 function statusClass(status: string) {
   const map: Record<string, string> = {
-    Pending: 'bg-amber-100 text-amber-700',
-    Approved: 'bg-green-100 text-green-700',
-    Rejected: 'bg-red-100 text-red-700',
-    Cancelled: 'bg-gray-100 text-gray-600',
+    pending: 'bg-amber-100 text-amber-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    cancelled: 'bg-gray-100 text-gray-600',
   }
   return map[status] ?? 'bg-gray-100 text-gray-600'
 }
@@ -80,31 +82,32 @@ onMounted(async () => {
       <PageHeader :title="t('leave.detail.title')" :description="leave.educatorFullName">
         <div class="flex flex-wrap items-center gap-2">
           <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(leave.status)]">
-            {{ t(`leave.status.${leave.status.toLowerCase()}`) }}
+            {{ t(`leave.status.${leave.status}`, leave.status) }}
           </span>
           <button
-            v-if="leave.status === 'Pending' && can('leave_request:update')"
+            v-if="leave.status === 'pending' && can('leave_request:update')"
             @click="router.push({ name: 'leave-edit', params: { id: leave.id } })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="leave.status === 'Pending' && can('leave_request:approve')"
+            v-if="leave.status === 'pending' && can('leave_request:approve')"
             @click="showApproveModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('leave.actions.approve') }}
           </button>
+          <!-- Reject uses `leave_request:reject` on the backend. -->
           <button
-            v-if="leave.status === 'Pending' && can('leave_request:approve')"
+            v-if="leave.status === 'pending' && can('leave_request:reject')"
             @click="showRejectModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
           >
             {{ t('leave.actions.reject') }}
           </button>
           <button
-            v-if="(leave.status === 'Pending' || leave.status === 'Approved') && can('leave_request:cancel')"
+            v-if="(leave.status === 'pending' || leave.status === 'approved') && can('leave_request:cancel')"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >
@@ -115,7 +118,7 @@ onMounted(async () => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('leave.detail.requestInfo') }}</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
@@ -125,7 +128,7 @@ onMounted(async () => {
               <div>
                 <dt class="text-muted-foreground mb-0.5">{{ t('leave.fields.unit') }}</dt>
                 <dd class="font-medium text-foreground">
-                  {{ leave.unit === 'Day' ? t('leave.unit.day') : t('leave.unit.hour') }}
+                  {{ leave.unit === 'day' ? t('leave.unit.day') : t('leave.unit.hour') }}
                   <span v-if="leave.quantity" class="text-muted-foreground ml-1">({{ leave.quantity }})</span>
                 </dd>
               </div>
@@ -166,7 +169,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('leave.detail.approvalHistory') }}</h3>
             <div v-if="leave.approvals.length === 0" class="text-sm text-muted-foreground text-center py-6">
               {{ t('leave.detail.noApprovals') }}
@@ -187,7 +190,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5 h-fit">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5 h-fit">
           <h3 class="font-semibold text-foreground mb-4">{{ t('leave.detail.educator') }}</h3>
           <p class="text-sm font-medium text-foreground">{{ leave.educatorFullName ?? '—' }}</p>
           <p class="text-xs text-muted-foreground mt-0.5">{{ t('leave.fields.educator') }}</p>

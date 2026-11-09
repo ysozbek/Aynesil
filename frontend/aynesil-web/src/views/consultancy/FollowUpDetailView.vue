@@ -142,7 +142,7 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.info') }}</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
@@ -175,7 +175,7 @@ onMounted(() => {
             </p>
           </div>
 
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.timeline') }}</h3>
             <div class="space-y-4">
               <div class="flex gap-3">
@@ -205,7 +205,7 @@ onMounted(() => {
         </div>
 
         <div class="space-y-6">
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.source') }}</h3>
             <dl class="space-y-3 text-sm">
               <div v-if="followUp.planName">
@@ -235,7 +235,7 @@ onMounted(() => {
             </dl>
           </div>
 
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('followUp.detail.metadata') }}</h3>
             <dl class="space-y-3 text-sm">
               <div>

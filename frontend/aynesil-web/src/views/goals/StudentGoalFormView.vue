@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import { goalService } from '@/services/goal.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import EntityPicker from '@/components/pickers/EntityPicker.vue'
+import type { PickerOption } from '@/components/pickers/types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import type { GoalTemplateListItemDto, StudentGoalListItemDto } from '@/types/goal.types'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -21,9 +26,12 @@ const id = computed(() => route.params.id as string | undefined)
 const categories = ref<RefValueItem[]>([])
 const developmentAreas = ref<RefValueItem[]>([])
 
+const templateCache = new Map<string, GoalTemplateListItemDto>()
+const parentGoals = ref<StudentGoalListItemDto[]>([])
+
 const form = reactive({
   corporationId: auth.user?.corporationId ?? '',
-  studentId: '',
+  studentId: typeof route.query.studentId === 'string' ? route.query.studentId : '',
   statement: '',
   horizon: 'long_term',
   templateId: '',
@@ -68,6 +76,44 @@ onMounted(async () => {
   }
 })
 
+async function searchTemplates(term: string): Promise<PickerOption[]> {
+  const res = await goalService.listTemplates({
+    corporationId: form.corporationId,
+    categoryId: form.categoryId || undefined,
+    developmentAreaId: form.developmentAreaId || undefined,
+    search: term || undefined,
+    page: 1,
+    pageSize: 20,
+  })
+  if (!res.success || !res.data) return []
+  return res.data.items.map((tpl) => {
+    templateCache.set(tpl.id, tpl)
+    return { id: tpl.id, label: tpl.statement, sublabel: tpl.code }
+  })
+}
+
+function onTemplateSelected(option: PickerOption | null) {
+  const tpl = option ? templateCache.get(option.id) : undefined
+  if (!tpl) return
+  if (!form.statement.trim()) form.statement = tpl.statement
+  if (!form.categoryId && tpl.categoryId) form.categoryId = tpl.categoryId
+  if (!form.developmentAreaId && tpl.developmentAreaId) form.developmentAreaId = tpl.developmentAreaId
+}
+
+watch(() => form.studentId, async (studentId) => {
+  form.parentGoalId = ''
+  parentGoals.value = []
+  if (!studentId || isEdit.value) return
+  const res = await goalService.listStudentGoals({
+    corporationId: form.corporationId,
+    studentId,
+    horizon: 'long_term',
+    page: 1,
+    pageSize: 100,
+  })
+  if (res.success && res.data) parentGoals.value = res.data.items
+}, { immediate: true })
+
 function validate(): boolean {
   Object.keys(errors).forEach(k => delete errors[k])
   let valid = true
@@ -79,7 +125,7 @@ function validate(): boolean {
     errors.horizon = t('validation.required', { field: t('goal.studentGoal.horizon') })
     valid = false
   }
-  if (!isEdit.value && !form.studentId.trim()) {
+  if (!isEdit.value && !form.studentId) {
     errors.studentId = t('validation.required', { field: t('bep.studentName') })
     valid = false
   }
@@ -141,17 +187,12 @@ async function submit() {
       <p v-if="generalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{{ generalError }}</p>
 
       <!-- Core fields -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
-        <h3 class="font-semibold text-foreground">Hedef Bilgileri</h3>
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+        <h3 class="font-semibold text-foreground">{{ t('goal.studentGoal.sectionInfo') }}</h3>
 
         <div v-if="!isEdit">
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.studentName') }} ID *</label>
-          <input
-            v-model="form.studentId"
-            type="text"
-            class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 focus:ring-primary"
-            :class="errors.studentId ? 'border-red-400' : 'border-border'"
-          />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.studentName') }} *</label>
+          <StudentPicker v-model="form.studentId" :invalid="!!errors.studentId" />
           <p v-if="errors.studentId" class="mt-1 text-xs text-red-600">{{ errors.studentId }}</p>
         </div>
 
@@ -174,14 +215,19 @@ async function submit() {
               class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 focus:ring-primary bg-transparent"
               :class="errors.horizon ? 'border-red-400' : 'border-border'"
             >
-              <option value="long_term">{{ t('goal.studentGoal.horizon.longTerm') }}</option>
-              <option value="short_term">{{ t('goal.studentGoal.horizon.shortTerm') }}</option>
+              <option value="long_term">{{ t('goal.studentGoal.horizonOptions.long_term') }}</option>
+              <option value="short_term">{{ t('goal.studentGoal.horizonOptions.short_term') }}</option>
             </select>
             <p v-if="errors.horizon" class="mt-1 text-xs text-red-600">{{ errors.horizon }}</p>
           </div>
           <div v-if="!isEdit">
-            <label class="block text-sm font-medium text-foreground mb-1">Şablon ID</label>
-            <input v-model="form.templateId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.template') }}</label>
+            <EntityPicker
+              v-model="form.templateId"
+              :search="searchTemplates"
+              :placeholder="t('goal.studentGoal.templatePlaceholder')"
+              @select="onTemplateSelected"
+            />
           </div>
         </div>
 
@@ -202,15 +248,23 @@ async function submit() {
           </div>
         </div>
 
-        <div v-if="!isEdit">
-          <label class="block text-sm font-medium text-foreground mb-1">Üst Hedef ID</label>
-          <input v-model="form.parentGoalId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+        <div v-if="!isEdit && form.horizon === 'short_term'">
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.parentGoal') }}</label>
+          <select
+            v-model="form.parentGoalId"
+            :disabled="!form.studentId"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          >
+            <option value="">{{ t('common.none') }}</option>
+            <option v-for="g in parentGoals" :key="g.id" :value="g.id">{{ g.statement }}</option>
+          </select>
+          <p class="mt-1 text-xs text-muted-foreground">{{ t('goal.studentGoal.parentGoalHint') }}</p>
         </div>
       </div>
 
       <!-- Criteria & measurements -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
-        <h3 class="font-semibold text-foreground">Kriter ve Ölçümler</h3>
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+        <h3 class="font-semibold text-foreground">{{ t('goal.studentGoal.sectionCriteria') }}</h3>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.masteryCriteria') }}</label>
           <textarea v-model="form.masteryCriteria" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary resize-none" />

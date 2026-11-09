@@ -100,7 +100,7 @@ export const useMakeupSessionStore = defineStore('makeupSession', () => {
     }
   }
 
-  async function completeMakeupRequest(id: string, rowVersion: string): Promise<MakeupRequestDto> {
+  async function completeMakeupRequest(id: string, rowVersion: number): Promise<MakeupRequestDto> {
     saving.value = true
     try {
       const res = await schedulingService.completeMakeupRequest(id, { rowVersion })

@@ -228,15 +228,16 @@ const responseTypeLabel = (type: string): string => {
       </div>
 
       <!-- Info Tab -->
-      <div v-if="activeTab === 'info'" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div v-if="activeTab === 'info'" class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <dl class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt class="text-muted-foreground">{{ t('assessment.template.type') }}</dt>
-            <dd class="font-medium text-foreground mt-0.5">{{ tpl.typeName ?? '—' }}</dd>
+            <!-- Backend returns typeCode / categoryCode (ref_value codes), not localized names. -->
+            <dd class="font-medium text-foreground mt-0.5">{{ tpl.typeCode ?? '—' }}</dd>
           </div>
           <div>
             <dt class="text-muted-foreground">{{ t('assessment.template.category') }}</dt>
-            <dd class="font-medium text-foreground mt-0.5">{{ tpl.categoryName ?? '—' }}</dd>
+            <dd class="font-medium text-foreground mt-0.5">{{ tpl.categoryCode ?? '—' }}</dd>
           </div>
           <div>
             <dt class="text-muted-foreground">{{ t('assessment.template.scoringModel') }}</dt>
@@ -271,7 +272,7 @@ const responseTypeLabel = (type: string): string => {
         </div>
         <div v-else class="space-y-4">
           <div v-for="section in [...tpl.sections].sort((a, b) => a.sortOrder - b.sortOrder)" :key="section.id"
-            class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+            class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <!-- Section header -->
             <div class="flex items-center justify-between px-4 py-3 bg-accent/30 border-b border-border">
               <div>
@@ -332,7 +333,7 @@ const responseTypeLabel = (type: string): string => {
         <div v-if="tpl.translations.length === 0" class="text-center py-12 text-muted-foreground">{{ t('assessment.translation.none') }}</div>
         <div v-else class="space-y-2">
           <div v-for="tr in tpl.translations" :key="tr.locale"
-            class="flex items-center justify-between rounded-xl border border-border bg-[--color-card] px-4 py-3 shadow-sm">
+            class="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
             <div>
               <span class="text-xs font-mono font-medium text-foreground uppercase">{{ tr.locale }}</span>
               <p class="text-sm text-foreground mt-0.5">{{ tr.name }}</p>

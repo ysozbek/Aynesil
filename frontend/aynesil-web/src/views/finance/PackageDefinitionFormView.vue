@@ -108,7 +108,7 @@ async function submit() {
     />
 
     <div class="max-w-2xl">
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-5">
+      <div class="rounded-xl border border-border bg-card shadow-sm p-6 space-y-5">
 
         <div v-if="errors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
           {{ errors.submit }}

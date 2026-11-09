@@ -84,7 +84,7 @@ function isOverdue(val: string | null): boolean {
       <div
         v-for="act in activityStore.followUps.items"
         :key="act.id"
-        :class="['rounded-xl border bg-[--color-card] p-4 shadow-sm hover:shadow transition-shadow cursor-pointer', isOverdue(act.followUpAt) ? 'border-red-200 bg-red-50/30' : 'border-border']"
+        :class="['rounded-xl border bg-card p-4 shadow-sm hover:shadow transition-shadow cursor-pointer', isOverdue(act.followUpAt) ? 'border-red-200 bg-red-50/30' : 'border-border']"
         @click="router.push({ name: 'lead-detail', params: { id: act.leadId } })"
       >
         <div class="flex items-start justify-between gap-4">

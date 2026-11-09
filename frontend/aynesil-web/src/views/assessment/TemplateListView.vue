@@ -74,8 +74,10 @@ function onSort(key: string, dir: 'asc' | 'desc') {
 const columns: Column<AssessmentTemplateListItemDto>[] = [
   { key: 'name', label: t('assessment.template.name'), sortable: true },
   { key: 'code', label: t('assessment.template.code'), width: '120px' },
-  { key: 'typeName', label: t('assessment.template.type'), width: '120px' },
-  { key: 'categoryName', label: t('assessment.template.category'), width: '130px' },
+  // Backend `AssessmentTemplateListItemDto` returns typeCode/categoryCode,
+  // not localized names.
+  { key: 'typeCode', label: t('assessment.template.type'), width: '120px' },
+  { key: 'categoryCode', label: t('assessment.template.category'), width: '130px' },
   { key: 'scoringModel', label: t('assessment.template.scoringModel'), width: '120px' },
   { key: 'version', label: t('assessment.template.version'), width: '70px', align: 'center' },
   { key: 'sectionCount', label: t('assessment.template.sections'), width: '80px', align: 'center' },

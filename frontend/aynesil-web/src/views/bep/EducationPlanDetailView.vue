@@ -6,7 +6,10 @@ import { useBepStore } from '@/stores/bep.store'
 import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
+import { goalService } from '@/services/goal.service'
 import type { EducationPlanGoalDto } from '@/types/bep.types'
+import type { StudentGoalListItemDto } from '@/types/goal.types'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -34,12 +37,16 @@ function formatDate(val: string | null): string {
 }
 
 // ── Status badges ────────────────────────────────────────────────────────────
+// Status tokens mirror the backend domain:
+//   draft, in_review, approved, active, revised, closed
+// (`EducationPlan.cs` + `db/layer2_sped/05_education.sql`).
 function statusColor(status: string): string {
   const map: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
-    pending_review: 'bg-yellow-100 text-yellow-700',
+    in_review: 'bg-yellow-100 text-yellow-700',
     approved: 'bg-green-100 text-green-700',
     active: 'bg-blue-100 text-blue-700',
+    revised: 'bg-amber-100 text-amber-700',
     closed: 'bg-slate-100 text-slate-600',
   }
   return map[status] ?? 'bg-gray-100 text-gray-700'
@@ -48,9 +55,10 @@ function statusColor(status: string): string {
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
     draft: t('bep.status.draft'),
-    pending_review: t('bep.status.pending_review'),
+    in_review: t('bep.status.in_review'),
     approved: t('bep.status.approved'),
     active: t('bep.status.active'),
+    revised: t('bep.status.revised'),
     closed: t('bep.status.closed'),
   }
   return map[status] ?? status
@@ -113,8 +121,8 @@ function openRejectModal() {
 }
 
 async function doApprove() {
-  if (!approvalForm.value.approverId.trim()) {
-    approvalError.value = t('validation.required', { field: 'Onaylayan ID' })
+  if (!approvalForm.value.approverId) {
+    approvalError.value = t('validation.required', { field: t('bep.approver') })
     return
   }
   try {
@@ -129,8 +137,8 @@ async function doApprove() {
 }
 
 async function doReject() {
-  if (!approvalForm.value.approverId.trim()) {
-    approvalError.value = t('validation.required', { field: 'Onaylayan ID' })
+  if (!approvalForm.value.approverId) {
+    approvalError.value = t('validation.required', { field: t('bep.approver') })
     return
   }
   try {
@@ -190,16 +198,32 @@ async function toggleGuardianVisibility() {
 const showAddGoalModal = ref(false)
 const addGoalForm = ref({ studentGoalId: '', horizon: 'long_term', sortOrder: 1 })
 const addGoalError = ref('')
+const availableGoals = ref<StudentGoalListItemDto[]>([])
 
-function openAddGoalModal() {
+async function openAddGoalModal() {
   addGoalForm.value = { studentGoalId: '', horizon: 'long_term', sortOrder: 1 }
   addGoalError.value = ''
+  availableGoals.value = []
   showAddGoalModal.value = true
+  if (!plan.value) return
+  const inPlan = new Set([...plan.value.longTermGoals, ...plan.value.shortTermGoals].map((g) => g.studentGoalId))
+  const res = await goalService.listStudentGoals({
+    corporationId: plan.value.corporationId,
+    studentId: plan.value.studentId,
+    page: 1,
+    pageSize: 200,
+  })
+  if (res.success && res.data) availableGoals.value = res.data.items.filter((g) => !inPlan.has(g.id))
+}
+
+function onGoalPicked() {
+  const goal = availableGoals.value.find((g) => g.id === addGoalForm.value.studentGoalId)
+  if (goal) addGoalForm.value.horizon = goal.horizon
 }
 
 async function doAddGoal() {
-  if (!addGoalForm.value.studentGoalId.trim()) {
-    addGoalError.value = t('validation.required', { field: 'Öğrenci Hedef ID' })
+  if (!addGoalForm.value.studentGoalId) {
+    addGoalError.value = t('validation.required', { field: t('bep.goal') })
     return
   }
   try {
@@ -219,7 +243,13 @@ async function doRemoveGoal(planGoalId: string, e: Event) {
   await store.removeGoal(id.value, planGoalId)
 }
 
+/** Reorder is only allowed in draft/in_review (enforced server-side too). */
+const canEditPlanStructure = computed(
+  () => plan.value?.status === 'draft' || plan.value?.status === 'in_review'
+)
+
 async function moveGoal(goals: EducationPlanGoalDto[], index: number, direction: 'up' | 'down') {
+  if (!canEditPlanStructure.value) return
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= goals.length) return
   const items = goals.map((g, i) => {
@@ -318,8 +348,8 @@ async function doAddReview() {
             </button>
           </template>
 
-          <!-- Pending review actions -->
-          <template v-else-if="plan.status === 'pending_review'">
+          <!-- In review actions -->
+          <template v-else-if="plan.status === 'in_review'">
             <button
               v-if="can('education_plan:approve')"
               @click="openApproveModal"
@@ -365,8 +395,10 @@ async function doAddReview() {
             >
               {{ t('bep.revise') }}
             </button>
+            <!-- Backend `PATCH /education-plans/{id}/guardian-visibility` enforces
+                 `education_plan:approve` (EducationPlansController.cs). -->
             <button
-              v-if="can('education_plan:update')"
+              v-if="can('education_plan:approve')"
               @click="toggleGuardianVisibility"
               :disabled="store.saving"
               :class="['px-3 py-2 text-sm rounded-lg border transition-colors disabled:opacity-60', plan.guardianVisible ? 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'border-border hover:bg-accent']"
@@ -398,7 +430,7 @@ async function doAddReview() {
 
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 space-y-3 shadow-sm md:col-span-2">
+        <div class="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm md:col-span-2">
           <h3 class="font-semibold text-foreground">{{ t('bep.tab.overview') }}</h3>
           <dl class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -446,7 +478,10 @@ async function doAddReview() {
 
       <!-- Goals Tab -->
       <div v-else-if="activeTab === 'goals'" class="space-y-6">
-        <div v-if="can('education_plan:manage_goals')" class="flex justify-end">
+        <div
+          v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+          class="flex justify-end"
+        >
           <button
             @click="openAddGoalModal"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
@@ -468,7 +503,7 @@ async function doAddReview() {
             <div
               v-for="(goal, index) in plan.longTermGoals"
               :key="goal.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
@@ -495,7 +530,10 @@ async function doAddReview() {
                     </div>
                   </div>
                 </div>
-                <div v-if="can('education_plan:manage_goals')" class="flex items-center gap-1 shrink-0">
+                <div
+                  v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+                  class="flex items-center gap-1 shrink-0"
+                >
                   <button
                     v-if="index > 0"
                     @click="moveGoal(plan.longTermGoals, index, 'up')"
@@ -541,7 +579,7 @@ async function doAddReview() {
             <div
               v-for="(goal, index) in plan.shortTermGoals"
               :key="goal.id"
-              class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+              class="rounded-xl border border-border bg-card p-4 shadow-sm"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
@@ -568,7 +606,10 @@ async function doAddReview() {
                     </div>
                   </div>
                 </div>
-                <div v-if="can('education_plan:manage_goals')" class="flex items-center gap-1 shrink-0">
+                <div
+                  v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+                  class="flex items-center gap-1 shrink-0"
+                >
                   <button
                     v-if="index > 0"
                     @click="moveGoal(plan.shortTermGoals, index, 'up')"
@@ -626,7 +667,7 @@ async function doAddReview() {
           <div
             v-for="review in plan.reviews"
             :key="review.id"
-            class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div class="flex items-start justify-between">
               <div>
@@ -650,7 +691,7 @@ async function doAddReview() {
         <div
           v-for="approval in plan.approvals"
           :key="approval.id"
-          class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+          class="rounded-xl border border-border bg-card p-4 shadow-sm"
         >
           <div class="flex items-start justify-between">
             <div>
@@ -673,7 +714,7 @@ async function doAddReview() {
         <div
           v-for="rev in plan.revisions"
           :key="rev.id"
-          class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm"
+          class="rounded-xl border border-border bg-card p-4 shadow-sm"
         >
           <div class="flex items-start justify-between">
             <div>
@@ -703,8 +744,8 @@ async function doAddReview() {
       <div class="space-y-4">
         <p v-if="approvalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ approvalError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">Onaylayan ID *</label>
-          <input v-model="approvalForm.approverId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.approver') }} *</label>
+          <EducatorPicker v-model="approvalForm.approverId" />
         </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('common.comment') }}</label>
@@ -724,8 +765,8 @@ async function doAddReview() {
       <div class="space-y-4">
         <p v-if="approvalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ approvalError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">Onaylayan ID *</label>
-          <input v-model="approvalForm.approverId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.approver') }} *</label>
+          <EducatorPicker v-model="approvalForm.approverId" />
         </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('common.comment') }}</label>
@@ -762,15 +803,30 @@ async function doAddReview() {
       <div class="space-y-4">
         <p v-if="addGoalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ addGoalError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">Öğrenci Hedef ID *</label>
-          <input v-model="addGoalForm.studentGoalId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.goal') }} *</label>
+          <select
+            v-model="addGoalForm.studentGoalId"
+            @change="onGoalPicked"
+            class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="g in availableGoals" :key="g.id" :value="g.id">{{ g.statement }}</option>
+          </select>
+          <p class="mt-1 text-xs text-muted-foreground">
+            {{ t('bep.addGoalHint') }}
+            <RouterLink
+              v-if="plan"
+              :to="{ name: 'student-goal-new', query: { studentId: plan.studentId } }"
+              class="text-primary hover:underline"
+            >{{ t('goal.studentGoal.create') }}</RouterLink>
+          </p>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.horizon') }}</label>
             <select v-model="addGoalForm.horizon" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
-              <option value="long_term">{{ t('goal.studentGoal.horizon.longTerm') }}</option>
-              <option value="short_term">{{ t('goal.studentGoal.horizon.shortTerm') }}</option>
+              <option value="long_term">{{ t('goal.studentGoal.horizonOptions.long_term') }}</option>
+              <option value="short_term">{{ t('goal.studentGoal.horizonOptions.short_term') }}</option>
             </select>
           </div>
           <div>
@@ -797,8 +853,8 @@ async function doAddReview() {
             <input v-model="reviewForm.reviewedOn" type="date" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-foreground mb-1">İnceleyen ID</label>
-            <input v-model="reviewForm.reviewerId" type="text" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.reviewer') }}</label>
+            <EducatorPicker v-model="reviewForm.reviewerId" />
           </div>
         </div>
         <div>

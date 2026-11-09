@@ -157,7 +157,7 @@ async function submit() {
       <p v-if="generalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{{ generalError }}</p>
 
       <!-- Contact Info -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <h3 class="font-semibold text-foreground">{{ t('crm.lead.contactInfo') }}</h3>
 
         <div>
@@ -189,7 +189,7 @@ async function submit() {
       </div>
 
       <!-- Child Info -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <h3 class="font-semibold text-foreground">{{ t('crm.lead.childInfo') }}</h3>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -204,7 +204,7 @@ async function submit() {
       </div>
 
       <!-- CRM Classification -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <h3 class="font-semibold text-foreground">{{ t('crm.lead.classification') }}</h3>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -244,7 +244,7 @@ async function submit() {
       </div>
 
       <!-- Clinical Notes -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm space-y-4">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
         <h3 class="font-semibold text-foreground">{{ t('crm.lead.clinicalInfo') }}</h3>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('crm.lead.presentingNeed') }}</label>

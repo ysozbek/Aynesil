@@ -24,11 +24,15 @@ public record CreateRecurringScheduleCommand(
     int[]? ByWeekday,
     int[]? ByMonthday,
     DateOnly? RangeEnd,
-    int? MaxOccurrences) : IRequest<RecurringScheduleDto>;
+    int? MaxOccurrences,
+    Guid? ProgramServiceId = null,
+    IReadOnlyList<EducatorAssignment>? Educators = null) : IRequest<RecurringScheduleDto>;
 
 public class CreateRecurringScheduleCommandValidator
     : AbstractValidator<CreateRecurringScheduleCommand>
 {
+    private static readonly string[] EducatorRoles = ["lead", "assistant", "observer", "supervisor"];
+
     public CreateRecurringScheduleCommandValidator()
     {
         RuleFor(x => x.CorporationId).NotEmpty();
@@ -42,6 +46,18 @@ public class CreateRecurringScheduleCommandValidator
             .WithMessage("Range end must be after range start.");
         RuleFor(x => x.IntervalCount).GreaterThanOrEqualTo(1);
         RuleFor(x => x.MaxOccurrences).GreaterThan(0).When(x => x.MaxOccurrences.HasValue);
+
+        RuleFor(x => x.Educators)
+            .Must(e => e!.Select(a => a.EducatorId).Distinct().Count() == e!.Count)
+            .When(x => x.Educators is { Count: > 0 })
+            .WithMessage("The same educator cannot be assigned twice.");
+        RuleForEach(x => x.Educators).ChildRules(a =>
+        {
+            a.RuleFor(e => e.EducatorId).NotEmpty();
+            a.RuleFor(e => e.Role)
+                .Must(r => EducatorRoles.Contains(r))
+                .WithMessage("Educator role must be lead, assistant, observer, or supervisor.");
+        });
     }
 }
 
@@ -60,11 +76,28 @@ public sealed class CreateRecurringScheduleCommandHandler
     public async Task<RecurringScheduleDto> Handle(
         CreateRecurringScheduleCommand req, CancellationToken ct)
     {
+        if (req.ProgramServiceId.HasValue)
+            await EnsureServiceMatchesStudentProgramAsync(req.ProgramServiceId.Value, req.StudentProgramId, ct);
+
+        var educators = req.Educators ?? [];
+        if (educators.Count > 0)
+        {
+            var ids = educators.Select(e => e.EducatorId).ToList();
+            var found = await _db.Educators.AsNoTracking()
+                .CountAsync(e => ids.Contains(e.Id) && e.IsActive, ct);
+            if (found != ids.Count)
+                throw new KeyNotFoundException("One or more educators were not found or are inactive.");
+        }
+
         var schedule = RecurringSchedule.Create(
             req.CorporationId, req.Frequency, req.StartTime, req.DurationMinutes,
             req.RangeStart, req.CampusId, req.StudentProgramId, req.SessionTypeId,
             req.RoomId, req.IntervalCount, req.ByWeekday, req.ByMonthday,
-            req.RangeEnd, req.MaxOccurrences, _currentUser.UserId);
+            req.RangeEnd, req.MaxOccurrences, _currentUser.UserId,
+            programServiceId: req.ProgramServiceId);
+
+        foreach (var e in educators)
+            schedule.AssignEducator(e.EducatorId, e.Role);
 
         _db.RecurringSchedules.Add(schedule);
         await _db.SaveChangesAsync(ct);
@@ -72,12 +105,35 @@ public sealed class CreateRecurringScheduleCommandHandler
         return ToDto(schedule);
     }
 
+    private async Task EnsureServiceMatchesStudentProgramAsync(
+        Guid programServiceId, Guid? studentProgramId, CancellationToken ct)
+    {
+        var serviceProgramId = await _db.ProgramServices.AsNoTracking()
+            .Where(ps => ps.Id == programServiceId)
+            .Select(ps => (Guid?)ps.ProgramId)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new KeyNotFoundException($"ProgramService {programServiceId} not found.");
+
+        if (!studentProgramId.HasValue) return;
+
+        var studentProgramProgramId = await _db.StudentPrograms.AsNoTracking()
+            .Where(sp => sp.Id == studentProgramId.Value)
+            .Select(sp => (Guid?)sp.ProgramId)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new KeyNotFoundException($"StudentProgram {studentProgramId} not found.");
+
+        if (studentProgramProgramId != serviceProgramId)
+            throw new InvalidOperationException(
+                "The selected service does not belong to the student's program.");
+    }
+
     internal static RecurringScheduleDto ToDto(RecurringSchedule s)
         => new(s.Id, s.CorporationId, s.CampusId, s.StudentProgramId,
                s.SessionTypeId, s.RoomId, s.Frequency, s.IntervalCount,
                s.ByWeekday, s.ByMonthday, s.StartTime, s.DurationMinutes,
                s.RangeStart, s.RangeEnd, s.MaxOccurrences, s.IsActive,
-               s.CreatedAt, s.RowVersion);
+               s.CreatedAt, s.RowVersion, s.ProgramServiceId,
+               s.Educators.Select(e => new RecurringScheduleEducatorDto(e.EducatorId, e.Role)).ToList());
 }
 
 // ── DeactivateRecurringScheduleCommand ───────────────────────────────────────
@@ -204,11 +260,29 @@ public sealed class BulkGenerateSessionsCommandHandler
         var schedule = await _db.RecurringSchedules
             .AsNoTracking()
             .Include(s => s.Exceptions)
+            .Include(s => s.Educators)
             .FirstOrDefaultAsync(s => s.Id == req.RecurringScheduleId, ct)
             ?? throw new KeyNotFoundException($"RecurringSchedule {req.RecurringScheduleId} not found.");
 
         if (!schedule.IsActive)
             throw new InvalidOperationException("Cannot generate sessions for an inactive recurring schedule.");
+
+        Guid? participantStudentId = null;
+        if (schedule.StudentProgramId.HasValue)
+        {
+            var studentProgram = await _db.StudentPrograms
+                .AsNoTracking()
+                .Where(sp => sp.Id == schedule.StudentProgramId.Value)
+                .Select(sp => new { sp.StudentId, sp.Status })
+                .FirstOrDefaultAsync(ct)
+                ?? throw new KeyNotFoundException($"StudentProgram {schedule.StudentProgramId} not found.");
+
+            if (studentProgram.Status != "active")
+                throw new InvalidOperationException(
+                    "Cannot generate sessions: the student's program is not active.");
+
+            participantStudentId = studentProgram.StudentId;
+        }
 
         // Load already-generated sessions for this window to avoid duplicates
         var windowStart = req.WindowStart.ToDateTime(schedule.StartTime, DateTimeKind.Utc);
@@ -230,6 +304,8 @@ public sealed class BulkGenerateSessionsCommandHandler
         var occurrences = ExpandOccurrences(schedule, req.WindowStart, req.WindowEnd);
 
         int created = 0;
+        int roomSkipped = 0;
+        int educatorSkipped = 0;
 
         foreach (var date in occurrences)
         {
@@ -261,15 +337,39 @@ public sealed class BulkGenerateSessionsCommandHandler
             {
                 var conflict = await _sessions.HasRoomConflictAsync(
                     schedule.RoomId.Value, startsAt, endsAt, null, ct);
-                if (conflict) continue;
+                if (conflict) { roomSkipped++; continue; }
             }
 
+            // trg_educator_overlap would abort the whole batch on save, so skip
+            // conflicting dates up front instead.
+            var educatorConflict = false;
+            foreach (var e in schedule.Educators)
+            {
+                if (await _sessions.HasEducatorConflictAsync(e.EducatorId, startsAt, endsAt, null, ct))
+                {
+                    educatorConflict = true;
+                    break;
+                }
+            }
+            if (educatorConflict) { educatorSkipped++; continue; }
+
+            // The eighth parameter of Session.Schedule is program_service_id, not
+            // student_program_id; student_program_id belongs on the participant row.
             var session = Session.Schedule(
                 schedule.CorporationId, schedule.SessionTypeId ?? Guid.Empty,
                 startsAt, endsAt,
                 schedule.CampusId, schedule.RoomId, schedule.Id,
-                schedule.StudentProgramId, null, false,
-                _currentUser.UserId);
+                programServiceId: schedule.ProgramServiceId, title: null, isMakeup: false,
+                createdBy: _currentUser.UserId);
+
+            if (participantStudentId.HasValue)
+                session.Participants.Add(SessionParticipant.Create(
+                    schedule.CorporationId, session.Id,
+                    participantStudentId.Value, schedule.StudentProgramId));
+
+            foreach (var e in schedule.Educators)
+                session.Educators.Add(SessionEducator.Assign(
+                    schedule.CorporationId, session.Id, e.EducatorId, e.Role));
 
             _db.Sessions.Add(session);
             created++;
@@ -283,7 +383,12 @@ public sealed class BulkGenerateSessionsCommandHandler
         if (created > 0)
             await _db.SaveChangesAsync(ct);
 
-        return new BulkOperationResultDto(created, $"{created} session(s) generated.");
+        return new BulkOperationResultDto(
+            created,
+            $"{created} session(s) generated; {roomSkipped} skipped due to room conflict; " +
+            $"{educatorSkipped} skipped due to educator conflict.",
+            roomSkipped,
+            educatorSkipped);
     }
 
     /// <summary>

@@ -29,7 +29,7 @@ const { t } = useI18n()
       <!-- Modal panel -->
       <div
         :class="[
-          'relative z-10 w-full rounded-2xl bg-white dark:bg-[--color-card] shadow-2xl flex flex-col max-h-[90vh] border border-gray-100',
+          'relative z-10 w-full rounded-2xl bg-white dark:bg-card shadow-2xl flex flex-col max-h-[90vh] border border-gray-100',
           wide ? 'max-w-3xl' : 'max-w-lg',
         ]"
       >

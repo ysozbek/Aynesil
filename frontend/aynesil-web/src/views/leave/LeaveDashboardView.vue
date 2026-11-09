@@ -17,17 +17,18 @@ function formatDate(dt: string) {
   return new Date(dt).toLocaleDateString('tr-TR')
 }
 
+// Backend status tokens are lowercase (`LeaveRequest.cs`).
 const pendingLeaves = computed(() =>
-  leaveStore.leaveList.items.filter((l) => l.status === 'Pending')
+  leaveStore.leaveList.items.filter((l) => l.status === 'pending')
 )
 const pendingCount = computed(() => pendingLeaves.value.length)
 const approvedCount = computed(() =>
-  leaveStore.leaveList.items.filter((l) => l.status === 'Approved').length
+  leaveStore.leaveList.items.filter((l) => l.status === 'approved').length
 )
 const upcomingCount = computed(() => {
   const now = new Date()
   return leaveStore.leaveList.items.filter(
-    (l) => l.status === 'Approved' && new Date(l.startsAt) > now
+    (l) => l.status === 'approved' && new Date(l.startsAt) > now
   ).length
 })
 
@@ -56,30 +57,30 @@ onMounted(async () => {
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-amber-600">{{ pendingCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('leave.dashboard.pendingApprovals') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-green-600">{{ approvedCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('leave.dashboard.approvedThisMonth') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-primary">{{ upcomingCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('leave.dashboard.upcomingLeaves') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-sky-600">{{ leaveStore.balances.length }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('leave.dashboard.balanceRecords') }}</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('leave.dashboard.pendingRequests') }}</h3>
           <button
-            @click="router.push({ name: 'leave-list', query: { status: 'Pending' } })"
+            @click="router.push({ name: 'leave-list', query: { status: 'pending' } })"
             class="text-xs text-primary hover:underline"
           >
             {{ t('common.viewAll') }}
@@ -112,7 +113,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('leave.dashboard.balanceSummary') }}</h3>
           <button @click="router.push({ name: 'leave-balances' })" class="text-xs text-primary hover:underline">

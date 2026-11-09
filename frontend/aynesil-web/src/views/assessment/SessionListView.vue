@@ -61,8 +61,10 @@ function onSort(key: string, dir: 'asc' | 'desc') {
 
 const columns: Column<AssessmentSessionListItemDto>[] = [
   { key: 'templateName', label: t('assessment.session.template'), sortable: false },
-  { key: 'leadContactName', label: t('assessment.session.subject') },
-  { key: 'assessorName', label: t('assessment.session.assessor'), width: '140px' },
+  // Backend session list DTO returns IDs (no joined names) — see
+  // `AssessmentSessionListItemDto` in `src/Aynesil.Application/Features/Assessment/Dtos`.
+  { key: 'templateName', label: t('assessment.session.subject') },
+  { key: 'assessorId', label: t('assessment.session.assessor'), width: '140px' },
   { key: 'status', label: t('common.status'), width: '120px' },
   { key: 'scheduledAt', label: t('assessment.session.scheduledAt'), sortable: true, width: '140px' },
   { key: 'totalScore', label: t('assessment.session.score'), width: '80px', align: 'center' },
@@ -146,8 +148,8 @@ async function doDelete() {
       @sort="onSort"
       @row-click="goDetail"
     >
-      <template #cell-leadContactName="{ row }">
-        {{ row.leadContactName ?? row.studentName ?? '—' }}
+      <template #cell-templateName="{ row }">
+        {{ row.templateName ?? '—' }}<span v-if="row.templateVersion" class="text-xs text-muted-foreground"> · v{{ row.templateVersion }}</span>
       </template>
       <template #cell-status="{ row }">
         <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">

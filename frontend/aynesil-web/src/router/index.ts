@@ -346,6 +346,19 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/programs/ProgramFormView.vue'),
         meta: { permission: 'program:create' },
       },
+      // Static paths before :id so "enrollments" is not captured as a program id.
+      {
+        path: 'programs/enrollments',
+        name: 'enrollments',
+        component: () => import('@/views/programs/EnrollmentListView.vue'),
+        meta: { permission: 'enrollment:read' },
+      },
+      {
+        path: 'programs/enrollments/:id',
+        name: 'enrollment-detail',
+        component: () => import('@/views/programs/EnrollmentDetailView.vue'),
+        meta: { permission: 'enrollment:read' },
+      },
       {
         path: 'programs/:id',
         name: 'program-detail',
@@ -384,6 +397,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/bep/EducationPlanFormView.vue'),
         meta: { permission: 'education_plan:update' },
       },
+      // Menu seed `/education-plans/*` (db/migrations/V12) still points to the
+      // older URL base. Keep both URLs working so permissioned menu rows do not
+      // 404 while we align menu paths in a follow-up migration.
+      { path: 'education-plans', redirect: '/bep' },
+      { path: 'education-plans/:id', redirect: (to) => `/bep/${to.params.id}` },
+      { path: 'education-plans/:id/edit', redirect: (to) => `/bep/${to.params.id}/edit` },
 
       // ── Scheduling & Sessions ──────────────────────────────────────────────────
       {
@@ -466,8 +485,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'finance',
         name: 'finance-dashboard',
+        // Backend catalog: Permissions.FinancePayments.Read = 'finance_payment:read'.
         component: () => import('@/views/finance/FinanceDashboardView.vue'),
-        meta: { permission: 'payment:read' },
+        meta: { permission: 'finance_payment:read' },
       },
       {
         path: 'finance/packages',
@@ -500,6 +520,12 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: 'student_package:read' },
       },
       {
+        path: 'finance/student-packages/new',
+        name: 'student-package-new',
+        component: () => import('@/views/finance/StudentPackageFormView.vue'),
+        meta: { permission: 'student_package:purchase' },
+      },
+      {
         path: 'finance/student-packages/:id',
         name: 'student-package-detail',
         component: () => import('@/views/finance/StudentPackageListView.vue'),
@@ -508,8 +534,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'finance/credits',
         name: 'credit-ledger',
+        // Backend catalog: Permissions.CreditLedger.Read = 'credit_ledger:read'.
         component: () => import('@/views/finance/CreditLedgerView.vue'),
-        meta: { permission: 'credit:read' },
+        meta: { permission: 'credit_ledger:read' },
       },
       {
         path: 'finance/invoices',
@@ -532,20 +559,21 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'finance/payments',
         name: 'payments',
+        // Permissions.FinancePayments.* uses the finance_payment:* prefix.
         component: () => import('@/views/finance/PaymentListView.vue'),
-        meta: { permission: 'payment:read' },
+        meta: { permission: 'finance_payment:read' },
       },
       {
         path: 'finance/payments/new',
         name: 'payment-new',
         component: () => import('@/views/finance/PaymentFormView.vue'),
-        meta: { permission: 'payment:create' },
+        meta: { permission: 'finance_payment:record' },
       },
       {
         path: 'finance/payments/:id',
         name: 'payment-detail',
         component: () => import('@/views/finance/PaymentDetailView.vue'),
-        meta: { permission: 'payment:read' },
+        meta: { permission: 'finance_payment:read' },
       },
       {
         path: 'finance/scholarships',

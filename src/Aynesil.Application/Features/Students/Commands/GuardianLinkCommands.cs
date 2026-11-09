@@ -79,7 +79,7 @@ public sealed class LinkGuardianToStudentCommandHandler
         _db.StudentGuardians.Add(link);
         await _db.SaveChangesAsync(ct);
 
-        return StudentProjection.ToStudentGuardianDto(link, guardian);
+        return StudentProjection.ToStudentGuardianDto(link, guardian, student);
     }
 }
 
@@ -117,8 +117,11 @@ public sealed class UpdateGuardianLinkCommandHandler
         var guardian = await _db.Guardians
             .AsNoTracking()
             .FirstOrDefaultAsync(g => g.Id == link.GuardianId, ct);
+        var student = await _db.Students
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == link.StudentId, ct);
 
-        return StudentProjection.ToStudentGuardianDto(link, guardian);
+        return StudentProjection.ToStudentGuardianDto(link, guardian, student);
     }
 }
 

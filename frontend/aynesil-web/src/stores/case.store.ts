@@ -162,6 +162,23 @@ export const useCaseStore = defineStore('case', () => {
     }
   }
 
+  async function updateDevelopmentReport(
+    studentId: string,
+    reportId: string,
+    payload: UpdateDevelopmentReportPayload,
+  ): Promise<DevelopmentReportDto> {
+    saving.value = true
+    try {
+      const res = await studentService.updateDevelopmentReport(studentId, reportId, payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Gelişim raporu güncellenemedi.')
+      const idx = developmentReports.value.findIndex(r => r.id === reportId)
+      if (idx >= 0) developmentReports.value[idx] = res.data
+      return res.data
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function deleteDevelopmentReport(studentId: string, reportId: string) {
     saving.value = true
     try {
@@ -207,7 +224,7 @@ export const useCaseStore = defineStore('case', () => {
     fetchCaseNotes, fetchMedicalReports, fetchDevelopmentReports, fetchExternalReports,
     addCaseNote, updateCaseNote, deleteCaseNote,
     addMedicalReport, updateMedicalReport, deleteMedicalReport,
-    addDevelopmentReport, deleteDevelopmentReport,
+    addDevelopmentReport, updateDevelopmentReport, deleteDevelopmentReport,
     addExternalReport, deleteExternalReport,
     clearAll,
   }

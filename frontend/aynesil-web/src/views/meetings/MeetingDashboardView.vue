@@ -129,26 +129,26 @@ onMounted(async () => {
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-primary">{{ store.meetingList.totalCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('meeting.dashboard.total') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-blue-600">{{ scheduledCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('meeting.dashboard.scheduled') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-green-600">{{ completedCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('meeting.dashboard.completed') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-amber-600">{{ followUpStore.pendingFollowUps.length }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('meeting.dashboard.pendingFollowUps') }}</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('meeting.dashboard.upcoming') }}</h3>
           <button
@@ -190,7 +190,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('meeting.followUp.pendingTitle') }}</h3>
           <button
@@ -225,21 +225,21 @@ onMounted(async () => {
     <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
       <button
         @click="router.push({ name: 'meetings' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <p class="font-semibold text-foreground text-sm">{{ t('meeting.nav.list') }}</p>
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('meeting.list.subtitle') }}</p>
       </button>
       <button
         @click="router.push({ name: 'meeting-calendar' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <p class="font-semibold text-foreground text-sm">{{ t('meeting.nav.calendar') }}</p>
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('meeting.calendar.subtitle') }}</p>
       </button>
       <button
         @click="router.push({ name: 'follow-ups' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <p class="font-semibold text-foreground text-sm">{{ t('meeting.nav.followUps') }}</p>
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('meeting.followUp.listSubtitle') }}</p>

@@ -49,26 +49,26 @@ onMounted(async () => {
     </PageHeader>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-primary">{{ totalCameras }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('camera.dashboard.totalCameras') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-green-600">{{ activeCameras }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('camera.dashboard.activeCameras') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-amber-600">{{ activeAuthorizations }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('camera.dashboard.activeAuthorizations') }}</p>
       </div>
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
         <p class="text-2xl font-bold text-sky-600">{{ cameraStore.viewingLogs.totalCount }}</p>
         <p class="text-xs text-muted-foreground mt-1">{{ t('camera.dashboard.recentViews') }}</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('camera.dashboard.cameraStatus') }}</h3>
           <button
@@ -108,7 +108,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('camera.dashboard.accessLogs') }}</h3>
           <button

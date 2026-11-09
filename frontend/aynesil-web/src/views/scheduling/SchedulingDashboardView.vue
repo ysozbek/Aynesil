@@ -32,7 +32,9 @@ onMounted(async () => {
     }),
     makeupStore.fetchMakeupRequests({
       corporationId: corporationId.value,
-      status: 'pending',
+      // Backend status token for "awaiting approval" is `requested`
+      // (MakeupRequest domain + db/layer2_sped/06_scheduling.sql).
+      status: 'requested',
       page: 1,
       pageSize: 5,
     }),
@@ -99,7 +101,7 @@ function statusLabel(status: string): string {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <button
         @click="router.push({ name: 'sessions' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <div class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +114,7 @@ function statusLabel(status: string): string {
 
       <button
         @click="router.push({ name: 'scheduling-calendar' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <div class="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +127,7 @@ function statusLabel(status: string): string {
 
       <button
         @click="router.push({ name: 'makeup-requests' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <div class="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +140,7 @@ function statusLabel(status: string): string {
 
       <button
         @click="router.push({ name: 'rooms' })"
-        class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
+        class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40 transition-colors"
       >
         <div class="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +154,7 @@ function statusLabel(status: string): string {
 
     <!-- Today's Sessions -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.dashboard.todaySessions') }}</h3>
           <button
@@ -195,7 +197,7 @@ function statusLabel(status: string): string {
       </div>
 
       <!-- Pending Makeup Requests -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.makeup.pendingTitle') }}</h3>
           <button
@@ -220,8 +222,7 @@ function statusLabel(status: string): string {
             @click="router.push({ name: 'makeup-request-detail', params: { id: req.id } })"
           >
             <p class="text-sm font-medium text-foreground truncate">{{ req.studentFullName }}</p>
-            <p class="text-xs text-muted-foreground mt-0.5">{{ req.missedSessionTitle }}</p>
-            <p class="text-xs text-muted-foreground">{{ formatDate(req.missedSessionDate) }}</p>
+            <p class="text-xs text-muted-foreground mt-0.5">{{ formatDate(req.requestedAt) }}</p>
           </div>
         </div>
       </div>

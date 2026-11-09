@@ -23,6 +23,7 @@ public class RecurringScheduleConfiguration : IEntityTypeConfiguration<Recurring
         builder.Property(x => x.CorporationId).HasColumnName("corporation_id").IsRequired();
         builder.Property(x => x.CampusId).HasColumnName("campus_id");
         builder.Property(x => x.StudentProgramId).HasColumnName("student_program_id");
+        builder.Property(x => x.ProgramServiceId).HasColumnName("program_service_id");
         builder.Property(x => x.SessionTypeId).HasColumnName("session_type_id");
         builder.Property(x => x.RoomId).HasColumnName("room_id");
         builder.Property(x => x.Frequency).HasColumnName("frequency").IsRequired();
@@ -62,5 +63,10 @@ public class RecurringScheduleConfiguration : IEntityTypeConfiguration<Recurring
             .WithOne()
             .HasForeignKey(s => s.RecurringScheduleId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasMany(x => x.Educators)
+            .WithOne()
+            .HasForeignKey(e => e.RecurringScheduleId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

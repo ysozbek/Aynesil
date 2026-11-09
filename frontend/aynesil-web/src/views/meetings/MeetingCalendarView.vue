@@ -233,7 +233,7 @@ onMounted(loadCalendar)
       {{ t('common.loading') }}
     </div>
 
-    <div v-else-if="viewMode === 'month'" class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else-if="viewMode === 'month'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div class="grid grid-cols-7 border-b border-border bg-accent/40">
         <div
           v-for="day in weekDays"
@@ -269,7 +269,7 @@ onMounted(loadCalendar)
       </div>
     </div>
 
-    <div v-else class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+    <div v-else class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div v-if="filteredMeetings.length === 0" class="py-10 text-center text-sm text-muted-foreground">
         {{ t('meeting.calendar.noMeetings') }}
       </div>

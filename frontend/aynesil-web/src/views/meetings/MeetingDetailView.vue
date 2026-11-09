@@ -194,7 +194,7 @@ onMounted(async () => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('meeting.fields.title') }}</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
@@ -216,7 +216,7 @@ onMounted(async () => {
             </dl>
           </div>
 
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+          <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b border-border">
               <h3 class="font-semibold text-foreground">{{ t('meeting.outcomes.title') }}</h3>
               <button
@@ -239,7 +239,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+          <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b border-border">
               <h3 class="font-semibold text-foreground">{{ t('meeting.followUp.title') }}</h3>
               <button
@@ -276,7 +276,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden h-fit">
+        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden h-fit">
           <div class="flex items-center justify-between p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">
               {{ t('meeting.participants.title') }} ({{ meeting.participants.length }})
@@ -315,7 +315,7 @@ onMounted(async () => {
                 </button>
                 <div
                   v-if="openParticipantMenu === p.id"
-                  class="absolute right-0 top-full mt-1 z-10 w-36 rounded-lg border border-border bg-[--color-card] shadow-lg py-1"
+                  class="absolute right-0 top-full mt-1 z-10 w-36 rounded-lg border border-border bg-card shadow-lg py-1"
                 >
                   <button
                     v-if="canRecordAttendance"

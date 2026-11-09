@@ -107,7 +107,7 @@ function horizonColor(horizon: string): string {
 }
 
 function horizonLabel(horizon: string): string {
-  return horizon === 'long_term' ? t('goal.studentGoal.horizon.longTerm') : t('goal.studentGoal.horizon.shortTerm')
+  return horizon === 'long_term' ? t('goal.studentGoal.horizonOptions.long_term') : t('goal.studentGoal.horizonOptions.short_term')
 }
 
 function statusColor(status: string): string {
@@ -204,8 +204,8 @@ async function doDelete() {
 
       <select v-model="query.horizon" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('goal.studentGoal.horizon') }}</option>
-        <option value="long_term">{{ t('goal.studentGoal.horizon.longTerm') }}</option>
-        <option value="short_term">{{ t('goal.studentGoal.horizon.shortTerm') }}</option>
+        <option value="long_term">{{ t('goal.studentGoal.horizonOptions.long_term') }}</option>
+        <option value="short_term">{{ t('goal.studentGoal.horizonOptions.short_term') }}</option>
       </select>
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">

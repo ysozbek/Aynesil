@@ -74,7 +74,7 @@ function formatDate(val: string): string {
     <PageHeader :title="t('finance.dashboard.title')" :description="t('finance.dashboard.description')">
       <div class="flex items-center gap-2">
         <button
-          v-if="can('payment:create')"
+          v-if="can('finance_payment:record')"
           @click="router.push({ name: 'payment-new' })"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >
@@ -88,7 +88,7 @@ function formatDate(val: string): string {
 
     <!-- Quick Nav Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <button @click="router.push({ name: 'packages' })" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40">
+      <button @click="router.push({ name: 'packages' })" class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40">
         <div class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -98,7 +98,7 @@ function formatDate(val: string): string {
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('finance.package.title') }}</p>
       </button>
 
-      <button @click="router.push({ name: 'invoices' })" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40">
+      <button @click="router.push({ name: 'invoices' })" class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40">
         <div class="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -108,7 +108,7 @@ function formatDate(val: string): string {
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('finance.invoice.title') }}</p>
       </button>
 
-      <button @click="router.push({ name: 'payments' })" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40">
+      <button @click="router.push({ name: 'payments' })" class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40">
         <div class="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -118,7 +118,7 @@ function formatDate(val: string): string {
         <p class="text-xs text-muted-foreground mt-0.5">{{ t('finance.payment.title') }}</p>
       </button>
 
-      <button @click="router.push({ name: 'credit-ledger' })" class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm text-left hover:border-primary/40">
+      <button @click="router.push({ name: 'credit-ledger' })" class="rounded-xl border border-border bg-card p-5 shadow-sm text-left hover:border-primary/40">
         <div class="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center mb-3">
           <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -146,7 +146,7 @@ function formatDate(val: string): string {
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Revenue Report -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('finance.dashboard.revenueSummary') }}</h3>
         </div>
@@ -173,7 +173,7 @@ function formatDate(val: string): string {
       </div>
 
       <!-- Package Report -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('finance.dashboard.packageSummary') }}</h3>
         </div>
@@ -200,7 +200,7 @@ function formatDate(val: string): string {
       </div>
 
       <!-- Outstanding Invoices -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('finance.dashboard.overdueInvoices') }}</h3>
           <button @click="router.push({ name: 'invoices', query: { status: 'overdue' } })" class="text-xs text-primary hover:underline">{{ t('common.viewAll') }}</button>
@@ -228,7 +228,7 @@ function formatDate(val: string): string {
       </div>
 
       <!-- Recent Payments -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('finance.dashboard.pendingPayments') }}</h3>
           <button @click="router.push({ name: 'payments' })" class="text-xs text-primary hover:underline">{{ t('common.viewAll') }}</button>

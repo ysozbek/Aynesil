@@ -118,6 +118,7 @@ public class AynesilDbContext : DbContext, IAppDbContext
     public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
     public DbSet<RecurringSchedule> RecurringSchedules => Set<RecurringSchedule>();
     public DbSet<RecurrenceException> RecurrenceExceptions => Set<RecurrenceException>();
+    public DbSet<RecurringScheduleEducator> RecurringScheduleEducators => Set<RecurringScheduleEducator>();
     public DbSet<Session> Sessions => Set<Session>();
     public DbSet<SessionParticipant> SessionParticipants => Set<SessionParticipant>();
     public DbSet<SessionEducator> SessionEducators => Set<SessionEducator>();

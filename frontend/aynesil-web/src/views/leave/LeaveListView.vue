@@ -171,7 +171,7 @@ onMounted(() => leaveStore.fetchLeaves(filters))
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="row.status === 'Pending' && can('leave_request:update')"
+            v-if="row.status === 'pending' && can('leave_request:update')"
             @click="router.push({ name: 'leave-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"

@@ -165,7 +165,7 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('consultancyContract.detail.info') }}</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
@@ -203,7 +203,7 @@ onMounted(() => {
             </dl>
           </div>
 
-          <div v-if="agreement.fileId" class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+          <div v-if="agreement.fileId" class="rounded-xl border border-border bg-card shadow-sm p-5">
             <h3 class="font-semibold text-foreground mb-4">{{ t('consultancyContract.detail.document') }}</h3>
             <div class="flex items-center gap-4 rounded-lg border border-border bg-accent/30 p-4">
               <svg class="w-8 h-8 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5 h-fit">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5 h-fit">
           <h3 class="font-semibold text-foreground mb-4">{{ t('consultancyContract.detail.metadata') }}</h3>
           <dl class="space-y-3 text-sm">
             <div>

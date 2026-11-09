@@ -87,12 +87,21 @@ public record GuardianListItemDto(
     bool HasPortalAccount,
     int LinkedStudentCount);
 
+/// <summary>
+/// A link between a student and a guardian, enriched with both sides so the DTO
+/// can be used from either the student record (`StudentDto.Guardians`) — where the
+/// consumer renders the guardian — or the guardian record (`GuardianDto.Students`),
+/// where the consumer renders the student and needs the student id to call
+/// `/api/guardians/{id}/students/{studentId}/portal-access`.
+/// </summary>
 public record StudentGuardianDto(
     Guid LinkId,
     Guid GuardianId,
     string GuardianFullName,
     string? GuardianEmail,
     string? GuardianPhone,
+    Guid StudentId,
+    string StudentFullName,
     Guid? RelationshipId,
     string? RelationshipLabel,
     bool IsPrimary,
@@ -332,6 +341,9 @@ internal static class StudentProjection
                 .FirstOrDefaultAsync(g => g.Id == link.GuardianId, ct);
             if (guardian is null) continue;
 
+            var student = await db.Students.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == link.StudentId, ct);
+
             var relLabel = link.RelationshipId.HasValue
                 ? await db.RefValues.AsNoTracking()
                     .Where(r => r.Id == link.RelationshipId.Value)
@@ -343,6 +355,8 @@ internal static class StudentProjection
                 link.Id, link.GuardianId,
                 $"{guardian.FirstName} {guardian.LastName}",
                 guardian.Email, guardian.Phone,
+                link.StudentId,
+                student is not null ? $"{student.FirstName} {student.LastName}" : string.Empty,
                 link.RelationshipId, relLabel,
                 link.IsPrimary, link.HasCustody,
                 link.PortalAccess, link.FinancialResponsible));
@@ -360,6 +374,9 @@ internal static class StudentProjection
                 .FirstOrDefaultAsync(g => g.Id == link.GuardianId, ct);
             if (guardian is null) continue;
 
+            var student = await db.Students.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == link.StudentId, ct);
+
             var relLabel = link.RelationshipId.HasValue
                 ? await db.RefValues.AsNoTracking()
                     .Where(r => r.Id == link.RelationshipId.Value)
@@ -371,6 +388,8 @@ internal static class StudentProjection
                 link.Id, link.GuardianId,
                 $"{guardian.FirstName} {guardian.LastName}",
                 guardian.Email, guardian.Phone,
+                link.StudentId,
+                student is not null ? $"{student.FirstName} {student.LastName}" : string.Empty,
                 link.RelationshipId, relLabel,
                 link.IsPrimary, link.HasCustody,
                 link.PortalAccess, link.FinancialResponsible));
@@ -381,10 +400,12 @@ internal static class StudentProjection
     // ── Static DTO mappers ────────────────────────────────────────────────────
 
     public static StudentGuardianDto ToStudentGuardianDto(
-        StudentGuardian link, Guardian? guardian)
+        StudentGuardian link, Guardian? guardian, Student? student = null)
         => new(link.Id, link.GuardianId,
             guardian is not null ? $"{guardian.FirstName} {guardian.LastName}" : string.Empty,
             guardian?.Email, guardian?.Phone,
+            link.StudentId,
+            student is not null ? $"{student.FirstName} {student.LastName}" : string.Empty,
             link.RelationshipId, null,
             link.IsPrimary, link.HasCustody, link.PortalAccess, link.FinancialResponsible);
 

@@ -9,6 +9,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeadStore } from '@/stores/lead.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -27,8 +28,8 @@ onMounted(async () => {
 })
 
 async function submit() {
-  if (!studentId.value.trim()) {
-    error.value = t('validation.required', { field: t('crm.lead.studentId') })
+  if (!studentId.value) {
+    error.value = t('validation.required', { field: t('scheduling.session.student') })
     return
   }
   if (!lead.value) return
@@ -36,7 +37,7 @@ async function submit() {
   error.value = ''
   try {
     await store.convert(id.value, {
-      studentId: studentId.value.trim(),
+      studentId: studentId.value,
       rowVersion: lead.value.rowVersion,
     })
     router.push({ name: 'lead-detail', params: { id: id.value } })
@@ -57,7 +58,7 @@ async function submit() {
 
     <template v-else>
       <!-- Lead summary -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm mb-6">
+      <div class="rounded-xl border border-border bg-card p-5 shadow-sm mb-6">
         <h3 class="font-semibold text-foreground mb-3">{{ t('crm.lead.convertLeadSummary') }}</h3>
         <dl class="space-y-2 text-sm">
           <div class="flex justify-between">
@@ -83,18 +84,18 @@ async function submit() {
       <form v-else @submit.prevent="submit" class="space-y-4">
         <p v-if="error" class="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{{ error }}</p>
 
-        <div class="rounded-xl border border-border bg-[--color-card] p-5 shadow-sm">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
           <div>
             <label class="block text-sm font-medium text-foreground mb-1">
-              {{ t('crm.lead.studentId') }} *
+              {{ t('scheduling.session.student') }} *
             </label>
-            <input
-              v-model="studentId"
-              type="text"
-              :placeholder="t('crm.lead.studentIdPlaceholder')"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            <p class="mt-1 text-xs text-muted-foreground">{{ t('crm.lead.studentIdHint') }}</p>
+            <StudentPicker v-model="studentId" />
+            <p class="mt-1 text-xs text-muted-foreground">
+              {{ t('crm.lead.convertPickStudentHint') }}
+              <RouterLink :to="{ name: 'student-new' }" class="text-primary hover:underline">
+                {{ t('crm.lead.convertCreateStudent') }}
+              </RouterLink>
+            </p>
           </div>
         </div>
 

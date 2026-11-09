@@ -17,6 +17,9 @@ public class RecurringSchedule : TenantEntity
     public Guid? CampusId { get; private set; }
     public Guid? StudentProgramId { get; private set; }
 
+    /// <summary>FK to education.program_service. Copied to session.program_service_id on generation.</summary>
+    public Guid? ProgramServiceId { get; private set; }
+
     /// <summary>FK to ref.ref_value (ref_type 'session_type'). Configurable.</summary>
     public Guid? SessionTypeId { get; private set; }
 
@@ -47,6 +50,7 @@ public class RecurringSchedule : TenantEntity
 
     public ICollection<RecurrenceException> Exceptions { get; private set; } = [];
     public ICollection<Session> Sessions { get; private set; } = [];
+    public ICollection<RecurringScheduleEducator> Educators { get; private set; } = [];
 
     // ── Factory ───────────────────────────────────────────────────────────────
 
@@ -65,7 +69,8 @@ public class RecurringSchedule : TenantEntity
         int[]? byMonthday = null,
         DateOnly? rangeEnd = null,
         int? maxOccurrences = null,
-        Guid? createdBy = null)
+        Guid? createdBy = null,
+        Guid? programServiceId = null)
     {
         ValidateFrequency(frequency);
 
@@ -80,6 +85,7 @@ public class RecurringSchedule : TenantEntity
             CorporationId    = corporationId,
             CampusId         = campusId,
             StudentProgramId = studentProgramId,
+            ProgramServiceId = programServiceId,
             SessionTypeId    = sessionTypeId,
             RoomId           = roomId,
             Frequency        = frequency,
@@ -104,6 +110,14 @@ public class RecurringSchedule : TenantEntity
     }
 
     // ── Domain methods ────────────────────────────────────────────────────────
+
+    public void AssignEducator(Guid educatorId, string role = "lead")
+    {
+        if (Educators.Any(e => e.EducatorId == educatorId))
+            throw new InvalidOperationException("Educator is already assigned to this recurring schedule.");
+
+        Educators.Add(RecurringScheduleEducator.Assign(CorporationId, Id, educatorId, role));
+    }
 
     public void Deactivate(Guid? updatedBy = null)
     {

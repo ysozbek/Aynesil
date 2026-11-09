@@ -36,7 +36,23 @@ public sealed class GetRecurringSchedulesQueryHandler
         var query = q.Select(s => new RecurringScheduleListItemDto(
             s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
             s.Frequency, s.StartTime, s.DurationMinutes,
-            s.RangeStart, s.RangeEnd, s.IsActive));
+            s.RangeStart, s.RangeEnd, s.IsActive,
+            _db.Campuses.Where(c => c.Id == s.CampusId).Select(c => c.Name).FirstOrDefault(),
+            s.RoomId,
+            _db.Rooms.Where(r => r.Id == s.RoomId).Select(r => r.Name).FirstOrDefault(),
+            s.StudentProgramId,
+            _db.StudentPrograms.Where(sp => sp.Id == s.StudentProgramId)
+                .Join(_db.Students, sp => sp.StudentId, st => st.Id, (sp, st) => st.FirstName + " " + st.LastName)
+                .FirstOrDefault(),
+            _db.StudentPrograms.Where(sp => sp.Id == s.StudentProgramId)
+                .Join(_db.EducationPrograms, sp => sp.ProgramId, p => p.Id, (sp, p) => p.Name)
+                .FirstOrDefault(),
+            _db.ProgramServices.Where(ps => ps.Id == s.ProgramServiceId).Select(ps => ps.Name).FirstOrDefault(),
+            s.Educators.Where(e => e.Role == "lead")
+                .Join(_db.Educators, e => e.EducatorId, ed => ed.Id, (e, ed) => ed.FirstName + " " + ed.LastName)
+                .FirstOrDefault(),
+            _db.Sessions.Count(x => x.RecurringScheduleId == s.Id),
+            s.ByWeekday));
 
         query = req.SortBy?.ToLower() switch
         {
@@ -65,6 +81,7 @@ public sealed class GetRecurringScheduleQueryHandler
     public async Task<RecurringScheduleDto> Handle(GetRecurringScheduleQuery req, CancellationToken ct)
     {
         var s = await _db.RecurringSchedules.AsNoTracking()
+            .Include(x => x.Educators)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"RecurringSchedule {req.Id} not found.");
 

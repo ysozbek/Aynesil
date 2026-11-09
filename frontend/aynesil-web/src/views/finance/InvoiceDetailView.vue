@@ -112,7 +112,7 @@ function printInvoice() {
     <template v-else-if="invoice">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <!-- Invoice Info -->
-        <div class="md:col-span-2 rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+        <div class="md:col-span-2 rounded-xl border border-border bg-card shadow-sm p-5">
           <div class="grid grid-cols-2 gap-4 text-sm mb-6">
             <div>
               <p class="text-xs text-muted-foreground mb-0.5">{{ t('student.fullName') }}</p>
@@ -175,7 +175,7 @@ function printInvoice() {
         </div>
 
         <!-- Totals -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm p-5">
+        <div class="rounded-xl border border-border bg-card shadow-sm p-5">
           <h4 class="text-sm font-semibold text-foreground mb-4">{{ t('finance.invoice.totals') }}</h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
@@ -205,7 +205,7 @@ function printInvoice() {
 
     <!-- Add Line Modal -->
     <div v-if="addLineModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold mb-4">{{ t('finance.invoice.addLine') }}</h3>
         <div class="space-y-3">
           <input v-model="lineForm.description" type="text" :placeholder="t('finance.invoice.lineDescription')" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
@@ -236,7 +236,7 @@ function printInvoice() {
 
     <!-- Void Modal -->
     <div v-if="voidModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-[--color-card] rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
         <h3 class="font-semibold mb-4">{{ t('finance.invoice.voidTitle') }}</h3>
         <textarea v-model="voidReason" rows="3" :placeholder="t('finance.invoice.voidReason')" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none resize-none" />
         <div class="flex justify-end gap-2 mt-4">

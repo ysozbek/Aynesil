@@ -75,9 +75,13 @@ export const useLeaveStore = defineStore('leave', () => {
   async function createLeave(payload: CreateLeaveRequestPayload): Promise<LeaveRequestDto> {
     saving.value = true
     try {
+      // Backend returns the new Guid; fetch the full DTO so callers get the
+      // complete `LeaveRequestDto` they expect.
       const res = await leaveService.create(payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'İzin talebi oluşturulamadı.')
-      return res.data
+      await fetchLeave(res.data)
+      if (!currentLeave.value) throw new Error('İzin talebi oluşturuldu ancak yüklenemedi.')
+      return currentLeave.value
     } finally {
       saving.value = false
     }
@@ -98,9 +102,11 @@ export const useLeaveStore = defineStore('leave', () => {
   async function approveLeave(id: string, payload: ApproveLeavePayload) {
     saving.value = true
     try {
+      // Backend returns a `LeaveApprovalDto` (one step), not the full request;
+      // refetch so the UI shows the recomputed overall status + full history.
       const res = await leaveService.approve(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'İzin onaylanamadı.')
-      if (currentLeave.value?.id === id) currentLeave.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'İzin onaylanamadı.')
+      if (currentLeave.value?.id === id) await fetchLeave(id)
     } finally {
       saving.value = false
     }
@@ -110,8 +116,8 @@ export const useLeaveStore = defineStore('leave', () => {
     saving.value = true
     try {
       const res = await leaveService.reject(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'İzin reddedilemedi.')
-      if (currentLeave.value?.id === id) currentLeave.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'İzin reddedilemedi.')
+      if (currentLeave.value?.id === id) await fetchLeave(id)
     } finally {
       saving.value = false
     }
@@ -120,9 +126,10 @@ export const useLeaveStore = defineStore('leave', () => {
   async function cancelLeave(id: string, payload: CancelLeavePayload) {
     saving.value = true
     try {
+      // Backend cancel is NoContent; refresh the current record if loaded.
       const res = await leaveService.cancel(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'İzin iptal edilemedi.')
-      if (currentLeave.value?.id === id) currentLeave.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'İzin iptal edilemedi.')
+      if (currentLeave.value?.id === id) await fetchLeave(id)
     } finally {
       saving.value = false
     }

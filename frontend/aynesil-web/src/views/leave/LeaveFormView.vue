@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { useEducatorStore } from '@/stores/educator.store'
 import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
@@ -12,6 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const leaveStore = useLeaveStore()
 const auth = useAuthStore()
+const educatorStore = useEducatorStore()
 const refData = useRefDataStore()
 
 const isEdit = computed(() => !!route.params.id)
@@ -19,9 +21,14 @@ const id = route.params.id as string | undefined
 const errorMsg = ref('')
 const leaveTypes = ref<RefValueItem[]>([])
 
+// Backend `SubmitLeaveRequestCommand` requires `EducatorId` (a row from
+// `educators.educator`). The old form read `auth.user?.id`, which does not
+// exist on `AuthUser` — the submit silently sent an empty string and the API
+// rejected it. We now require explicit educator selection.
 const form = reactive({
+  educatorId: '',
   leaveTypeId: '',
-  unit: 'Day' as 'Day' | 'Hour',
+  unit: 'day' as 'day' | 'hour',
   startsAt: '',
   endsAt: '',
   quantity: undefined as number | undefined,
@@ -31,6 +38,10 @@ const form = reactive({
 async function handleSubmit() {
   errorMsg.value = ''
   const corp = auth.user?.corporationId ?? ''
+  if (!isEdit.value && !form.educatorId) {
+    errorMsg.value = t('validation.required', { field: t('leave.fields.educator') })
+    return
+  }
   try {
     if (isEdit.value && id) {
       const current = leaveStore.currentLeave
@@ -48,7 +59,7 @@ async function handleSubmit() {
     } else {
       const result = await leaveStore.createLeave({
         corporationId: corp,
-        educatorId: auth.user?.id ?? '',
+        educatorId: form.educatorId,
         leaveTypeId: form.leaveTypeId || undefined,
         unit: form.unit,
         startsAt: new Date(form.startsAt).toISOString(),
@@ -65,12 +76,16 @@ async function handleSubmit() {
 
 onMounted(async () => {
   leaveTypes.value = await refData.getValues('leave_type')
+  if (educatorStore.list.items.length === 0) {
+    await educatorStore.fetchList({ pageSize: 200 })
+  }
   if (isEdit.value && id) {
     await leaveStore.fetchLeave(id)
     const l = leaveStore.currentLeave
     if (l) {
+      form.educatorId = l.educatorId
       form.leaveTypeId = l.leaveTypeId ?? ''
-      form.unit = l.unit as 'Day' | 'Hour'
+      form.unit = (l.unit?.toLowerCase() === 'hour' ? 'hour' : 'day') as 'day' | 'hour'
       form.startsAt = l.startsAt.substring(0, 16)
       form.endsAt = l.endsAt.substring(0, 16)
       form.quantity = l.quantity
@@ -94,10 +109,25 @@ onMounted(async () => {
     </PageHeader>
 
     <form
-      class="max-w-2xl rounded-xl border border-border bg-[--color-card] shadow-sm p-6 space-y-4"
+      class="max-w-2xl rounded-xl border border-border bg-card shadow-sm p-6 space-y-4"
       @submit.prevent="handleSubmit"
     >
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div v-if="!isEdit" class="sm:col-span-2">
+          <label class="block text-sm font-medium text-foreground mb-1">
+            {{ t('leave.fields.educator') }} *
+          </label>
+          <select
+            v-model="form.educatorId"
+            required
+            class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent"
+          >
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="e in educatorStore.list.items" :key="e.id" :value="e.id">
+              {{ e.fullName }}
+            </option>
+          </select>
+        </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.leaveType') }} *</label>
           <select v-model="form.leaveTypeId" required class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
@@ -108,8 +138,9 @@ onMounted(async () => {
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.unit') }} *</label>
           <select v-model="form.unit" required class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
-            <option value="Day">{{ t('leave.unit.day') }}</option>
-            <option value="Hour">{{ t('leave.unit.hour') }}</option>
+            <!-- Backend accepts lowercase "day" | "hour" (see SubmitLeaveRequestCommandValidator). -->
+            <option value="day">{{ t('leave.unit.day') }}</option>
+            <option value="hour">{{ t('leave.unit.hour') }}</option>
           </select>
         </div>
         <div>
@@ -120,7 +151,7 @@ onMounted(async () => {
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.endsAt') }} *</label>
           <input v-model="form.endsAt" type="datetime-local" required class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
         </div>
-        <div v-if="form.unit === 'Hour'">
+        <div v-if="form.unit === 'hour'">
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.quantity') }}</label>
           <input v-model.number="form.quantity" type="number" step="0.5" min="0.5" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
         </div>

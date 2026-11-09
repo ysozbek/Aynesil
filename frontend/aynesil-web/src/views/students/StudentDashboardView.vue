@@ -83,7 +83,7 @@ function programStatusClass(status: string): string {
 
     <template v-else-if="summary">
       <!-- Student Summary Card -->
-      <div class="rounded-xl border border-border bg-[--color-card] p-6 shadow-sm mb-6">
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm mb-6">
         <div class="flex items-center gap-5">
           <!-- Photo placeholder -->
           <div class="w-16 h-16 rounded-full bg-accent flex items-center justify-center shrink-0">
@@ -122,19 +122,19 @@ function programStatusClass(status: string): string {
 
       <!-- Stats Row -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-foreground">{{ programStore.studentProgramList.totalCount }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('student.tab.programs') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-foreground">{{ activeGoals.length }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('common.activeGoals') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-foreground">—</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('common.upcomingSessions') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-2xl font-bold text-foreground">—</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('common.recentAssessments') }}</p>
         </div>
@@ -144,7 +144,7 @@ function programStatusClass(status: string): string {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Active Programs -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.tab.programs') }}</h3>
             <span v-if="programStore.loading" class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -173,7 +173,7 @@ function programStatusClass(status: string): string {
         </div>
 
         <!-- Current Goals -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('common.activeGoals') }}</h3>
             <span v-if="goalStore.loading" class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -217,7 +217,7 @@ function programStatusClass(status: string): string {
         </div>
 
         <!-- Assigned Educators (placeholder) -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('common.assignedEducators') }}</h3>
           </div>
@@ -227,7 +227,7 @@ function programStatusClass(status: string): string {
         </div>
 
         <!-- Attendance Summary (placeholder) -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm">
+        <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('common.attendanceSummary') }}</h3>
           </div>
@@ -237,7 +237,7 @@ function programStatusClass(status: string): string {
         </div>
 
         <!-- Recent Assessments (placeholder) -->
-        <div class="rounded-xl border border-border bg-[--color-card] shadow-sm md:col-span-2">
+        <div class="rounded-xl border border-border bg-card shadow-sm md:col-span-2">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('common.recentAssessments') }}</h3>
             <button class="text-xs text-primary hover:underline">

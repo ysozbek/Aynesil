@@ -105,8 +105,8 @@ export const financeService = {
   createStudentPackage: (payload: CreateStudentPackagePayload) =>
     apiService.post<StudentPackageDto>('/payments/packages', payload),
 
-  cancelStudentPackage: (id: string, payload: { reason?: string }) =>
-    apiService.post(`/payments/packages/${id}/cancel`, payload),
+  cancelStudentPackage: (id: string, payload: { rowVersion: number }) =>
+    apiService.post<StudentPackageDto>(`/payments/packages/${id}/cancel`, payload),
 
   // ── Credit Ledger ──────────────────────────────────────────────────────────
 

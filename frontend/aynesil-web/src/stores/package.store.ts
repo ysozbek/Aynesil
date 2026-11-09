@@ -157,10 +157,14 @@ export const usePackageStore = defineStore('package', () => {
     }
   }
 
-  async function cancelStudentPackage(id: string, reason?: string) {
+  /** The list DTO carries no rowVersion, so the current version is read first. */
+  async function cancelStudentPackage(id: string) {
     saving.value = true
     try {
-      await financeService.cancelStudentPackage(id, { reason })
+      const current = await financeService.getStudentPackage(id)
+      if (!current.success || !current.data) throw new Error(current.message ?? 'Paket bulunamadı.')
+      const res = await financeService.cancelStudentPackage(id, { rowVersion: current.data.rowVersion })
+      if (!res.success) throw new Error(res.message ?? 'Paket iptal edilemedi.')
       if (currentStudentPackage.value?.id === id) await fetchStudentPackage(id)
     } finally {
       saving.value = false

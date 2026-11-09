@@ -16,7 +16,7 @@ export interface RoomDto {
   capacity: number
   isVirtual: boolean
   isActive: boolean
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface RoomListItemDto {
@@ -38,7 +38,8 @@ export interface RoomListQuery extends PagedQuery {
 
 export interface CreateRoomPayload {
   corporationId: string
-  campusId: string
+  /** Required for physical rooms; must be omitted for virtual rooms. */
+  campusId?: string
   code: string
   name: string
   capacity: number
@@ -49,7 +50,7 @@ export interface UpdateRoomPayload {
   name: string
   capacity: number
   isVirtual: boolean
-  rowVersion: string
+  rowVersion: number
 }
 
 // ── Calendar Entries ───────────────────────────────────────────────────────────
@@ -79,41 +80,63 @@ export interface CreateCalendarEntryPayload {
 
 // ── Recurring Schedules ────────────────────────────────────────────────────────
 
+export type RecurrenceFrequency = 'weekly' | 'biweekly' | 'monthly'
+
+export type EducatorRole = 'lead' | 'assistant' | 'observer' | 'supervisor'
+
+/** Mirrors EducatorAssignment / RecurringScheduleEducatorDto on the API. */
+export interface RecurringScheduleEducator {
+  educatorId: string
+  role: EducatorRole
+}
+
+/** Mirrors RecurringScheduleDto on the API. Weekdays: 0 = Sunday … 6 = Saturday. */
 export interface RecurringScheduleDto {
   id: string
   corporationId: string
-  campusId: string
+  campusId?: string
+  studentProgramId?: string
+  sessionTypeId?: string
   roomId?: string
-  roomName?: string
-  sessionTypeId: string
-  sessionTypeLabel?: string
-  frequency: string
+  frequency: RecurrenceFrequency
   intervalCount: number
-  byWeekday?: string[]
+  byWeekday?: number[]
+  byMonthday?: number[]
   startTime: string
   durationMinutes: number
   rangeStart: string
   rangeEnd?: string
   maxOccurrences?: number
   isActive: boolean
-  generatedCount: number
-  educatorIds: string[]
-  rowVersion: string
+  createdAt: string
+  rowVersion: number
+  programServiceId?: string
+  educators: RecurringScheduleEducator[]
 }
 
+/** Mirrors RecurringScheduleListItemDto on the API. */
 export interface RecurringScheduleListItemDto {
   id: string
-  campusId: string
-  campusName: string
-  roomName?: string
-  sessionTypeLabel?: string
-  frequency: string
+  corporationId: string
+  campusId?: string
+  sessionTypeId?: string
+  frequency: RecurrenceFrequency
   startTime: string
   durationMinutes: number
   rangeStart: string
   rangeEnd?: string
   isActive: boolean
+  campusName?: string
+  roomId?: string
+  roomName?: string
+  studentProgramId?: string
+  studentFullName?: string
+  programName?: string
+  programServiceName?: string
+  leadEducatorName?: string
   generatedCount: number
+  /** 0 = Sunday … 6 = Saturday. */
+  byWeekday?: number[]
 }
 
 export interface RecurringScheduleListQuery extends PagedQuery {
@@ -122,25 +145,44 @@ export interface RecurringScheduleListQuery extends PagedQuery {
   isActive?: boolean
 }
 
+/** Mirrors CreateRecurringScheduleRequest on the API. Weekdays: 0 = Sunday … 6 = Saturday. */
 export interface CreateRecurringSchedulePayload {
   corporationId: string
-  campusId: string
+  campusId?: string
+  studentProgramId?: string
+  programServiceId?: string
+  educators?: RecurringScheduleEducator[]
   roomId?: string
   sessionTypeId: string
-  frequency: string
+  frequency: RecurrenceFrequency
   intervalCount: number
-  byWeekday?: string[]
+  byWeekday?: number[]
+  byMonthday?: number[]
+  /** HH:mm:ss */
   startTime: string
   durationMinutes: number
   rangeStart: string
   rangeEnd?: string
   maxOccurrences?: number
-  educatorIds?: string[]
 }
 
+/** Mirrors AddRecurrenceExceptionRequest on the API. */
 export interface AddRecurringExceptionPayload {
-  date: string
+  /** ISO date (YYYY-MM-DD) for the occurrence being overridden. */
+  exceptionDate: string
+  /** `skip` | `reschedule` | `cancel`. */
+  action: 'skip' | 'reschedule' | 'cancel'
+  /** Required when action = 'reschedule'. */
+  newStartAt?: string
   reason?: string
+}
+
+/** Mirrors BulkGenerateRequest on the API. */
+export interface BulkGeneratePayload {
+  /** ISO date (YYYY-MM-DD) start of the window. */
+  windowStart: string
+  /** ISO date (YYYY-MM-DD) end of the window. */
+  windowEnd: string
 }
 
 export interface BulkCancelPayload {
@@ -184,7 +226,7 @@ export interface SessionNoteDto {
   parentVisible: boolean
   authorName: string
   createdAt: string
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface AttendanceDto {
@@ -222,7 +264,7 @@ export interface SessionDto {
   goals: SessionGoalDto[]
   notes: SessionNoteDto[]
   attendances: AttendanceDto[]
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface SessionListItemDto {
@@ -252,32 +294,37 @@ export interface SessionListQuery extends PagedQuery {
   isMakeup?: boolean
 }
 
+/** Mirrors ScheduleSessionRequest on the API. */
 export interface CreateSessionPayload {
   corporationId: string
-  campusId: string
-  roomId?: string
   sessionTypeId: string
-  recurringScheduleId?: string
-  title: string
   startsAt: string
   endsAt: string
+  campusId?: string
+  roomId?: string
+  recurringScheduleId?: string
+  programServiceId?: string
+  title?: string
+  isMakeup: boolean
+  participantStudentIds: string[]
+  educatorAssignments: RecurringScheduleEducator[]
 }
 
 export interface RescheduleSessionPayload {
-  startsAt: string
-  endsAt: string
+  newStartsAt: string
+  newEndsAt: string
   roomId?: string
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface CompleteSessionPayload {
   notes?: string
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface CancelSessionPayload {
   reason?: string
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface AddParticipantPayload {
@@ -304,7 +351,7 @@ export interface CreateSessionNotePayload {
 export interface UpdateSessionNotePayload {
   body: string
   parentVisible: boolean
-  rowVersion: string
+  rowVersion: number
 }
 
 // ── Attendance ────────────────────────────────────────────────────────────────
@@ -339,82 +386,90 @@ export interface StudentAttendanceQuery extends PagedQuery {
 }
 
 // ── Makeup Requests ────────────────────────────────────────────────────────────
+// Mirrors Aynesil.Application.Features.Scheduling.Dtos.MakeupRequestDto.
 
 export interface MakeupRequestDto {
   id: string
   corporationId: string
   studentId: string
   studentFullName: string
-  missedSessionId: string
-  missedSessionTitle: string
-  missedSessionDate: string
+  missedSessionId?: string
+  missedReasonId?: string
+  /** `requested` | `approved` | `scheduled` | `completed` | `rejected` | `expired`. */
   status: string
-  makeupSessionId?: string
-  makeupSessionDate?: string
-  requestedBy: string
+  requestedBy?: string
   requestedAt: string
-  approvedBy?: string
-  approvedAt?: string
+  makeupSessionId?: string
+  completedAt?: string
   expiresOn?: string
-  reason?: string
-  rowVersion: string
+  note?: string
+  updatedAt: string
+  rowVersion: number
 }
 
+/** Mirrors MakeupRequestListItemDto on the API. */
 export interface MakeupRequestListItemDto {
   id: string
+  studentId: string
   studentFullName: string
-  missedSessionTitle: string
-  missedSessionDate: string
+  missedSessionId?: string
   status: string
-  makeupSessionDate?: string
-  expiresOn?: string
   requestedAt: string
+  expiresOn?: string
 }
 
 export interface MakeupRequestListQuery extends PagedQuery {
   corporationId: string
   studentId?: string
   status?: string
-  from?: string
-  to?: string
 }
 
 export interface CreateMakeupRequestPayload {
   corporationId: string
   studentId: string
-  missedSessionId: string
-  reason?: string
+  missedSessionId?: string
+  missedReasonId?: string
+  note?: string
   expiresOn?: string
 }
 
 export interface ApproveMakeupRequestPayload {
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface RejectMakeupRequestPayload {
-  reason?: string
-  rowVersion: string
+  note?: string
+  rowVersion: number
 }
 
 export interface AssignMakeupSessionPayload {
   makeupSessionId: string
-  rowVersion: string
+  rowVersion: number
 }
 
 // ── Calendar Views ────────────────────────────────────────────────────────────
+// School and campus calendars return `CalendarViewDto` ({ sessions, entries });
+// room / educator / student calendars return `SessionListItemDto[]`.
 
+export interface CalendarViewDto {
+  sessions: SessionListItemDto[]
+  entries: CalendarEntryDto[]
+}
+
+/**
+ * Normalised calendar event used by the Vue calendar UI.
+ * Built client-side from the raw API responses — not a backend DTO.
+ */
 export interface CalendarEventDto {
   id: string
   title: string
   start: string
   end: string
-  type: 'session' | 'calendar_entry' | 'recurring'
+  type: 'session' | 'calendar_entry'
   status?: string
   roomName?: string
-  educatorNames?: string[]
   participantCount?: number
   isMakeup?: boolean
-  color?: string
 }
 
 export interface CalendarQuery {
@@ -427,6 +482,8 @@ export interface CalendarQuery {
 export interface BulkOperationResultDto {
   affectedCount: number
   message: string
+  roomConflictSkipped: number
+  educatorConflictSkipped: number
 }
 
 // ── Conflict Check ─────────────────────────────────────────────────────────────

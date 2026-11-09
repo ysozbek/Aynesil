@@ -1,24 +1,35 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAttendanceStore } from '@/stores/attendance.store'
+import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import Pagination from '@/components/shared/Pagination.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const store = useAttendanceStore()
+const auth = useAuthStore()
 
-const studentIdInput = ref('')
+const corporationId = computed(() => auth.user?.corporationId ?? '')
+const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
 
+watch(studentIdInput, () => loadStudentData(), { immediate: true })
+
 async function loadStudentData() {
-  if (!studentIdInput.value.trim()) return
-  loadedStudentId.value = studentIdInput.value.trim()
+  if (!studentIdInput.value || !corporationId.value) {
+    loadedStudentId.value = ''
+    return
+  }
+  loadedStudentId.value = studentIdInput.value
+  // Both backend endpoints require corporationId (see SchedulingController.cs).
   await Promise.all([
-    store.fetchAttendanceSummary(loadedStudentId.value),
-    store.fetchStudentAttendance(loadedStudentId.value, { page: 1, pageSize: 20 }),
+    store.fetchAttendanceSummary(loadedStudentId.value, corporationId.value),
+    store.fetchStudentAttendance(loadedStudentId.value, corporationId.value, { page: 1, pageSize: 20 }),
   ])
 }
 
@@ -47,29 +58,12 @@ function statusColor(status: string): string {
     <PageHeader :title="t('scheduling.attendance.dashboardTitle')" :description="t('scheduling.attendance.dashboardDescription')" />
 
     <!-- Student filter -->
-    <div class="mb-6 flex items-center gap-3">
-      <input
-        v-model="studentIdInput"
-        type="text"
-        :placeholder="t('scheduling.attendance.studentIdPlaceholder')"
-        @keydown.enter="loadStudentData"
-        class="flex-1 max-w-sm px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-      />
-      <button
-        @click="loadStudentData"
-        :disabled="store.loading || !studentIdInput.trim()"
-        class="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
-      >
-        <svg v-if="store.loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        {{ t('common.search') }}
-      </button>
+    <div class="mb-6 max-w-sm">
+      <StudentPicker v-model="studentIdInput" />
     </div>
 
     <div v-if="!loadedStudentId" class="text-center py-16 text-muted-foreground text-sm">
-      {{ t('scheduling.attendance.enterStudentId') }}
+      {{ t('pickers.selectStudentFirst') }}
     </div>
 
     <div v-else-if="store.loading" class="space-y-4">
@@ -79,26 +73,26 @@ function statusColor(status: string): string {
     <template v-else-if="store.summary">
       <!-- Summary cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-green-600">{{ store.summary.present }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.present') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-red-600">{{ store.summary.absent }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.absent') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-amber-600">{{ store.summary.late }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.late') }}</p>
         </div>
-        <div class="rounded-xl border border-border bg-[--color-card] p-4 shadow-sm text-center">
+        <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-blue-600">{{ formatPct(store.summary.attendanceRate) }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.rate') }}</p>
         </div>
       </div>
 
       <!-- Attendance History -->
-      <div class="rounded-xl border border-border bg-[--color-card] shadow-sm overflow-hidden">
+      <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.attendance.history') }}</h3>
         </div>
@@ -140,8 +134,8 @@ function statusColor(status: string): string {
             :total-pages="store.studentAttendance.totalPages"
             :has-previous-page="store.studentAttendance.hasPreviousPage"
             :has-next-page="store.studentAttendance.hasNextPage"
-            @update:page="(p) => store.fetchStudentAttendance(loadedStudentId, { page: p, pageSize: 20 })"
-            @update:page-size="(s) => store.fetchStudentAttendance(loadedStudentId, { page: 1, pageSize: s })"
+            @update:page="(p) => store.fetchStudentAttendance(loadedStudentId, corporationId, { page: p, pageSize: 20 })"
+            @update:page-size="(s) => store.fetchStudentAttendance(loadedStudentId, corporationId, { page: 1, pageSize: s })"
           />
         </div>
       </div>

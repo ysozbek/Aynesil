@@ -85,7 +85,7 @@ function statusColor(status: string): string {
   <div>
     <PageHeader :title="t('finance.payment.title')" :description="t('finance.payment.description')">
       <button
-        v-if="can('payment:create')"
+        v-if="can('finance_payment:record')"
         @click="router.push({ name: 'payment-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
