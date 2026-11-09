@@ -27,7 +27,7 @@ import type {
   ConversionReportQuery,
 } from '@/types/crm.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -40,7 +40,7 @@ export const leadService = {
   // ── Lead Queries ────────────────────────────────────────────────────────────
 
   list: (query: LeadListQuery) =>
-    apiService.get<PaginatedResult<LeadListItemDto>>(`/leads${qs(query as Record<string, unknown>)}`),
+    apiService.get<PaginatedResult<LeadListItemDto>>(`/leads${qs(query)}`),
 
   getById: (id: string) =>
     apiService.get<LeadDto>(`/leads/${id}`),
@@ -49,10 +49,10 @@ export const leadService = {
     apiService.get<PipelineSummaryDto>(`/leads/pipeline${qs({ corporationId, campusId })}`),
 
   getFollowUpsDue: (query: FollowUpsQuery) =>
-    apiService.get<PaginatedResult<LeadActivityDto>>(`/leads/followups${qs(query as Record<string, unknown>)}`),
+    apiService.get<PaginatedResult<LeadActivityDto>>(`/leads/followups${qs(query)}`),
 
   getConversionReport: (query: ConversionReportQuery) =>
-    apiService.get<ConversionReportDto>(`/leads/reports/conversion${qs(query as Record<string, unknown>)}`),
+    apiService.get<ConversionReportDto>(`/leads/reports/conversion${qs(query)}`),
 
   getStatusHistory: (leadId: string) =>
     apiService.get<LeadStatusHistoryDto[]>(`/leads/${leadId}/history`),

@@ -80,6 +80,11 @@ async function quickStart(id: string) {
   await doFetch()
 }
 
+/** List items may not carry rowVersion; fall back to 1 as before. */
+function rowVersionOf(row: FollowUpActivityListItemDto): number {
+  return (row as FollowUpActivityListItemDto & { rowVersion?: number }).rowVersion ?? 1
+}
+
 function openCompleteModal(id: string, rowVersion: number) {
   completeModal.followUpId = id
   completeModal.rowVersion = rowVersion
@@ -227,7 +232,7 @@ onMounted(doFetch)
           </button>
           <button
             v-if="row.status === 'in_progress' && can('follow_up:complete')"
-            @click="openCompleteModal(row.id, (row as FollowUpActivityListItemDto & { rowVersion?: number }).rowVersion ?? 1)"
+            @click="openCompleteModal(row.id, rowVersionOf(row))"
             class="p-1.5 rounded-lg hover:bg-accent text-green-600 hover:text-green-700"
             :title="t('followUp.markCompleted')"
           >

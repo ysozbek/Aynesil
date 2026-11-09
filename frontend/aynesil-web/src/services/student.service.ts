@@ -48,7 +48,7 @@ import type {
   GrantPortalAccessPayload,
 } from '@/types/student.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -62,7 +62,7 @@ export const studentService = {
 
   listStudents: (query: StudentListQuery) =>
     apiService.get<PaginatedResult<StudentListItemDto>>(
-      `/students${qs(query as Record<string, unknown>)}`
+      `/students${qs(query)}`
     ),
 
   getStudent: (id: string) =>
@@ -207,7 +207,7 @@ export const guardianService = {
 
   listGuardians: (query: GuardianListQuery) =>
     apiService.get<PaginatedResult<GuardianListItemDto>>(
-      `/guardians${qs(query as Record<string, unknown>)}`
+      `/guardians${qs(query)}`
     ),
 
   getGuardian: (id: string) =>

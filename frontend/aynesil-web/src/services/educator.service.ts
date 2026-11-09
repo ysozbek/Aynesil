@@ -26,7 +26,7 @@ import type {
   EndHierarchyPayload,
 } from '@/types/educator.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -40,7 +40,7 @@ export const educatorService = {
 
   listEducators: (query: EducatorListQuery) =>
     apiService.get<PaginatedResult<EducatorListItemDto>>(
-      `/educators${qs(query as Record<string, unknown>)}`
+      `/educators${qs(query)}`
     ),
 
   getEducator: (id: string) =>
@@ -51,7 +51,7 @@ export const educatorService = {
 
   getUtilization: (query: UtilizationQuery) =>
     apiService.get<EducatorUtilizationDto[]>(
-      `/educators/utilization${qs(query as Record<string, unknown>)}`
+      `/educators/utilization${qs(query)}`
     ),
 
   // ── CRUD Commands ───────────────────────────────────────────────────────────

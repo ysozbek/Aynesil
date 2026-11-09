@@ -113,7 +113,7 @@ function alignClass(align?: string) {
         <template v-else>
           <tr
             v-for="row in rows"
-            :key="String(row[rowKey])"
+            :key="String(row[rowKey as keyof T])"
             class="border-b border-border last:border-0 hover:bg-accent/30 transition-colors"
             @click="emit('row-click', row)"
           >

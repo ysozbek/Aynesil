@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import type { RefValueItem } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
@@ -16,7 +17,7 @@ const refDataStore = useRefDataStore()
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
 const errorMsg = ref('')
-const institutionTypes = computed(() => refDataStore.getByCategory?.('institution_type') ?? [])
+const institutionTypes = ref<RefValueItem[]>([])
 
 const form = reactive({
   name: '',
@@ -56,7 +57,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('institution_type')
+  institutionTypes.value = await refDataStore.getValues('institution_type').catch(() => [])
   if (isEdit.value && id) {
     await consultancyStore.fetchInstitution(id)
     const inst = consultancyStore.currentInstitution

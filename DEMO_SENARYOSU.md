@@ -4,7 +4,7 @@ Bu doküman müşteri sunumunu **adım adım** anlatır: hangi menüye girilecek
 
 Menü ve buton adları ekranda göründüğü gibi yazılmıştır (ör. **Planlama → Tekrar Eden Planlar**).
 
-> ⚠️ **Önemli:** Bazı ekranlar şu an isim seçtirmek yerine **ID** (uzun bir kod) yazmayı istiyor, bazı akışlar da henüz uçtan uca çalışmıyor. Bu yüzden demo iki parçaya bölünmüştür:
+> ⚠️ **Önemli:** Demo verisinin hazırlanması zaman alır. Bu yüzden demo iki parçaya bölünmüştür:
 > - **Canlı yap:** Akıcı çalışan adımlar. Müşterinin önünde tıklayın.
 > - **Önceden hazırla:** Takılan adımlar. Demodan önce verisini girin, demoda yalnızca sonucunu gösterin.
 >
@@ -29,10 +29,7 @@ Aday  →  Öğrenci  →  Program (ne alıyor?)  →  Haftalık Plan  →  Sean
 
 ## 1. Demo verisi hazırlığı (demodan 1 gün önce)
 
-Aşağıdakileri sisteme önceden girin. Hazırlık sırasında ID gereken yerlerde şu yöntemi kullanın:
-
-> **ID nasıl bulunur?** Kişinin/kaydın detay sayfasını açın. Tarayıcının adres çubuğundaki son kısım ID'dir.
-> Örnek: `.../students/0193a7c2-5b1e-7d40-9f2a-1c3e5d7b9a01` → ID = `0193a7c2-5b1e-7d40-9f2a-1c3e5d7b9a01`
+Aşağıdakileri sisteme önceden girin. Hiçbir ekran ID istemiyor; kişi ve kayıtlar adla aranıp seçiliyor.
 
 **Hazırlık listesi:**
 
@@ -43,14 +40,14 @@ Aşağıdakileri sisteme önceden girin. Hazırlık sırasında ID gereken yerle
 - [ ] **Veliler:** 3 veli (**Veliler → Veli Ekle**)
 - [ ] **Öğrenciler:** 3 öğrenci (**Öğrenciler → Öğrenci Ekle**). Her birine veli bağlayın: öğrenci detayı → **Veliler** sekmesi → **Veli Bağla** (veli adla aranır; önce **Veliler → Veli Ekle** ile velileri oluşturun)
 - [ ] **Adaylar:** 2 aday (**CRM → Adaylar → Aday Ekle**)
-  - Biri **dönüştürülmüş** olsun: Önce öğrenci kaydını açın, sonra aday detayı → **Öğrenciye Dönüştür** (öğrenci adıyla aranır)
+  - Biri **dönüştürülmüş** olsun: aday detayı → **Öğrenciye Dönüştür** → **Yeni öğrenci oluştur** (öğrenci ve veli aday bilgileriyle açılır)
   - Diğeri **yeni** kalsın. Bu aday canlı demoda kullanılacak.
 - [ ] **Kayıt + Program:** Öğrencileri programa ekleyin: **Programlar → Kayıtlar → Kayıt Oluştur**, öğrenci ve program listeden seçilir
 - [ ] **Seanslar:** Önümüzdeki hafta için 4–5 seans (**Planlama → Seanslar → Seans Oluştur**). Öğrenci, sorumlu eğitimci ve oda formda adıyla seçilir; ek katılımcılar seans detayındaki **Katılımcılar** sekmesinden eklenir
   - Biri **bugüne** denk gelsin. Canlı demoda yoklama bu seansta alınacak.
 - [ ] **Hedefler:** Bir öğrenciye 2–3 hedef (**Hedefler → Öğrenci Hedefleri → Hedef Ekle**)
 - [ ] **BEP:** Aynı öğrenci için bir BEP planı (**BEP / IEP → Plan Oluştur**), hedefleri ekleyin (önce **Hedefler → Öğrenci Hedefleri** ile öğrenciye hedef tanımlayın), onaylayın (**Onayla**, onaylayan eğitimci adla seçilir), sonra **Veliye Göster**
-- [ ] **Paket ve seans hakkı:** **Finans → Paket Tanımları**'nda en az bir paket olsun (ör. "20 Seanslık Dil ve Konuşma"). Demo öğrencisine **Öğrenci Paketleri → Paket Ata** ile bu paketi atayın; canlı da gösterilebilir.
+- [ ] **Paket ve seans hakkı:** **Finans → Paket Tanımları**'nda en az bir paket olsun (ör. "20 Seanslık Dil ve Konuşma") ve **demo seansının programına bağlı** olsun; yoksa tamamlanınca hak düşmez. Demo öğrencisine **Öğrenci Paketleri → Paket Ata** ile bu paketi atayın; canlı da gösterilebilir.
 - [ ] **Telafi talebi:** 1 bekleyen telafi talebi
 - [ ] **Veli kullanıcısı:** Bir veli için portal hesabı açın. Veli detayı → **Portal Erişimi** sekmesi → **Erişim Aç** ve tüm kutuları işaretleyin (Oturumlar, Devam, Raporlar, BEP/IEP, Finans)
 - [ ] **Tarayıcı:** İki ayrı pencere hazırlayın. Birinde yönetici, diğerinde (gizli pencerede) veli oturumu açık olsun.
@@ -67,7 +64,7 @@ Aşağıdakileri sisteme önceden girin. Hazırlık sırasında ID gereken yerle
 | 1 | Aday ekle | **Canlı.** CRM → Adaylar → **Aday Ekle**. İletişim kişisi, çocuk adı, doğum tarihi, telefon, kaynak ve başvuru nedenini doldurun. **Kaydet**. | "Veli telefonu açtığı anda kaydı burada açıyoruz. Nereden geldiğini de seçiyoruz; böylece hangi reklamın işe yaradığını görebiliyorsunuz." |
 | 2 | Görüşme kaydı | **Canlı.** Aday detayı → **Aktiviteler** sekmesi → **Aktivite Kaydet**. Bir takip tarihi girin. | "Kim aradı, ne konuşuldu, ne zaman tekrar aranacak; hepsi burada. Takip tarihi gelince sistem hatırlatıyor." |
 | 3 | Satış hunisi | **Canlı.** CRM → **Pipeline**. | "Tüm adayları aşama aşama görüyorsunuz. Hangi aşamada kaç kişi var, bir bakışta görünüyor." |
-| 4 | Öğrenciye dönüşüm | **Önceden hazırla.** Daha önce dönüştürdüğünüz adayı açın, "Dönüştürüldü" durumunu gösterin. | "Veli kayıt olmaya karar verince aday öğrenciye dönüşüyor, geçmişi de kaybolmuyor." |
+| 4 | Öğrenciye dönüşüm | **Canlı.** 1. adımda eklediğiniz aday → **Öğrenciye Dönüştür**. **Yeni öğrenci oluştur** seçili; bilgilerin adaydan geldiğini gösterin, "İletişim kişisini veli olarak ekle" işaretli kalsın → **Öğrenciyi Oluştur ve Dönüştür**. | "Veli kayıt olmaya karar verince tek tıkla öğrenci ve veli kaydı açılıyor; telefonda aldığımız bilgileri tekrar yazmıyoruz. Adayın geçmişi de kaybolmuyor." |
 | 5 | Öğrenci kartı | **Canlı.** Öğrenciler → öğrenciyi açın. **Genel Bakış**, **Veliler**, **Programlar** sekmelerini gezin. | "Çocuğun bütün dosyası tek yerde: veliler, acil iletişim, tanılar, raporlar." |
 | 6 | Programa ekleme | **Canlı.** Programlar → **Kayıtlar** → **Kayıt Oluştur**. Öğrenciyi ve programı listeden seçin. | "Çocuğu hangi programa aldığımızı burada belirliyoruz. Program, kurumunuzun sunduğu hizmet paketi." |
 
@@ -89,9 +86,9 @@ Aşağıdakileri sisteme önceden girin. Hazırlık sırasında ID gereken yerle
 | 2 | Takvim | **Canlı.** Planlama → **Takvim**. **Okul** görünümünde **Hafta**'yı seçin. | "Tüm kurumun haftası. Aynı odaya iki seans konamaz, sistem engelliyor." |
 | 3 | Seansa gir | **Canlı.** Bugünkü seansı açın. **Genel Bakış**, **Katılımcılar** sekmeleri. | "Eğitimci seansa girdiğinde öğrencisini ve bilgilerini burada görüyor." |
 | 4 | Yoklama | **Canlı.** **Devam** sekmesi → **Katıldı** / **Gelmedi** / **Geç**. | "Yoklama tek tıkla. Gelmeyen çocuk için telafi süreci buradan başlıyor." |
-| 5 | Hedef işaretleme | **Canlı.** **Hedefler** sekmesi → çalışılan hedeflerin kutusunu işaretleyin. | "Bu seansta hangi hedefler üzerinde çalışıldığını işaretliyor. Gelişim raporu buradan oluşuyor." |
+| 5 | Hedef işaretleme | **Canlı.** **Hedefler** sekmesi → üstteki kutudan öğrencinin hedefini seçip **Hedef Ekle**, ardından çalışılan hedeflerin kutusunu işaretleyin. | "Bu seansta hangi hedefler üzerinde çalışıldığını işaretliyor. Gelişim raporu buradan oluşuyor." |
 | 6 | Seans notu | **Canlı.** **Notlar** sekmesi → **Not Ekle** → **Veliye Görünür** işaretli. | "Hocanın notu. İsterse veliye de gösteriyor; veli akşam telefondan okuyor." |
-| 7 | Seansı tamamla | **Canlı.** **Tamamla**. | "Seans tamamlanınca velinin paketinden bir seans hakkı otomatik düşüyor." |
+| 7 | Seansı tamamla | **Canlı.** Önce yoklamada "Geldi" seçili olsun, sonra **Tamamla**. Öğrencinin yanında "1 seans hakkı düşüldü" çıkar. | "Seans tamamlanınca velinin paketinden bir seans hakkı otomatik düşüyor." |
 | 8 | Telafi | **Canlı.** Planlama → **Telafi Talepleri** → bekleyen talep → **Onayla**. | "Kaçırılan seansların telafisi kaybolmuyor; kim, ne zaman, onaylandı mı, hepsi kayıtlı." |
 
 **Sonucu söyleyin:**
@@ -99,7 +96,7 @@ Aşağıdakileri sisteme önceden girin. Hazırlık sırasında ID gereken yerle
 
 **Atlayın:**
 - **Tekrar Eden Planlar:** Artık canlı gösterilebilir. Form öğrenci, program, hizmet, sorumlu eğitimci, kampüs ve oda seçtiriyor. "Seansları Oluştur" denince öğrenci, eğitimci ve hizmet seanslara otomatik ekleniyor; eğitimcinin ya da salonun dolu olduğu tarihler atlanıp sayısı gösteriliyor. Liste ekranında her plan "Ayşe · Dil ve Konuşma · Pınar Öğretmen · Sal, Per 10:00 · Oda 3" şeklinde okunur; müşteriye bu listeyi göstermek iyi bir giriş olur.
-- **Takvim'in Eğitimci/Öğrenci görünümleri:** Artık adla aranıyor; "Pınar Öğretmen'in haftası" gösterilebilir. Aylık görünüm henüz yok.
+- **Takvim'in Eğitimci/Öğrenci görünümleri:** Artık adla aranıyor; "Pınar Öğretmen'in haftası" gösterilebilir. **Ay** görünümü de var; ayın doluluğunu göstermek için kullanılabilir.
 
 ---
 
@@ -147,6 +144,4 @@ Ayrıca müşterinin kullandığı kelimeleri yazın. "Kayıt", "seans hakkı", 
 ## 6. Demoda yapılmaması gerekenler
 
 - **Menüyü baştan sona gezmeyin.** Kamp, kamera, danışmanlık, KPI, izinler, toplantılar: "Bunlar ek modüller, ihtiyaca göre açılıyor" deyip geçin.
-- **Faturalar listesini açmayın.** Tutar ve Kalan sütunları şu an boş görünüyor (`EKRAN_IYILESTIRME_LISTESI.md` madde 1.8).
 - **Teknik terim kullanmayın:** enrollment, student program, recurring schedule, GUID, tenant, RBAC demeyin.
-- **Takvimde Ay görünümünü seçmeyin.** Henüz yok; Hafta ve Gün görünümlerini kullanın.

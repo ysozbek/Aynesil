@@ -85,7 +85,7 @@ async function submitCreate() {
   if (!validateCreate()) return
   try {
     await store.create({
-      username: createForm.username,
+      username: createForm.username.trim().toLowerCase(),
       fullName: createForm.fullName,
       email: createForm.email || undefined,
       phone: createForm.phone || undefined,
@@ -237,6 +237,7 @@ function statusActions(row: UserListItemDto) {
               class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 focus:ring-primary"
               :class="createErrors.username ? 'border-red-400' : 'border-border'" />
             <p v-if="createErrors.username" class="mt-1 text-xs text-red-600">{{ createErrors.username }}</p>
+            <p v-else class="mt-1 text-xs text-muted-foreground">{{ t('user.usernameHint') }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-foreground mb-1">{{ t('user.fullName') }} *</label>

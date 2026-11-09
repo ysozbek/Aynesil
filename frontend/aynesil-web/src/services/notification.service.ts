@@ -21,7 +21,7 @@ import type {
   UpsertTriggerConfigPayload,
 } from '@/types/notification.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -35,7 +35,7 @@ export const notificationService = {
 
   list: (query: NotificationListQuery) =>
     apiService.get<PaginatedResult<NotificationListItemDto>>(
-      `/notifications${qs(query as Record<string, unknown>)}`
+      `/notifications${qs(query)}`
     ),
 
   getUnreadCount: () =>
@@ -59,7 +59,7 @@ export const notificationService = {
 
   listTemplates: (query: NotificationTemplateListQuery) =>
     apiService.get<PaginatedResult<NotificationTemplateListItemDto>>(
-      `/notification-templates${qs(query as Record<string, unknown>)}`
+      `/notification-templates${qs(query)}`
     ),
 
   getTemplate: (id: string) =>
@@ -78,7 +78,7 @@ export const notificationService = {
 
   listTriggers: (corporationId?: string) =>
     apiService.get<PaginatedResult<NotificationTriggerConfigListItemDto>>(
-      `/notification-triggers${qs({ corporationId } as Record<string, unknown>)}`
+      `/notification-triggers${qs({ corporationId })}`
     ),
 
   upsertTrigger: (payload: UpsertTriggerConfigPayload) =>

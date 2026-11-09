@@ -20,7 +20,7 @@ import type {
 } from '@/types/portal.types'
 import type { NotificationListItemDto, NotificationListQuery } from '@/types/notification.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -48,7 +48,7 @@ export const portalService = {
   getSessions: (query: PortalSessionListQuery) => {
     const { studentId, ...rest } = query
     return apiService.get<PaginatedResult<PortalSessionDto>>(
-      `/portal/students/${studentId}/sessions${qs(rest as Record<string, unknown>)}`
+      `/portal/students/${studentId}/sessions${qs(rest)}`
     )
   },
 
@@ -57,7 +57,7 @@ export const portalService = {
   getAttendance: (query: PortalAttendanceListQuery) => {
     const { studentId, ...rest } = query
     return apiService.get<PaginatedResult<PortalAttendanceDto>>(
-      `/portal/students/${studentId}/attendance${qs(rest as Record<string, unknown>)}`
+      `/portal/students/${studentId}/attendance${qs(rest)}`
     )
   },
 
@@ -71,7 +71,7 @@ export const portalService = {
   getDocuments: (query: PortalDocumentListQuery) => {
     const { studentId, ...rest } = query
     return apiService.get<PaginatedResult<PortalDocumentDto>>(
-      `/portal/students/${studentId}/documents${qs(rest as Record<string, unknown>)}`
+      `/portal/students/${studentId}/documents${qs(rest)}`
     )
   },
 

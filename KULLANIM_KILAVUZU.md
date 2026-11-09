@@ -54,10 +54,9 @@ En geniş yetki sahibi. İlk kurulumda şu sırayı izleyin:
 1. `CRM → Adaylar → Aday Ekle` ile gelen başvuruyu kaydedin (iletişim kişisi, çocuk bilgisi, kaynak, başvuru nedeni).
 2. `CRM → Pipeline` ekranında adaylar aşama aşama ilerler. Aşama adları kurumunuza göre `Referans Veri` ekranından ayarlanır.
 3. Aday detayındaki `Aktiviteler` ve `Görüşmeler` sekmelerinde her telefon, e-posta ve görüşme kaydedilir.
-4. Aday kayıt olmaya karar verdiğinde:
-   - Önce `Öğrenciler → Öğrenci Ekle` ile öğrenci kaydını açın, gerekirse `Veliler → Veli Ekle` ile veliyi ekleyin.
-   - Sonra aday detayından **Öğrenciye Dönüştür** ile adayı bu öğrenciye bağlayın.
-   - Not: Dönüştürme ekranı şu an öğrencinin ID'sini istiyor. ID, öğrenci detay sayfasının adres çubuğundaki son kısımdır.
+4. Aday kayıt olmaya karar verdiğinde aday detayından **Öğrenciye Dönüştür**'e basın:
+   - **Yeni öğrenci oluştur:** Öğrencinin adı, soyadı ve doğum tarihi adaydan gelir; kampüs ve başvuru nedeni aktarılır. "İletişim kişisini veli olarak ekle" işaretliyse veli de açılır ve öğrencinin birincil velisi olarak bağlanır. **Öğrenciyi Oluştur ve Dönüştür** ile hepsi tek seferde yapılır.
+   - **Var olan öğrenciye bağla:** Öğrenci kaydı daha önce açıldıysa öğrenciyi adıyla arayıp seçin.
 
 ### 3.3 Değerlendirme Ekibi
 `Değerlendirme` menüsünden:
@@ -66,9 +65,9 @@ En geniş yetki sahibi. İlk kurulumda şu sırayı izleyin:
 3. Oturum detayında `Puanlama` sekmesinden formu doldurun, `Rapor` sekmesinden raporu hazırlayın, `Öneriler` sekmesinden program önerisi ekleyin.
 
 ### 3.4 Eğitmenler / Terapistler
-1. `Takvim` → günlük/haftalık seanslarınızı görün.
+1. `Takvim` → günlük, haftalık veya aylık seanslarınızı görün. Ay görünümünde bir güne tıklayınca o günün ayrıntısı açılır.
 2. Seansa tıklayın → öğrenci bilgisi, hedefler, önceki notlar açılır.
-3. Seans sonunda: **yoklama al** (öğrenci geldi/gelmedi), **seans notu** yaz, **hedef ilerlemesi** gir.
+3. Seans sonunda: **yoklama al** (öğrenci geldi/gelmedi), **seans notu** yaz, **hedef ilerlemesi** gir. Seansta çalışılan hedef listede yoksa `Hedefler` sekmesindeki **Hedef Ekle** ile öğrencinin aktif hedeflerinden ekleyin.
 4. Gelmeyen öğrenci için → `Telafi Talebi` oluşturun.
 5. `İzin` menüsünden kendi izin taleplerinizi girin.
 
@@ -80,15 +79,15 @@ En geniş yetki sahibi. İlk kurulumda şu sırayı izleyin:
 
 ### 3.6 Sekreter / Resepsiyon (Planlama)
 1. `Planlama → Planlama Paneli` → bugünkü seansları görün. `Planlama → Takvim` → haftalık tablo.
-2. `Planlama → Seanslar → Seans Oluştur` → tek seferlik seans. Öğrenci ve eğitimci, seans detayındaki `Katılımcılar` sekmesinden eklenir.
+2. `Planlama → Seanslar → Seans Oluştur` → tek seferlik seans. Kampüs, oda, öğrenci ve sorumlu eğitimci formda adıyla seçilir. Grup seansı için ek öğrenci ve eğitimciler seans detayındaki `Katılımcılar` sekmesinden eklenir.
 3. `Planlama → Tekrar Eden Planlar → Plan Oluştur` → haftalık tekrar eden seans düzeni. Öğrenciyi, aldığı programı, hizmeti, sorumlu eğitimciyi, kampüsü, odayı, günleri ve saati seçersiniz; örneğin "Her Pazartesi 10:00, Ayşe, Dil ve Konuşma, Pınar Öğretmen, 2 Nolu Oda". Ardından listede **Seansları Oluştur** ile bir tarih aralığı verirsiniz. Sistem seansları öğrenci, eğitimci ve hizmetle birlikte üretir. Eğitimcinin veya odanın o saatte dolu olduğu tarihleri atlar ve kaç tarihin atlandığını söyler.
 4. `Odalar` → çakışma kontrolü için oda listesini güncel tutun.
 5. `Telafi Talepleri` → gelen talepleri onaylayın/reddedin.
 
 ### 3.7 Finans / Muhasebe
-1. `Finans → Paketler` → sattığınız seans paketlerini tanımlayın (ör. "20 Seanslık Bireysel Terapi Paketi").
+1. `Finans → Paketler` → sattığınız seans paketlerini tanımlayın (ör. "20 Seanslık Bireysel Terapi Paketi"). **Paketi mutlaka bir programa bağlayın**; seans hakkı otomatik düşerken bu bağlantıya bakılır.
 2. Öğrenciye paket satışı: `Öğrenci Paketleri → Paket Ata`. Öğrenciyi ve paketi seçersiniz; kredi sayısı, fiyat ve son kullanım tarihi paketten gelir. Kaydedince paketteki kredi öğrenciye yüklenir. Paket atamak ödeme almaz; ödemeyi `Ödemeler` ekranından ayrıca kaydedin.
-3. `Kredi Defteri` → öğrencinin kalan seans hakkı takip edilir (seans yapıldıkça düşer).
+3. `Kredi Defteri` → öğrencinin kalan seans hakkı takip edilir. Seans tamamlanınca otomatik düşer (bkz. 8.5); gerekirse buradan elle düşülür, iade veya düzeltme yapılır.
 4. `Faturalar` → fatura kesme.
 5. `Ödemeler → Yeni Ödeme` → tahsilat kaydı. **Finansal kayıtlar silinmez** — yanlış kayıt için düzeltme (ters kayıt) yapılır.
 6. `Burslar` ve `Promosyonlar` → indirim tanımları.
@@ -141,7 +140,7 @@ Veliler ayrı bir arayüz görür: `Portal` menüsü altında.
 Çoğu kayıt "sil" dediğinizde fiziksel olarak silinmez; `IsDeleted` işaretlenir. Yöneticiniz gerekirse geri alabilir.
 
 ### Dil
-Sistem Türkçe ve İngilizce destekler. Üst bardan dil değiştirebilirsiniz. Referans veriler ve menüler de çevrilidir.
+Arayüz şu an Türkçedir. Altyapı başka dilleri destekleyecek şekilde kurulmuştur (menüler ve referans veriler çevrilebilir), ancak İngilizce arayüz çevirisi henüz eklenmemiştir.
 
 ### Bildirimler
 - `Bildirimler → Gelen Kutusu` → size gelen bildirimler.
@@ -158,7 +157,7 @@ Kritik işlemler (öğrenci oluşturma, sözleşme imzalama, ödeme, izin onayı
 1. **Sekreter:** `CRM → Yeni Aday` kaydı açar.
 2. **CRM ekibi:** Aktivite kaydeder, görüşme yapar, pipeline'da ilerletir.
 3. **Değerlendirme ekibi:** `Değerlendirme → Yeni Seans` planlar, formu doldurur.
-4. **CRM ekibi:** Öğrenci kaydını açar, ardından aday detayında **Öğrenciye Dönüştür** ile adayı bu öğrenciye bağlar.
+4. **CRM ekibi:** Aday detayında **Öğrenciye Dönüştür** ile öğrenci ve veli kaydını aday bilgilerinden açar.
 5. **BEP sorumlusu:** Yeni öğrenci için BEP oluşturur, hedefler ekler.
 6. **Hukuk:** Sözleşme + onamları imzalatır.
 7. **Finans:** Paket satışı + ilk ödeme.
@@ -272,7 +271,10 @@ Kurum (Corporation)
 ### 8.5 Finansla bağlantı
 
 - Öğrenciye bir **paket** satılır (ör. "20 seanslık Konuşma Terapisi paketi") — bir program hizmetine karşılık gelir.
-- Her tamamlanan seans + mevcut yoklama → `Kredi Defteri`nden bir kredi düşer.
+- Seans **tamamlanınca**, yoklamada "geldi", "geç geldi" veya "erken ayrıldı" olan her öğrencinin paketinden 1 seans hakkı otomatik düşer.
+  - Hangi paket: öğrencinin, **seansın programına bağlı** aktif paketi. Program, katılımcının program kaydından, yoksa seansın hizmetinden bulunur. Birden fazla uygun paket varsa süresi en önce dolan kullanılır.
+  - Düşmeyen durumlar: yoklama alınmamış, öğrenci gelmemiş veya mazeretli, seans "gelmedi" (no-show) olarak işaretlenmiş, ya da öğrencinin o programa bağlı, hakkı kalan paketi yok. Seans detayında her öğrencinin yanında "1 seans hakkı düşüldü" ya da "Seans hakkı düşülmedi" yazar.
+  - **Sıra önemli:** önce yoklama, sonra "Tamamla". Tamamladıktan sonra alınan yoklama hak düşürmez; o durumda Kredi Defteri'nden elle düşün.
 - Formül: **Program = ne sattığımız, Seans = ne teslim ettiğimiz, Kredi Defteri = sayaç**.
 
 ### 8.6 Somut örnek — "Ayşe"
@@ -292,7 +294,7 @@ Kurum (Corporation)
    - Yoklama alır
    - Not yazar
    - Hedef ilerlemesini günceller
-9. **Arka planda:** Seans "completed" olunca Ayşe'nin 40 kredisinden 1 düşer.
+9. **Arka planda:** Seans "completed" olunca, yoklamada "geldi" görünen Ayşe'nin programa bağlı paketinden 1 seans hakkı düşer (seans detayında "1 seans hakkı düşüldü").
 10. **Veli portalı:** Not `parent_visible = true` ise veli görür. BEP onaylı + görünür ise hedef ilerlemesini de görür.
 
 ### 8.7 Aynı öğrenci birden fazla programda olabilir mi?

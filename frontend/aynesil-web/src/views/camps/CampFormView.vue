@@ -60,6 +60,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
+import type { RefValueItem } from '@/stores/refdata.store'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,7 +71,7 @@ const refDataStore = useRefDataStore()
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
 const errorMsg = ref('')
-const campTypes = computed(() => refDataStore.getByCategory?.('camp_type') ?? [])
+const campTypes = ref<RefValueItem[]>([])
 const form = reactive({ code: '', name: '', campTypeId: '', capacity: undefined as number | undefined, location: '', description: '' })
 
 async function handleSubmit() {
@@ -100,7 +101,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await refDataStore.fetchCategory?.('camp_type')
+  campTypes.value = await refDataStore.getValues('camp_type').catch(() => [])
   if (isEdit.value && id) {
     await campStore.fetchCamp(id)
     const c = campStore.currentCamp

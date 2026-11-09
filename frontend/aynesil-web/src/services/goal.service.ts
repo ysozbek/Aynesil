@@ -32,7 +32,7 @@ import type {
   RecordProgressPayload,
 } from '@/types/goal.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -46,7 +46,7 @@ export const goalService = {
 
   listLibraries: (query: GoalLibraryListQuery) =>
     apiService.get<PaginatedResult<GoalLibraryListItemDto>>(
-      `/goals/libraries${qs(query as Record<string, unknown>)}`
+      `/goals/libraries${qs(query)}`
     ),
 
   getLibrary: (id: string) =>
@@ -65,7 +65,7 @@ export const goalService = {
 
   listTemplates: (query: GoalTemplateListQuery) =>
     apiService.get<PaginatedResult<GoalTemplateListItemDto>>(
-      `/goals/templates${qs(query as Record<string, unknown>)}`
+      `/goals/templates${qs(query)}`
     ),
 
   getTemplate: (id: string) =>
@@ -87,7 +87,7 @@ export const goalService = {
 
   listStudentGoals: (query: StudentGoalListQuery) =>
     apiService.get<PaginatedResult<StudentGoalListItemDto>>(
-      `/goals/student-goals${qs(query as Record<string, unknown>)}`
+      `/goals/student-goals${qs(query)}`
     ),
 
   getStudentGoal: (id: string) =>
@@ -127,6 +127,6 @@ export const goalService = {
 
   getSuccessRates: (query: SuccessRatesQuery) =>
     apiService.get<GoalSuccessRateDto[]>(
-      `/goals/analytics/success-rates${qs(query as Record<string, unknown>)}`
+      `/goals/analytics/success-rates${qs(query)}`
     ),
 }

@@ -38,6 +38,8 @@ db/validation/smoke_test.sh
 
 `devops/*.py` wrap build/publish/migrate (`migrate.py --local | --incremental | --seed-only | --skip-seed`).
 
+New customer (tenant) onboarding: `python3 devops/new_tenant.py --check --code <code> --name "<name>" --admin-username <email> --admin-name "<name>"` (drop `--check` to commit; `--dry-run` prints SQL). Login resolves users by username alone (`iam.authenticate_user`), so `user_account.username` is **globally unique** across corporations (V36, `uq_user_account_username`). User-creation handlers check it via the SECURITY DEFINER `iam.username_exists()` (`Features/Users/UsernameAvailability.cs`), since RLS hides other tenants' rows. Onboarding phases: `docs/KURULUM_YOL_HARITASI.md`.
+
 ## Architecture
 
 ### Layers (src/)
@@ -64,7 +66,7 @@ db/validation/smoke_test.sh
 Permission-based RBAC: `[HasPermission(Permissions.X.Y)]` with a dynamic policy provider (`Api/Authorization`). Never check role names. On the frontend, use `composables/usePermission.ts`. Menus are DB-driven (`iam.menu_item` + translations, `required_permission`, `feature_flag`).
 
 ### Database changes
-- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (currently V35). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
+- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (currently V36). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
 - A new module typically ships a `V{N}__<module>_permissions_and_menu.sql` that seeds `iam` permissions, `menu_item` rows and their `tr` translations. Keep it in sync with `Shared/Constants/Permissions.cs` and frontend routes.
 - The layered DDL files (`db/layer*/`) are also kept in sync when a migration changes a table.
 

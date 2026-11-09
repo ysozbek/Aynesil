@@ -203,6 +203,8 @@ export interface SessionParticipantDto {
   studentId: string
   studentFullName: string
   role: string
+  /** Package credits consumed by this session (deducted automatically on completion) */
+  creditsConsumed: number
 }
 
 export interface SessionEducatorDto {

@@ -211,7 +211,8 @@ export interface InvoiceDto {
   dueDate?: string
   subtotal: number
   discountTotal: number
-  total: number
+  taxTotal: number
+  grandTotal: number
   paidAmount: number
   balance: number
   currency: string
@@ -226,7 +227,7 @@ export interface InvoiceListItemDto {
   invoiceNo: string
   issueDate?: string
   dueDate?: string
-  total: number
+  grandTotal: number
   paidAmount: number
   balance: number
   currency: string
@@ -237,8 +238,9 @@ export interface InvoiceListQuery extends PagedQuery {
   corporationId: string
   studentId?: string
   status?: string
-  from?: string
-  to?: string
+  overdue?: boolean
+  issuedFrom?: string
+  issuedTo?: string
 }
 
 export interface CreateInvoicePayload {

@@ -34,6 +34,15 @@ db/seed/tenants/
 
 ## Yeni tenant kurulumu
 
+**Önerilen yol:** `devops/new_tenant.py`. Kurum, kampüsler, admin rolü ve ilk yönetici kullanıcıyı tek transaction'da açar; dosya kopyalamak ve SQL düzenlemek gerekmez. Ayrıntı: `docs/KURULUM_YOL_HARITASI.md`.
+
+```bash
+python3 devops/new_tenant.py --check --code yeni_musteri --name "Yeni Müşteri" \
+  --campus "Merkez Kampüs:İstanbul" --admin-username mudur@yenimusteri.com --admin-name "Ad Soyad"
+```
+
+Aşağıdaki şablon yöntemi, kuruma özel ek seed (ör. özel roller) gerektiğinde kullanılır. Not: şablon yönetici kullanıcı açmaz.
+
 ```bash
 # 1. Şablonu kopyalayın
 cp -r db/seed/tenants/_template db/seed/tenants/yeni_musteri

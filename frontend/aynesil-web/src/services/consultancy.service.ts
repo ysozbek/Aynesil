@@ -24,7 +24,7 @@ import type {
   CompleteFollowUpPayload,
 } from '@/types/consultancy.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -37,7 +37,7 @@ export const consultancyService = {
   // ── Institutions ───────────────────────────────────────────────────────────
   listInstitutions: (query: InstitutionListQuery) =>
     apiService.get<PaginatedResult<InstitutionListItemDto>>(
-      `/consultancy/institutions${qs(query as Record<string, unknown>)}`
+      `/consultancy/institutions${qs(query)}`
     ),
 
   getInstitution: (id: string) =>
@@ -52,7 +52,7 @@ export const consultancyService = {
   // ── Plans ──────────────────────────────────────────────────────────────────
   listPlans: (query: PlanListQuery) =>
     apiService.get<PaginatedResult<ConsultancyPlanListItemDto>>(
-      `/consultancy/plans${qs(query as Record<string, unknown>)}`
+      `/consultancy/plans${qs(query)}`
     ),
 
   getPlan: (id: string) =>
@@ -76,7 +76,7 @@ export const consultancyService = {
   // ── Visits ─────────────────────────────────────────────────────────────────
   listVisits: (query: VisitListQuery) =>
     apiService.get<PaginatedResult<SchoolVisitListItemDto>>(
-      `/consultancy/visits${qs(query as Record<string, unknown>)}`
+      `/consultancy/visits${qs(query)}`
     ),
 
   getVisit: (id: string) =>
@@ -110,7 +110,7 @@ export const consultancyService = {
   // ── Agreements ─────────────────────────────────────────────────────────────
   listAgreements: (query: AgreementListQuery) =>
     apiService.get<PaginatedResult<ConsultancyAgreementListItemDto>>(
-      `/consultancy/agreements${qs(query as Record<string, unknown>)}`
+      `/consultancy/agreements${qs(query)}`
     ),
 
   getAgreement: (id: string) =>
@@ -139,13 +139,13 @@ export const consultancyService = {
 
   getAgreementSummary: (query: AgreementSummaryQuery) =>
     apiService.get<AgreementSummaryDto[]>(
-      `/consultancy/reporting/agreements${qs(query as Record<string, unknown>)}`
+      `/consultancy/reporting/agreements${qs(query)}`
     ),
 
   // ── Follow-Ups ─────────────────────────────────────────────────────────────
   listFollowUps: (query: FollowUpListQuery) =>
     apiService.get<PaginatedResult<FollowUpActivityListItemDto>>(
-      `/consultancy/follow-ups${qs(query as Record<string, unknown>)}`
+      `/consultancy/follow-ups${qs(query)}`
     ),
 
   getFollowUp: (id: string) =>
@@ -171,23 +171,23 @@ export const consultancyService = {
 
   getOpenFollowUpsReport: (query: OpenFollowUpReportQuery) =>
     apiService.get<OpenFollowUpReportItemDto[]>(
-      `/consultancy/reporting/follow-ups/open${qs(query as Record<string, unknown>)}`
+      `/consultancy/reporting/follow-ups/open${qs(query)}`
     ),
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   // URL corrected: /consultancy/reporting/* (not /consultancy/reports/*)
   getInstitutionReport: (query: { corporationId?: string; institutionTypeId?: string }) =>
     apiService.get<InstitutionReportDto[]>(
-      `/consultancy/reporting/institutions${qs(query as Record<string, unknown>)}`
+      `/consultancy/reporting/institutions${qs(query)}`
     ),
 
   getOutcomes: (query: { corporationId?: string; institutionId?: string; status?: string }) =>
     apiService.get<ConsultancyOutcomesDto[]>(
-      `/consultancy/reporting/outcomes${qs(query as Record<string, unknown>)}`
+      `/consultancy/reporting/outcomes${qs(query)}`
     ),
 
   getVisitHistory: (query: { corporationId?: string; institutionId?: string; from?: string; to?: string }) =>
     apiService.get<unknown[]>(
-      `/consultancy/reporting/visit-history${qs(query as Record<string, unknown>)}`
+      `/consultancy/reporting/visit-history${qs(query)}`
     ),
 }

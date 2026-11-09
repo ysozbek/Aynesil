@@ -12,7 +12,7 @@ import type {
   KpiDefinitionListQuery, SnapshotListQuery, KpiReportQuery, DashboardQuery,
 } from '@/types/kpi.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -29,7 +29,7 @@ export const kpiService = {
   // ── Definitions ────────────────────────────────────────────────────────────
   listDefinitions: (query: KpiDefinitionListQuery) =>
     apiService.get<PaginatedResult<KpiDefinitionListItemDto>>(
-      `/performance-kpi/definitions${qs(query as Record<string, unknown>)}`
+      `/performance-kpi/definitions${qs(query)}`
     ),
 
   getDefinition: (id: string) =>
@@ -73,7 +73,7 @@ export const kpiService = {
   // Backend only exposes a paginated list; there is no `GET /snapshots/{id}`.
   listSnapshots: (query: SnapshotListQuery) =>
     apiService.get<PaginatedResult<EducatorPerformanceSnapshotListItemDto>>(
-      `/performance-kpi/snapshots${qs(query as Record<string, unknown>)}`
+      `/performance-kpi/snapshots${qs(query)}`
     ),
 
   // ── Parent Feedback ────────────────────────────────────────────────────────
@@ -87,29 +87,29 @@ export const kpiService = {
   // ── Dashboards ─────────────────────────────────────────────────────────────
   getEducatorDashboard: (educatorId: string, query: DashboardQuery) =>
     apiService.get<EducatorDashboardDto>(
-      `/performance-kpi/dashboards/educator/${educatorId}${qs(query as Record<string, unknown>)}`
+      `/performance-kpi/dashboards/educator/${educatorId}${qs(query)}`
     ),
 
   getManagerDashboard: (query: DashboardQuery) =>
     apiService.get<ManagerDashboardDto>(
-      `/performance-kpi/dashboards/manager${qs(query as Record<string, unknown>)}`
+      `/performance-kpi/dashboards/manager${qs(query)}`
     ),
 
   getExecutiveDashboard: (query: DashboardQuery) =>
     apiService.get<ExecutiveDashboardDto>(
-      `/performance-kpi/dashboards/executive${qs(query as Record<string, unknown>)}`
+      `/performance-kpi/dashboards/executive${qs(query)}`
     ),
 
   // ── Trends & Ranking ──────────────────────────────────────────────────────
   // Backend splits trends into `trends/educator/{id}` and `trends/corporation`.
   getEducatorTrend: (educatorId: string, query: DashboardQuery) =>
     apiService.get(
-      `/performance-kpi/trends/educator/${educatorId}${qs(query as Record<string, unknown>)}`,
+      `/performance-kpi/trends/educator/${educatorId}${qs(query)}`,
     ),
 
   getCorporationTrend: (query: DashboardQuery) =>
     apiService.get(
-      `/performance-kpi/trends/corporation${qs(query as Record<string, unknown>)}`,
+      `/performance-kpi/trends/corporation${qs(query)}`,
     ),
 
   getRanking: (query: { corporationId?: string; kpiId?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
@@ -117,5 +117,5 @@ export const kpiService = {
 
   // ── Reports ────────────────────────────────────────────────────────────────
   getKpiReport: (query: KpiReportQuery) =>
-    apiService.get<KpiReportRowDto[]>(`/performance-kpi/reports/kpi${qs(query as Record<string, unknown>)}`),
+    apiService.get<KpiReportRowDto[]>(`/performance-kpi/reports/kpi${qs(query)}`),
 }

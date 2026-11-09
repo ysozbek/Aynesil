@@ -26,7 +26,7 @@ import type {
   CarryForwardPayload,
 } from '@/types/leave.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -40,7 +40,7 @@ export const leaveService = {
 
   list: (query: LeaveRequestListQuery) =>
     apiService.get<PaginatedResult<LeaveRequestListItemDto>>(
-      `/leave/requests${qs(query as Record<string, unknown>)}`
+      `/leave/requests${qs(query)}`
     ),
 
   get: (id: string) =>
@@ -74,14 +74,14 @@ export const leaveService = {
 
   getCalendar: (query: LeaveCalendarQuery) =>
     apiService.get<LeaveCalendarItemDto[]>(
-      `/leave/calendar${qs(query as Record<string, unknown>)}`
+      `/leave/calendar${qs(query)}`
     ),
 
   // ── Balances ───────────────────────────────────────────────────────────────
 
   getBalances: (query: LeaveBalanceQuery) =>
     apiService.get<LeaveBalanceDto[]>(
-      `/leave/balances${qs(query as Record<string, unknown>)}`
+      `/leave/balances${qs(query)}`
     ),
 
   setEntitlement: (balanceId: string, payload: SetLeaveEntitlementPayload) =>
@@ -94,11 +94,11 @@ export const leaveService = {
 
   getUsageReport: (query: LeaveReportQuery) =>
     apiService.get<LeaveUsageReportItemDto[]>(
-      `/leave/reports/usage${qs(query as Record<string, unknown>)}`
+      `/leave/reports/usage${qs(query)}`
     ),
 
   getTrendReport: (query: LeaveReportQuery) =>
     apiService.get<LeaveTrendItemDto[]>(
-      `/leave/reports/trends${qs(query as Record<string, unknown>)}`
+      `/leave/reports/trends${qs(query)}`
     ),
 }

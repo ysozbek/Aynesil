@@ -33,8 +33,8 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.Username)
             .NotEmpty().MaximumLength(100)
-            .Matches(@"^[a-z0-9][a-z0-9._-]*$")
-            .WithMessage("Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, or underscores.");
+            .Matches(@"^[a-z0-9][a-z0-9._@+-]*$")
+            .WithMessage("Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, underscores, @ or +. An e-mail address is recommended.");
 
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(300);
         RuleFor(x => x.Email).EmailAddress().MaximumLength(200).When(x => x.Email is not null);
@@ -72,9 +72,8 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 
         var usernameLower = req.Username.ToLowerInvariant();
 
-        var taken = await _db.UserAccounts.AnyAsync(
-            u => u.CorporationId == corporationId && u.Username == usernameLower, ct);
-        if (taken)
+        // Global check: usernames are unique across all corporations (login has no tenant)
+        if (await _db.UsernameExistsAsync(usernameLower, ct))
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(
                 nameof(req.Username), $"Username '{usernameLower}' is already taken.")]);
 

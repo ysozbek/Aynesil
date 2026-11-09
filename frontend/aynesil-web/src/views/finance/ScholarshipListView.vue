@@ -9,7 +9,7 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
-import type { ScholarshipListItemDto, PaginatedResult } from '@/types/finance.types'
+import type { ScholarshipListItemDto } from '@/types/finance.types'
 import type { PaginatedResult as PR } from '@/types/api.types'
 import type { RefValueItem } from '@/stores/refdata.store'
 

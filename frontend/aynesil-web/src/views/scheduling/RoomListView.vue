@@ -96,7 +96,7 @@ async function submitForm() {
         name: formData.name,
         capacity: formData.capacity,
         isVirtual: formData.isVirtual,
-        rowVersion: store.currentRoom?.rowVersion ?? '',
+        rowVersion: store.currentRoom?.rowVersion ?? 0,
       })
     } else {
       await store.createRoom({

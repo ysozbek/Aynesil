@@ -42,7 +42,8 @@ public sealed class GetInvoicesQueryHandler
         if (req.Overdue == true)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            q = q.Where(i => (i.Status == "issued" || i.Status == "partial") && i.DueDate < today);
+            q = q.Where(i => i.Status == "overdue"
+                          || ((i.Status == "issued" || i.Status == "partial") && i.DueDate < today));
         }
 
         if (!string.IsNullOrWhiteSpace(req.Search))
@@ -81,6 +82,7 @@ public sealed class GetInvoicesQueryHandler
             x.inv.StudentId, x.StudentFullName?.Trim(),
             x.inv.InvoiceNo, x.inv.IssueDate, x.inv.DueDate,
             x.inv.Currency, x.inv.GrandTotal, x.PaidAmount,
+            x.inv.GrandTotal - x.PaidAmount,
             x.inv.Status)).ToList();
 
         return PaginatedResult<InvoiceListItemDto>.Create(items, total, req.Page, req.PageSize);

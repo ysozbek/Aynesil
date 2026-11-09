@@ -25,29 +25,53 @@ const campuses = ref<CampusListItemDto[]>([])
 const currentDate = ref(new Date())
 const calendarView = ref<'week' | 'month' | 'day' | 'agenda'>('week')
 
-const from = computed(() => {
-  const d = new Date(currentDate.value)
-  if (calendarView.value === 'day') return d.toISOString().slice(0, 10)
-  if (calendarView.value === 'week') {
-    const day = d.getDay()
-    const start = new Date(d)
-    start.setDate(d.getDate() - day)
-    return start.toISOString().slice(0, 10)
-  }
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10)
+// ── Date range ────────────────────────────────────────────────────────────────
+// All calculations use the browser's local time. The API receives full ISO
+// timestamps with an exclusive end (backend filters `starts_at < to`), so the
+// last day of the range is included and the timezone offset is preserved.
+
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+}
+
+/** Monday-based week start (Turkish convention). */
+function startOfWeek(d: Date): Date {
+  const day = (d.getDay() + 6) % 7 // Mon=0 … Sun=6
+  return addDays(startOfDay(d), -day)
+}
+
+/** Local calendar date key, e.g. 2026-11-09 (not UTC). */
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const rangeStart = computed<Date>(() => {
+  const d = currentDate.value
+  if (calendarView.value === 'day') return startOfDay(d)
+  if (calendarView.value === 'week') return startOfWeek(d)
+  // month + agenda: month grid starts on the Monday on/before the 1st
+  const first = new Date(d.getFullYear(), d.getMonth(), 1)
+  return calendarView.value === 'month' ? startOfWeek(first) : first
 })
 
-const to = computed(() => {
-  const d = new Date(currentDate.value)
-  if (calendarView.value === 'day') return d.toISOString().slice(0, 10)
-  if (calendarView.value === 'week') {
-    const day = d.getDay()
-    const end = new Date(d)
-    end.setDate(d.getDate() + (6 - day))
-    return end.toISOString().slice(0, 10)
-  }
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+/** Exclusive end of the range. */
+const rangeEnd = computed<Date>(() => {
+  const d = currentDate.value
+  if (calendarView.value === 'day') return addDays(startOfDay(d), 1)
+  if (calendarView.value === 'week') return addDays(startOfWeek(d), 7)
+  const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1)
+  if (calendarView.value === 'agenda') return nextMonth
+  // month grid ends on the Sunday on/after the last day of the month
+  const lastDay = addDays(nextMonth, -1)
+  return addDays(startOfWeek(lastDay), 7)
 })
+
+const from = computed(() => rangeStart.value.toISOString())
+const to = computed(() => rangeEnd.value.toISOString())
 
 function formatDateHeader(): string {
   const d = currentDate.value
@@ -55,7 +79,10 @@ function formatDateHeader(): string {
     return d.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
   if (calendarView.value === 'week') {
-    return `${from.value} – ${to.value}`
+    const last = addDays(rangeEnd.value, -1)
+    const startText = rangeStart.value.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+    const endText = last.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
+    return `${startText} – ${endText}`
   }
   return d.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })
 }
@@ -125,24 +152,57 @@ function formatTime(val: string): string {
   return new Date(val).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Generate week days for week view
-const weekDays = computed(() => {
+// Week view: 7 days starting Monday
+const weekDays = computed(() => Array.from({ length: 7 }, (_, i) => addDays(rangeStart.value, i)))
+
+// Month view: full weeks covering the month (Mon–Sun rows)
+const monthDays = computed(() => {
   const days: Date[] = []
-  const start = new Date(from.value)
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start)
-    d.setDate(start.getDate() + i)
-    days.push(d)
-  }
+  for (let d = rangeStart.value; d < rangeEnd.value; d = addDays(d, 1)) days.push(d)
   return days
 })
+const MONTH_CELL_LIMIT = 3
+const weekDaysOfGrid = computed(() => monthDays.value.slice(0, 7))
 
 // Hours for day/week view
 const hours = Array.from({ length: 14 }, (_, i) => i + 7) // 7am to 8pm
 
+const eventsByDay = computed(() => {
+  const map = new Map<string, CalendarEventDto[]>()
+  for (const e of calendarStore.events) {
+    const key = dayKey(new Date(e.start))
+    const list = map.get(key)
+    if (list) list.push(e)
+    else map.set(key, [e])
+  }
+  for (const list of map.values()) list.sort((a, b) => a.start.localeCompare(b.start))
+  return map
+})
+
 function eventsOnDay(day: Date): CalendarEventDto[] {
-  const dayStr = day.toISOString().slice(0, 10)
-  return calendarStore.events.filter(e => e.start.slice(0, 10) === dayStr)
+  return eventsByDay.value.get(dayKey(day)) ?? []
+}
+
+/** Local hour of the event start (API timestamps are UTC). */
+function eventHour(event: CalendarEventDto): number {
+  return new Date(event.start).getHours()
+}
+
+function isToday(day: Date): boolean {
+  return dayKey(day) === dayKey(new Date())
+}
+
+function isCurrentMonth(day: Date): boolean {
+  return day.getMonth() === currentDate.value.getMonth()
+}
+
+function openDay(day: Date) {
+  currentDate.value = day
+  calendarView.value = 'day'
+}
+
+function openEvent(event: CalendarEventDto) {
+  if (event.type === 'session') router.push({ name: 'session-detail', params: { id: event.id } })
 }
 </script>
 
@@ -239,10 +299,10 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
           v-for="event in calendarStore.events"
           :key="event.id"
           class="flex items-center gap-4 px-4 py-3 hover:bg-accent/30 cursor-pointer transition-colors"
-          @click="event.type === 'session' && router.push({ name: 'session-detail', params: { id: event.id } })"
+          @click="openEvent(event)"
         >
           <div class="text-center min-w-[72px]">
-            <p class="text-xs text-muted-foreground">{{ event.start.slice(0, 10) }}</p>
+            <p class="text-xs text-muted-foreground">{{ new Date(event.start).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', weekday: 'short' }) }}</p>
             <p class="text-sm font-semibold">{{ formatTime(event.start) }}</p>
           </div>
           <div class="flex-1 min-w-0">
@@ -266,7 +326,7 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
           class="px-2 py-2 text-center text-xs font-medium text-muted-foreground"
         >
           <p>{{ day.toLocaleDateString('tr-TR', { weekday: 'short' }) }}</p>
-          <p :class="['text-base font-semibold mt-0.5', day.toDateString() === new Date().toDateString() ? 'text-primary' : 'text-foreground']">
+          <p :class="['text-base font-semibold mt-0.5', isToday(day) ? 'text-primary' : 'text-foreground']">
             {{ day.getDate() }}
           </p>
         </div>
@@ -287,9 +347,9 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
           >
             <template v-for="event in eventsOnDay(day)" :key="event.id">
               <div
-                v-if="parseInt(event.start.slice(11, 13)) === hour"
+                v-if="eventHour(event) === hour"
                 :class="['rounded p-1 mb-0.5 cursor-pointer text-xs border truncate', eventColor(event)]"
-                @click="event.type === 'session' && router.push({ name: 'session-detail', params: { id: event.id } })"
+                @click="openEvent(event)"
               >
                 {{ formatTime(event.start) }} {{ event.title }}
               </div>
@@ -300,14 +360,55 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
     </div>
 
     <!-- Month View -->
-    <div v-else-if="calendarView === 'month'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-      <div class="grid grid-cols-7 border-b border-border bg-accent/50">
-        <div v-for="d in ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']" :key="d" class="px-2 py-2 text-center text-xs font-medium text-muted-foreground">
-          {{ d }}
+    <div v-else-if="calendarView === 'month'" class="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+      <div class="min-w-[640px]">
+        <div class="grid grid-cols-7 border-b border-border bg-accent/50">
+          <div
+            v-for="d in weekDaysOfGrid"
+            :key="d.getDay()"
+            class="px-2 py-2 text-center text-xs font-medium text-muted-foreground"
+          >
+            {{ d.toLocaleDateString('tr-TR', { weekday: 'short' }) }}
+          </div>
         </div>
-      </div>
-      <div class="text-center py-16 text-muted-foreground text-sm">
-        {{ t('scheduling.calendar.monthViewHint') }}
+        <div class="grid grid-cols-7">
+          <div
+            v-for="day in monthDays"
+            :key="dayKey(day)"
+            :class="[
+              'min-h-[110px] border-b border-r border-border/50 p-1 flex flex-col gap-0.5',
+              isCurrentMonth(day) ? '' : 'bg-accent/30',
+            ]"
+          >
+            <button
+              type="button"
+              @click="openDay(day)"
+              :class="[
+                'self-end w-7 h-7 rounded-full text-xs font-medium hover:bg-accent',
+                isToday(day) ? 'bg-primary text-primary-foreground hover:bg-primary' : isCurrentMonth(day) ? 'text-foreground' : 'text-muted-foreground',
+              ]"
+            >
+              {{ day.getDate() }}
+            </button>
+            <div
+              v-for="event in eventsOnDay(day).slice(0, MONTH_CELL_LIMIT)"
+              :key="event.id"
+              :class="['rounded px-1 py-0.5 text-[11px] leading-tight border truncate', event.type === 'session' ? 'cursor-pointer' : '', eventColor(event)]"
+              :title="`${formatTime(event.start)} ${event.title}`"
+              @click="openEvent(event)"
+            >
+              {{ formatTime(event.start) }} {{ event.title }}
+            </div>
+            <button
+              v-if="eventsOnDay(day).length > MONTH_CELL_LIMIT"
+              type="button"
+              @click="openDay(day)"
+              class="text-left px-1 text-[11px] text-primary hover:underline"
+            >
+              {{ t('scheduling.calendar.moreEvents', { n: eventsOnDay(day).length - MONTH_CELL_LIMIT }) }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -323,9 +424,9 @@ function eventsOnDay(day: Date): CalendarEventDto[] {
           <div class="flex-1 py-1 space-y-1">
             <template v-for="event in eventsOnDay(currentDate)" :key="event.id">
               <div
-                v-if="parseInt(event.start.slice(11, 13)) === hour"
+                v-if="eventHour(event) === hour"
                 :class="['rounded-lg p-2 cursor-pointer border text-xs', eventColor(event)]"
-                @click="event.type === 'session' && router.push({ name: 'session-detail', params: { id: event.id } })"
+                @click="openEvent(event)"
               >
                 <p class="font-medium">{{ event.title }}</p>
                 <p class="text-xs opacity-75">{{ formatTime(event.start) }} – {{ formatTime(event.end) }}</p>

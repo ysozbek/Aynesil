@@ -28,7 +28,7 @@ import type {
   UpdateStudentProgramPayload,
 } from '@/types/program.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -42,7 +42,7 @@ export const programService = {
 
   listPrograms: (query: ProgramListQuery) =>
     apiService.get<PaginatedResult<ProgramListItemDto>>(
-      `/programs${qs(query as Record<string, unknown>)}`
+      `/programs${qs(query)}`
     ),
 
   getProgram: (id: string) =>
@@ -79,7 +79,7 @@ export const enrollmentService = {
 
   listEnrollments: (query: EnrollmentListQuery) =>
     apiService.get<PaginatedResult<EnrollmentListItemDto>>(
-      `/enrollments${qs(query as Record<string, unknown>)}`
+      `/enrollments${qs(query)}`
     ),
 
   getEnrollment: (id: string) =>
@@ -113,7 +113,7 @@ export const studentProgramService = {
 
   listStudentPrograms: (query: StudentProgramListQuery) =>
     apiService.get<PaginatedResult<StudentProgramListItemDto>>(
-      `/student-programs${qs(query as Record<string, unknown>)}`
+      `/student-programs${qs(query)}`
     ),
 
   getStudentProgram: (id: string) =>

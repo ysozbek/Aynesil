@@ -20,7 +20,7 @@ import type {
   StartViewingPayload,
 } from '@/types/camera.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -34,7 +34,7 @@ export const cameraService = {
 
   list: (query: CameraListQuery) =>
     apiService.get<PaginatedResult<CameraListItemDto>>(
-      `/cameras${qs(query as Record<string, unknown>)}`
+      `/cameras${qs(query)}`
     ),
 
   get: (id: string) =>
@@ -72,7 +72,7 @@ export const cameraService = {
 
   listAuthorizations: (query: ViewingAuthorizationQuery) =>
     apiService.get<PaginatedResult<ViewingAuthorizationDto>>(
-      `/cameras/authorizations${qs(query as Record<string, unknown>)}`
+      `/cameras/authorizations${qs(query)}`
     ),
 
   getAuthorization: (id: string) =>
@@ -94,6 +94,6 @@ export const cameraService = {
 
   listViewingLogs: (query: ViewingLogQuery) =>
     apiService.get<PaginatedResult<ViewingLogDto>>(
-      `/cameras/viewing-logs${qs(query as Record<string, unknown>)}`
+      `/cameras/viewing-logs${qs(query)}`
     ),
 }

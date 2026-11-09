@@ -188,7 +188,7 @@ function printInvoice() {
             </div>
             <div class="flex justify-between font-semibold text-base border-t border-border pt-2 mt-2">
               <span>{{ t('finance.invoice.total') }}</span>
-              <span class="font-mono">{{ formatCurrency(invoice.total, invoice.currency) }}</span>
+              <span class="font-mono">{{ formatCurrency(invoice.grandTotal, invoice.currency) }}</span>
             </div>
             <div class="flex justify-between text-green-600">
               <span>{{ t('finance.invoice.paid') }}</span>

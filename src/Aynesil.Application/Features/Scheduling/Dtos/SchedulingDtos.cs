@@ -138,7 +138,8 @@ public record SessionParticipantDto(
     Guid StudentId,
     string StudentFullName,
     Guid? StudentProgramId,
-    string Role);
+    string Role,
+    decimal CreditsConsumed = 0);   // package credits consumed by this session (auto on completion)
 
 public record SessionEducatorDto(
     Guid Id,
@@ -290,14 +291,17 @@ internal static class SchedulingProjection
             foreach (var s in extra) studentMap[s.Id] = $"{s.FirstName} {s.LastName}".Trim();
         }
 
-        return ToSessionDto(session, studentMap, educatorMap, goalMap);
+        var creditMap = await SessionCreditConsumer.LoadConsumedBySessionAsync(db, sessionId, ct);
+
+        return ToSessionDto(session, studentMap, educatorMap, goalMap, creditMap);
     }
 
     public static SessionDto ToSessionDto(
         Domain.Modules.Scheduling.Entities.Session s,
         Dictionary<Guid, string> studentMap,
         Dictionary<Guid, string> educatorMap,
-        Dictionary<Guid, string> goalMap)
+        Dictionary<Guid, string> goalMap,
+        Dictionary<Guid, decimal>? creditMap = null)
         => new(
             s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
             s.RoomId, s.Room?.Name,
@@ -307,7 +311,8 @@ internal static class SchedulingProjection
             s.Participants.Select(p => new SessionParticipantDto(
                 p.Id, p.SessionId, p.StudentId,
                 studentMap.GetValueOrDefault(p.StudentId, ""),
-                p.StudentProgramId, p.Role)).ToList(),
+                p.StudentProgramId, p.Role,
+                creditMap?.GetValueOrDefault(p.StudentId) ?? 0)).ToList(),
             s.Educators.Select(e => new SessionEducatorDto(
                 e.Id, e.SessionId, e.EducatorId,
                 educatorMap.GetValueOrDefault(e.EducatorId, ""),

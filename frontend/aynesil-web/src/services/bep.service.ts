@@ -25,7 +25,7 @@ import type {
   AddPlanReviewPayload,
 } from '@/types/bep.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -39,7 +39,7 @@ export const bepService = {
 
   listAcademicPeriods: (query: AcademicPeriodListQuery) =>
     apiService.get<PaginatedResult<AcademicPeriodListItemDto>>(
-      `/education-plans/academic-periods${qs(query as Record<string, unknown>)}`
+      `/education-plans/academic-periods${qs(query)}`
     ),
 
   getAcademicPeriod: (id: string) =>
@@ -61,7 +61,7 @@ export const bepService = {
 
   listPlans: (query: EducationPlanListQuery) =>
     apiService.get<PaginatedResult<EducationPlanListItemDto>>(
-      `/education-plans${qs(query as Record<string, unknown>)}`
+      `/education-plans${qs(query)}`
     ),
 
   getPlan: (id: string) =>

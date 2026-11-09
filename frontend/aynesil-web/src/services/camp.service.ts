@@ -22,7 +22,7 @@ import type {
   RecordAttendancePayload,
 } from '@/types/camp.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -34,7 +34,7 @@ function qs(params: Record<string, unknown>): string {
 export const campService = {
   // ── Camps ──────────────────────────────────────────────────────────────────
   list: (query: CampListQuery) =>
-    apiService.get<PaginatedResult<CampListItemDto>>(`/camps${qs(query as Record<string, unknown>)}`),
+    apiService.get<PaginatedResult<CampListItemDto>>(`/camps${qs(query)}`),
 
   get: (id: string) =>
     apiService.get<CampDto>(`/camps/${id}`),

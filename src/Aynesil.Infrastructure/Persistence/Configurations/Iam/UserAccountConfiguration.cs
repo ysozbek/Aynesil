@@ -34,7 +34,8 @@ public class UserAccountConfiguration : IEntityTypeConfiguration<UserAccount>
 
         builder.HasQueryFilter(x => x.DeletedAt == null);
 
-        builder.HasIndex(x => new { x.CorporationId, x.Username }).IsUnique();
+        // Global: login resolves by username across all corporations (V36)
+        builder.HasIndex(x => x.Username).IsUnique().HasDatabaseName("uq_user_account_username");
         builder.HasIndex(x => new { x.CorporationId, x.Email })
             .IsUnique()
             .HasFilter("email IS NOT NULL AND deleted_at IS NULL")

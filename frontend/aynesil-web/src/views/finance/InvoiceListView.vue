@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import { useInvoiceStore } from '@/stores/invoice.store'
@@ -13,6 +13,7 @@ import type { InvoiceListItemDto } from '@/types/finance.types'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const store = useInvoiceStore()
 const { can } = usePermission()
@@ -22,7 +23,7 @@ const corporationId = computed(() => auth.user?.corporationId ?? '')
 const query = reactive({
   corporationId: corporationId.value,
   studentId: '',
-  status: '',
+  status: typeof route.query.status === 'string' ? route.query.status : '',
   from: '',
   to: '',
   page: 1,
@@ -34,12 +35,15 @@ onMounted(() => loadList())
 
 async function loadList() {
   await store.fetchInvoices({
-    ...query,
+    page: query.page,
+    pageSize: query.pageSize,
     corporationId: corporationId.value,
     studentId: query.studentId || undefined,
-    status: query.status || undefined,
-    from: query.from || undefined,
-    to: query.to || undefined,
+    // 'overdue' is derived (issued/partial past due date), so it maps to the overdue flag
+    status: query.status && query.status !== 'overdue' ? query.status : undefined,
+    overdue: query.status === 'overdue' ? true : undefined,
+    issuedFrom: query.from || undefined,
+    issuedTo: query.to || undefined,
   })
 }
 
@@ -48,7 +52,7 @@ const columns: Column<InvoiceListItemDto>[] = [
   { key: 'studentFullName', label: t('student.fullName') },
   { key: 'issueDate', label: t('finance.invoice.issueDate'), width: '110px' },
   { key: 'dueDate', label: t('finance.invoice.dueDate'), width: '110px' },
-  { key: 'total', label: t('finance.invoice.total'), width: '110px', align: 'right' },
+  { key: 'grandTotal', label: t('finance.invoice.total'), width: '110px', align: 'right' },
   { key: 'paidAmount', label: t('finance.invoice.paid'), width: '110px', align: 'right' },
   { key: 'balance', label: t('finance.invoice.balance'), width: '110px', align: 'right' },
   { key: 'status', label: t('common.status'), width: '100px' },
@@ -122,8 +126,8 @@ function statusColor(status: string): string {
       <template #cell-dueDate="{ value }">
         <span :class="value && new Date(String(value)) < new Date() ? 'text-red-600' : ''">{{ formatDate(value) }}</span>
       </template>
-      <template #cell-total="{ row }">
-        <span class="font-mono">{{ formatCurrency(row.total, row.currency) }}</span>
+      <template #cell-grandTotal="{ row }">
+        <span class="font-mono">{{ formatCurrency(row.grandTotal, row.currency) }}</span>
       </template>
       <template #cell-paidAmount="{ row }">
         <span class="font-mono text-green-600">{{ formatCurrency(row.paidAmount, row.currency) }}</span>

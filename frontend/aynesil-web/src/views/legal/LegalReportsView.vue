@@ -19,7 +19,7 @@ const consentStore = useConsentStore()
 const auth = useAuthStore()
 const tab = ref<'contracts' | 'consents' | 'signatures'>('contracts')
 
-type ConsentReportRow = ConsentReportItemDto & { id: string }
+type ConsentReportRow = ConsentReportItemDto & { id: string } & Record<string, unknown>
 
 const consentReportRows = computed<ConsentReportRow[]>(() =>
   consentStore.consentReport.map((r, i) => ({
@@ -37,7 +37,7 @@ const contractReportColumns: Column<ContractReportItemDto>[] = [
   { key: 'terminatedContracts', label: t('legal.contract.status.terminated'), width: '90px', align: 'center' },
 ]
 
-const consentReportColumns: Column<ConsentReportItemDto>[] = [
+const consentReportColumns: Column<ConsentReportRow>[] = [
   { key: 'studentFullName', label: t('legal.consent.fields.student') },
   { key: 'consentTypeCode', label: t('legal.consent.fields.consentType') },
   { key: 'isMandatory', label: t('legal.consent.fields.mandatory'), width: '110px' },

@@ -16,7 +16,7 @@ import type {
   CreateConsentPayload, GrantConsentPayload, WithdrawConsentPayload,
 } from '@/types/legal.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -29,7 +29,7 @@ export const legalService = {
   // ── Contract Templates ─────────────────────────────────────────────────────
   listContractTemplates: (query: ContractTemplateListQuery) =>
     apiService.get<PaginatedResult<ContractTemplateListItemDto>>(
-      `/legal/contract-templates${qs(query as Record<string, unknown>)}`
+      `/legal/contract-templates${qs(query)}`
     ),
 
   getContractTemplate: (id: string) =>
@@ -41,7 +41,7 @@ export const legalService = {
   // ── Student Contracts ──────────────────────────────────────────────────────
   listContracts: (query: ContractListQuery) =>
     apiService.get<PaginatedResult<StudentContractListItemDto>>(
-      `/legal/contracts${qs(query as Record<string, unknown>)}`
+      `/legal/contracts${qs(query)}`
     ),
 
   getContract: (id: string) =>
@@ -68,7 +68,7 @@ export const legalService = {
   // ── Consent Templates ──────────────────────────────────────────────────────
   listConsentTemplates: (query: ConsentTemplateListQuery) =>
     apiService.get<PaginatedResult<ConsentTemplateListItemDto>>(
-      `/legal/consent-templates${qs(query as Record<string, unknown>)}`
+      `/legal/consent-templates${qs(query)}`
     ),
 
   getConsentTemplate: (id: string) =>
@@ -80,7 +80,7 @@ export const legalService = {
   // ── Student Consents ───────────────────────────────────────────────────────
   listConsents: (query: ConsentListQuery) =>
     apiService.get<PaginatedResult<StudentConsentListItemDto>>(
-      `/legal/consents${qs(query as Record<string, unknown>)}`
+      `/legal/consents${qs(query)}`
     ),
 
   getConsent: (id: string) =>

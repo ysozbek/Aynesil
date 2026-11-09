@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session.store'
@@ -11,6 +11,8 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { goalService } from '@/services/goal.service'
+import type { StudentGoalListItemDto } from '@/types/goal.types'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -34,6 +36,11 @@ const newNoteParentVisible = ref(false)
 const addParticipantId = ref('')
 const addEducatorId = ref('')
 
+// Add goal to session: active goals of the session's participants not yet linked
+const participantGoals = ref<(StudentGoalListItemDto & { studentFullName: string })[]>([])
+const addGoalId = ref('')
+const goalsLoaded = ref(false)
+
 onMounted(async () => {
   await Promise.all([
     store.fetchSession(sessionId),
@@ -43,6 +50,39 @@ onMounted(async () => {
 })
 
 const session = computed(() => store.currentSession)
+
+async function loadParticipantGoals() {
+  const s = store.currentSession
+  if (!s) return
+  const results = await Promise.all(
+    s.participants.map(p =>
+      goalService
+        .listStudentGoals({ studentId: p.studentId, status: 'active', page: 1, pageSize: 100 })
+        .then(res => (res.success && res.data ? res.data.items : []).map(g => ({ ...g, studentFullName: p.studentFullName })))
+        .catch(() => []),
+    ),
+  )
+  participantGoals.value = results.flat()
+  goalsLoaded.value = true
+}
+
+const availableGoals = computed(() => {
+  const linked = new Set((session.value?.goals ?? []).map(g => g.studentGoalId))
+  return participantGoals.value.filter(g => !linked.has(g.id))
+})
+
+const showStudentNameInGoals = computed(() => (session.value?.participants.length ?? 0) > 1)
+
+watch(
+  () => [activeTab.value, session.value?.participants.map(p => p.studentId).join(',')],
+  () => { if (activeTab.value === 'goals') loadParticipantGoals() },
+)
+
+async function addGoalToSession() {
+  if (!addGoalId.value) return
+  await store.updateSessionGoal(sessionId, addGoalId.value, { workedOn: true })
+  addGoalId.value = ''
+}
 
 function formatDateTime(val: string): string {
   return new Date(val).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
@@ -224,7 +264,17 @@ function getAttendance(studentId: string) {
           <ul v-else class="space-y-1">
             <li v-for="p in session.participants" :key="p.studentId" class="flex items-center justify-between text-sm">
               <span>{{ p.studentFullName }}</span>
-              <span class="text-xs text-muted-foreground">{{ p.role }}</span>
+              <span v-if="session.status === 'completed' && p.creditsConsumed > 0" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                {{ t('scheduling.session.creditConsumed', { n: p.creditsConsumed }) }}
+              </span>
+              <span
+                v-else-if="session.status === 'completed'"
+                class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-help"
+                :title="t('scheduling.session.creditNotConsumedHint')"
+              >
+                {{ t('scheduling.session.creditNotConsumed') }}
+              </span>
+              <span v-else class="text-xs text-muted-foreground">{{ p.role }}</span>
             </li>
           </ul>
           <h3 class="font-semibold text-foreground mb-3 mt-5">{{ t('scheduling.session.educators') }}</h3>
@@ -420,6 +470,35 @@ function getAttendance(studentId: string) {
 
       <!-- Goals Tab -->
       <div v-if="activeTab === 'goals'">
+        <div v-if="can('session:manage_goals')" class="rounded-xl border border-border bg-card shadow-sm p-4 mb-4">
+          <div v-if="session.participants.length === 0" class="text-sm text-muted-foreground">
+            {{ t('scheduling.session.goalNeedsParticipant') }}
+          </div>
+          <div v-else-if="goalsLoaded && availableGoals.length === 0" class="text-sm text-muted-foreground">
+            {{ t('scheduling.session.noAvailableGoals') }}
+            <RouterLink
+              v-if="session.participants.length === 1"
+              :to="{ name: 'student-goal-new', query: { studentId: session.participants[0].studentId } }"
+              class="text-primary hover:underline ml-1"
+            >{{ t('scheduling.session.createStudentGoal') }}</RouterLink>
+          </div>
+          <div v-else class="flex flex-wrap gap-2 items-center">
+            <select
+              v-model="addGoalId"
+              class="flex-1 min-w-0 h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">{{ t('scheduling.session.selectGoal') }}</option>
+              <option v-for="g in availableGoals" :key="g.id" :value="g.id">
+                {{ showStudentNameInGoals ? `${g.studentFullName} · ` : '' }}{{ g.statement }}
+              </option>
+            </select>
+            <button
+              @click="addGoalToSession"
+              :disabled="!addGoalId || store.saving"
+              class="px-3 h-9 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50"
+            >{{ t('scheduling.session.addGoal') }}</button>
+          </div>
+        </div>
         <div v-if="session.goals.length === 0" class="py-10 text-center text-muted-foreground text-sm">
           {{ t('scheduling.session.noGoals') }}
         </div>

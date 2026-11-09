@@ -25,7 +25,8 @@ create table iam.user_account (
   updated_by  uuid,
   deleted_at  timestamptz,
   row_version integer not null default 1,
-  unique (corporation_id, username)
+  -- Global: login resolves users by username across all corporations (V36)
+  constraint uq_user_account_username unique (username)
 );
 comment on table iam.user_account is 'Authentication identity. Educators and guardians link to a user_account for portal/app access.';
 create unique index uq_user_email on iam.user_account(corporation_id, email) where email is not null and deleted_at is null;

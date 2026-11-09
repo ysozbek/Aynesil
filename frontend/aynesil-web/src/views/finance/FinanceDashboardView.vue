@@ -39,7 +39,7 @@ onMounted(async () => {
   await Promise.all([
     loadReports(),
     paymentStore.fetchTransactions({ corporationId: corporationId.value, page: 1, pageSize: 5, status: 'pending' }),
-    invoiceStore.fetchInvoices({ corporationId: corporationId.value, page: 1, pageSize: 5, status: 'overdue' }),
+    invoiceStore.fetchInvoices({ corporationId: corporationId.value, page: 1, pageSize: 5, overdue: true }),
   ])
 })
 

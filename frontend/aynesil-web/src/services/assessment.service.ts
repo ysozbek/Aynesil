@@ -35,7 +35,7 @@ import type {
   SessionListQuery,
 } from '@/types/assessment.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -49,7 +49,7 @@ export const assessmentService = {
 
   listTemplates: (query: TemplateListQuery) =>
     apiService.get<PaginatedResult<AssessmentTemplateListItemDto>>(
-      `/assessment-templates${qs(query as Record<string, unknown>)}`
+      `/assessment-templates${qs(query)}`
     ),
 
   getTemplate: (id: string) =>
@@ -98,7 +98,7 @@ export const assessmentService = {
 
   listSessions: (query: SessionListQuery) =>
     apiService.get<PaginatedResult<AssessmentSessionListItemDto>>(
-      `/assessment-sessions${qs(query as Record<string, unknown>)}`
+      `/assessment-sessions${qs(query)}`
     ),
 
   getSession: (id: string) =>

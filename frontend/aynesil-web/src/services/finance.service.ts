@@ -54,7 +54,7 @@ import type {
   ReportQuery,
 } from '@/types/finance.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -68,7 +68,7 @@ export const financeService = {
 
   listPackageDefinitions: (query: PackageDefinitionListQuery) =>
     apiService.get<PaginatedResult<PackageDefinitionListItemDto>>(
-      `/payments/package-definitions${qs(query as Record<string, unknown>)}`
+      `/payments/package-definitions${qs(query)}`
     ),
 
   getPackageDefinition: (id: string) =>
@@ -93,7 +93,7 @@ export const financeService = {
 
   listStudentPackages: (query: StudentPackageListQuery) =>
     apiService.get<PaginatedResult<StudentPackageListItemDto>>(
-      `/payments/packages${qs(query as Record<string, unknown>)}`
+      `/payments/packages${qs(query)}`
     ),
 
   getStudentPackage: (id: string) =>
@@ -112,7 +112,7 @@ export const financeService = {
 
   listCredits: (query: CreditLedgerQuery) =>
     apiService.get<PaginatedResult<CreditLedgerEntryDto>>(
-      `/payments/credits${qs(query as Record<string, unknown>)}`
+      `/payments/credits${qs(query)}`
     ),
 
   getCreditSummary: (studentId: string) =>
@@ -134,7 +134,7 @@ export const financeService = {
 
   listInvoices: (query: InvoiceListQuery) =>
     apiService.get<PaginatedResult<InvoiceListItemDto>>(
-      `/payments/invoices${qs(query as Record<string, unknown>)}`
+      `/payments/invoices${qs(query)}`
     ),
 
   getInvoice: (id: string) =>
@@ -159,7 +159,7 @@ export const financeService = {
 
   listTransactions: (query: PaymentListQuery) =>
     apiService.get<PaginatedResult<PaymentListItemDto>>(
-      `/payments/transactions${qs(query as Record<string, unknown>)}`
+      `/payments/transactions${qs(query)}`
     ),
 
   getTransaction: (id: string) =>
@@ -178,7 +178,7 @@ export const financeService = {
 
   listRefunds: (query: RefundListQuery) =>
     apiService.get<PaginatedResult<RefundListItemDto>>(
-      `/payments/refunds${qs(query as Record<string, unknown>)}`
+      `/payments/refunds${qs(query)}`
     ),
 
   getRefund: (id: string) =>
@@ -202,7 +202,7 @@ export const financeService = {
 
   listScholarships: (query: ScholarshipListQuery) =>
     apiService.get<PaginatedResult<ScholarshipListItemDto>>(
-      `/payments/scholarships${qs(query as Record<string, unknown>)}`
+      `/payments/scholarships${qs(query)}`
     ),
 
   getScholarship: (id: string) =>
@@ -218,7 +218,7 @@ export const financeService = {
 
   listPromotions: (query: PromotionListQuery) =>
     apiService.get<PaginatedResult<PromotionListItemDto>>(
-      `/payments/promotions${qs(query as Record<string, unknown>)}`
+      `/payments/promotions${qs(query)}`
     ),
 
   getPromotion: (id: string) =>
@@ -226,7 +226,7 @@ export const financeService = {
 
   validatePromotion: (code: string, corporationId: string) =>
     apiService.get<ValidatePromotionResult>(
-      `/payments/promotions/validate${qs({ code, corporationId } as Record<string, unknown>)}`
+      `/payments/promotions/validate${qs({ code, corporationId })}`
     ),
 
   createPromotion: (payload: CreatePromotionPayload) =>
@@ -245,16 +245,16 @@ export const financeService = {
 
   getRevenueReport: (query: ReportQuery) =>
     apiService.get<RevenueReportDto>(
-      `/payments/reports/revenue${qs(query as Record<string, unknown>)}`
+      `/payments/reports/revenue${qs(query)}`
     ),
 
   getPackageReport: (query: ReportQuery) =>
     apiService.get<PackageReportDto>(
-      `/payments/reports/packages${qs(query as Record<string, unknown>)}`
+      `/payments/reports/packages${qs(query)}`
     ),
 
   getCreditUsageReport: (query: ReportQuery) =>
     apiService.get<CreditUsageReportDto>(
-      `/payments/reports/credit-usage${qs(query as Record<string, unknown>)}`
+      `/payments/reports/credit-usage${qs(query)}`
     ),
 }

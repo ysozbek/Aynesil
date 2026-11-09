@@ -112,6 +112,8 @@ public record InvoiceDto(
     decimal DiscountTotal,
     decimal TaxTotal,
     decimal GrandTotal,
+    decimal PaidAmount,
+    decimal Balance,
     string Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
@@ -131,6 +133,7 @@ public record InvoiceListItemDto(
     string Currency,
     decimal GrandTotal,
     decimal PaidAmount,
+    decimal Balance,
     string Status);
 
 public record InvoiceLineDto(
@@ -340,6 +343,7 @@ internal static class FinanceProjection
             i.Id, i.CorporationId, i.StudentId, studentName,
             i.GuardianId, i.InvoiceNo, i.IssueDate, i.DueDate,
             i.Currency, i.Subtotal, i.DiscountTotal, i.TaxTotal, i.GrandTotal,
+            paidAmount, i.GrandTotal - paidAmount,
             i.Status, i.CreatedAt, i.UpdatedAt, i.RowVersion,
             i.Lines.OrderBy(l => l.SortOrder).Select(ToInvoiceLineDto).ToList(),
             i.Payments.Select(p => ToPaymentDto(p)).ToList(),

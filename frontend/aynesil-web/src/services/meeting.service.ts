@@ -21,7 +21,7 @@ import type {
   UpdateFollowUpStatusPayload,
 } from '@/types/meeting.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -35,7 +35,7 @@ export const meetingService = {
 
   list: (query: MeetingListQuery) =>
     apiService.get<PaginatedResult<MeetingListItemDto>>(
-      `/meetings${qs(query as Record<string, unknown>)}`
+      `/meetings${qs(query)}`
     ),
 
   get: (id: string) =>
@@ -90,6 +90,6 @@ export const meetingService = {
 
   getCalendar: (query: MeetingCalendarQuery) =>
     apiService.get<MeetingCalendarItemDto[]>(
-      `/meetings/calendar${qs(query as Record<string, unknown>)}`
+      `/meetings/calendar${qs(query)}`
     ),
 }

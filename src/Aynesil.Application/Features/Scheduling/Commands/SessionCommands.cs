@@ -177,6 +177,8 @@ public sealed class CompleteSessionCommandHandler : IRequestHandler<CompleteSess
             throw new InvalidOperationException("Session was modified by another user. Please refresh and retry.");
 
         session.Complete(_currentUser.UserId);
+        // Same SaveChanges: completion and credit consumption commit together.
+        await SessionCreditConsumer.ConsumeForCompletedSessionAsync(_db, session, _currentUser.UserId, ct);
         await _db.SaveChangesAsync(ct);
         return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
     }

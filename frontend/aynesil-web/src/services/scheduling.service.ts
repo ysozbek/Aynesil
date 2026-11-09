@@ -49,7 +49,7 @@ import type {
   BulkOperationResultDto,
 } from '@/types/scheduling.types'
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: object): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
@@ -63,7 +63,7 @@ export const schedulingService = {
 
   listRooms: (query: RoomListQuery) =>
     apiService.get<PaginatedResult<RoomListItemDto>>(
-      `/scheduling/rooms${qs(query as Record<string, unknown>)}`
+      `/scheduling/rooms${qs(query)}`
     ),
 
   getRoom: (id: string) =>
@@ -85,7 +85,7 @@ export const schedulingService = {
 
   listCalendarEntries: (corporationId: string, campusId?: string, from?: string, to?: string) =>
     apiService.get<CalendarEntryDto[]>(
-      `/scheduling/calendar-entries${qs({ corporationId, campusId, from, to } as Record<string, unknown>)}`
+      `/scheduling/calendar-entries${qs({ corporationId, campusId, from, to })}`
     ),
 
   createCalendarEntry: (payload: CreateCalendarEntryPayload) =>
@@ -98,7 +98,7 @@ export const schedulingService = {
 
   listRecurringSchedules: (query: RecurringScheduleListQuery) =>
     apiService.get<PaginatedResult<RecurringScheduleListItemDto>>(
-      `/scheduling/recurring-schedules${qs(query as Record<string, unknown>)}`
+      `/scheduling/recurring-schedules${qs(query)}`
     ),
 
   getRecurringSchedule: (id: string) =>
@@ -133,7 +133,7 @@ export const schedulingService = {
 
   listSessions: (query: SessionListQuery) =>
     apiService.get<PaginatedResult<SessionListItemDto>>(
-      `/scheduling/sessions${qs(query as Record<string, unknown>)}`
+      `/scheduling/sessions${qs(query)}`
     ),
 
   getSession: (id: string) =>
@@ -228,7 +228,7 @@ export const schedulingService = {
 
   listMakeupRequests: (query: MakeupRequestListQuery) =>
     apiService.get<PaginatedResult<MakeupRequestListItemDto>>(
-      `/scheduling/makeup-requests${qs(query as Record<string, unknown>)}`
+      `/scheduling/makeup-requests${qs(query)}`
     ),
 
   getMakeupRequest: (id: string) =>
@@ -256,26 +256,26 @@ export const schedulingService = {
 
   getSchoolCalendar: (corporationId: string, query: CalendarQuery) =>
     apiService.get<CalendarViewDto>(
-      `/scheduling/calendar/school${qs({ corporationId, ...query } as Record<string, unknown>)}`
+      `/scheduling/calendar/school${qs({ corporationId, ...query })}`
     ),
 
   getCampusCalendar: (campusId: string, corporationId: string, query: CalendarQuery) =>
     apiService.get<CalendarViewDto>(
-      `/scheduling/calendar/campus/${campusId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
+      `/scheduling/calendar/campus/${campusId}${qs({ corporationId, ...query })}`
     ),
 
   getRoomCalendar: (roomId: string, query: CalendarQuery) =>
     apiService.get<SessionListItemDto[]>(
-      `/scheduling/calendar/room/${roomId}${qs(query as Record<string, unknown>)}`
+      `/scheduling/calendar/room/${roomId}${qs(query)}`
     ),
 
   getEducatorCalendar: (educatorId: string, corporationId: string, query: CalendarQuery) =>
     apiService.get<SessionListItemDto[]>(
-      `/scheduling/calendar/educator/${educatorId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
+      `/scheduling/calendar/educator/${educatorId}${qs({ corporationId, ...query })}`
     ),
 
   getStudentCalendar: (studentId: string, corporationId: string, query: CalendarQuery) =>
     apiService.get<SessionListItemDto[]>(
-      `/scheduling/calendar/student/${studentId}${qs({ corporationId, ...query } as Record<string, unknown>)}`
+      `/scheduling/calendar/student/${studentId}${qs({ corporationId, ...query })}`
     ),
 }
