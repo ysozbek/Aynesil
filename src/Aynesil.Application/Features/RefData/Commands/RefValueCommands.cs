@@ -203,6 +203,10 @@ public sealed class UpdateRefValueCommandHandler : IRequestHandler<UpdateRefValu
         if (value.IsSystem)
             throw new BusinessRuleViolationException(MsgKeys.Rule.SystemRefValueNoEdit);
 
+        // Shared global values (and their ref_value_translation rows, which have no corporation_id) are
+        // used by every tenant; a tenant hides them with the activate/deactivate override instead.
+        TenantOwnership.EnsureWritable(value.CorporationId, corporationId, "RefValue");
+
         if (req.IsDefault && !value.IsDefault)
         {
             // Clear other defaults in the same scope (tenant-owned or global).

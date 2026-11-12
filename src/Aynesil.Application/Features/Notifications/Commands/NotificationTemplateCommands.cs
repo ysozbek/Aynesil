@@ -120,20 +120,26 @@ public sealed class UpdateNotificationTemplateCommandHandler
 {
     private readonly IAppDbContext _db;
     private readonly IMediator _mediator;
+    private readonly ITenantContext _tenant;
 
-    public UpdateNotificationTemplateCommandHandler(IAppDbContext db, IMediator mediator)
+    public UpdateNotificationTemplateCommandHandler(IAppDbContext db, IMediator mediator, ITenantContext tenant)
     {
         _db = db;
         _mediator = mediator;
+        _tenant = tenant;
     }
 
     public async Task<NotificationTemplateDto> Handle(
         UpdateNotificationTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.NotificationTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTemplate"));
+        // notification_template_translation has no corporation_id; platform templates are shared by all tenants.
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "NotificationTemplate");
 
         template.CategoryId = req.CategoryId;
         template.TypeId     = req.TypeId;
@@ -180,14 +186,23 @@ public sealed class DeleteNotificationTemplateCommandHandler
     : IRequestHandler<DeleteNotificationTemplateCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public DeleteNotificationTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteNotificationTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(DeleteNotificationTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.NotificationTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTemplate"));
+        // tenant_isolation lets DELETE reach global rows; deleting would cascade its translations for everyone.
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "NotificationTemplate");
 
         // Soft-deactivate: templates referenced by trigger configs cannot be hard-deleted
         var isReferenced = await _db.NotificationTriggerConfigs

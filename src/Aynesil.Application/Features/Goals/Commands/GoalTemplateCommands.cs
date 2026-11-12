@@ -1,6 +1,7 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
 using FluentValidation;
@@ -205,12 +206,19 @@ public sealed class SetGoalTemplateTranslationCommandHandler
     : IRequestHandler<SetGoalTemplateTranslationCommand, GoalTemplateTranslationDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public SetGoalTemplateTranslationCommandHandler(IAppDbContext db) => _db = db;
+    public SetGoalTemplateTranslationCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<GoalTemplateTranslationDto> Handle(
         SetGoalTemplateTranslationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var localeExists = await _db.Locales.AnyAsync(l => l.Code == req.Locale, ct);
         if (!localeExists)
             throw new NotFoundException(MsgKeys.Rule.LocaleNotSupported, req.Locale);
@@ -219,6 +227,8 @@ public sealed class SetGoalTemplateTranslationCommandHandler
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
+        // goal_template_translation has no corporation_id; a global template's text is shared by all tenants.
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "GoalTemplate");
 
         var translation = template.SetTranslation(req.Locale, req.Statement, req.DefaultCriteria);
 

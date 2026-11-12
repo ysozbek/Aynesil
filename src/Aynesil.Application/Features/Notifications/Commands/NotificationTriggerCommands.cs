@@ -1,6 +1,7 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Domain.Modules.Core.Entities;
 using FluentValidation;
@@ -95,14 +96,23 @@ public sealed class DeleteNotificationTriggerConfigCommandHandler
     : IRequestHandler<DeleteNotificationTriggerConfigCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public DeleteNotificationTriggerConfigCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteNotificationTriggerConfigCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(DeleteNotificationTriggerConfigCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var config = await _db.NotificationTriggerConfigs
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTriggerConfig"));
+        // Platform default configs (corporation_id IS NULL) apply to every tenant; their channels cascade on delete.
+        TenantOwnership.EnsureWritable(config.CorporationId, corporationId, "NotificationTriggerConfig");
 
         _db.NotificationTriggerConfigs.Remove(config);
         await _db.SaveChangesAsync(ct);

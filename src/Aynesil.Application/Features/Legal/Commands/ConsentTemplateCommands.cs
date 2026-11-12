@@ -128,15 +128,23 @@ public class UpdateConsentTemplateCommandValidator : AbstractValidator<UpdateCon
 public sealed class UpdateConsentTemplateCommandHandler : IRequestHandler<UpdateConsentTemplateCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpdateConsentTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateConsentTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(UpdateConsentTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.ConsentTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "ConsentTemplate");
 
         template.Update(req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);
 
@@ -174,16 +182,24 @@ public sealed class NewVersionConsentTemplateCommandHandler
     : IRequestHandler<NewVersionConsentTemplateCommand, ConsentTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public NewVersionConsentTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public NewVersionConsentTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConsentTemplateDto> Handle(
         NewVersionConsentTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var current = await _db.ConsentTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.CurrentTemplateId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
+        TenantOwnership.EnsureWritable(current.CorporationId, corporationId, "ConsentTemplate");
 
         var next = current.NewVersion(req.EffectiveFrom);
 

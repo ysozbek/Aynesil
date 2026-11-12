@@ -45,15 +45,24 @@ public sealed class AddAssessmentItemCommandHandler
     : IRequestHandler<AddAssessmentItemCommand, AssessmentItemDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AddAssessmentItemCommandHandler(IAppDbContext db) => _db = db;
+    public AddAssessmentItemCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AssessmentItemDto> Handle(
         AddAssessmentItemCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var section = await _db.AssessmentSections
+            .Include(s => s.Template)
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
+        TenantOwnership.EnsureWritable(section.Template.CorporationId, corporationId, "AssessmentTemplate");
 
         var item = AssessmentItem.Create(
             req.SectionId, req.Code, req.Prompt,
@@ -102,15 +111,25 @@ public sealed class UpdateAssessmentItemCommandHandler
     : IRequestHandler<UpdateAssessmentItemCommand, AssessmentItemDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpdateAssessmentItemCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateAssessmentItemCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AssessmentItemDto> Handle(
         UpdateAssessmentItemCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
+        // assessment_item → section → template: the template decides the tenant (Y3).
         var item = await _db.AssessmentItems
+            .Include(i => i.Section).ThenInclude(s => s.Template)
             .FirstOrDefaultAsync(i => i.Id == req.ItemId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentItem"));
+        TenantOwnership.EnsureWritable(item.Section.Template.CorporationId, corporationId, "AssessmentTemplate");
 
         item.Update(req.Code, req.Prompt, req.ResponseType, req.Choices, req.Weight, req.SortOrder);
         await _db.SaveChangesAsync(ct);
@@ -128,14 +147,24 @@ public record DeleteAssessmentItemCommand(Guid ItemId) : IRequest;
 public sealed class DeleteAssessmentItemCommandHandler : IRequestHandler<DeleteAssessmentItemCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public DeleteAssessmentItemCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteAssessmentItemCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(DeleteAssessmentItemCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
+        // assessment_item → section → template: the template decides the tenant (Y3).
         var item = await _db.AssessmentItems
+            .Include(i => i.Section).ThenInclude(s => s.Template)
             .FirstOrDefaultAsync(i => i.Id == req.ItemId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentItem"));
+        TenantOwnership.EnsureWritable(item.Section.Template.CorporationId, corporationId, "AssessmentTemplate");
 
         _db.AssessmentItems.Remove(item);
         await _db.SaveChangesAsync(ct);

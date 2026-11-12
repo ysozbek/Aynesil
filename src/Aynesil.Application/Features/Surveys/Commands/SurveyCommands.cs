@@ -225,6 +225,8 @@ public sealed class SubmitSurveyResponseCommandHandler
             await PortalGuardian.EnsureCanAccessStudentAsync(
                 _db, corporationId, guardianId!.Value, req.StudentId.Value, ct);
 
+        await EnsureAnswersBelongToSurveyAsync(req, ct);
+
         var response = SurveyResponse.Create(
             corporationId, req.SurveyId, userId,
             guardianId, req.StudentId, req.SessionId);
@@ -239,6 +241,39 @@ public sealed class SubmitSurveyResponseCommandHandler
         response.Submit();
         await _db.SaveChangesAsync(ct);
         return response.Id;
+    }
+
+    /// <summary>
+    /// Y6: each answer's question must belong to the submitted survey, and a chosen option to that
+    /// question. survey_question / survey_answer_option have no corporation_id, so without this check an
+    /// answer could point at another survey's (or another tenant's) question. Mismatch → 422.
+    /// </summary>
+    private async Task EnsureAnswersBelongToSurveyAsync(SubmitSurveyResponseCommand req, CancellationToken ct)
+    {
+        var questionIds = await _db.SurveyQuestions.AsNoTracking()
+            .Where(q => q.SurveyId == req.SurveyId)
+            .Select(q => q.Id)
+            .ToListAsync(ct);
+        var optionIds = req.Answers.Any(a => a.AnswerOptionId.HasValue)
+            ? await _db.SurveyAnswerOptions.AsNoTracking()
+                .Where(o => questionIds.Contains(o.QuestionId))
+                .Select(o => new { o.Id, o.QuestionId })
+                .ToDictionaryAsync(o => o.Id, o => o.QuestionId, ct)
+            : new Dictionary<Guid, Guid>();
+
+        var failures = new List<FluentValidation.Results.ValidationFailure>();
+        for (var i = 0; i < req.Answers.Count; i++)
+        {
+            var answer = req.Answers[i];
+            if (!questionIds.Contains(answer.QuestionId))
+                failures.Add(ValidationFailures.For($"Answers[{i}].QuestionId", MsgKeys.Validation.NotPartOfSurvey));
+            else if (answer.AnswerOptionId is { } optionId
+                     && (!optionIds.TryGetValue(optionId, out var optionQuestion) || optionQuestion != answer.QuestionId))
+                failures.Add(ValidationFailures.For($"Answers[{i}].AnswerOptionId", MsgKeys.Validation.NotPartOfSurvey));
+        }
+
+        if (failures.Count > 0)
+            throw new Aynesil.Application.Common.Exceptions.ValidationException(failures);
     }
 }
 

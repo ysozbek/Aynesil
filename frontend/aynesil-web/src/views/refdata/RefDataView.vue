@@ -100,8 +100,9 @@ function openCreate() {
 }
 
 function canEdit(row: RefValueItem) {
-  // Tenant-owned or shared catalog values; platform system vocabulary is read-only.
-  return !row.isSystem
+  // Only the tenant's own values. Shared (platform) values are used by every tenant: they can only be
+  // hidden for this tenant with activate/deactivate.
+  return !row.isSystem && row.isTenantOwned
 }
 
 function openEdit(row: RefValueItem, e: Event) {

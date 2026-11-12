@@ -1,6 +1,7 @@
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Permissions.Dtos;
 using Aynesil.Domain.Modules.Iam.Entities;
 using FluentValidation;
@@ -35,15 +36,13 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
 
     public async Task<PermissionListItemDto> Handle(AssignRolePermissionCommand req, CancellationToken ct)
     {
-        var corporationId = _tenantContext.CorporationId
-            ?? throw new UnauthorizedAccessException("Tenant context is required.");
+        var corporationId = _tenantContext.RequireCorporationId();
 
         var role = await _db.Roles.FindAsync([req.RoleId], ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
-        // Tenants may only modify their own roles, not system-level templates
-        if (role.CorporationId.HasValue && role.CorporationId != corporationId)
-            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "Role"));
+        // Tenants may only modify their own roles — not global (system) roles shared by every tenant.
+        TenantOwnership.EnsureWritable(role.CorporationId, corporationId, "Role");
 
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
@@ -80,11 +79,23 @@ public class RemoveRolePermissionCommandValidator : AbstractValidator<RemoveRole
 public sealed class RemoveRolePermissionCommandHandler : IRequestHandler<RemoveRolePermissionCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenantContext;
 
-    public RemoveRolePermissionCommandHandler(IAppDbContext db) => _db = db;
+    public RemoveRolePermissionCommandHandler(IAppDbContext db, ITenantContext tenantContext)
+    {
+        _db = db;
+        _tenantContext = tenantContext;
+    }
 
     public async Task Handle(RemoveRolePermissionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenantContext.RequireCorporationId();
+
+        // iam.role_permission has no corporation_id: the role decides the tenant (Y2).
+        var role = await _db.Roles.FirstOrDefaultAsync(r => r.Id == req.RoleId, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
+        TenantOwnership.EnsureWritable(role.CorporationId, corporationId, "Role");
+
         var grant = await _db.RolePermissions.FindAsync([req.RoleId, req.PermissionId], ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RolePermission"));
 

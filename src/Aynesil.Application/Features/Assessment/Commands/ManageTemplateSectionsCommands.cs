@@ -1,6 +1,7 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
 using FluentValidation;
@@ -31,15 +32,24 @@ public sealed class AddAssessmentSectionCommandHandler
     : IRequestHandler<AddAssessmentSectionCommand, AssessmentTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AddAssessmentSectionCommandHandler(IAppDbContext db) => _db = db;
+    public AddAssessmentSectionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AssessmentTemplateDto> Handle(
         AddAssessmentSectionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
+        // Global şablonlar RLS ile her kiracıya görünür; bölüm eklemek hepsini değiştirirdi (Y3).
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "AssessmentTemplate");
 
         var section = AssessmentSection.Create(
             req.TemplateId, req.Code, req.SortOrder, req.DevelopmentAreaId);
@@ -73,15 +83,25 @@ public sealed class UpdateAssessmentSectionCommandHandler
     : IRequestHandler<UpdateAssessmentSectionCommand, AssessmentSectionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpdateAssessmentSectionCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateAssessmentSectionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AssessmentSectionDto> Handle(
         UpdateAssessmentSectionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
+        // assessment_section has no corporation_id: the template decides the tenant (Y3).
         var section = await _db.AssessmentSections
+            .Include(s => s.Template)
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
+        TenantOwnership.EnsureWritable(section.Template.CorporationId, corporationId, "AssessmentTemplate");
 
         section.Update(req.Code, req.SortOrder, req.DevelopmentAreaId);
         await _db.SaveChangesAsync(ct);
@@ -100,14 +120,24 @@ public sealed class DeleteAssessmentSectionCommandHandler
     : IRequestHandler<DeleteAssessmentSectionCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public DeleteAssessmentSectionCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteAssessmentSectionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(DeleteAssessmentSectionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
+        // assessment_section has no corporation_id: the template decides the tenant (Y3).
         var section = await _db.AssessmentSections
+            .Include(s => s.Template)
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
+        TenantOwnership.EnsureWritable(section.Template.CorporationId, corporationId, "AssessmentTemplate");
 
         _db.AssessmentSections.Remove(section);
         await _db.SaveChangesAsync(ct);

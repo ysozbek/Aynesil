@@ -127,15 +127,23 @@ public class UpdateContractTemplateCommandValidator : AbstractValidator<UpdateCo
 public sealed class UpdateContractTemplateCommandHandler : IRequestHandler<UpdateContractTemplateCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpdateContractTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateContractTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(UpdateContractTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.ContractTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "ContractTemplate");
 
         template.Update(req.ContractTypeId, req.EffectiveFrom);
 
@@ -173,16 +181,24 @@ public sealed class NewVersionContractTemplateCommandHandler
     : IRequestHandler<NewVersionContractTemplateCommand, ContractTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public NewVersionContractTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public NewVersionContractTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ContractTemplateDto> Handle(
         NewVersionContractTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var current = await _db.ContractTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.CurrentTemplateId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
+        TenantOwnership.EnsureWritable(current.CorporationId, corporationId, "ContractTemplate");
 
         // NewVersion() archives `current` and returns the new version entity.
         var next = current.NewVersion(req.EffectiveFrom);

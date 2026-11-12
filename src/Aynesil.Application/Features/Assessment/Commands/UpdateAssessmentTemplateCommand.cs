@@ -150,15 +150,24 @@ public sealed class UpsertTemplateTranslationCommandHandler
     : IRequestHandler<UpsertTemplateTranslationCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpsertTemplateTranslationCommandHandler(IAppDbContext db) => _db = db;
+    public UpsertTemplateTranslationCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(UpsertTemplateTranslationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.AssessmentTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
+        // assessment_template_translation has no corporation_id; a global template's text is shared by all tenants.
+        TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "AssessmentTemplate");
 
         template.UpsertTranslation(req.Locale, req.Name, req.Description);
         await _db.SaveChangesAsync(ct);

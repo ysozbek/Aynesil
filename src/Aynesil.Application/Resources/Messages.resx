@@ -217,6 +217,7 @@
   <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>'{0}' durumundaki bir plan revize edilemez.</value></data>
   <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Yalnızca taslak bir plan incelemeye gönderilebilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform varsayılan menü öğeleri silinemez.</value></data>
+  <data name="Rule.PlatformRecordReadOnly" xml:space="preserve"><value>Bu {0} bir platform kaydıdır; kurumlar tarafından değiştirilemez.</value></data>
   <data name="Rule.PortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için portal erişim kaydı bulunamadı.</value></data>
   <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>Bu öğrenci için zaten bir birincil bakım ekibi ataması var. Yeni atama yapmadan önce mevcut birincil atamayı kaldırın.</value></data>
   <data name="Rule.ProgramHasAssignments" xml:space="preserve"><value>Aktif öğrenci atamaları olan bir program silinemez. Bunun yerine pasife alın.</value></data>
@@ -296,6 +297,7 @@
   <data name="Validation.Required" xml:space="preserve"><value>{0} zorunludur.</value></data>
   <data name="Validation.RequiredWhenEquals" xml:space="preserve"><value>{1} '{2}' olduğunda {0} zorunludur.</value></data>
   <data name="Validation.SameEducatorTwice" xml:space="preserve"><value>Aynı eğitimci iki kez atanamaz.</value></data>
+  <data name="Validation.NotPartOfSurvey" xml:space="preserve"><value>Bu soru ya da seçenek yanıtlanan ankete ait değil.</value></data>
   <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Yüzde veya sabit tutardan yalnızca biri belirtilmelidir.</value></data>
   <data name="Validation.UsernameFormat" xml:space="preserve"><value>Kullanıcı adı harf veya rakamla başlamalı; yalnızca küçük harf, rakam, nokta, tire, alt çizgi, @ veya + içermelidir. E-posta adresi önerilir.</value></data>
   <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Sanal odalar bir kampüse atanamaz.</value></data>

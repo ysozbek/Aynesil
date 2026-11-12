@@ -217,6 +217,7 @@
   <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>A plan in status '{0}' cannot be revised.</value></data>
   <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Only a draft plan can be submitted for review. Current status: {0}.</value></data>
   <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform default menu items cannot be deleted.</value></data>
+  <data name="Rule.PlatformRecordReadOnly" xml:space="preserve"><value>This {0} is a platform record and cannot be changed by an organization.</value></data>
   <data name="Rule.PortalAccessNotFound" xml:space="preserve"><value>Portal access record not found for guardian {0} / student {1}.</value></data>
   <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>A primary care-team assignment already exists for this student. Remove the existing primary assignment before assigning a new one.</value></data>
   <data name="Rule.ProgramHasAssignments" xml:space="preserve"><value>Cannot delete a program with active student assignments. Deactivate it instead.</value></data>
@@ -296,6 +297,7 @@
   <data name="Validation.Required" xml:space="preserve"><value>{0} is required.</value></data>
   <data name="Validation.RequiredWhenEquals" xml:space="preserve"><value>{0} is required when {1} is '{2}'.</value></data>
   <data name="Validation.SameEducatorTwice" xml:space="preserve"><value>The same educator cannot be assigned twice.</value></data>
+  <data name="Validation.NotPartOfSurvey" xml:space="preserve"><value>This question or option does not belong to the survey being answered.</value></data>
   <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Specify either a percentage or a fixed amount, not both and not neither.</value></data>
   <data name="Validation.UsernameFormat" xml:space="preserve"><value>Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, underscores, @ or +. An e-mail address is recommended.</value></data>
   <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Virtual rooms cannot be assigned to a campus.</value></data>

@@ -1,6 +1,7 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
 using FluentValidation;
@@ -163,11 +164,25 @@ public sealed class SetProgramTranslationCommandHandler
     : IRequestHandler<SetProgramTranslationCommand, ProgramTranslationDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public SetProgramTranslationCommandHandler(IAppDbContext db) => _db = db;
+    public SetProgramTranslationCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ProgramTranslationDto> Handle(SetProgramTranslationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
+        // education.program_translation has no corporation_id: load the program first so the tenant
+        // decides which translations may be written (Y4).
+        var program = await _db.EducationPrograms.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == req.ProgramId, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
+        TenantOwnership.EnsureWritable(program.CorporationId, corporationId, "Program");
+
         var localeExists = await _db.Locales.AnyAsync(l => l.Code == req.Locale, ct);
         if (!localeExists)
             throw new NotFoundException(MsgKeys.Rule.LocaleNotSupported, req.Locale);
@@ -182,10 +197,6 @@ public sealed class SetProgramTranslationCommandHandler
         }
         else
         {
-            var programExists = await _db.EducationPrograms.AnyAsync(p => p.Id == req.ProgramId, ct);
-            if (!programExists)
-                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
-
             _db.ProgramTranslations.Add(new ProgramTranslation
             {
                 ProgramId   = req.ProgramId,

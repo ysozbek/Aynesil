@@ -57,6 +57,7 @@ public static class MsgKeys
         public static readonly MsgKey PasswordMustDiffer = new("Validation.PasswordMustDiffer");
         public static readonly MsgKey VirtualRoomNoCampus = new("Validation.VirtualRoomNoCampus");
         public static readonly MsgKey SameEducatorTwice = new("Validation.SameEducatorTwice");
+        public static readonly MsgKey NotPartOfSurvey = new("Validation.NotPartOfSurvey");
         public static readonly MsgKey EducatorCannotSuperviseSelf = new("Validation.EducatorCannotSuperviseSelf");
         public static readonly MsgKey DiscountTarget = new("Validation.DiscountTarget");
         public static readonly MsgKey ScholarshipPercentOrAmount = new("Validation.ScholarshipPercentOrAmount");
@@ -250,6 +251,7 @@ public static class MsgKeys
         public static readonly MsgKey PlanReviseStatus = new("Rule.PlanReviseStatus");
         public static readonly MsgKey PlanSubmitNeedsDraft = new("Rule.PlanSubmitNeedsDraft");
         public static readonly MsgKey PlatformMenuNoDelete = new("Rule.PlatformMenuNoDelete");
+        public static readonly MsgKey PlatformRecordReadOnly = new("Rule.PlatformRecordReadOnly");
         public static readonly MsgKey PrimaryCareTeamExists = new("Rule.PrimaryCareTeamExists");
         public static readonly MsgKey ProgramHasAssignments = new("Rule.ProgramHasAssignments");
         public static readonly MsgKey RecurringScheduleInactive = new("Rule.RecurringScheduleInactive");

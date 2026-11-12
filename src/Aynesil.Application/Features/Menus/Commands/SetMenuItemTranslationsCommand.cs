@@ -68,16 +68,16 @@ public sealed class SetMenuItemTranslationsCommandHandler
         SetMenuItemTranslationsCommand req,
         CancellationToken ct)
     {
-        var corporationId = _tenantContext.CorporationId
-            ?? throw new UnauthorizedAccessException("Tenant context is required.");
+        var corporationId = _tenantContext.RequireCorporationId();
 
         var item = await _db.MenuItems
             .Include(m => m.Translations)
             .FirstOrDefaultAsync(m => m.Id == req.MenuItemId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
-        if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
+        // iam.menu_item_translation has no corporation_id: platform default menu labels are shared by every
+        // tenant, so only the tenant's own menu items may be relabelled.
+        TenantOwnership.EnsureWritable(item.CorporationId, corporationId, "MenuItem");
 
         // Remove all existing translations and replace with the incoming set
         _db.MenuItemTranslations.RemoveRange(item.Translations);
