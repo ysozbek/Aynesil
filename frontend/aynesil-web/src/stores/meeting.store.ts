@@ -48,20 +48,23 @@ export const useMeetingStore = defineStore('meeting', () => {
     }
   }
 
-  async function fetchMeeting(id: string) {
+  async function fetchMeeting(id: string, silent = false) {
     loading.value = true
     error.value = null
     try {
       const res = await meetingService.get(id)
       if (res.success && res.data) currentMeeting.value = res.data
     } catch (e: unknown) {
-      error.value = (e as Error).message
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchMeeting yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
     } finally {
       loading.value = false
     }
   }
 
-  async function scheduleMeeting(payload: ScheduleMeetingPayload): Promise<MeetingDto> {
+  /** Backend yalnızca yeni toplantının Guid'ini döner. */
+  async function scheduleMeeting(payload: ScheduleMeetingPayload): Promise<string> {
     saving.value = true
     try {
       const res = await meetingService.schedule(payload)
@@ -72,13 +75,14 @@ export const useMeetingStore = defineStore('meeting', () => {
     }
   }
 
-  async function updateMeeting(id: string, payload: UpdateMeetingPayload): Promise<MeetingDto> {
+  async function updateMeeting(id: string, payload: UpdateMeetingPayload): Promise<MeetingDto | null> {
     saving.value = true
     try {
+      // Backend gövdesiz yanıt döner; güncel kaydı yeniden çek.
       const res = await meetingService.update(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Toplantı güncellenemedi.')
-      currentMeeting.value = res.data
-      return res.data
+      if (!res.success) throw new Error(res.message ?? 'Toplantı güncellenemedi.')
+      await fetchMeeting(id, true)
+      return currentMeeting.value
     } finally {
       saving.value = false
     }
@@ -99,8 +103,8 @@ export const useMeetingStore = defineStore('meeting', () => {
     saving.value = true
     try {
       const res = await meetingService.complete(id)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Toplantı tamamlanamadı.')
-      if (currentMeeting.value?.id === id) currentMeeting.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'Toplantı tamamlanamadı.')
+      await fetchMeeting(id, true)
     } finally {
       saving.value = false
     }
@@ -110,8 +114,8 @@ export const useMeetingStore = defineStore('meeting', () => {
     saving.value = true
     try {
       const res = await meetingService.cancel(id)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Toplantı iptal edilemedi.')
-      if (currentMeeting.value?.id === id) currentMeeting.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'Toplantı iptal edilemedi.')
+      await fetchMeeting(id, true)
     } finally {
       saving.value = false
     }

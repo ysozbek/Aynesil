@@ -42,10 +42,10 @@ export const cameraService = {
     apiService.get<CameraDto>(`/cameras/${id}`),
 
   create: (payload: CreateCameraPayload) =>
-    apiService.post<CameraDto>('/cameras', payload),
+    apiService.post<string>('/cameras', payload),
 
   update: (id: string, payload: UpdateCameraPayload) =>
-    apiService.put<CameraDto>(`/cameras/${id}`, payload),
+    apiService.put<void>(`/cameras/${id}`, payload),
 
   delete: (id: string) =>
     apiService.delete(`/cameras/${id}`),
@@ -80,7 +80,7 @@ export const cameraService = {
     apiService.get<ViewingAuthorizationDto>(`/cameras/authorizations/${id}`),
 
   createAuthorization: (payload: CreateAuthorizationPayload) =>
-    apiService.post<ViewingAuthorizationDto>('/cameras/authorizations', payload),
+    apiService.post<string>('/cameras/authorizations', payload),
 
   revokeAuthorization: (id: string) =>
     apiService.post(`/cameras/authorizations/${id}/revoke`),

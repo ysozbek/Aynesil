@@ -59,14 +59,16 @@ export const useLeaveStore = defineStore('leave', () => {
     }
   }
 
-  async function fetchLeave(id: string) {
+  async function fetchLeave(id: string, silent = false) {
     loading.value = true
     error.value = null
     try {
       const res = await leaveService.get(id)
       if (res.success && res.data) currentLeave.value = res.data
     } catch (e: unknown) {
-      error.value = (e as Error).message
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchLeave yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
     } finally {
       loading.value = false
     }
@@ -87,13 +89,14 @@ export const useLeaveStore = defineStore('leave', () => {
     }
   }
 
-  async function updateLeave(id: string, payload: UpdateLeaveRequestPayload): Promise<LeaveRequestDto> {
+  async function updateLeave(id: string, payload: UpdateLeaveRequestPayload): Promise<LeaveRequestDto | null> {
     saving.value = true
     try {
+      // Backend gövdesiz yanıt döner; güncel kaydı yeniden çek.
       const res = await leaveService.update(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'İzin talebi güncellenemedi.')
-      currentLeave.value = res.data
-      return res.data
+      if (!res.success) throw new Error(res.message ?? 'İzin talebi güncellenemedi.')
+      await fetchLeave(id, true)
+      return currentLeave.value
     } finally {
       saving.value = false
     }

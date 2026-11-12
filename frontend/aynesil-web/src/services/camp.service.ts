@@ -43,7 +43,7 @@ export const campService = {
     apiService.post<CampDto>('/camps', payload),
 
   update: (id: string, payload: UpdateCampPayload) =>
-    apiService.put<CampDto>(`/camps/${id}`, payload),
+    apiService.put<void>(`/camps/${id}`, payload),
 
   // ── Periods ────────────────────────────────────────────────────────────────
   createPeriod: (campId: string, payload: CreatePeriodPayload) =>

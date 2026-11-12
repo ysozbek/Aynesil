@@ -33,7 +33,8 @@ export const useCameraAccessStore = defineStore('cameraAccess', () => {
     }
   }
 
-  async function createAuthorization(payload: CreateAuthorizationPayload): Promise<ViewingAuthorizationDto> {
+  /** Backend yalnızca yeni yetkinin Guid'ini döner. */
+  async function createAuthorization(payload: CreateAuthorizationPayload): Promise<string> {
     saving.value = true
     try {
       const res = await cameraService.createAuthorization(payload)

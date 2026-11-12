@@ -55,12 +55,16 @@ export const useConsentStore = defineStore('consent', () => {
     finally { loading.value = false }
   }
 
-  async function fetchConsent(id: string) {
+  async function fetchConsent(id: string, silent = false) {
     loading.value = true; error.value = null
     try {
       const res = await legalService.getConsent(id)
       if (res.success && res.data) currentConsent.value = res.data
-    } catch (e: unknown) { error.value = (e as Error).message }
+    } catch (e: unknown) {
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchConsent yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
+    }
     finally { loading.value = false }
   }
 
@@ -86,8 +90,8 @@ export const useConsentStore = defineStore('consent', () => {
     saving.value = true
     try {
       const res = await legalService.withdrawConsent(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Rıza geri alınamadı.')
-      currentConsent.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'Rıza geri alınamadı.')
+      await fetchConsent(id, true)
     } finally { saving.value = false }
   }
 

@@ -49,12 +49,16 @@ export const useCampStore = defineStore('camp', () => {
     finally { loading.value = false }
   }
 
-  async function fetchCamp(id: string) {
+  async function fetchCamp(id: string, silent = false) {
     loading.value = true; error.value = null
     try {
       const res = await campService.get(id)
       if (res.success && res.data) currentCamp.value = res.data
-    } catch (e: unknown) { error.value = (e as Error).message }
+    } catch (e: unknown) {
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchCamp yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
+    }
     finally { loading.value = false }
   }
 
@@ -67,13 +71,14 @@ export const useCampStore = defineStore('camp', () => {
     } finally { saving.value = false }
   }
 
-  async function updateCamp(id: string, payload: UpdateCampPayload): Promise<CampDto> {
+  async function updateCamp(id: string, payload: UpdateCampPayload): Promise<CampDto | null> {
     saving.value = true
     try {
+      // Backend gövdesiz yanıt döner; güncel kaydı yeniden çek.
       const res = await campService.update(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Kamp güncellenemedi.')
-      currentCamp.value = res.data
-      return res.data
+      if (!res.success) throw new Error(res.message ?? 'Kamp güncellenemedi.')
+      await fetchCamp(id, true)
+      return currentCamp.value
     } finally { saving.value = false }
   }
 

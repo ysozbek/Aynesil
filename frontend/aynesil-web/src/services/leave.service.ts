@@ -52,7 +52,7 @@ export const leaveService = {
     apiService.post<string>('/leave/requests', payload),
 
   update: (id: string, payload: UpdateLeaveRequestPayload) =>
-    apiService.put<LeaveRequestDto>(`/leave/requests/${id}`, payload),
+    apiService.put<void>(`/leave/requests/${id}`, payload),
 
   // Backend approve/reject return `LeaveApprovalDto` (a single approval step),
   // not the full LeaveRequestDto — callers refetch the request after action.
@@ -85,7 +85,7 @@ export const leaveService = {
     ),
 
   setEntitlement: (balanceId: string, payload: SetLeaveEntitlementPayload) =>
-    apiService.patch<LeaveBalanceDto>(`/leave/balances/${balanceId}/entitlement`, payload),
+    apiService.patch<void>(`/leave/balances/${balanceId}/entitlement`, payload),
 
   carryForward: (payload: CarryForwardPayload) =>
     apiService.post('/leave/balances/carry-forward', payload),

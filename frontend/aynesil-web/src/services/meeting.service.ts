@@ -43,19 +43,19 @@ export const meetingService = {
     apiService.get<MeetingDto>(`/meetings/${id}`),
 
   schedule: (payload: ScheduleMeetingPayload) =>
-    apiService.post<MeetingDto>('/meetings', payload),
+    apiService.post<string>('/meetings', payload),
 
   update: (id: string, payload: UpdateMeetingPayload) =>
-    apiService.put<MeetingDto>(`/meetings/${id}`, payload),
+    apiService.put<void>(`/meetings/${id}`, payload),
 
   delete: (id: string) =>
     apiService.delete(`/meetings/${id}`),
 
   complete: (id: string) =>
-    apiService.post<MeetingDto>(`/meetings/${id}/complete`),
+    apiService.post<void>(`/meetings/${id}/complete`),
 
   cancel: (id: string) =>
-    apiService.post<MeetingDto>(`/meetings/${id}/cancel`),
+    apiService.post<void>(`/meetings/${id}/cancel`),
 
   // ── Participants ───────────────────────────────────────────────────────────
 

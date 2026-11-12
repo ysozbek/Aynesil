@@ -52,14 +52,14 @@ async function submit() {
         rowVersion: m.rowVersion,
       })
     } else {
-      const created = await store.scheduleMeeting({
+      const createdId = await store.scheduleMeeting({
         title: form.value.title,
         location: form.value.location || undefined,
         scheduledAt: form.value.scheduledAt || undefined,
         endsAt: form.value.endsAt || undefined,
         participants: form.value.participants.length ? form.value.participants : undefined,
       })
-      router.push({ name: 'meeting-detail', params: { id: created.id } })
+      router.push({ name: 'meeting-detail', params: { id: createdId } })
       return
     }
     router.push({ name: 'meeting-detail', params: { id: route.params.id } })

@@ -63,12 +63,16 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     finally { loading.value = false }
   }
 
-  async function fetchInstitution(id: string) {
+  async function fetchInstitution(id: string, silent = false) {
     loading.value = true; error.value = null
     try {
       const res = await consultancyService.getInstitution(id)
       if (res.success && res.data) currentInstitution.value = res.data
-    } catch (e: unknown) { error.value = (e as Error).message }
+    } catch (e: unknown) {
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchInstitution yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
+    }
     finally { loading.value = false }
   }
 
@@ -81,13 +85,14 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     } finally { saving.value = false }
   }
 
-  async function updateInstitution(id: string, payload: UpdateInstitutionPayload): Promise<InstitutionDto> {
+  async function updateInstitution(id: string, payload: UpdateInstitutionPayload): Promise<InstitutionDto | null> {
     saving.value = true
     try {
+      // Backend gövdesiz yanıt döner; güncel kaydı yeniden çek.
       const res = await consultancyService.updateInstitution(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Kurum güncellenemedi.')
-      currentInstitution.value = res.data
-      return res.data
+      if (!res.success) throw new Error(res.message ?? 'Kurum güncellenemedi.')
+      await fetchInstitution(id, true)
+      return currentInstitution.value
     } finally { saving.value = false }
   }
 

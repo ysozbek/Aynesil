@@ -53,7 +53,7 @@ export const notificationService = {
     apiService.get<NotificationPreferenceDto[]>('/notifications/preferences'),
 
   updatePreferences: (payload: UpdateNotificationPreferencesPayload) =>
-    apiService.put<NotificationPreferenceDto[]>('/notifications/preferences', payload),
+    apiService.put<void>('/notifications/preferences', payload),
 
   // ── Templates ──────────────────────────────────────────────────────────────
 

@@ -47,7 +47,7 @@ export const consultancyService = {
     apiService.post<InstitutionDto>('/consultancy/institutions', payload),
 
   updateInstitution: (id: string, payload: UpdateInstitutionPayload) =>
-    apiService.put<InstitutionDto>(`/consultancy/institutions/${id}`, payload),
+    apiService.put<void>(`/consultancy/institutions/${id}`, payload),
 
   // ── Plans ──────────────────────────────────────────────────────────────────
   listPlans: (query: PlanListQuery) =>
@@ -121,7 +121,7 @@ export const consultancyService = {
     apiService.post<ConsultancyAgreementDto>('/consultancy/agreements', payload),
 
   updateAgreement: (id: string, payload: UpdateAgreementPayload) =>
-    apiService.put<ConsultancyAgreementDto>(`/consultancy/agreements/${id}`, payload),
+    apiService.put<void>(`/consultancy/agreements/${id}`, payload),
 
   sendAgreement: (id: string) =>
     apiService.post(`/consultancy/agreements/${id}/send`),
@@ -156,7 +156,7 @@ export const consultancyService = {
     apiService.post<FollowUpActivityDto>('/consultancy/follow-ups', payload),
 
   updateFollowUp: (id: string, payload: UpdateFollowUpPayload) =>
-    apiService.put<FollowUpActivityDto>(`/consultancy/follow-ups/${id}`, payload),
+    apiService.put<void>(`/consultancy/follow-ups/${id}`, payload),
 
   startFollowUp: (id: string) =>
     apiService.post(`/consultancy/follow-ups/${id}/start`),

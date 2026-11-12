@@ -34,7 +34,13 @@ export const useNotificationPreferenceStore = defineStore('notificationPreferenc
     try {
       const res = await notificationService.updatePreferences(payload)
       if (!res.success) throw new Error(res.message ?? 'Tercihler kaydedilemedi.')
-      if (res.data) preferences.value = res.data
+      // Backend gövdesiz yanıt döner; güncel tercihleri yeniden çek.
+      try {
+        await fetchPreferences()
+      } catch (e) {
+        // Kayıt başarılı; yeniden çekme hatası kullanıcıya yansıtılmaz.
+        console.warn('Bildirim tercihleri yeniden çekilemedi', e)
+      }
     } finally {
       saving.value = false
     }

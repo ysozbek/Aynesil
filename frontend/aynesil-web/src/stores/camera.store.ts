@@ -53,20 +53,23 @@ export const useCameraStore = defineStore('camera', () => {
     }
   }
 
-  async function fetchCamera(id: string) {
+  async function fetchCamera(id: string, silent = false) {
     loading.value = true
     error.value = null
     try {
       const res = await cameraService.get(id)
       if (res.success && res.data) currentCamera.value = res.data
     } catch (e: unknown) {
-      error.value = (e as Error).message
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchCamera yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
     } finally {
       loading.value = false
     }
   }
 
-  async function createCamera(payload: CreateCameraPayload): Promise<CameraDto> {
+  /** Backend yalnızca yeni kaydın Guid'ini döner. */
+  async function createCamera(payload: CreateCameraPayload): Promise<string> {
     saving.value = true
     try {
       const res = await cameraService.create(payload)
@@ -77,13 +80,14 @@ export const useCameraStore = defineStore('camera', () => {
     }
   }
 
-  async function updateCamera(id: string, payload: UpdateCameraPayload): Promise<CameraDto> {
+  async function updateCamera(id: string, payload: UpdateCameraPayload): Promise<CameraDto | null> {
     saving.value = true
     try {
+      // Backend gövdesiz yanıt döner; güncel kaydı yeniden çek.
       const res = await cameraService.update(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Kamera güncellenemedi.')
-      currentCamera.value = res.data
-      return res.data
+      if (!res.success) throw new Error(res.message ?? 'Kamera güncellenemedi.')
+      await fetchCamera(id, true)
+      return currentCamera.value
     } finally {
       saving.value = false
     }
@@ -173,7 +177,8 @@ export const useCameraStore = defineStore('camera', () => {
     }
   }
 
-  async function createAuthorization(payload: CreateAuthorizationPayload): Promise<ViewingAuthorizationDto> {
+  /** Backend yalnızca yeni yetkinin Guid'ini döner. */
+  async function createAuthorization(payload: CreateAuthorizationPayload): Promise<string> {
     saving.value = true
     try {
       const res = await cameraService.createAuthorization(payload)

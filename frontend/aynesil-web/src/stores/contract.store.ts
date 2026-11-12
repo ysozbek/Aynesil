@@ -56,12 +56,16 @@ export const useContractStore = defineStore('contract', () => {
     finally { loading.value = false }
   }
 
-  async function fetchContract(id: string) {
+  async function fetchContract(id: string, silent = false) {
     loading.value = true; error.value = null
     try {
       const res = await legalService.getContract(id)
       if (res.success && res.data) currentContract.value = res.data
-    } catch (e: unknown) { error.value = (e as Error).message }
+    } catch (e: unknown) {
+      // silent: güncelleme sonrası yeniden çekme hatası kullanıcıya yansıtılmaz.
+      if (silent) console.warn(`fetchContract yeniden çekilemedi`, e)
+      else error.value = (e as Error).message
+    }
     finally { loading.value = false }
   }
 
@@ -87,8 +91,8 @@ export const useContractStore = defineStore('contract', () => {
     saving.value = true
     try {
       const res = await legalService.signContract(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'İmzalanamadı.')
-      currentContract.value = res.data
+      if (!res.success) throw new Error(res.message ?? 'İmzalanamadı.')
+      await fetchContract(id, true)
     } finally { saving.value = false }
   }
 

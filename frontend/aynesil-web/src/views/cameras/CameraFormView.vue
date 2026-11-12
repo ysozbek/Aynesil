@@ -34,13 +34,13 @@ async function handleSubmit() {
       })
       router.push({ name: 'camera-detail', params: { id } })
     } else {
-      const result = await cameraStore.createCamera({
+      const newId = await cameraStore.createCamera({
         code: form.code,
         name: form.name,
         cameraTypeId: form.cameraTypeId || undefined,
         streamRef: form.streamRef || undefined,
       })
-      router.push({ name: 'camera-detail', params: { id: result.id } })
+      router.push({ name: 'camera-detail', params: { id: newId } })
     }
   } catch (e: unknown) {
     errorMsg.value = (e as Error).message

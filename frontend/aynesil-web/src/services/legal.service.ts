@@ -54,7 +54,7 @@ export const legalService = {
     apiService.post(`/legal/contracts/${id}/send`),
 
   signContract: (id: string, payload: SignContractPayload) =>
-    apiService.post<StudentContractDto>(`/legal/contracts/${id}/sign`, payload),
+    apiService.post<void>(`/legal/contracts/${id}/sign`, payload),
 
   activateContract: (id: string) =>
     apiService.post(`/legal/contracts/${id}/activate`),
@@ -93,7 +93,7 @@ export const legalService = {
     apiService.post<StudentConsentDto>(`/legal/consents/${id}/grant`, payload),
 
   withdrawConsent: (id: string, payload: WithdrawConsentPayload) =>
-    apiService.post<StudentConsentDto>(`/legal/consents/${id}/withdraw`, payload),
+    apiService.post<void>(`/legal/consents/${id}/withdraw`, payload),
 
   addConsentEvidence: (id: string, fileId: string) =>
     apiService.post(`/legal/consents/${id}/evidence`, { fileId }),
