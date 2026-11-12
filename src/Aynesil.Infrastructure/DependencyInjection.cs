@@ -11,6 +11,7 @@ using Aynesil.Infrastructure.Services.Cache;
 using Aynesil.Infrastructure.Services.Files;
 using Aynesil.Infrastructure.Services.Jobs;
 using Aynesil.Infrastructure.Services.Localization;
+using Aynesil.Infrastructure.Services.Notifications;
 using Aynesil.Infrastructure.Services.Ref;
 using Aynesil.Infrastructure.Services.Settings;
 using Hangfire;
@@ -115,6 +116,9 @@ public static class DependencyInjection
         services.AddScoped<IStorageProvider, LocalStorageProvider>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IEventBus, InProcessEventBus>();
+
+        // Gerçek e-posta/SMS sağlayıcısı bağlanana kadar bildirimler yalnızca log'a yazılır (bkz. CLAUDE.md).
+        services.AddScoped<INotificationService, LoggingNotificationService>();
 
         // ── Typed repositories ───────────────────────────────────────────────────
         // Repository is used only where a handler needs reusable, complex query logic

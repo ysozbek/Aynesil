@@ -291,4 +291,12 @@ public static class MsgKeys
         public static readonly MsgKey VisitActionStatus = new("Rule.VisitActionStatus");
         public static readonly MsgKey VisitHasObservations = new("Rule.VisitHasObservations");
     }
+
+    /// <summary>Kimlik doğrulama (giriş) hataları.</summary>
+    public static class Auth
+    {
+        public static readonly MsgKey InvalidCredentials = new("Auth.InvalidCredentials");
+        public static readonly MsgKey AccountLocked = new("Auth.AccountLocked");
+        public static readonly MsgKey AccountDisabled = new("Auth.AccountDisabled");
+    }
 }

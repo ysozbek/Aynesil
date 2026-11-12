@@ -94,6 +94,9 @@ Vue 3 Composition API + Pinia + Vue Router + vue-i18n + Metronic 9 (Tailwind 4, 
 - **SaaS licensing/subscriptions:** don't build it, but don't assume every tenant has every module. `menu_item.feature_flag` is the seam.
 - **ABAC/Care-Team:** partially introduced via migrations V15/V16 (`students.user_can_access_student()`, `app.care_team_bypass`, `Application/Common/CareTeam`). Follow the existing implementation and don't extend it beyond what `db/` defines. Don't assume RBAC is the only permanent mechanism for clinical data.
 
+- **E-posta/SMS sağlayıcısı:** henüz bağlı değil. `INotificationService` için `LoggingNotificationService` kayıtlı: bildirimi göndermez, yalnızca şablon kodu + alıcıyı log'a yazar (token gibi değişken değerleri asla loglanmaz). Gerçek sağlayıcı (SMTP/outbox + Hangfire işçisi) eklendiğinde `Infrastructure/DependencyInjection.cs`'teki kayıt onunla değiştirilir; o zamana kadar davet/parola sıfırlama e-postaları gitmez.
+- **DI doğrulaması:** servis kayıtları `AddAynesilApi` içindedir; `ServiceRegistrationTests` ValidateOnBuild + ValidateScopes ile hepsini doğrular (eksik kayıt testte kırılır).
+
 ## Working style (from .cursorrules)
 
 Generate one requested module at a time, layer by layer. After each major layer, stop, summarize the files, and wait for confirmation.

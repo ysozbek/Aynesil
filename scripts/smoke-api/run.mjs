@@ -209,8 +209,18 @@ async function setup() {
 }
 
 async function writeFlows() {
+  // 0) kullanıcı kaydı (davet) + parola sıfırlama isteği — INotificationService kaydı eksikse 500 verir
+  const regUser = `smoke.reg.${RUN.toLowerCase()}@demo-a.test`
+  let r = await write('yazma', 'auth.register', 'POST', '/auth/register', {
+    username: regUser, fullName: `Smoke Kullanıcı ${RUN}`, email: regUser, phone: null, password: null,
+    preferredLocale: 'tr', primaryCampusId: ctx.campusId ?? null, sendVerificationEmail: true })
+  if (r.status && r.status < 300) {
+    // anonim uç: kayıtlı e-posta için de olmayan e-posta için de aynı 2xx döner (e-posta numaralandırma yok)
+    await write('yazma', 'auth.requestPasswordReset', 'POST', '/auth/request-password-reset', { email: regUser })
+    await write('yazma', 'auth.requestPasswordReset (kayıtsız e-posta)', 'POST', '/auth/request-password-reset', { email: `nobody.${RUN.toLowerCase()}@demo-a.test` })
+  } else record({ phase: 'yazma', id: 'auth.requestPasswordReset', verb: 'POST', url: '/auth/request-password-reset', status: null, outcome: 'skip', note: 'kayıt oluşmadı', mismatches: [] })
   // A) kamp + dönem
-  let r = await write('yazma', 'camp.create', 'POST', '/camps', {
+  r = await write('yazma', 'camp.create', 'POST', '/camps', {
     campusId: ctx.campusId, code: `SMK-${RUN}`, name: `Smoke Kamp ${RUN}`, description: 'smoke-api', location: 'Test', capacity: 20 }, 'post:camp.create')
   const campId = idOf(r.json?.data)
   if (campId) {

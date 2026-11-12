@@ -73,6 +73,11 @@ public class ExceptionMiddleware
                 StatusCodes.Status403Forbidden,
                 Localized(fae, MsgKeys.Error.Forbidden, null)),
 
+            // Giriş hataları: kod + parametreden istek dilinde metin (Auth.InvalidCredentials/AccountLocked/AccountDisabled).
+            AuthenticationFailedException afe => (
+                StatusCodes.Status401Unauthorized,
+                Localized(afe, MsgKeys.Error.Unauthorized, null)),
+
             UnauthorizedAccessException => (
                 StatusCodes.Status401Unauthorized,
                 Fail(MsgKeys.Error.Unauthorized)),

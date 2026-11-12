@@ -149,6 +149,19 @@ public class ExceptionMiddlewareTests
     }
 
     [Fact]
+    public async Task AuthenticationFailedException_is_401_with_code_and_localized_message()
+    {
+        var ex = new AuthenticationFailedException(MsgKeys.Auth.AccountLocked);
+        var (status, _, tr, _) = await RunAsync(ex, "tr");
+        var (_, _, en, _) = await RunAsync(ex, "en");
+
+        status.Should().Be(StatusCodes.Status401Unauthorized);
+        tr.GetProperty("code").GetString().Should().Be("Auth.AccountLocked").And.Be(en.GetProperty("code").GetString());
+        tr.GetProperty("message").GetString().Should().Contain("kilitlendi");
+        en.GetProperty("message").GetString().Should().Contain("locked");
+    }
+
+    [Fact]
     public async Task ConflictException_without_code_keeps_its_own_message()
     {
         var (status, _, json, _) = await RunAsync(new ConflictException("Zaten kayıtlı."));

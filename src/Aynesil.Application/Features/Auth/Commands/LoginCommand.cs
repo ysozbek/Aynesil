@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Domain.Common;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -78,25 +79,28 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
                   FROM iam.authenticate_user({0}::citext)",
                 req.Username)
             .FirstOrDefaultAsync(ct)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+            ?? throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
 
-        // ── Step 2: Status check ───────────────────────────────────────────────
-        if (user.Status is "suspended" or "disabled")
-            throw new UnauthorizedAccessException("Account is not active.");
+        // ── Step 2: Password verification FIRST ────────────────────────────────
+        // Hesap durumu (kilitli/devre dışı) yalnızca parola doğruysa bildirilir; aksi halde her başarısızlık
+        // aynı "geçersiz kimlik bilgisi" yanıtını verir ve kullanıcının var olup olmadığı sızmaz.
+        var inactive = user.Status is "suspended" or "disabled";
+        var lockedOut = await _passwords.IsLockedOutAsync(user.Id, ct);
+        var passwordOk = !string.IsNullOrEmpty(user.PasswordHash) && _passwords.Verify(req.Password, user.PasswordHash);
 
-        // ── Step 3: Lockout check ─────────────────────────────────────────────
-        if (await _passwords.IsLockedOutAsync(user.Id, ct))
-            throw new UnauthorizedAccessException("Account is temporarily locked. Please try again later.");
-
-        // ── Step 4: Password verification ─────────────────────────────────────
-        if (string.IsNullOrEmpty(user.PasswordHash) ||
-            !_passwords.Verify(req.Password, user.PasswordHash))
+        if (!passwordOk)
         {
-            var locked = await _passwords.RecordFailedAttemptAsync(user.Id, ct);
-            throw new UnauthorizedAccessException(locked
-                ? "Account temporarily locked due to too many failed attempts."
-                : "Invalid credentials.");
+            // Kilitli/devre dışı hesaplarda deneme sayacı artırılmaz (kilit süresi uzamasın).
+            if (!inactive && !lockedOut)
+                await _passwords.RecordFailedAttemptAsync(user.Id, ct);
+            throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
         }
+
+        // ── Step 3: Account state (password is correct, so revealing it is safe) ─
+        if (inactive)
+            throw new AuthenticationFailedException(MsgKeys.Auth.AccountDisabled);
+        if (lockedOut)
+            throw new AuthenticationFailedException(MsgKeys.Auth.AccountLocked);
 
         await _passwords.ResetFailedAttemptsAsync(user.Id, ct);
 
