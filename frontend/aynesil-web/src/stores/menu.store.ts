@@ -10,6 +10,7 @@ import { ref } from 'vue'
 import { apiService } from '@/services/api.service'
 import { menuAdminService } from '@/services/menu-admin.service'
 import { useLocaleStore } from './locale.store'
+import router from '@/router'
 import type { MenuTreeNodeDto, MenuItemListItemDto, CreateMenuItemRequest, UpdateMenuItemRequest, SetMenuItemTranslationsRequest } from '@/types/menu-admin.types'
 
 export interface MenuItem {
@@ -37,7 +38,7 @@ export const useMenuStore = defineStore('menu', () => {
       // Permission filtering and feature-flag gating happen server-side.
       const response = await apiService.get<MenuTreeNodeDto[]>(`/menus/me?locale=${locale}`)
       if (response.success && response.data) {
-        tree.value = mapTree(response.data)
+        tree.value = pruneUnroutable(mapTree(response.data))
         items.value = flattenTree(tree.value)
       } else {
         console.warn('[MenuStore] /menus/me returned success=false:', response)
@@ -65,6 +66,36 @@ export const useMenuStore = defineStore('menu', () => {
       sortOrder: node.sortOrder,
       children: mapTree(node.children ?? [], node.id),
     }))
+  }
+
+  /**
+   * Drops menu entries whose route has no page in the Vue router (it would land on 404).
+   * A group whose own route is unknown but still has valid children is kept, without a link.
+   * Guards against DB menu rows that point at routes the frontend never implemented.
+   */
+  function pruneUnroutable(nodes: MenuItem[]): MenuItem[] {
+    const result: MenuItem[] = []
+    for (const node of nodes) {
+      const children = pruneUnroutable(node.children ?? [])
+      const routable = !!node.route && isRoutable(node.route)
+      if (node.route && !routable) {
+        console.warn(`[MenuStore] Menu item '${node.code}' points to unknown route '${node.route}'; hidden.`)
+      }
+      if (routable || children.length > 0) {
+        result.push({ ...node, route: routable ? node.route : undefined, children })
+      }
+    }
+    return result
+  }
+
+  function isRoutable(path: string): boolean {
+    try {
+      const resolved = router.resolve(path)
+      return resolved.matched.length > 0
+        && !resolved.matched.some((r) => r.path === '/:pathMatch(.*)*' || r.name === 'not-found')
+    } catch {
+      return false
+    }
   }
 
   function flattenTree(nodes: MenuItem[]): MenuItem[] {

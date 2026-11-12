@@ -1,6 +1,6 @@
 # Migration Önerisi — V35: Tekrar Eden Plana Eğitimci ve Hizmet
 
-**Durum:** Öneri. Onay bekliyor. Henüz `db/migrations/` altına konmadı.
+**Durum:** Uygulandı: `db/migrations/V35__recurring_schedule_service_and_educators.sql`. Bu dosya karar kaydı olarak saklanıyor.
 
 ## Neden gerekli?
 

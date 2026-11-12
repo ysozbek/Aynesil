@@ -960,8 +960,9 @@ const tr = {
 
   enrollment: {
     title: 'Kayıtlar',
-    description: 'Öğrenci kayıtlarını ve program atamalarını yönetin.',
+    description: 'Öğrencinin kurumdaki kayıt dosyası ve aldığı programlar. Öğrenciyi bir programa eklemek için "Kayıt Oluştur"u kullanın.',
     create: 'Kayıt Oluştur',
+    existingEnrollmentNotice: 'Bu öğrencinin {date} tarihli aktif kaydı var. Yeni kayıt açılmayacak; seçtiğiniz program bu kayda eklenecek.',
     detail: 'Kayıt Detayı',
     detailDescription: 'Kayıt bilgileri ve atanmış programlar.',
     backToList: 'Kayıt Listesi',

@@ -8,6 +8,7 @@ AyNesil is a multi-tenant SaaS platform for special-education / therapy centers.
 
 - `db/` (`db/layer1_core/`, `db/layer2_sped/`, `db/99_triggers_rls_policies.sql`, `db/seed/`, `db/migrations/`) is the **authoritative schema**. Never invent tables, columns, FKs or relationships. If a needed structure is missing: stop, explain what's missing, and wait for the user's decision.
 - `ARCHITECTURE.md` (summary) and `docs/01`…`08` (detail) are authoritative for architecture. Do not modify `ARCHITECTURE.md` on your own initiative.
+- Other docs live under `docs/` grouped by audience (index: `docs/README.md`): `docs/musteri/` (user guide, demo script, onboarding roadmap), `docs/calisma/` (work-in-progress lists, decision records), `docs/raporlar/` (dated audit reports). `docs/01`…`08` and `ABAC_CARE_TEAM_DESIGN.md` stay at the `docs/` root because applied migrations reference them by path.
 - `.cursorrules` holds the full project rule set; the key points are below.
 
 ## Build / run / verify
@@ -38,7 +39,7 @@ db/validation/smoke_test.sh
 
 `devops/*.py` wrap build/publish/migrate (`migrate.py --local | --incremental | --seed-only | --skip-seed`).
 
-New customer (tenant) onboarding: `python3 devops/new_tenant.py --check --code <code> --name "<name>" --admin-username <email> --admin-name "<name>"` (drop `--check` to commit; `--dry-run` prints SQL). Login resolves users by username alone (`iam.authenticate_user`), so `user_account.username` is **globally unique** across corporations (V36, `uq_user_account_username`). User-creation handlers check it via the SECURITY DEFINER `iam.username_exists()` (`Features/Users/UsernameAvailability.cs`), since RLS hides other tenants' rows. Onboarding phases: `docs/KURULUM_YOL_HARITASI.md`.
+New customer (tenant) onboarding: `python3 devops/new_tenant.py --check --code <code> --name "<name>" --admin-username <email> --admin-name "<name>"` (drop `--check` to commit; `--dry-run` prints SQL). Login resolves users by username alone (`iam.authenticate_user`), so `user_account.username` is **globally unique** across corporations (V36, `uq_user_account_username`). User-creation handlers check it via the SECURITY DEFINER `iam.username_exists()` (`Features/Users/UsernameAvailability.cs`), since RLS hides other tenants' rows. Onboarding phases: `docs/musteri/KURULUM_YOL_HARITASI.md`.
 
 ## Architecture
 
@@ -66,7 +67,7 @@ New customer (tenant) onboarding: `python3 devops/new_tenant.py --check --code <
 Permission-based RBAC: `[HasPermission(Permissions.X.Y)]` with a dynamic policy provider (`Api/Authorization`). Never check role names. On the frontend, use `composables/usePermission.ts`. Menus are DB-driven (`iam.menu_item` + translations, `required_permission`, `feature_flag`).
 
 ### Database changes
-- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (currently V36). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
+- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (currently V37). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
 - A new module typically ships a `V{N}__<module>_permissions_and_menu.sql` that seeds `iam` permissions, `menu_item` rows and their `tr` translations. Keep it in sync with `Shared/Constants/Permissions.cs` and frontend routes.
 - The layered DDL files (`db/layer*/`) are also kept in sync when a migration changes a table.
 

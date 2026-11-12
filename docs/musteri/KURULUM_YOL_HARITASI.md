@@ -42,7 +42,7 @@ Komut kurumu, kampüsleri, tüm izinlere sahip **Yönetici** rolünü ve ilk yö
 3. **Programlar ve hizmetler:** hangi programları sunuyorlar, her programda hangi hizmetler var, süresi kaç dakika, haftada kaç kez (ör. "Erken Çocukluk: Dil ve Konuşma 45 dk haftada 2, Duyu Bütünleme 60 dk haftada 1")
 4. **Paketler ve fiyatlar:** ör. "20 seanslık Dil ve Konuşma paketi, 3 ay geçerli, X TL"
 5. **Personel ve görevleri:** sekreter, koordinatör, muhasebe gibi kimler sisteme girecek
-6. **Kullandıkları kelimeler:** "seans hakkı" mı "ders hakkı" mı, "eğitimci" mi "öğretmen" mi (bkz. `EKRAN_IYILESTIRME_LISTESI.md` Bölüm 3)
+6. **Kullandıkları kelimeler:** "seans hakkı" mı "ders hakkı" mı, "eğitimci" mi "öğretmen" mi (bkz. `docs/calisma/EKRAN_IYILESTIRME_LISTESI.md` Bölüm 3)
 
 **Oturumda, bu sırayla:**
 
@@ -80,4 +80,4 @@ Kamera, kamp, danışmanlık, KPI gibi ek modüller bu aşamada açılmaz. Kurum
 
 - **Toplu aktarma yok.** Excel'deki eğitimci ve öğrenci listeleri ekranlardan tek tek giriliyor. Kurum büyükse bu, kurulumun en uzun adımı olur.
 - **Hazır rol seti yok.** Gün 0'da yalnızca Yönetici rolü açılıyor. Sekreter, eğitimci gibi roller her kurum için Roller ekranından tanımlanıyor.
-- **Demo verisi yok.** Demo öncesi hazırlık `DEMO_SENARYOSU.md` bölüm 1'deki listeyle elle yapılıyor.
+- **Demo verisi yok.** Demo öncesi hazırlık `docs/musteri/DEMO_SENARYOSU.md` bölüm 1'deki listeyle elle yapılıyor.

@@ -7,6 +7,7 @@ import { useProgramStore } from '@/stores/program.store'
 import { useStudentStore } from '@/stores/student.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { campusService } from '@/services/campus.service'
+import { enrollmentService } from '@/services/program.service'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -114,6 +115,30 @@ const createForm = reactive({
 })
 const createError = ref('')
 
+// A student normally has ONE open enrollment (the file at the institution).
+// If the selected student already has one, the program is added to it
+// instead of opening a second enrollment.
+const existingEnrollment = ref<EnrollmentListItemDto | null>(null)
+watch(() => createForm.studentId, async (studentId) => {
+  existingEnrollment.value = null
+  if (!studentId) return
+  try {
+    const res = await enrollmentService.listEnrollments({
+      corporationId: corporationId.value || undefined,
+      studentId,
+      isActive: true,
+      page: 1,
+      pageSize: 1,
+      sortBy: 'enrolledOn',
+      sortDirection: 'desc',
+    })
+    if (createForm.studentId !== studentId) return
+    existingEnrollment.value = res.success && res.data ? (res.data.items[0] ?? null) : null
+  } catch {
+    existingEnrollment.value = null
+  }
+})
+
 function openCreate() {
   createForm.studentId = query.studentId || ''
   createForm.programId = ''
@@ -137,6 +162,27 @@ async function submitCreate() {
     return
   }
   createError.value = ''
+
+  if (existingEnrollment.value) {
+    const target = existingEnrollment.value
+    try {
+      await store.assignStudentToProgram({
+        corporationId: corporationId.value,
+        studentId: createForm.studentId,
+        programId: createForm.programId,
+        enrollmentId: target.id,
+        campusId: target.campusId,
+        startDate: createForm.startDate || null,
+        endDate: null,
+      })
+      showCreate.value = false
+      router.push({ name: 'enrollment-detail', params: { id: target.id } })
+    } catch (e: unknown) {
+      createError.value = (e as Error).message
+    }
+    return
+  }
+
   try {
     const created = await store.createEnrollment({
       corporationId: corporationId.value,
@@ -325,6 +371,11 @@ async function submitCreate() {
           </select>
         </div>
 
+        <p v-if="existingEnrollment" class="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
+          {{ t('enrollment.existingEnrollmentNotice', { date: formatDate(existingEnrollment.enrolledOn) }) }}
+        </p>
+
+        <template v-if="!existingEnrollment">
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('enrollment.campus') }}</label>
           <select
@@ -356,6 +407,7 @@ async function submitCreate() {
             />
           </div>
         </div>
+        </template>
 
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('enrollment.startDate') }}</label>
