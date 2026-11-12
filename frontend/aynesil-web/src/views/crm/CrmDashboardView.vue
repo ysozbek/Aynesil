@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useRouter } from 'vue-router'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { usePermission } from '@/composables/usePermission'
 
 const { t } = useI18n()
+const crm = useCrmLabels()
 const router = useRouter()
 const pipelineStore = useLeadPipelineStore()
 const activityStore = useLeadActivityStore()
@@ -18,6 +20,7 @@ onMounted(async () => {
   statsLoading.value = true
   try {
     await Promise.all([
+      crm.load('pipeline_stage', 'activity_type'),
       pipelineStore.fetchSummary(),
       activityStore.fetchFollowUps({ pageSize: 5 }),
     ])
@@ -26,8 +29,8 @@ onMounted(async () => {
   }
 })
 
-const totalConverted = computed(() => pipelineStore.summary?.convertedLeads ?? 0)
-const totalLost = computed(() => pipelineStore.summary?.lostLeads ?? 0)
+const totalConverted = computed(() => pipelineStore.summary?.totalConverted ?? 0)
+const totalLost = computed(() => pipelineStore.summary?.totalLost ?? 0)
 const stages = computed(() => pipelineStore.summary?.stages ?? [])
 const followUps = computed(() => activityStore.followUps.items)
 
@@ -101,7 +104,7 @@ function formatDateTime(date: string | null): string {
         <div v-else class="space-y-3">
           <div v-for="stage in stages" :key="stage.stageId">
             <div class="flex items-center justify-between text-sm mb-1">
-              <span class="text-foreground font-medium">{{ stage.stageName }}</span>
+              <span class="text-foreground font-medium">{{ crm.label('pipeline_stage', stage.stageCode) }}</span>
               <span class="text-muted-foreground">{{ stage.count }}</span>
             </div>
             <div class="h-2 rounded-full bg-accent overflow-hidden">
@@ -133,7 +136,7 @@ function formatDateTime(date: string | null): string {
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-sm font-medium text-foreground">{{ item.subject ?? t('crm.activity.noSubject') }}</p>
-                <p class="text-xs text-muted-foreground">{{ item.activityTypeName }}</p>
+                <p class="text-xs text-muted-foreground">{{ crm.label('activity_type', item.activityTypeCode) }}</p>
               </div>
               <span class="text-xs text-amber-600 font-medium whitespace-nowrap ml-3">
                 {{ formatDateTime(item.followUpAt) }}

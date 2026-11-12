@@ -8,6 +8,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useBranchStore } from '@/stores/branch.store'
@@ -22,6 +23,7 @@ const leadStore = useLeadStore()
 const pipelineStore = useLeadPipelineStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
+const crm = useCrmLabels()
 const { can } = usePermission()
 
 const stages = ref<RefValueItem[]>([])
@@ -33,6 +35,7 @@ const loadingStages = ref(true)
 
 onMounted(async () => {
   await Promise.all([
+    crm.load('lead_source'),
     refData.getValues('pipeline_stage').then(v => { stages.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])
@@ -162,8 +165,8 @@ function stageCardColor(idx: number): string {
     <!-- Pipeline Summary Stats -->
     <div v-if="pipelineStore.summary" class="mb-6 flex items-center gap-4 text-sm text-muted-foreground">
       <span>{{ t('crm.pipeline.total') }}: <strong class="text-foreground">{{ pipelineStore.summary.totalLeads }}</strong></span>
-      <span>{{ t('crm.pipeline.converted') }}: <strong class="text-emerald-600">{{ pipelineStore.summary.convertedLeads }}</strong></span>
-      <span>{{ t('crm.pipeline.lost') }}: <strong class="text-red-500">{{ pipelineStore.summary.lostLeads }}</strong></span>
+      <span>{{ t('crm.pipeline.converted') }}: <strong class="text-emerald-600">{{ pipelineStore.summary.totalConverted }}</strong></span>
+      <span>{{ t('crm.pipeline.lost') }}: <strong class="text-red-500">{{ pipelineStore.summary.totalLost }}</strong></span>
     </div>
 
     <!-- Loading -->
@@ -200,7 +203,7 @@ function stageCardColor(idx: number): string {
             <p class="text-sm font-medium text-foreground truncate">{{ lead.contactName }}</p>
             <p v-if="lead.childName" class="text-xs text-muted-foreground truncate">{{ lead.childName }}</p>
             <div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span v-if="lead.sourceName" class="bg-accent rounded px-1.5 py-0.5">{{ lead.sourceName }}</span>
+              <span v-if="lead.sourceCode" class="bg-accent rounded px-1.5 py-0.5">{{ crm.label('lead_source', lead.sourceCode) }}</span>
               <span v-if="lead.score !== null && lead.score !== undefined" class="ml-auto font-mono">{{ lead.score }}</span>
             </div>
             <p v-if="lead.assignedToName" class="mt-1 text-xs text-muted-foreground">{{ lead.assignedToName }}</p>

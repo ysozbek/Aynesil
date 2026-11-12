@@ -23,13 +23,14 @@ public sealed class GetLeadStatusHistoryQueryHandler
             from h    in _db.LeadStatusHistories
             join stat in _db.RefValues on h.StatusId        equals stat.Id into statG from stat in statG.DefaultIfEmpty()
             join stg  in _db.RefValues on h.PipelineStageId equals stg.Id  into stgG  from stg  in stgG.DefaultIfEmpty()
+            join usr  in _db.UserAccounts on h.ChangedBy    equals usr.Id  into usrG  from usr  in usrG.DefaultIfEmpty()
             where h.LeadId == req.LeadId
             orderby h.ChangedAt descending
             select new LeadStatusHistoryDto(
                 h.Id,
                 h.StatusId, stat == null ? null : stat.Code,
                 h.PipelineStageId, stg == null ? null : stg.Code,
-                h.ChangedAt, h.ChangedBy)
+                h.ChangedAt, h.ChangedBy, usr == null ? null : usr.FullName)
         ).ToListAsync(ct);
 
         return rows;

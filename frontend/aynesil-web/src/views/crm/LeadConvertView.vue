@@ -20,6 +20,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -29,6 +30,7 @@ import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
+const crm = useCrmLabels()
 const route = useRoute()
 const router = useRouter()
 const store = useLeadStore()
@@ -68,6 +70,7 @@ function splitName(full: string | null | undefined): { first: string; last: stri
 onMounted(async () => {
   await Promise.all([
     store.fetchOne(id.value),
+    crm.load('lead_status'),
     refData.getValues('GUARDIAN_RELATIONSHIP').then(v => { relationships.value = v }).catch(() => {}),
   ])
   const l = lead.value
@@ -197,9 +200,9 @@ const inputClass = 'w-full h-9 px-3 text-sm rounded-lg border border-border bg-t
             <dt class="text-muted-foreground">{{ t('crm.lead.childName') }}</dt>
             <dd class="font-medium text-foreground text-right">{{ lead.childName }}</dd>
           </div>
-          <div v-if="lead.statusName" class="flex justify-between gap-4">
+          <div v-if="lead.statusCode" class="flex justify-between gap-4">
             <dt class="text-muted-foreground">{{ t('common.status') }}</dt>
-            <dd class="font-medium text-foreground text-right">{{ lead.statusName }}</dd>
+            <dd class="font-medium text-foreground text-right">{{ crm.label('lead_status', lead.statusCode) }}</dd>
           </div>
         </dl>
       </div>

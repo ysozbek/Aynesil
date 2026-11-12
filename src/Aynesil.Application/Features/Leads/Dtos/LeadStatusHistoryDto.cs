@@ -8,5 +8,6 @@ public record LeadStatusHistoryDto(
     Guid? PipelineStageId,
     string? PipelineStageCode,
     DateTimeOffset ChangedAt,
-    Guid? ChangedBy
+    Guid? ChangedBy,
+    string? ChangedByName
 );

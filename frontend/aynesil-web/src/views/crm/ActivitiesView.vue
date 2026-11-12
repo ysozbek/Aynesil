@@ -5,6 +5,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { useBranchStore } from '@/stores/branch.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -14,6 +15,7 @@ const { t } = useI18n()
 const router = useRouter()
 const activityStore = useLeadActivityStore()
 const branchStore = useBranchStore()
+const crm = useCrmLabels()
 
 const query = reactive({
   campusId: '',
@@ -22,6 +24,7 @@ const query = reactive({
 })
 
 onMounted(async () => {
+  await crm.load('activity_type')
   if (branchStore.list.items.length === 0) await branchStore.fetchList({ pageSize: 200 })
   await loadFollowUps()
 })
@@ -85,7 +88,7 @@ function isOverdue(val: string | null): boolean {
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-foreground truncate">{{ act.subject ?? t('crm.activity.noSubject') }}</p>
             <p class="text-xs text-muted-foreground mt-0.5">
-              {{ act.activityTypeName ?? '—' }}
+              {{ crm.label('activity_type', act.activityTypeCode) ?? '—' }}
               <span v-if="act.direction"> · {{ act.direction === 'inbound' ? t('crm.activity.inbound') : t('crm.activity.outbound') }}</span>
             </p>
             <p v-if="act.body" class="mt-1 text-xs text-muted-foreground line-clamp-2">{{ act.body }}</p>

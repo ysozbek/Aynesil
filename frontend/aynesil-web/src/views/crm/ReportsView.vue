@@ -4,12 +4,14 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useBranchStore } from '@/stores/branch.store'
 import { leadService } from '@/services/lead.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { ConversionReportDto } from '@/types/crm.types'
 
 const { t } = useI18n()
+const crm = useCrmLabels()
 const branchStore = useBranchStore()
 
 const filters = reactive({
@@ -24,7 +26,7 @@ const error = ref('')
 
 onMounted(async () => {
   if (branchStore.list.items.length === 0) await branchStore.fetchList({ pageSize: 200 })
-  await loadReport()
+  await Promise.all([crm.load('lead_source'), loadReport()])
 })
 
 async function loadReport() {
@@ -45,11 +47,11 @@ async function loadReport() {
 }
 
 function pct(rate: number): string {
-  return `${(rate * 100).toFixed(1)}%`
+  return `${rate.toFixed(1)}%`
 }
 
 function barWidth(rate: number): string {
-  return `${Math.min(100, rate * 100)}%`
+  return `${Math.min(100, rate)}%`
 }
 </script>
 
@@ -102,7 +104,7 @@ function barWidth(rate: number): string {
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.converted') }}</p>
-          <p class="text-3xl font-bold text-emerald-600 mt-1">{{ report.convertedLeads }}</p>
+          <p class="text-3xl font-bold text-emerald-600 mt-1">{{ report.totalConverted }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-xs text-muted-foreground uppercase">{{ t('crm.reports.conversionRate') }}</p>
@@ -121,17 +123,17 @@ function barWidth(rate: number): string {
           {{ t('common.noData') }}
         </div>
         <div v-else class="space-y-4">
-          <div v-for="src in report.bySource" :key="src.sourceId">
+          <div v-for="src in report.bySource" :key="src.sourceId ?? 'none'">
             <div class="flex items-center justify-between text-sm mb-1">
-              <span class="font-medium text-foreground">{{ src.sourceName }}</span>
+              <span class="font-medium text-foreground">{{ crm.label('lead_source', src.sourceCode) ?? t('crm.reports.unknownSource') }}</span>
               <span class="text-muted-foreground">
-                {{ src.converted }}/{{ src.total }} · <strong class="text-primary">{{ pct(src.rate) }}</strong>
+                {{ src.converted }}/{{ src.totalLeads }} · <strong class="text-primary">{{ pct(src.conversionRate) }}</strong>
               </span>
             </div>
             <div class="h-2.5 rounded-full bg-accent overflow-hidden">
               <div
                 class="h-full rounded-full bg-primary transition-all"
-                :style="{ width: barWidth(src.rate) }"
+                :style="{ width: barWidth(src.conversionRate) }"
               />
             </div>
           </div>

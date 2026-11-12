@@ -455,6 +455,7 @@ const tr = {
       campus: 'Kampüs',
       scheduledAt: 'Planlanan Tarih',
       conductedBy: 'Yapan Kişi',
+      conductedAt: 'Görüşme Tarihi',
       outcome: 'Sonuç',
       recommendation: 'Öneri',
       complete: 'Görüşmeyi Tamamla',
@@ -497,6 +498,7 @@ const tr = {
       sources: 'Kaynak Sayısı',
       bySource: 'Kaynağa Göre Dönüşüm',
       noReport: 'Rapor oluşturmak için filtre seçin.',
+      unknownSource: 'Kaynak belirtilmemiş',
     },
   },
 

@@ -7,11 +7,8 @@ export interface LeadListItemDto {
   contactName: string
   contactPhone: string | null
   contactEmail: string | null
-  sourceName: string | null
   sourceCode: string | null
-  statusName: string | null
   statusCode: string | null
-  pipelineStageName: string | null
   pipelineStageCode: string | null
   campusName: string | null
   assignedToName: string | null
@@ -39,7 +36,7 @@ export interface LeadActivityDto {
   id: string
   leadId: string
   activityTypeId: string | null
-  activityTypeName: string | null
+  activityTypeCode: string | null
   subject: string | null
   body: string | null
   direction: string | null
@@ -51,13 +48,13 @@ export interface LeadActivityDto {
 
 export interface LeadStatusHistoryDto {
   id: string
-  leadId: string
-  previousStatusCode: string | null
-  newStatusCode: string | null
-  previousPipelineStageCode: string | null
-  newPipelineStageCode: string | null
-  changedByName: string | null
+  statusId: string | null
+  statusCode: string | null
+  pipelineStageId: string | null
+  pipelineStageCode: string | null
   changedAt: string
+  changedBy: string | null
+  changedByName: string | null
 }
 
 export interface InterviewDto {
@@ -67,7 +64,7 @@ export interface InterviewDto {
   campusName: string | null
   status: string
   scheduledAt: string | null
-  completedAt: string | null
+  conductedAt: string | null
   outcome: string | null
   recommendation: string | null
   conductedByName: string | null
@@ -77,35 +74,35 @@ export interface InterviewDto {
 
 export interface PipelineSummaryDto {
   totalLeads: number
-  convertedLeads: number
-  lostLeads: number
+  totalConverted: number
+  totalLost: number
   stages: PipelineStageCountDto[]
 }
 
 export interface PipelineStageCountDto {
   stageId: string
   stageCode: string
-  stageName: string
   count: number
-  sortOrder: number
 }
 
 export interface ConversionReportDto {
-  corporationId: string
   from: string
   to: string
   totalLeads: number
-  convertedLeads: number
+  /** Backend toplam dönüşen aday sayısını `totalConverted` adıyla gönderir. */
+  totalConverted: number
+  /** Yüzde olarak (0–100), backend 1 ondalığa yuvarlar. */
   conversionRate: number
   bySource: ConversionBySourceDto[]
 }
 
 export interface ConversionBySourceDto {
-  sourceId: string
-  sourceName: string
-  total: number
+  sourceId: string | null
+  sourceCode: string | null
+  totalLeads: number
   converted: number
-  rate: number
+  /** Yüzde olarak (0–100). */
+  conversionRate: number
 }
 
 // ── Request payloads ───────────────────────────────────────────────────────────

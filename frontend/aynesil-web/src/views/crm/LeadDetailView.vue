@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -17,12 +18,28 @@ const router = useRouter()
 const store = useLeadStore()
 const activityStore = useLeadActivityStore()
 const refData = useRefDataStore()
+const crm = useCrmLabels()
 const branchStore = useBranchStore()
 const { can } = usePermission()
 
 const id = computed(() => route.params.id as string)
 const lead = computed(() => store.current)
 const activeTab = ref<'overview' | 'activities' | 'interviews' | 'history'>('overview')
+
+// Durum geçmişi: tarihe göre eskiden yeniye sıralanır, önceki durum bir önceki satırdan türetilir;
+// ekranda en yeni üstte gösterilir.
+const historyRows = computed(() => {
+  const asc = [...activityStore.history].sort(
+    (a, b) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime(),
+  )
+  return asc
+    .map((h, i) => ({
+      ...h,
+      previousStatusCode: i > 0 ? asc[i - 1].statusCode : null,
+      hasPrevious: i > 0,
+    }))
+    .reverse()
+})
 
 const statuses = ref<RefValueItem[]>([])
 const stages = ref<RefValueItem[]>([])
@@ -36,6 +53,7 @@ onMounted(async () => {
     activityStore.fetchHistory(id.value),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
     refData.getValues('pipeline_stage').then(v => { stages.value = v }),
+    crm.load('lead_source', 'lead_status', 'pipeline_stage', 'activity_type'),
     refData.getValues('ACTIVITY_TYPE').then(v => { activityTypes.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])
@@ -211,11 +229,11 @@ function interviewStatusBadge(status: string): string {
           </button>
           <h1 class="text-2xl font-bold text-foreground">{{ lead.contactName }}</h1>
           <div class="flex items-center gap-2 mt-1 flex-wrap">
-            <span v-if="lead.pipelineStageName" class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-              {{ lead.pipelineStageName }}
+            <span v-if="lead.pipelineStageCode" class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+              {{ crm.label('pipeline_stage', lead.pipelineStageCode) }}
             </span>
-            <span v-if="lead.statusName" class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-              {{ lead.statusName }}
+            <span v-if="lead.statusCode" class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+              {{ crm.label('lead_status', lead.statusCode) }}
             </span>
             <span v-if="lead.isConverted" class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
               {{ t('crm.lead.converted') }}
@@ -316,7 +334,7 @@ function interviewStatusBadge(status: string): string {
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('crm.lead.source') }}</dt>
-              <dd class="font-medium text-foreground">{{ lead.sourceName ?? '—' }}</dd>
+              <dd class="font-medium text-foreground">{{ crm.label('lead_source', lead.sourceCode) ?? '—' }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('crm.lead.assignedTo') }}</dt>
@@ -357,7 +375,7 @@ function interviewStatusBadge(status: string): string {
               <div>
                 <p class="text-sm font-medium text-foreground">{{ act.subject ?? t('crm.activity.noSubject') }}</p>
                 <p class="text-xs text-muted-foreground mt-0.5">
-                  {{ act.activityTypeName }} · {{ act.direction === 'inbound' ? t('crm.activity.inbound') : t('crm.activity.outbound') }} · {{ formatDateTime(act.occurredAt) }}
+                  {{ crm.label('activity_type', act.activityTypeCode) ?? '—' }} · {{ act.direction === 'inbound' ? t('crm.activity.inbound') : t('crm.activity.outbound') }} · {{ formatDateTime(act.occurredAt) }}
                 </p>
               </div>
               <span v-if="act.followUpAt" class="text-xs text-amber-600 font-medium">
@@ -386,6 +404,7 @@ function interviewStatusBadge(status: string): string {
                   {{ t(`crm.interview.status.${iv.status}`) }}
                 </span>
                 <p class="mt-2 text-sm text-foreground">{{ t('crm.interview.scheduledAt') }}: {{ formatDateTime(iv.scheduledAt) }}</p>
+                <p v-if="iv.conductedAt" class="text-sm text-foreground">{{ t('crm.interview.conductedAt') }}: {{ formatDateTime(iv.conductedAt) }}</p>
                 <p v-if="iv.campusName" class="text-xs text-muted-foreground">{{ iv.campusName }}</p>
                 <p v-if="iv.conductedByName" class="text-xs text-muted-foreground">{{ t('crm.interview.conductedBy') }}: {{ iv.conductedByName }}</p>
               </div>
@@ -416,16 +435,19 @@ function interviewStatusBadge(status: string): string {
           {{ t('crm.history.noHistory') }}
         </div>
         <div v-else class="relative pl-4 border-l-2 border-border ml-4 space-y-4">
-          <div v-for="h in activityStore.history" :key="h.id" class="relative">
+          <div v-for="h in historyRows" :key="h.id" class="relative">
             <div class="absolute -left-[1.35rem] w-3 h-3 rounded-full bg-primary border-2 border-background" />
             <div class="rounded-xl border border-border bg-card p-3 shadow-sm ml-4">
-              <p class="text-xs text-muted-foreground mb-1">{{ formatDateTime(h.changedAt) }} · {{ h.changedByName }}</p>
+              <p class="text-xs text-muted-foreground mb-1">{{ formatDateTime(h.changedAt) }}<template v-if="h.changedByName"> · {{ h.changedByName }}</template></p>
               <p class="text-sm text-foreground">
-                <span class="font-medium">{{ h.previousStatusCode ?? '—' }}</span>
-                → <span class="font-medium">{{ h.newStatusCode ?? '—' }}</span>
+                <template v-if="h.hasPrevious">
+                  <span class="font-medium">{{ crm.label('lead_status', h.previousStatusCode) ?? '—' }}</span>
+                  →
+                </template>
+                <span class="font-medium">{{ crm.label('lead_status', h.statusCode) ?? '—' }}</span>
               </p>
-              <p v-if="h.newPipelineStageCode" class="text-xs text-muted-foreground">
-                {{ t('crm.lead.pipelineStage') }}: {{ h.newPipelineStageCode }}
+              <p v-if="h.pipelineStageCode" class="text-xs text-muted-foreground">
+                {{ t('crm.lead.pipelineStage') }}: {{ crm.label('pipeline_stage', h.pipelineStageCode) }}
               </p>
             </div>
           </div>

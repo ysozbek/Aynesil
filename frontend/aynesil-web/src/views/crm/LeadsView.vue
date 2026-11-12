@@ -2,6 +2,7 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -19,6 +20,7 @@ const router = useRouter()
 const store = useLeadStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
+const crm = useCrmLabels()
 const { can } = usePermission()
 
 const statuses = ref<RefValueItem[]>([])
@@ -53,6 +55,7 @@ watch(
 onMounted(async () => {
   await Promise.all([
     loadList(),
+    crm.load('lead_source', 'lead_status', 'pipeline_stage'),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
     refData.getValues('LEAD_SOURCE').then(v => { sources.value = v }),
@@ -83,9 +86,9 @@ const columns: Column<LeadListItemDto>[] = [
   { key: 'contactName', label: t('crm.lead.contactName'), sortable: true },
   { key: 'childName', label: t('crm.lead.childName') },
   { key: 'contactPhone', label: t('crm.lead.phone'), width: '120px' },
-  { key: 'sourceName', label: t('crm.lead.source'), width: '110px' },
-  { key: 'pipelineStageName', label: t('crm.lead.pipelineStage'), width: '130px' },
-  { key: 'statusName', label: t('common.status'), width: '110px' },
+  { key: 'sourceCode', label: t('crm.lead.source'), width: '110px' },
+  { key: 'pipelineStageCode', label: t('crm.lead.pipelineStage'), width: '130px' },
+  { key: 'statusCode', label: t('common.status'), width: '110px' },
   { key: 'assignedToName', label: t('crm.lead.assignedTo'), width: '130px' },
   { key: 'score', label: t('crm.lead.score'), width: '70px', align: 'center' },
   { key: 'createdAt', label: t('common.createdAt'), sortable: true, width: '120px' },
@@ -210,18 +213,21 @@ function stageColor(code: string | null): string {
       <template #cell-contactPhone="{ value }">
         {{ value ?? '—' }}
       </template>
-      <template #cell-pipelineStageName="{ row }">
+      <template #cell-sourceCode="{ row }">
+        {{ crm.label('lead_source', row.sourceCode) ?? '—' }}
+      </template>
+      <template #cell-pipelineStageCode="{ row }">
         <span
-          v-if="row.pipelineStageName"
+          v-if="row.pipelineStageCode"
           :class="['px-2 py-0.5 rounded-full text-xs font-medium', stageColor(row.pipelineStageCode)]"
-        >{{ row.pipelineStageName }}</span>
+        >{{ crm.label('pipeline_stage', row.pipelineStageCode) }}</span>
         <span v-else class="text-muted-foreground">—</span>
       </template>
-      <template #cell-statusName="{ row }">
+      <template #cell-statusCode="{ row }">
         <span
-          v-if="row.statusName"
+          v-if="row.statusCode"
           :class="['px-2 py-0.5 rounded-full text-xs font-medium', row.isConverted ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700']"
-        >{{ row.statusName }}</span>
+        >{{ crm.label('lead_status', row.statusCode) }}</span>
       </template>
       <template #cell-score="{ value }">
         <span v-if="value !== null && value !== undefined" class="font-mono text-xs">{{ value }}</span>

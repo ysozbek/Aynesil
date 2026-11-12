@@ -80,7 +80,8 @@ internal static class LeadMappings
     internal static LeadStatusHistoryDto ToDto(
         this LeadStatusHistory h,
         string? statusCode,
-        string? pipelineStageCode)
+        string? pipelineStageCode,
+        string? changedByName)
         => new(
             h.Id,
             h.StatusId,
@@ -88,5 +89,6 @@ internal static class LeadMappings
             h.PipelineStageId,
             pipelineStageCode,
             h.ChangedAt,
-            h.ChangedBy);
+            h.ChangedBy,
+            changedByName);
 }
