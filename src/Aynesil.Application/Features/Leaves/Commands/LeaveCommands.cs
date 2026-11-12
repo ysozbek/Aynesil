@@ -149,9 +149,9 @@ public sealed class UpdateLeaveRequestCommandHandler : IRequestHandler<UpdateLea
 
 // ── ApproveLeaveRequestCommand ────────────────────────────────────────────────
 
+/// <summary>Onaylayan istemciden gelmez; oturumdaki kullanıcıdır (leave_approval.approver_id → iam.user_account).</summary>
 public record ApproveLeaveRequestCommand(
     Guid Id,
-    Guid? ApproverId,
     string? Comment,
     int StepNo = 1) : IRequest<LeaveApprovalDto>;
 
@@ -168,11 +168,18 @@ public sealed class ApproveLeaveRequestCommandHandler
     : IRequestHandler<ApproveLeaveRequestCommand, LeaveApprovalDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ApproveLeaveRequestCommandHandler(IAppDbContext db) => _db = db;
+    public ApproveLeaveRequestCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<LeaveApprovalDto> Handle(ApproveLeaveRequestCommand req, CancellationToken ct)
     {
+        var approverId = _currentUser.RequireUserId();
+
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
@@ -199,7 +206,7 @@ public sealed class ApproveLeaveRequestCommandHandler
 
         var approval = LeaveApproval.Record(
             leave.CorporationId, leave.Id,
-            req.ApproverId, "approved",
+            approverId, "approved",
             req.Comment, req.StepNo);
 
         _db.LeaveApprovals.Add(approval);
@@ -215,9 +222,9 @@ public sealed class ApproveLeaveRequestCommandHandler
 
 // ── RejectLeaveRequestCommand ─────────────────────────────────────────────────
 
+/// <summary>Onaylayan istemciden gelmez; oturumdaki kullanıcıdır (leave_approval.approver_id → iam.user_account).</summary>
 public record RejectLeaveRequestCommand(
     Guid Id,
-    Guid? ApproverId,
     string? Comment,
     int StepNo = 1) : IRequest<LeaveApprovalDto>;
 
@@ -234,11 +241,18 @@ public sealed class RejectLeaveRequestCommandHandler
     : IRequestHandler<RejectLeaveRequestCommand, LeaveApprovalDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public RejectLeaveRequestCommandHandler(IAppDbContext db) => _db = db;
+    public RejectLeaveRequestCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<LeaveApprovalDto> Handle(RejectLeaveRequestCommand req, CancellationToken ct)
     {
+        var approverId = _currentUser.RequireUserId();
+
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
@@ -247,7 +261,7 @@ public sealed class RejectLeaveRequestCommandHandler
 
         var approval = LeaveApproval.Record(
             leave.CorporationId, leave.Id,
-            req.ApproverId, "rejected",
+            approverId, "rejected",
             req.Comment, req.StepNo);
 
         _db.LeaveApprovals.Add(approval);

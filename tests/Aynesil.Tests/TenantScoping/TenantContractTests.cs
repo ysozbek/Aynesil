@@ -29,6 +29,10 @@ public class TenantContractTests
     [
         "CorporationId", "CreatedBy", "UpdatedBy", "DeletedBy", "AuthoredBy",
         "RecordedBy", "AssignedBy", "CompletedBy", "GrantedBy", "RevokedBy", "RespondentUserId",
+        // Onay/karar aktörleri (Y5): oturumdaki kullanıcıdan ya da ona bağlı eğitmen kaydından türetilir.
+        "ApproverId", "ApprovedBy", "RejectedBy", "ReviewedBy", "DecidedBy", "VerifiedBy", "VoidedBy",
+        "ProcessedBy", "CancelledBy", "SignedBy", "IssuedBy", "FinalizedBy", "RevisedBy", "ChangedBy",
+        "UploadedBy", "RequestedBy",
     ];
 
     /// <summary>Requests whose CorporationId was moved from the payload to ITenantContext.</summary>
