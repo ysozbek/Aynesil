@@ -116,10 +116,10 @@ function statusColor(status: string): string {
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    active: t('goal.studentGoal.status.active'),
-    achieved: t('goal.studentGoal.status.achieved'),
-    discontinued: t('goal.studentGoal.status.discontinued'),
-    on_hold: t('goal.studentGoal.status.on_hold'),
+    active: t('goal.studentGoal.statusOptions.active'),
+    achieved: t('goal.studentGoal.statusOptions.achieved'),
+    discontinued: t('goal.studentGoal.statusOptions.discontinued'),
+    on_hold: t('goal.studentGoal.statusOptions.on_hold'),
   }
   return map[status] ?? status
 }
@@ -204,10 +204,10 @@ async function doDelete() {
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('goal.studentGoal.status') }}</option>
-        <option value="active">{{ t('goal.studentGoal.status.active') }}</option>
-        <option value="achieved">{{ t('goal.studentGoal.status.achieved') }}</option>
-        <option value="discontinued">{{ t('goal.studentGoal.status.discontinued') }}</option>
-        <option value="on_hold">{{ t('goal.studentGoal.status.on_hold') }}</option>
+        <option value="active">{{ t('goal.studentGoal.statusOptions.active') }}</option>
+        <option value="achieved">{{ t('goal.studentGoal.statusOptions.achieved') }}</option>
+        <option value="discontinued">{{ t('goal.studentGoal.statusOptions.discontinued') }}</option>
+        <option value="on_hold">{{ t('goal.studentGoal.statusOptions.on_hold') }}</option>
       </select>
 
       <select v-model="query.categoryId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">

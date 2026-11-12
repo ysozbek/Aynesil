@@ -9,7 +9,7 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
-import type { FollowUpActivityListItemDto } from '@/types/consultancy.types'
+import type { FollowUpActivityListItemDto, FollowUpListQuery } from '@/types/consultancy.types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -111,9 +111,18 @@ async function doCreate() {
   await doFetch()
 }
 
+function buildQuery(): FollowUpListQuery {
+  return {
+    page: filters.page,
+    pageSize: filters.pageSize,
+    status: filters.status || undefined,
+    overdueOnly: filters.overdueOnly ? true : undefined,
+  }
+}
+
 async function doFetch() {
   filters.page = 1
-  await store.fetchFollowUps(filters)
+  await store.fetchFollowUps(buildQuery())
 }
 
 function resetFilters() {
@@ -125,7 +134,7 @@ function resetFilters() {
 
 watch(
   () => filters.page,
-  () => store.fetchFollowUps(filters)
+  () => store.fetchFollowUps(buildQuery())
 )
 
 onMounted(doFetch)
@@ -249,7 +258,7 @@ onMounted(doFetch)
         :has-previous-page="store.followUps.hasPreviousPage"
         :has-next-page="store.followUps.hasNextPage"
         @update:page="(p) => { filters.page = p }"
-        @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; store.fetchFollowUps(filters) }"
+        @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; store.fetchFollowUps(buildQuery()) }"
       />
     </div>
 

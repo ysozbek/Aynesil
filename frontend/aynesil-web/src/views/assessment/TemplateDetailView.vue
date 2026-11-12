@@ -277,7 +277,7 @@ const responseTypeLabel = (type: string): string => {
             <div class="flex items-center justify-between px-4 py-3 bg-accent/30 border-b border-border">
               <div>
                 <span class="text-sm font-semibold text-foreground font-mono">{{ section.code }}</span>
-                <span v-if="section.developmentAreaName" class="ml-2 text-xs text-muted-foreground">· {{ section.developmentAreaName }}</span>
+                <span v-if="section.developmentAreaCode" class="ml-2 text-xs text-muted-foreground">· {{ section.developmentAreaCode }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <button v-if="can('assessment_template:update')" @click="openAddItem(section.id, section.items.length + 1)"

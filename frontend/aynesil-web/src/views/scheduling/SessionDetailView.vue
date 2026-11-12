@@ -178,7 +178,7 @@ function getAttendance(studentId: string) {
 <template>
   <div>
     <PageHeader
-      :title="session?.title ?? t('scheduling.session.detail')"
+      :title="session?.title ?? session?.sessionTypeName ?? t('scheduling.session.detail')"
       :description="session ? formatDateTime(session.startsAt) + ' – ' + formatDateTime(session.endsAt) : ''"
     >
       <div v-if="session" class="flex items-center gap-2">
@@ -374,7 +374,7 @@ function getAttendance(studentId: string) {
           <thead>
             <tr class="border-b border-border bg-accent/50">
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.session.student') }}</th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.attendance.status') }}</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.attendance.status.label') }}</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">{{ t('scheduling.attendance.reason') }}</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase" v-if="can('attendance:record')">{{ t('common.actions') }}</th>
             </tr>

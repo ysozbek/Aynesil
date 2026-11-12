@@ -17,6 +17,7 @@ import type {
   CampEducatorDto,
   CampActivityParticipationDto,
   CampListQuery, CampEnrollmentQuery,
+  CampPerformanceQuery, CampActivityListQuery, CampParticipationListQuery,
   CreateCampPayload, UpdateCampPayload,
   CreatePeriodPayload, EnrollStudentPayload,
   RecordAttendancePayload,
@@ -74,26 +75,31 @@ export const campService = {
     apiService.post(`/camps/enrollments/${enrollmentId}/complete`),
 
   // ── Attendance ─────────────────────────────────────────────────────────────
+  /** POST /camps/attendance — enrollment id travels in the body (CampEnrollmentId). */
   recordAttendance: (enrollmentId: string, payload: RecordAttendancePayload) =>
-    apiService.post<CampAttendanceDto>(`/camps/enrollments/${enrollmentId}/attendance`, payload),
+    apiService.post<CampAttendanceDto>('/camps/attendance', { campEnrollmentId: enrollmentId, ...payload }),
 
-  getAttendanceSummary: (enrollmentId: string) =>
-    apiService.get<CampAttendanceSummaryDto>(`/camps/enrollments/${enrollmentId}/attendance-summary`),
+  /** Backend returns one attendance summary row per enrolled student of the period. */
+  getAttendanceSummary: (periodId: string) =>
+    apiService.get<CampAttendanceSummaryDto[]>(`/camps/periods/${periodId}/attendance-summary`),
 
   // ── Reports & Analytics ────────────────────────────────────────────────────
   /** Backend returns one summary row per period of the camp. */
   getEnrollmentSummary: (campId: string) =>
     apiService.get<CampEnrollmentSummaryDto[]>(`/camps/${campId}/enrollment-summary`),
 
-  getPerformance: (campId: string) =>
-    apiService.get<CampPerformanceDto>(`/camps/${campId}/performance`),
+  /** Performance report is tenant-wide (one row per camp); optional campus / camp type filters. */
+  getPerformance: (query: CampPerformanceQuery = {}) =>
+    apiService.get<CampPerformanceDto[]>(`/camps/performance${qs(query)}`),
 
-  getCampReport: (enrollmentId: string) =>
-    apiService.get<CampReportDto>(`/camps/enrollments/${enrollmentId}/report`),
+  /** End-of-camp reports of an enrollment (a list; there is no single "report" resource). */
+  listCampReports: (enrollmentId: string) =>
+    apiService.get<CampReportDto[]>(`/camps/enrollments/${enrollmentId}/reports`),
 
   // ── Activities ─────────────────────────────────────────────────────────────
-  listActivities: (periodId: string) =>
-    apiService.get<CampActivityListItemDto[]>(`/camps/periods/${periodId}/activities`),
+  listActivities: (periodId: string, query: CampActivityListQuery = {}) =>
+    apiService.get<PaginatedResult<CampActivityListItemDto>>(
+      `/camps/activities${qs({ ...query, campPeriodId: periodId })}`),
 
   createActivity: (periodId: string, payload: Partial<CampActivityDto>) =>
     apiService.post<CampActivityDto>(`/camps/periods/${periodId}/activities`, payload),
@@ -106,6 +112,7 @@ export const campService = {
     apiService.post<CampEducatorDto>(`/camps/${campId}/educators`, payload),
 
   // ── Participations ─────────────────────────────────────────────────────────
-  listParticipations: (activityId: string) =>
-    apiService.get<CampActivityParticipationDto[]>(`/camps/activities/${activityId}/participations`),
+  listParticipations: (activityId: string, query: CampParticipationListQuery = {}) =>
+    apiService.get<PaginatedResult<CampActivityParticipationDto>>(
+      `/camps/participations${qs({ ...query, campActivityId: activityId })}`),
 }

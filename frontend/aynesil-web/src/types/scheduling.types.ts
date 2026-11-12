@@ -9,7 +9,7 @@ import type { PagedQuery } from './api.types'
 export interface RoomDto {
   id: string
   corporationId: string
-  campusId: string
+  campusId: string | null
   campusName: string | null
   roomTypeId?: string
   meetingUrl?: string
@@ -23,8 +23,8 @@ export interface RoomDto {
 
 export interface RoomListItemDto {
   id: string
-  campusId: string
-  campusName: string
+  campusId: string | null
+  campusName: string | null
   code: string
   name: string
   capacity: number
@@ -60,13 +60,13 @@ export interface UpdateRoomPayload {
 export interface CalendarEntryDto {
   id: string
   corporationId: string
-  campusId: string
+  campusId: string | null
   title: string
   entryType: string
   startsAt: string
   endsAt: string
   isAllDay: boolean
-  description?: string
+  createdAt: string
 }
 
 export interface CreateCalendarEntryPayload {
@@ -192,8 +192,8 @@ export interface BulkCancelPayload {
 
 export interface BulkReassignRoomPayload {
   newRoomId: string
+  /** `YYYY-MM-DD`: future sessions from this date are moved (no end date on the backend). */
   from: string
-  to: string
 }
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
@@ -249,19 +249,18 @@ export interface AttendanceDto {
 export interface SessionDto {
   id: string
   corporationId: string
-  campusId: string
+  campusId: string | null
   campusName?: string
   roomId?: string
   roomName?: string
   sessionTypeId: string
   sessionTypeName?: string
   recurringScheduleId?: string
-  title: string
+  title: string | null
   startsAt: string
   endsAt: string
   status: string
   isMakeup: boolean
-  makeupRequestId?: string
   participants: SessionParticipantDto[]
   educators: SessionEducatorDto[]
   goals: SessionGoalDto[]
@@ -272,12 +271,12 @@ export interface SessionDto {
 
 export interface SessionListItemDto {
   id: string
-  campusId?: string
+  campusId: string | null
   campusName?: string
   roomName?: string
   sessionTypeId: string
   sessionTypeName?: string
-  title: string
+  title: string | null
   startsAt: string
   endsAt: string
   status: string
@@ -289,8 +288,6 @@ export interface SessionListItemDto {
 export interface SessionListQuery extends PagedQuery {
   campusId?: string
   roomId?: string
-  educatorId?: string
-  studentId?: string
   sessionTypeId?: string
   status?: string
   from?: string
@@ -321,7 +318,6 @@ export interface RescheduleSessionPayload {
 }
 
 export interface CompleteSessionPayload {
-  notes?: string
   rowVersion: number
 }
 
@@ -492,5 +488,6 @@ export interface BulkOperationResultDto {
 export interface ConflictCheckDto {
   hasRoomConflict: boolean
   hasEducatorConflict: boolean
-  conflictDetails?: string[]
+  conflictingSessionId?: string | null
+  conflictingEducatorId?: string | null
 }

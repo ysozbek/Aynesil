@@ -74,7 +74,7 @@ function onSort(key: string, dir: 'asc' | 'desc') {
 const columns: Column<EducationPlanListItemDto>[] = [
   { key: 'studentName', label: t('bep.studentName'), sortable: true },
   { key: 'academicPeriodName', label: t('bep.academicPeriod'), width: '150px' },
-  { key: 'title', label: t('bep.title2'), sortable: true },
+  { key: 'title', label: t('bep.titleField'), sortable: true },
   { key: 'version', label: t('bep.version'), width: '70px', align: 'center' },
   { key: 'status', label: t('bep.statusLabel'), width: '130px' },
   { key: 'effectiveFrom', label: t('bep.effectiveFrom'), width: '120px' },

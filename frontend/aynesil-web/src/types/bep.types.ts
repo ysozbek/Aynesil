@@ -196,7 +196,6 @@ export interface UpdateEducationPlanPayload {
 }
 
 export interface ApproveRejectPayload {
-  approverId: string
   comment: string | null
 }
 

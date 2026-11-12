@@ -69,7 +69,7 @@ export const usePaymentStore = defineStore('payment', () => {
     }
   }
 
-  async function captureTransaction(id: string, rowVersion: string): Promise<PaymentDto> {
+  async function captureTransaction(id: string, rowVersion: number): Promise<PaymentDto> {
     saving.value = true
     try {
       const res = await financeService.captureTransaction(id, { rowVersion })
@@ -81,7 +81,7 @@ export const usePaymentStore = defineStore('payment', () => {
     }
   }
 
-  async function failTransaction(id: string, reason: string, rowVersion: string): Promise<PaymentDto> {
+  async function failTransaction(id: string, reason: string, rowVersion: number): Promise<PaymentDto> {
     saving.value = true
     try {
       const res = await financeService.failTransaction(id, { reason, rowVersion })
@@ -129,10 +129,10 @@ export const usePaymentStore = defineStore('payment', () => {
     }
   }
 
-  async function processRefund(id: string, rowVersion: string): Promise<RefundDto> {
+  async function processRefund(id: string): Promise<RefundDto> {
     saving.value = true
     try {
-      const res = await financeService.processRefund(id, { rowVersion })
+      const res = await financeService.processRefund(id)
       if (!res.success || !res.data) throw new Error(res.message ?? 'İade işlenemedi.')
       currentRefund.value = res.data
       return res.data

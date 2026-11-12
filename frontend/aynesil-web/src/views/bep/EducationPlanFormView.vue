@@ -56,7 +56,7 @@ function validate(): boolean {
   Object.keys(errors).forEach(k => delete errors[k])
   let valid = true
   if (!form.title.trim()) {
-    errors.title = t('validation.required', { field: t('bep.title2') })
+    errors.title = t('validation.required', { field: t('bep.titleField') })
     valid = false
   }
   if (!isEdit.value && !form.studentId.trim()) {
@@ -113,10 +113,10 @@ async function submit() {
 
       <!-- Basic Info -->
       <div class="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-        <h3 class="font-semibold text-foreground">{{ t('bep.title2') }}</h3>
+        <h3 class="font-semibold text-foreground">{{ t('bep.titleField') }}</h3>
 
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.title2') }} *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.titleField') }} *</label>
           <input
             v-model="form.title"
             type="text"

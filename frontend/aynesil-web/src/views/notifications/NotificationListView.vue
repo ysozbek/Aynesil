@@ -89,6 +89,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notification.store'
+import { dateRangeToIso } from '@/utils/datetime'
 
 const store = useNotificationStore()
 const router = useRouter()
@@ -100,8 +101,7 @@ function load(page = 1) {
     page,
     pageSize: 20,
     isRead: filters.value.isRead === '' ? undefined : filters.value.isRead === 'true',
-    from: filters.value.from || undefined,
-    to: filters.value.to || undefined,
+    ...dateRangeToIso(filters.value.from, filters.value.to),
   })
 }
 

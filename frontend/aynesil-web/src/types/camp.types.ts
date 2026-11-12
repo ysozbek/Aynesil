@@ -252,6 +252,22 @@ export interface EnrollStudentPayload {
   studentPackageId?: string
 }
 
+export interface CampPerformanceQuery {
+  campusId?: string
+  campTypeId?: string
+}
+
+export interface CampActivityListQuery extends PagedQuery {
+  activityTypeId?: string
+  isActive?: boolean
+}
+
+export interface CampParticipationListQuery extends PagedQuery {
+  campEnrollmentId?: string
+  status?: string
+}
+
+/** Enrollment id is supplied by the service (CampEnrollmentId in the POST body). */
 export interface RecordAttendancePayload {
   attendanceDate: string
   status: string

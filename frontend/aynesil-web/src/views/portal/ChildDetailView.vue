@@ -33,7 +33,7 @@
             <div>
               <h1 class="text-2xl font-bold">{{ store.currentStudent.fullName }}</h1>
               <p v-if="store.currentStudent.birthDate" class="text-gray-500">
-                {{ $t('student.dateOfBirth') }}: {{ formatDate(store.currentStudent.birthDate) }}
+                {{ $t('student.birthDate') }}: {{ formatDate(store.currentStudent.birthDate) }}
               </p>
               <p v-if="store.currentStudent.primaryCampusName" class="text-gray-500">
                 {{ store.currentStudent.primaryCampusName }}

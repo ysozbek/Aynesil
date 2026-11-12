@@ -10,6 +10,7 @@ import type {
   ParentFeedbackDto, EducatorDashboardDto, ManagerDashboardDto, ExecutiveDashboardDto,
   RankingItemDto, KpiReportRowDto,
   KpiDefinitionListQuery, SnapshotListQuery, KpiReportQuery, DashboardQuery,
+  KpiValueListQuery, EducatorKpiValueQuery, KpiTrendQuery, KpiTrendDto,
 } from '@/types/kpi.types'
 
 function qs(params: object): string {
@@ -43,15 +44,15 @@ export const kpiService = {
 
   // ── KPI Values ─────────────────────────────────────────────────────────────
   // Backend returns PaginatedResult<KpiValueDto> (see KpiValueQueries.cs).
-  listKpiValues: (query: { kpiId?: string; educatorId?: string } & Record<string, unknown>) =>
+  listKpiValues: (query: KpiValueListQuery) =>
     apiService.get<PaginatedResult<KpiValueDto>>(`/performance-kpi/kpi-values${qs(query)}`),
 
   listEducatorKpiValues: (
     educatorId: string,
-    query?: { kpiId?: string; from?: string; to?: string } & Record<string, unknown>,
+    query: EducatorKpiValueQuery = {},
   ) =>
     apiService.get<KpiValueDto[]>(
-      `/performance-kpi/educators/${educatorId}/kpi-values${qs((query ?? {}) as Record<string, unknown>)}`,
+      `/performance-kpi/educators/${educatorId}/kpi-values${qs(query)}`,
     ),
 
   // Backend route: /performance-kpi/educators/{educatorId}/compute
@@ -102,13 +103,13 @@ export const kpiService = {
 
   // ── Trends & Ranking ──────────────────────────────────────────────────────
   // Backend splits trends into `trends/educator/{id}` and `trends/corporation`.
-  getEducatorTrend: (educatorId: string, query: DashboardQuery) =>
-    apiService.get(
+  getEducatorTrend: (educatorId: string, query: KpiTrendQuery) =>
+    apiService.get<KpiTrendDto>(
       `/performance-kpi/trends/educator/${educatorId}${qs(query)}`,
     ),
 
-  getCorporationTrend: (query: DashboardQuery) =>
-    apiService.get(
+  getCorporationTrend: (query: KpiTrendQuery) =>
+    apiService.get<KpiTrendDto>(
       `/performance-kpi/trends/corporation${qs(query)}`,
     ),
 

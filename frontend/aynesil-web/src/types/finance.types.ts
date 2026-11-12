@@ -18,7 +18,7 @@ export interface PackageDefinitionDto {
   listPrice: number
   currency: string
   isActive: boolean
-  rowVersion: string
+  rowVersion: number
 }
 
 /** Mirrors PackageDefinitionListItemDto. `packageTypeId` is resolved to a label via ref-data (package_type). */
@@ -63,7 +63,7 @@ export interface UpdatePackageDefinitionPayload {
   validityDays: number
   listPrice: number
   currency: string
-  rowVersion: string
+  rowVersion: number
 }
 
 // ── Student Packages ───────────────────────────────────────────────────────────
@@ -174,7 +174,6 @@ export interface GrantCreditPayload {
 
 export interface RefundCreditPayload {
   studentPackageId: string
-  sessionId?: string
   amount: number
   reason?: string
 }
@@ -198,9 +197,10 @@ export interface InvoiceLineDto {
 export interface InvoiceDto {
   id: string
   corporationId: string
-  studentId: string
-  studentFullName: string
-  invoiceNo: string
+  studentId: string | null
+  studentFullName: string | null
+  /** null until the invoice is issued (draft invoices have no number). */
+  invoiceNo: string | null
   issueDate?: string
   dueDate?: string
   subtotal: number
@@ -212,13 +212,14 @@ export interface InvoiceDto {
   currency: string
   status: string
   lines: InvoiceLineDto[]
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface InvoiceListItemDto {
   id: string
-  studentFullName: string
-  invoiceNo: string
+  studentFullName: string | null
+  /** null until the invoice is issued (draft invoices have no number). */
+  invoiceNo: string | null
   issueDate?: string
   dueDate?: string
   grandTotal: number
@@ -237,6 +238,8 @@ export interface InvoiceListQuery extends PagedQuery {
 }
 
 export interface CreateInvoicePayload {
+  /** `YYYY-MM-DD`; required by the backend (DateOnly, no default). */
+  issueDate: string
   studentId: string
   dueDate?: string
   currency: string
@@ -253,8 +256,8 @@ export interface AddInvoiceLinePayload {
 export interface PaymentDto {
   id: string
   corporationId: string
-  studentId: string
-  studentFullName: string
+  studentId: string | null
+  studentFullName: string | null
   invoiceId?: string
   invoiceNo?: string
   amount: number
@@ -264,12 +267,12 @@ export interface PaymentDto {
   paymentMethodName?: string
   gatewayReference?: string
   paidAt?: string
-  rowVersion: string
+  rowVersion: number
 }
 
 export interface PaymentListItemDto {
   id: string
-  studentFullName: string
+  studentFullName: string | null
   invoiceNo?: string
   amount: number
   currency: string
@@ -305,21 +308,17 @@ export interface RefundDto {
   id: string
   corporationId: string
   paymentId: string
-  paymentAmount: number
   amount: number
-  currency: string
   reason?: string
   status: string
   processedAt?: string
-  processedByName?: string
-  rowVersion: string
+  createdAt: string
 }
 
 export interface RefundListItemDto {
   id: string
   paymentId: string
   amount: number
-  currency: string
   reason?: string
   status: string
   processedAt?: string
@@ -343,12 +342,11 @@ export interface DiscountDto {
   corporationId: string
   invoiceId?: string
   studentPackageId?: string
-  discountTypeId: string
-  discountTypeLabel?: string
+  discountTypeId: string | null
   isPercentage: boolean
   value: number
-  appliedAt: string
-  appliedByName: string
+  reason?: string | null
+  createdAt: string
 }
 
 export interface CreateDiscountPayload {

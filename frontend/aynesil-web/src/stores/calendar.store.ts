@@ -159,7 +159,7 @@ export const useCalendarStore = defineStore('calendar', () => {
 function sessionToEvent(s: SessionListItemDto): CalendarEventDto {
   return {
     id: s.id,
-    title: s.title,
+    title: s.title ?? s.sessionTypeName ?? '—',
     start: s.startsAt,
     end: s.endsAt,
     type: 'session',

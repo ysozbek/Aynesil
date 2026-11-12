@@ -237,6 +237,32 @@ export interface KpiReportQuery {
   periodEnd?: string
 }
 
+/** GET /performance-kpi/kpi-values (GetKpiValuesQuery). */
+export interface KpiValueListQuery extends PagedQuery {
+  kpiId?: string
+  subjectType?: string
+  subjectId?: string
+  /** `YYYY-MM-DD` */
+  periodStart?: string
+  periodEnd?: string
+}
+
+/** GET /performance-kpi/educators/{id}/kpi-values (GetEducatorKpiValuesQuery). */
+export interface EducatorKpiValueQuery {
+  periodStart?: string
+  periodEnd?: string
+  /** e.g. "educator." for all educator KPIs */
+  kpiCodePrefix?: string
+}
+
+/** GET /performance-kpi/trends/educator/{id} and /trends/corporation. */
+export interface KpiTrendQuery {
+  kpiCode: string
+  fromPeriodStart?: string
+  /** Backend default / max: 12 */
+  maxPeriods?: number
+}
+
 export interface DashboardQuery {
   campusId?: string
   educatorId?: string

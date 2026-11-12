@@ -17,6 +17,7 @@ import type {
   PortalSessionListQuery,
   PortalAttendanceListQuery,
 } from '@/types/portal.types'
+import type { DevelopmentReportDto } from '@/types/student.types'
 import type { NotificationListItemDto, NotificationListQuery } from '@/types/notification.types'
 
 function qs(params: object): string {
@@ -88,7 +89,7 @@ export const portalService = {
   // ── Development Reports ────────────────────────────────────────────────────
 
   getDevelopmentReports: (studentId: string) =>
-    apiService.get<PortalDocumentDto[]>(`/portal/students/${studentId}/development-reports`),
+    apiService.get<DevelopmentReportDto[]>(`/portal/students/${studentId}/development-reports`),
 
   // ── Portal Notifications ───────────────────────────────────────────────────
 

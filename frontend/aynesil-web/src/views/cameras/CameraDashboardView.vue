@@ -17,14 +17,13 @@ function formatDatetime(dt: string) {
 
 const totalCameras = computed(() => cameraStore.cameraList.totalCount)
 const activeCameras = computed(() => cameraStore.cameraList.items.filter((c) => c.isActive).length)
-const activeAuthorizations = computed(() =>
-  cameraStore.authorizations.items.filter((a) => a.isCurrentlyValid && !a.isRevoked).length
-)
+// activeOnly sunucuda süzüldü; toplam adet sayfa boyutundan bağımsız.
+const activeAuthorizations = computed(() => cameraStore.authorizations.totalCount)
 
 onMounted(async () => {
   await Promise.all([
     cameraStore.fetchCameras({ pageSize: 50 }),
-    cameraStore.fetchAuthorizations({ isCurrentlyValid: true }),
+    cameraStore.fetchAuthorizations({ activeOnly: true }),
     cameraStore.fetchViewingLogs({ pageSize: 20 }),
   ])
 })

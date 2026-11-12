@@ -123,7 +123,7 @@ function alignClass(align?: string) {
               :class="['px-4 py-3 text-foreground', alignClass(col.align)]"
             >
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-                {{ col.render ? col.render(row) : row[col.key] }}
+                {{ col.render ? col.render(row) : (row[col.key] ?? '—') }}
               </slot>
             </td>
             <td v-if="$slots.actions" class="px-4 py-3 text-right">

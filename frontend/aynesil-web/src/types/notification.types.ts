@@ -111,26 +111,29 @@ export interface NotificationPreferenceDto {
 
 export interface NotificationListQuery extends PagedQuery {
   isRead?: boolean
-  categoryCode?: string
+  categoryId?: string
+  status?: string
+  /** ISO instant; use dateRangeToIso() so `to` covers the whole day. */
   from?: string
   to?: string
 }
 
 export interface NotificationTemplateListQuery extends PagedQuery {
   isActive?: boolean
-  categoryCode?: string
+  categoryId?: string
+  typeId?: string
 }
 
+/** New templates are always created active by the backend (no isActive on create). */
 export interface CreateNotificationTemplatePayload {
   code: string
   categoryId?: string
   typeId?: string
-  isActive: boolean
   translations: NotificationTemplateTranslationDto[]
 }
 
+/** Template code is immutable after creation (not part of the update command). */
 export interface UpdateNotificationTemplatePayload {
-  code: string
   categoryId?: string
   typeId?: string
   isActive: boolean

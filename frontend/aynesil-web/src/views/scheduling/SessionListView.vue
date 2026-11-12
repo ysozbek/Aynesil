@@ -262,7 +262,7 @@ async function doDelete() {
     <ConfirmModal
       :open="!!deleteTarget"
       :title="t('scheduling.session.deleteTitle')"
-      :message="t('scheduling.session.deleteMessage', { title: deleteTarget?.title })"
+      :message="t('scheduling.session.deleteMessage', { title: deleteTarget?.title ?? deleteTarget?.sessionTypeName ?? '—' })"
       :confirm-label="t('common.delete')"
       :loading="deleteLoading"
       @confirm="doDelete"

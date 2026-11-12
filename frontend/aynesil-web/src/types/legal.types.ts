@@ -241,18 +241,12 @@ export interface SignContractPayload {
   rowVersion: number
 }
 
-export interface CreateConsentPayload {
-  studentId: string
-  consentTypeId?: string
-  templateId?: string
-  guardianId?: string
-  validUntil?: string
-}
-
+/** POST /legal/consents/grant — a consent is created already granted (no separate create/grant steps). */
 export interface GrantConsentPayload {
-  rowVersion: number
-}
-
-export interface WithdrawConsentPayload {
-  rowVersion: number
+  studentId: string
+  guardianId?: string
+  templateId?: string
+  consentTypeId?: string
+  validUntil?: string
+  evidenceFileId?: string
 }

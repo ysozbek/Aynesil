@@ -354,7 +354,7 @@ function getChoices(item: AssessmentItemDto): string[] {
           <div v-for="section in [...template.sections].sort((a, b) => a.sortOrder - b.sortOrder)" :key="section.id">
             <div class="mb-2 px-1 flex items-center gap-2">
               <span class="text-sm font-semibold text-foreground font-mono">{{ section.code }}</span>
-              <span v-if="section.developmentAreaName" class="text-xs text-muted-foreground">· {{ section.developmentAreaName }}</span>
+              <span v-if="section.developmentAreaCode" class="text-xs text-muted-foreground">· {{ section.developmentAreaCode }}</span>
             </div>
             <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div v-for="(item, idx) in [...section.items].sort((a, b) => a.sortOrder - b.sortOrder)" :key="item.id"

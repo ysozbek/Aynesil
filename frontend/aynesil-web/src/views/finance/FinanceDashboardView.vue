@@ -216,8 +216,8 @@ function formatDate(val: string): string {
             @click="router.push({ name: 'invoice-detail', params: { id: inv.id } })"
           >
             <div>
-              <p class="text-sm font-medium text-foreground">{{ inv.studentFullName }}</p>
-              <p class="text-xs text-muted-foreground">{{ inv.invoiceNo }}</p>
+              <p class="text-sm font-medium text-foreground">{{ inv.studentFullName ?? '—' }}</p>
+              <p class="text-xs text-muted-foreground">{{ inv.invoiceNo ?? t('finance.payment.invoiceDraft') }}</p>
             </div>
             <p class="text-sm font-semibold text-red-600">{{ formatCurrency(inv.balance) }}</p>
           </div>
@@ -244,7 +244,7 @@ function formatDate(val: string): string {
             @click="router.push({ name: 'payment-detail', params: { id: pay.id } })"
           >
             <div>
-              <p class="text-sm font-medium text-foreground">{{ pay.studentFullName }}</p>
+              <p class="text-sm font-medium text-foreground">{{ pay.studentFullName ?? '—' }}</p>
               <p class="text-xs text-muted-foreground">{{ pay.paymentMethodName ?? '—' }}</p>
             </div>
             <p class="text-sm font-semibold text-foreground">{{ formatCurrency(pay.amount) }}</p>

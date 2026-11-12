@@ -303,9 +303,11 @@ export interface PlanListQuery extends PagedQuery {
 export interface VisitListQuery extends PagedQuery {
   consultancyPlanId?: string
   institutionId?: string
+  visitorId?: string
   status?: string
-  from?: string
-  to?: string
+  /** `YYYY-MM-DD` (backend: DateOnly DateFrom / DateTo). */
+  dateFrom?: string
+  dateTo?: string
 }
 
 export interface AgreementListQuery extends PagedQuery {
@@ -318,9 +320,12 @@ export interface AgreementListQuery extends PagedQuery {
 export interface FollowUpListQuery extends PagedQuery {
   consultancyPlanId?: string
   schoolVisitId?: string
-  observationRecordId?: string
   assignedTo?: string
   status?: string
+  /** `YYYY-MM-DD`; due date on or before / on or after (inclusive). */
+  dueBefore?: string
+  dueAfter?: string
+  /** Due before today (tenant time zone) AND status pending/in_progress; ANDs with `status`. */
   overdueOnly?: boolean
 }
 

@@ -17,6 +17,12 @@ public class GetFollowUpActivitiesQuery
     public string? Status { get; set; }
     public DateOnly? DueBefore { get; set; }
     public DateOnly? DueAfter { get; set; }
+
+    /// <summary>
+    /// When true: only overdue work — DueDate before today (tenant time zone) and status
+    /// pending or in_progress. Combines (AND) with <see cref="Status"/> if also given.
+    /// </summary>
+    public bool? OverdueOnly { get; set; }
 }
 
 public sealed class GetFollowUpActivitiesQueryHandler
@@ -29,6 +35,14 @@ public sealed class GetFollowUpActivitiesQueryHandler
     {
         _db = db;
         _tenant = tenant;
+    }
+
+    private static TimeZoneInfo ResolveTimeZone(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return TimeZoneInfo.Utc;
+        try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+        catch (TimeZoneNotFoundException) { return TimeZoneInfo.Utc; }
+        catch (InvalidTimeZoneException) { return TimeZoneInfo.Utc; }
     }
 
     public async Task<PaginatedResult<FollowUpActivityListItemDto>> Handle(
@@ -47,6 +61,13 @@ public sealed class GetFollowUpActivitiesQueryHandler
             q = q.Where(a => a.AssignedTo == req.AssignedTo.Value);
         if (!string.IsNullOrWhiteSpace(req.Status))
             q = q.Where(a => a.Status == req.Status);
+        if (req.OverdueOnly == true)
+        {
+            var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(
+                DateTimeOffset.UtcNow, ResolveTimeZone(_tenant.Timezone)).DateTime);
+            q = q.Where(a => a.DueDate.HasValue && a.DueDate < today
+                             && (a.Status == "pending" || a.Status == "in_progress"));
+        }
         if (req.DueBefore.HasValue)
             q = q.Where(a => a.DueDate.HasValue && a.DueDate <= req.DueBefore.Value);
         if (req.DueAfter.HasValue)

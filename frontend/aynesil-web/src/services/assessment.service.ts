@@ -137,7 +137,7 @@ export const assessmentService = {
   // ── Report ──────────────────────────────────────────────────────────────────
 
   getReport: (sessionId: string) =>
-    apiService.get<AssessmentReportDto>(`/assessment-sessions/${sessionId}/report`),
+    apiService.get<AssessmentReportDto | null>(`/assessment-sessions/${sessionId}/report`),
 
   createReport: (sessionId: string, payload: CreateReportPayload) =>
     apiService.post<AssessmentReportDto>(`/assessment-sessions/${sessionId}/report`, payload),

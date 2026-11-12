@@ -25,13 +25,14 @@
               <input
                 v-model="form.code"
                 type="text"
+                :disabled="isEdit"
                 :class="['input input-bordered', errors.code ? 'input-error' : '']"
                 :placeholder="$t('notification.templates.codePlaceholder')"
               />
               <label v-if="errors.code" class="label"><span class="label-text-alt text-error">{{ errors.code }}</span></label>
             </div>
 
-            <div class="form-control">
+            <div v-if="isEdit" class="form-control">
               <label class="label"><span class="label-text">{{ $t('notification.templates.status') }}</span></label>
               <label class="label cursor-pointer justify-start gap-3">
                 <input v-model="form.isActive" type="checkbox" class="toggle toggle-primary" />
@@ -139,7 +140,6 @@ async function submit() {
     if (isEdit.value) {
       const tpl = store.currentTemplate!
       await store.updateTemplate(route.params.id as string, {
-        code: form.value.code,
         isActive: form.value.isActive,
         translations: form.value.translations,
         rowVersion: tpl.rowVersion,
@@ -147,7 +147,6 @@ async function submit() {
     } else {
       await store.createTemplate({
         code: form.value.code,
-        isActive: form.value.isActive,
         translations: form.value.translations,
       })
     }

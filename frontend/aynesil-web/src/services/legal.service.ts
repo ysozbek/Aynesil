@@ -13,7 +13,7 @@ import type {
   ContractListQuery, ConsentListQuery,
   ContractTemplateListQuery, ConsentTemplateListQuery,
   CreateContractPayload, SignContractPayload,
-  CreateConsentPayload, GrantConsentPayload, WithdrawConsentPayload,
+  GrantConsentPayload,
 } from '@/types/legal.types'
 
 function qs(params: object): string {
@@ -86,14 +86,13 @@ export const legalService = {
   getConsent: (id: string) =>
     apiService.get<StudentConsentDto>(`/legal/consents/${id}`),
 
-  createConsent: (payload: CreateConsentPayload) =>
-    apiService.post<StudentConsentDto>('/legal/consents', payload),
+  /** Single endpoint: creates the consent already granted. */
+  grantConsent: (payload: GrantConsentPayload) =>
+    apiService.post<StudentConsentDto>('/legal/consents/grant', payload),
 
-  grantConsent: (id: string, payload: GrantConsentPayload) =>
-    apiService.post<StudentConsentDto>(`/legal/consents/${id}/grant`, payload),
-
-  withdrawConsent: (id: string, payload: WithdrawConsentPayload) =>
-    apiService.post<void>(`/legal/consents/${id}/withdraw`, payload),
+  /** Withdraw returns 204 (no body, no payload). */
+  withdrawConsent: (id: string) =>
+    apiService.post(`/legal/consents/${id}/withdraw`),
 
   addConsentEvidence: (id: string, fileId: string) =>
     apiService.post(`/legal/consents/${id}/evidence`, { fileId }),

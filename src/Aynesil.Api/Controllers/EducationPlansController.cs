@@ -178,7 +178,7 @@ public sealed class EducationPlansController : BaseController
     public async Task<IActionResult> Approve(
         Guid id, [FromBody] ApproveRejectRequest req, CancellationToken ct)
         => OkResult(await Sender.Send(
-            new ApproveEducationPlanCommand(id, req.ApproverId, req.Comment), ct));
+            new ApproveEducationPlanCommand(id, req.Comment), ct));
 
     [HttpPost("{id:guid}/reject")]
     [HasPermission(Permissions.EducationPlans.Approve)]
@@ -186,7 +186,7 @@ public sealed class EducationPlansController : BaseController
     public async Task<IActionResult> Reject(
         Guid id, [FromBody] ApproveRejectRequest req, CancellationToken ct)
         => OkResult(await Sender.Send(
-            new RejectEducationPlanCommand(id, req.ApproverId, req.Comment), ct));
+            new RejectEducationPlanCommand(id, req.Comment), ct));
 
     [HttpPost("{id:guid}/activate")]
     [HasPermission(Permissions.EducationPlans.Approve)]
@@ -305,7 +305,7 @@ public record UpdateEducationPlanRequest(
     DateOnly? EffectiveTo,
     int RowVersion);
 
-public record ApproveRejectRequest(Guid ApproverId, string? Comment);
+public record ApproveRejectRequest(string? Comment);
 
 public record ReviseRequest(string? ChangeSummary);
 

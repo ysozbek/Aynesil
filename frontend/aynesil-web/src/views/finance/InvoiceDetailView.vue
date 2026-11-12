@@ -79,8 +79,8 @@ function printInvoice() {
 <template>
   <div>
     <PageHeader
-      :title="invoice?.invoiceNo ?? t('finance.invoice.detail')"
-      :description="invoice ? invoice.studentFullName : ''"
+      :title="invoice ? (invoice.invoiceNo ?? t('finance.payment.invoiceDraft')) : t('finance.invoice.detail')"
+      :description="invoice ? (invoice.studentFullName ?? '') : ''"
     >
       <div v-if="invoice" class="flex items-center gap-2">
         <span :class="['px-3 py-1 rounded-full text-sm font-medium', statusColor(invoice.status)]">
@@ -120,7 +120,7 @@ function printInvoice() {
             </div>
             <div>
               <p class="text-xs text-muted-foreground mb-0.5">{{ t('finance.invoice.no') }}</p>
-              <p class="font-medium">{{ invoice.invoiceNo }}</p>
+              <p class="font-medium">{{ invoice.invoiceNo ?? t('finance.payment.invoiceDraft') }}</p>
             </div>
             <div>
               <p class="text-xs text-muted-foreground mb-0.5">{{ t('finance.invoice.issueDate') }}</p>

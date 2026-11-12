@@ -14,6 +14,10 @@ public class GetMyNotificationsQuery : PagedQuery, IRequest<PaginatedResult<Noti
     public Guid? CategoryId { get; set; }
     public string? Status { get; set; }
     public bool? IsRead { get; set; }
+    /// <summary>Inclusive lower bound on CreatedAt.</summary>
+    public DateTimeOffset? From { get; set; }
+    /// <summary>Inclusive upper bound on CreatedAt (client sends end of day).</summary>
+    public DateTimeOffset? To { get; set; }
 }
 
 public sealed class GetMyNotificationsQueryHandler
@@ -39,6 +43,12 @@ public sealed class GetMyNotificationsQueryHandler
 
         if (!string.IsNullOrWhiteSpace(req.Status))
             query = query.Where(x => x.n.Status == req.Status);
+
+        if (req.From.HasValue)
+            query = query.Where(x => x.n.CreatedAt >= req.From.Value);
+
+        if (req.To.HasValue)
+            query = query.Where(x => x.n.CreatedAt <= req.To.Value);
 
         if (req.IsRead.HasValue)
         {

@@ -20,9 +20,9 @@ const showCreateModal = ref(false)
 const showRevokeConfirm = ref(false)
 const revokeTargetId = ref<string | null>(null)
 
+// Backend yalnızca `activeOnly` (iptal edilmemiş ve geçerlilik penceresi içinde) süzer.
 const filters = reactive({
-  isRevoked: undefined as boolean | undefined,
-  isCurrentlyValid: undefined as boolean | undefined,
+  activeOnly: undefined as boolean | undefined,
 })
 
 const createForm = reactive({ guardianId: '', studentId: '', validFrom: '', validTo: '' })
@@ -54,8 +54,7 @@ function authStatusLabel(a: ViewingAuthorizationDto) {
 
 async function doFetch() {
   await cameraStore.fetchAuthorizations({
-    isRevoked: filters.isRevoked,
-    isCurrentlyValid: filters.isCurrentlyValid,
+    activeOnly: filters.activeOnly,
   })
 }
 
@@ -105,27 +104,14 @@ onMounted(doFetch)
 
     <div class="mb-4 flex flex-wrap items-end gap-3">
       <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
-        <select
-          v-model="filters.isRevoked"
-          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
-          @change="doFetch"
-        >
-          <option :value="undefined">{{ t('common.allStatuses') }}</option>
-          <option :value="false">{{ t('camera.auth.active') }}</option>
-          <option :value="true">{{ t('camera.auth.revoked') }}</option>
-        </select>
-      </div>
-      <div>
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('camera.auth.currentlyValid') }}</label>
         <select
-          v-model="filters.isCurrentlyValid"
+          v-model="filters.activeOnly"
           class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent"
           @change="doFetch"
         >
           <option :value="undefined">{{ t('common.allStatuses') }}</option>
           <option :value="true">{{ t('common.active') }}</option>
-          <option :value="false">{{ t('common.passive') }}</option>
         </select>
       </div>
     </div>

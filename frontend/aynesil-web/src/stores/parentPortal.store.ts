@@ -20,6 +20,7 @@ import type {
   PortalSessionListQuery,
   PortalAttendanceListQuery,
 } from '@/types/portal.types'
+import type { DevelopmentReportDto } from '@/types/student.types'
 import type { NotificationListItemDto } from '@/types/notification.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -46,7 +47,7 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
 
   // ── Documents ──────────────────────────────────────────────────────────────
   const documentList = ref<PortalDocumentDto[]>([])
-  const reportList = ref<PortalDocumentDto[]>([])
+  const reportList = ref<DevelopmentReportDto[]>([])
 
   // ── BEP ────────────────────────────────────────────────────────────────────
   const bepList = ref<PortalEducationPlanDto[]>([])

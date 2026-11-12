@@ -14,7 +14,7 @@ import type {
   CampPerformanceDto,
   CampActivityListItemDto,
   CampEducatorDto,
-  CampListQuery, CampEnrollmentQuery,
+  CampListQuery, CampEnrollmentQuery, CampPerformanceQuery,
   CreateCampPayload, UpdateCampPayload,
   CreatePeriodPayload, EnrollStudentPayload,
   RecordAttendancePayload,
@@ -32,8 +32,8 @@ export const useCampStore = defineStore('camp', () => {
   const enrollments = ref<PaginatedResult<CampEnrollmentListItemDto>>(emptyPage<CampEnrollmentListItemDto>())
   const currentEnrollment = ref<CampEnrollmentDto | null>(null)
   const enrollmentSummary = ref<CampEnrollmentSummaryDto | null>(null)
-  const attendanceSummary = ref<CampAttendanceSummaryDto | null>(null)
-  const performance = ref<CampPerformanceDto | null>(null)
+  const attendanceSummary = ref<CampAttendanceSummaryDto[]>([])
+  const performance = ref<CampPerformanceDto[]>([])
   const activities = ref<CampActivityListItemDto[]>([])
   const educators = ref<CampEducatorDto[]>([])
   const loading = ref(false)
@@ -146,10 +146,19 @@ export const useCampStore = defineStore('camp', () => {
     finally { loading.value = false }
   }
 
-  async function fetchPerformance(campId: string) {
+  async function fetchAttendanceSummary(periodId: string) {
     loading.value = true
     try {
-      const res = await campService.getPerformance(campId)
+      const res = await campService.getAttendanceSummary(periodId)
+      if (res.success && res.data) attendanceSummary.value = res.data
+    } catch (e: unknown) { error.value = (e as Error).message }
+    finally { loading.value = false }
+  }
+
+  async function fetchPerformance(query: CampPerformanceQuery = {}) {
+    loading.value = true
+    try {
+      const res = await campService.getPerformance(query)
       if (res.success && res.data) performance.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
@@ -159,7 +168,7 @@ export const useCampStore = defineStore('camp', () => {
     loading.value = true
     try {
       const res = await campService.listActivities(periodId)
-      if (res.success && res.data) activities.value = res.data
+      if (res.success && res.data) activities.value = res.data.items
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
   }
@@ -175,7 +184,7 @@ export const useCampStore = defineStore('camp', () => {
 
   function clearCurrent() {
     currentCamp.value = null; currentPeriod.value = null
-    currentEnrollment.value = null; performance.value = null
+    currentEnrollment.value = null; performance.value = []
   }
 
   return {
@@ -185,7 +194,7 @@ export const useCampStore = defineStore('camp', () => {
     fetchCamps, fetchCamp, createCamp, updateCamp,
     createPeriod,
     fetchEnrollments, enrollStudent, promoteFromWaitlist, withdraw,
-    recordAttendance, fetchEnrollmentSummary, fetchPerformance,
+    recordAttendance, fetchEnrollmentSummary, fetchAttendanceSummary, fetchPerformance,
     fetchActivities, fetchEducators, clearCurrent,
   }
 })

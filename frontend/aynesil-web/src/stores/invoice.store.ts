@@ -84,7 +84,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
 
-  async function issueInvoice(id: string, rowVersion: string): Promise<InvoiceDto> {
+  async function issueInvoice(id: string, rowVersion: number): Promise<InvoiceDto> {
     saving.value = true
     try {
       const res = await financeService.issueInvoice(id, { rowVersion })
@@ -96,7 +96,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
 
-  async function voidInvoice(id: string, reason: string, rowVersion: string): Promise<InvoiceDto> {
+  async function voidInvoice(id: string, reason: string, rowVersion: number): Promise<InvoiceDto> {
     saving.value = true
     try {
       const res = await financeService.voidInvoice(id, { reason, rowVersion })

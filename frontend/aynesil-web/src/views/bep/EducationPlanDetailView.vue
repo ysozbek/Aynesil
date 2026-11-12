@@ -105,29 +105,24 @@ async function doSubmit() {
 // ── Approve / Reject modal ────────────────────────────────────────────────────
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
-const approvalForm = ref({ approverId: '', comment: '' })
+const approvalForm = ref({ comment: '' })
 const approvalError = ref('')
 
 function openApproveModal() {
-  approvalForm.value = { approverId: '', comment: '' }
+  approvalForm.value = { comment: '' }
   approvalError.value = ''
   showApproveModal.value = true
 }
 
 function openRejectModal() {
-  approvalForm.value = { approverId: '', comment: '' }
+  approvalForm.value = { comment: '' }
   approvalError.value = ''
   showRejectModal.value = true
 }
 
 async function doApprove() {
-  if (!approvalForm.value.approverId) {
-    approvalError.value = t('validation.required', { field: t('bep.approver') })
-    return
-  }
   try {
     await store.approvePlan(id.value, {
-      approverId: approvalForm.value.approverId,
       comment: approvalForm.value.comment || null,
     })
     showApproveModal.value = false
@@ -137,13 +132,8 @@ async function doApprove() {
 }
 
 async function doReject() {
-  if (!approvalForm.value.approverId) {
-    approvalError.value = t('validation.required', { field: t('bep.approver') })
-    return
-  }
   try {
     await store.rejectPlan(id.value, {
-      approverId: approvalForm.value.approverId,
       comment: approvalForm.value.comment || null,
     })
     showRejectModal.value = false
@@ -743,10 +733,6 @@ async function doAddReview() {
       <div class="space-y-4">
         <p v-if="approvalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ approvalError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.approver') }} *</label>
-          <EducatorPicker v-model="approvalForm.approverId" />
-        </div>
-        <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('common.comment') }}</label>
           <textarea v-model="approvalForm.comment" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
         </div>
@@ -763,10 +749,6 @@ async function doAddReview() {
     >
       <div class="space-y-4">
         <p v-if="approvalError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ approvalError }}</p>
-        <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('bep.approver') }} *</label>
-          <EducatorPicker v-model="approvalForm.approverId" />
-        </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('common.comment') }}</label>
           <textarea v-model="approvalForm.comment" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary resize-none" />

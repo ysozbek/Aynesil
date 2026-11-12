@@ -53,10 +53,10 @@ onMounted(async () => {
     await store.fetchSession(sessionId)
     const s = store.currentSession
     if (s) {
-      form.campusId = s.campusId
+      form.campusId = s.campusId ?? ''
       form.roomId = s.roomId ?? ''
       form.sessionTypeId = s.sessionTypeId
-      form.title = s.title
+      form.title = s.title ?? ''
       form.startsAt = isoToLocalInput(s.startsAt)
       form.endsAt = isoToLocalInput(s.endsAt)
     }

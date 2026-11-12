@@ -10,7 +10,7 @@ import type {
   KpiValueDto, EducatorPerformanceSnapshotListItemDto,
   ParentFeedbackDto, EducatorDashboardDto, ManagerDashboardDto, ExecutiveDashboardDto,
   RankingItemDto, KpiReportRowDto,
-  KpiDefinitionListQuery, SnapshotListQuery, DashboardQuery,
+  KpiDefinitionListQuery, SnapshotListQuery, DashboardQuery, KpiValueListQuery,
 } from '@/types/kpi.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -76,7 +76,7 @@ export const useKpiStore = defineStore('kpi', () => {
     finally { loading.value = false }
   }
 
-  async function fetchKpiValues(query: Record<string, unknown>) {
+  async function fetchKpiValues(query: KpiValueListQuery) {
     loading.value = true
     try {
       const res = await kpiService.listKpiValues(query)

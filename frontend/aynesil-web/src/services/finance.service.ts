@@ -148,10 +148,10 @@ export const financeService = {
   removeInvoiceLine: (id: string, lineId: string) =>
     apiService.delete(`/payments/invoices/${id}/lines/${lineId}`),
 
-  issueInvoice: (id: string, payload: { rowVersion: string }) =>
+  issueInvoice: (id: string, payload: { rowVersion: number }) =>
     apiService.post<InvoiceDto>(`/payments/invoices/${id}/issue`, payload),
 
-  voidInvoice: (id: string, payload: { reason?: string; rowVersion: string }) =>
+  voidInvoice: (id: string, payload: { reason?: string; rowVersion: number }) =>
     apiService.post<InvoiceDto>(`/payments/invoices/${id}/void`, payload),
 
   // ── Transactions (Payments) ────────────────────────────────────────────────
@@ -167,10 +167,10 @@ export const financeService = {
   createTransaction: (payload: CreatePaymentPayload) =>
     apiService.post<PaymentDto>('/payments/transactions', payload),
 
-  captureTransaction: (id: string, payload: { rowVersion: string }) =>
+  captureTransaction: (id: string, payload: { rowVersion: number }) =>
     apiService.post<PaymentDto>(`/payments/transactions/${id}/capture`, payload),
 
-  failTransaction: (id: string, payload: { reason?: string; rowVersion: string }) =>
+  failTransaction: (id: string, payload: { reason?: string; rowVersion: number }) =>
     apiService.post<PaymentDto>(`/payments/transactions/${id}/fail`, payload),
 
   // ── Refunds ───────────────────────────────────────────────────────────────
@@ -186,11 +186,12 @@ export const financeService = {
   createRefund: (payload: CreateRefundPayload) =>
     apiService.post<RefundDto>('/payments/refunds', payload),
 
-  processRefund: (id: string, payload: { rowVersion: string }) =>
-    apiService.post<RefundDto>(`/payments/refunds/${id}/process`, payload),
+  // Process / fail take no body on the backend (ProcessRefundCommand(Id), FailRefundCommand(Id)).
+  processRefund: (id: string) =>
+    apiService.post<RefundDto>(`/payments/refunds/${id}/process`),
 
-  failRefund: (id: string, payload: { reason?: string; rowVersion: string }) =>
-    apiService.post<RefundDto>(`/payments/refunds/${id}/fail`, payload),
+  failRefund: (id: string) =>
+    apiService.post<RefundDto>(`/payments/refunds/${id}/fail`),
 
   // ── Discounts ──────────────────────────────────────────────────────────────
 

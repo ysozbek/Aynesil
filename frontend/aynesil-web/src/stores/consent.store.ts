@@ -10,7 +10,7 @@ import type {
   StudentConsentListItemDto, StudentConsentDto,
   ConsentReportItemDto,
   ConsentListQuery, ConsentTemplateListQuery,
-  CreateConsentPayload, GrantConsentPayload, WithdrawConsentPayload,
+  GrantConsentPayload,
 } from '@/types/legal.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -68,28 +68,21 @@ export const useConsentStore = defineStore('consent', () => {
     finally { loading.value = false }
   }
 
-  async function createConsent(payload: CreateConsentPayload): Promise<StudentConsentDto> {
+  async function grantConsent(payload: GrantConsentPayload): Promise<StudentConsentDto> {
     saving.value = true
     try {
-      const res = await legalService.createConsent(payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Rıza oluşturulamadı.')
+      const res = await legalService.grantConsent(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Rıza verilemedi.')
+      currentConsent.value = res.data
       return res.data
     } finally { saving.value = false }
   }
 
-  async function grantConsent(id: string, payload: GrantConsentPayload) {
+  async function withdrawConsent(id: string) {
     saving.value = true
     try {
-      const res = await legalService.grantConsent(id, payload)
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Rıza verilemedi.')
-      currentConsent.value = res.data
-    } finally { saving.value = false }
-  }
-
-  async function withdrawConsent(id: string, payload: WithdrawConsentPayload) {
-    saving.value = true
-    try {
-      const res = await legalService.withdrawConsent(id, payload)
+      // 204 NoContent: no res.data; reload the record to reflect the withdrawn state.
+      const res = await legalService.withdrawConsent(id)
       if (!res.success) throw new Error(res.message ?? 'Rıza geri alınamadı.')
       await fetchConsent(id, true)
     } finally { saving.value = false }
@@ -110,6 +103,6 @@ export const useConsentStore = defineStore('consent', () => {
     templates, currentTemplate, consents, currentConsent,
     consentReport, loading, saving, error,
     fetchTemplates, fetchTemplate, fetchConsents, fetchConsent,
-    createConsent, grantConsent, withdrawConsent, fetchConsentReport, clearCurrent,
+    grantConsent, withdrawConsent, fetchConsentReport, clearCurrent,
   }
 })

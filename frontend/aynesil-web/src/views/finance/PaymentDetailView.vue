@@ -94,7 +94,7 @@ async function doRefund() {
         <dl class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('student.fullName') }}</dt>
-            <dd class="font-medium">{{ payment.studentFullName }}</dd>
+            <dd class="font-medium">{{ payment.studentFullName ?? '—' }}</dd>
           </div>
           <div>
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('finance.invoice.no') }}</dt>

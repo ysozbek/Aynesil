@@ -21,8 +21,8 @@ const filters = reactive<VisitListQuery>({
   page: 1,
   pageSize: 20,
   status: '',
-  from: '',
-  to: '',
+  dateFrom: '',
+  dateTo: '',
 })
 const createForm = reactive({ institutionId: '', visitDate: '', purpose: '' })
 
@@ -98,11 +98,11 @@ onMounted(doFetch)
       </div>
       <div>
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.from') }}</label>
-        <input v-model="filters.from" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
+        <input v-model="filters.dateFrom" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
       </div>
       <div>
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.to') }}</label>
-        <input v-model="filters.to" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
+        <input v-model="filters.dateTo" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch" />
       </div>
     </div>
 

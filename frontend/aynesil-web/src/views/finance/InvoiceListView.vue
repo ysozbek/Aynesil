@@ -116,6 +116,7 @@ function statusColor(status: string): string {
       :loading="store.loading"
       @row-click="(row) => router.push({ name: 'invoice-detail', params: { id: row.id } })"
     >
+      <template #cell-invoiceNo="{ value }">{{ value ?? t('finance.payment.invoiceDraft') }}</template>
       <template #cell-issueDate="{ value }">{{ formatDate(value) }}</template>
       <template #cell-dueDate="{ value }">
         <span :class="value && new Date(String(value)) < new Date() ? 'text-red-600' : ''">{{ formatDate(value) }}</span>

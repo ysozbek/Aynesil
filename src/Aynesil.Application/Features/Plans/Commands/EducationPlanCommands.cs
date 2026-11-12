@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -148,7 +149,6 @@ public sealed class SubmitEducationPlanForReviewCommandHandler
 
 public record ApproveEducationPlanCommand(
     Guid Id,
-    Guid ApproverId,
     string? Comment) : IRequest<EducationPlanDto>;
 
 public class ApproveEducationPlanCommandValidator : AbstractValidator<ApproveEducationPlanCommand>
@@ -156,7 +156,6 @@ public class ApproveEducationPlanCommandValidator : AbstractValidator<ApproveEdu
     public ApproveEducationPlanCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.ApproverId).NotEmpty();
     }
 }
 
@@ -165,11 +164,14 @@ public sealed class ApproveEducationPlanCommandHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public ApproveEducationPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public ApproveEducationPlanCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<EducationPlanDto> Handle(ApproveEducationPlanCommand req, CancellationToken ct)
@@ -177,10 +179,14 @@ public sealed class ApproveEducationPlanCommandHandler
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
 
-        plan.Approve(req.ApproverId, _currentUser.UserId);
+        // Onaylayan istemciden gelmez: oturumdaki kullanıcıya bağlı eğitmen kaydı.
+        var approverId = await ActingEducator.RequireIdAsync(
+            _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
+
+        plan.Approve(approverId, _currentUser.UserId);
 
         var approval = EducationPlanApproval.Create(
-            plan.CorporationId, plan.Id, req.ApproverId, "approved", req.Comment);
+            plan.CorporationId, plan.Id, approverId, "approved", req.Comment);
 
         _db.EducationPlanApprovals.Add(approval);
         await _db.SaveChangesAsync(ct);
@@ -192,7 +198,6 @@ public sealed class ApproveEducationPlanCommandHandler
 
 public record RejectEducationPlanCommand(
     Guid Id,
-    Guid ApproverId,
     string? Comment) : IRequest<EducationPlanDto>;
 
 public sealed class RejectEducationPlanCommandHandler
@@ -200,11 +205,14 @@ public sealed class RejectEducationPlanCommandHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public RejectEducationPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public RejectEducationPlanCommandHandler(
+        IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<EducationPlanDto> Handle(RejectEducationPlanCommand req, CancellationToken ct)
@@ -212,10 +220,13 @@ public sealed class RejectEducationPlanCommandHandler
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
 
+        var approverId = await ActingEducator.RequireIdAsync(
+            _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
+
         plan.Reject(_currentUser.UserId);
 
         var approval = EducationPlanApproval.Create(
-            plan.CorporationId, plan.Id, req.ApproverId, "rejected", req.Comment);
+            plan.CorporationId, plan.Id, approverId, "rejected", req.Comment);
 
         _db.EducationPlanApprovals.Add(approval);
         await _db.SaveChangesAsync(ct);

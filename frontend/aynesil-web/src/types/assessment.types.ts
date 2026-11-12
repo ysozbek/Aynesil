@@ -21,7 +21,8 @@ export interface AssessmentTemplateListItemDto {
   createdAt: string
 }
 
-export interface AssessmentTemplateDto extends AssessmentTemplateListItemDto {
+/** Detail DTO has no sectionCount (use sections.length). */
+export interface AssessmentTemplateDto extends Omit<AssessmentTemplateListItemDto, 'sectionCount'> {
   sections: AssessmentSectionDto[]
   translations: AssessmentTranslationDto[]
   rowVersion: number
@@ -39,7 +40,7 @@ export interface AssessmentSectionDto {
   code: string
   sortOrder: number
   developmentAreaId: string | null
-  developmentAreaName: string | null
+  developmentAreaCode: string | null
   items: AssessmentItemDto[]
 }
 

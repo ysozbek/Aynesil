@@ -107,8 +107,9 @@ export interface CameraListQuery extends PagedQuery {
 export interface ViewingAuthorizationQuery extends PagedQuery {
   guardianId?: string
   studentId?: string
-  isRevoked?: boolean
-  isCurrentlyValid?: boolean
+  sessionId?: string
+  /** Not revoked and inside the validity window (server-side). */
+  activeOnly?: boolean
 }
 
 export interface ViewingLogQuery extends PagedQuery {

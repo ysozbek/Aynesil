@@ -42,10 +42,10 @@ function statusColor(status: string): string {
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    active: t('goal.studentGoal.status.active'),
-    achieved: t('goal.studentGoal.status.achieved'),
-    discontinued: t('goal.studentGoal.status.discontinued'),
-    on_hold: t('goal.studentGoal.status.on_hold'),
+    active: t('goal.studentGoal.statusOptions.active'),
+    achieved: t('goal.studentGoal.statusOptions.achieved'),
+    discontinued: t('goal.studentGoal.statusOptions.discontinued'),
+    on_hold: t('goal.studentGoal.statusOptions.on_hold'),
   }
   return map[status] ?? status
 }
@@ -55,13 +55,13 @@ function horizonColor(horizon: string): string {
 }
 
 function horizonLabel(horizon: string): string {
-  return horizon === 'long_term' ? t('goal.studentGoal.horizon.longTerm') : t('goal.studentGoal.horizon.shortTerm')
+  return horizon === 'long_term' ? t('goal.studentGoal.horizonOptions.long_term') : t('goal.studentGoal.horizonOptions.short_term')
 }
 
 function trendDisplay(trend: string | null): { icon: string; color: string; label: string } {
-  if (trend === 'improving') return { icon: '↑', color: 'text-emerald-600', label: t('goal.progress.trend.improving') }
-  if (trend === 'declining') return { icon: '↓', color: 'text-red-600', label: t('goal.progress.trend.declining') }
-  if (trend === 'stable') return { icon: '→', color: 'text-gray-500', label: t('goal.progress.trend.stable') }
+  if (trend === 'improving') return { icon: '↑', color: 'text-emerald-600', label: t('goal.progress.trendOptions.improving') }
+  if (trend === 'declining') return { icon: '↓', color: 'text-red-600', label: t('goal.progress.trendOptions.declining') }
+  if (trend === 'stable') return { icon: '→', color: 'text-gray-500', label: t('goal.progress.trendOptions.stable') }
   return { icon: '—', color: 'text-muted-foreground', label: '—' }
 }
 
@@ -370,10 +370,10 @@ async function submitProgress() {
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.status') }} *</label>
           <select v-model="statusForm.newStatus" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
             <option value="">{{ t('common.select') }}</option>
-            <option value="active">{{ t('goal.studentGoal.status.active') }}</option>
-            <option value="achieved">{{ t('goal.studentGoal.status.achieved') }}</option>
-            <option value="discontinued">{{ t('goal.studentGoal.status.discontinued') }}</option>
-            <option value="on_hold">{{ t('goal.studentGoal.status.on_hold') }}</option>
+            <option value="active">{{ t('goal.studentGoal.statusOptions.active') }}</option>
+            <option value="achieved">{{ t('goal.studentGoal.statusOptions.achieved') }}</option>
+            <option value="discontinued">{{ t('goal.studentGoal.statusOptions.discontinued') }}</option>
+            <option value="on_hold">{{ t('goal.studentGoal.statusOptions.on_hold') }}</option>
           </select>
         </div>
         <div>
@@ -410,9 +410,9 @@ async function submitProgress() {
             <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.progress.trend') }}</label>
             <select v-model="progressForm.trend" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
               <option value="">{{ t('common.select') }}</option>
-              <option value="improving">{{ t('goal.progress.trend.improving') }}</option>
-              <option value="stable">{{ t('goal.progress.trend.stable') }}</option>
-              <option value="declining">{{ t('goal.progress.trend.declining') }}</option>
+              <option value="improving">{{ t('goal.progress.trendOptions.improving') }}</option>
+              <option value="stable">{{ t('goal.progress.trendOptions.stable') }}</option>
+              <option value="declining">{{ t('goal.progress.trendOptions.declining') }}</option>
             </select>
           </div>
         </div>
