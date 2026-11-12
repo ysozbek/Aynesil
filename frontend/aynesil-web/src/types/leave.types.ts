@@ -147,6 +147,13 @@ export interface LeaveReportQuery {
   educatorId?: string
 }
 
+/** GET /leave/reports/trends — backend yıl aralığı ister (periodYear/educatorId tanımaz). */
+export interface LeaveTrendQuery {
+  fromYear: number
+  toYear: number
+  leaveTypeId?: string
+}
+
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateLeaveRequestPayload {

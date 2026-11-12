@@ -12,6 +12,7 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { SessionListItemDto } from '@/types/scheduling.types'
+import { dateRangeToIso } from '@/utils/datetime'
 import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
@@ -54,13 +55,14 @@ onMounted(async () => {
 })
 
 async function loadList() {
+  const range = dateRangeToIso(query.from, query.to)
   await store.fetchSessions({
     ...query,
     status: query.status || undefined,
     sessionTypeId: query.sessionTypeId || undefined,
     campusId: query.campusId || undefined,
-    from: query.from || undefined,
-    to: query.to || undefined,
+    from: range.from,
+    to: range.to,
     search: query.search || undefined,
   })
 }
@@ -74,7 +76,7 @@ const columns: Column<SessionListItemDto>[] = [
   { key: 'title', label: t('scheduling.session.titleField') },
   { key: 'startsAt', label: t('scheduling.session.startsAt'), sortable: true, width: '160px' },
   { key: 'endsAt', label: t('scheduling.session.endsAt'), width: '120px' },
-  { key: 'sessionTypeLabel', label: t('scheduling.session.type'), width: '130px' },
+  { key: 'sessionTypeName', label: t('scheduling.session.type'), width: '130px' },
   { key: 'roomName', label: t('scheduling.session.room'), width: '120px' },
   { key: 'status', label: t('common.status'), width: '110px' },
   { key: 'participantCount', label: t('scheduling.session.participants'), width: '100px', align: 'center' },
@@ -207,6 +209,9 @@ async function doDelete() {
         <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
           {{ statusLabel(row.status) }}
         </span>
+      </template>
+      <template #cell-sessionTypeName="{ value }">
+        <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-roomName="{ value }">
         <span class="text-muted-foreground">{{ value ?? t('scheduling.session.noRoom') }}</span>

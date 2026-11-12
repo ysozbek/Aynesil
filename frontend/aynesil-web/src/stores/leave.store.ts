@@ -17,6 +17,7 @@ import type {
   LeaveBalanceQuery,
   LeaveCalendarQuery,
   LeaveReportQuery,
+  LeaveTrendQuery,
   CreateLeaveRequestPayload,
   UpdateLeaveRequestPayload,
   ApproveLeavePayload,
@@ -213,7 +214,7 @@ export const useLeaveStore = defineStore('leave', () => {
     }
   }
 
-  async function fetchTrendReport(query: LeaveReportQuery) {
+  async function fetchTrendReport(query: LeaveTrendQuery) {
     loading.value = true
     try {
       const res = await leaveService.getTrendReport(query)

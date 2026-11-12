@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +50,7 @@ public sealed class GetRevenueReportQueryHandler
         // Ödeme yöntemi adı: ref_value çevirisi (kullanıcı dili → 'tr' → herhangi biri), yoksa kod.
         var methodIds = payments.Where(p => p.PaymentMethodId.HasValue)
             .Select(p => p.PaymentMethodId!.Value).Distinct().ToList();
-        var methodLabels = await FinanceProjection.LoadRefLabelsAsync(
+        var methodLabels = await RefLabelLoader.LoadAsync(
             _db, methodIds, _tenant.Locale, ct);
 
         string MethodName(Guid? id) =>

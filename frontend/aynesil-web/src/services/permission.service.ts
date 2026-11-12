@@ -13,9 +13,21 @@ export const permissionService = {
     return apiService.get<PermissionDto>(`${BASE}/${id}`)
   },
 
-  listAll() {
-    return apiService.get<PaginatedResult<PermissionListItemDto>>(BASE, {
-      params: { page: 1, pageSize: 500 },
-    })
+  /** Backend pageSize'ı en fazla 200'e kırpar; tüm sayfaları döngüyle çekip birleştirir. */
+  async listAll(): Promise<PermissionListItemDto[]> {
+    const pageSize = 200
+    const items: PermissionListItemDto[] = []
+    let page = 1
+    let totalPages = 1
+    do {
+      const res = await apiService.get<PaginatedResult<PermissionListItemDto>>(BASE, {
+        params: { page, pageSize },
+      })
+      if (!res.success || !res.data) throw new Error(res.message ?? 'İzin kataloğu yüklenemedi.')
+      items.push(...res.data.items)
+      totalPages = res.data.totalPages
+      page++
+    } while (page <= totalPages)
+    return items
   },
 }

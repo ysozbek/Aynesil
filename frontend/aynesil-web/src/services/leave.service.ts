@@ -17,6 +17,7 @@ import type {
   LeaveBalanceQuery,
   LeaveCalendarQuery,
   LeaveReportQuery,
+  LeaveTrendQuery,
   CreateLeaveRequestPayload,
   UpdateLeaveRequestPayload,
   ApproveLeavePayload,
@@ -97,7 +98,7 @@ export const leaveService = {
       `/leave/reports/usage${qs(query)}`
     ),
 
-  getTrendReport: (query: LeaveReportQuery) =>
+  getTrendReport: (query: LeaveTrendQuery) =>
     apiService.get<LeaveTrendItemDto[]>(
       `/leave/reports/trends${qs(query)}`
     ),

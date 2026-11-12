@@ -11,7 +11,7 @@
       <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
-    <div v-else-if="!store.portalNotifications.items.length" class="card bg-base-100 shadow">
+    <div v-else-if="!store.portalNotifications.length" class="card bg-base-100 shadow">
       <div class="card-body items-center text-center py-12">
         <div class="text-5xl mb-3">🔔</div>
         <p class="text-gray-500">{{ $t('portal.notifications.noNotifications') }}</p>
@@ -20,7 +20,7 @@
 
     <div v-else class="space-y-3">
       <div
-        v-for="n in store.portalNotifications.items"
+        v-for="n in store.portalNotifications"
         :key="n.id"
         :class="['card bg-base-100 shadow-sm border-l-4 transition-all', n.isRead ? 'border-base-300 opacity-70' : 'border-primary']"
       >
@@ -40,10 +40,10 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="store.portalNotifications.totalPages > 1" class="flex justify-center gap-2 mt-4">
-        <button class="btn btn-sm" :disabled="!store.portalNotifications.hasPreviousPage" @click="load(store.portalNotifications.page - 1)">«</button>
-        <span class="btn btn-sm btn-disabled">{{ store.portalNotifications.page }} / {{ store.portalNotifications.totalPages }}</span>
-        <button class="btn btn-sm" :disabled="!store.portalNotifications.hasNextPage" @click="load(store.portalNotifications.page + 1)">»</button>
+      <div v-if="store.notificationPage > 1 || store.notificationHasNext" class="flex justify-center gap-2 mt-4">
+        <button class="btn btn-sm" :disabled="store.notificationPage <= 1" @click="load(store.notificationPage - 1)">«</button>
+        <span class="btn btn-sm btn-disabled">{{ store.notificationPage }}</span>
+        <button class="btn btn-sm" :disabled="!store.notificationHasNext" @click="load(store.notificationPage + 1)">»</button>
       </div>
     </div>
   </div>

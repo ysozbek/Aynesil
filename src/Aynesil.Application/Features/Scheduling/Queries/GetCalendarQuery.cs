@@ -36,6 +36,7 @@ public sealed class GetSchoolCalendarQueryHandler
         var sessions = await CalendarHelpers.BuildSessionListQuery(_db, corporationId, null, req.From, req.To)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
+        sessions = await SchedulingProjection.WithSessionTypeNamesAsync(_db, sessions, _tenant.Locale, ct);
 
         var rawEntries = await _db.CalendarEntries.AsNoTracking()
             .Where(e => e.CorporationId == corporationId
@@ -74,6 +75,7 @@ public sealed class GetCampusCalendarQueryHandler
         var sessions = await CalendarHelpers.BuildSessionListQuery(_db, corporationId, req.CampusId, req.From, req.To)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
+        sessions = await SchedulingProjection.WithSessionTypeNamesAsync(_db, sessions, _tenant.Locale, ct);
 
         var rawEntries2 = await _db.CalendarEntries.AsNoTracking()
             .Where(e => e.CorporationId == corporationId
@@ -98,12 +100,18 @@ public sealed class GetRoomCalendarQueryHandler
     : IRequestHandler<GetRoomCalendarQuery, IReadOnlyList<SessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetRoomCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetRoomCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<SessionListItemDto>> Handle(
         GetRoomCalendarQuery req, CancellationToken ct)
-        => await _db.Sessions.AsNoTracking()
+    {
+        var items = await _db.Sessions.AsNoTracking()
             .Where(s => s.RoomId == req.RoomId
                      && s.StartsAt < req.To
                      && s.EndsAt   > req.From)
@@ -111,9 +119,12 @@ public sealed class GetRoomCalendarQueryHandler
                 new SessionListItemDto(
                     s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
                     s.RoomId, r.Name, s.Title, s.StartsAt, s.EndsAt, s.Status, s.IsMakeup,
-                    s.Participants.Count(), s.Educators.Count()))
+                    s.Participants.Count(), s.Educators.Count(),
+                _db.Campuses.Where(c => c.Id == s.CampusId).Select(c => c.Name).FirstOrDefault(), null))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
+        return await SchedulingProjection.WithSessionTypeNamesAsync(_db, items, _tenant.Locale, ct);
+    }
 }
 
 // ── GetEducatorCalendarQuery ──────────────────────────────────────────────────
@@ -145,7 +156,7 @@ public sealed class GetEducatorCalendarQueryHandler
             .Select(se => se.SessionId)
             .ToListAsync(ct);
 
-        return await _db.Sessions.AsNoTracking()
+        var items = await _db.Sessions.AsNoTracking()
             .Where(s => s.CorporationId == corporationId
                      && sessionIds.Contains(s.Id)
                      && s.StartsAt < req.To
@@ -153,9 +164,11 @@ public sealed class GetEducatorCalendarQueryHandler
             .Select(s => new SessionListItemDto(
                 s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
                 s.RoomId, null, s.Title, s.StartsAt, s.EndsAt, s.Status, s.IsMakeup,
-                s.Participants.Count(), s.Educators.Count()))
+                s.Participants.Count(), s.Educators.Count(),
+                _db.Campuses.Where(c => c.Id == s.CampusId).Select(c => c.Name).FirstOrDefault(), null))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
+        return await SchedulingProjection.WithSessionTypeNamesAsync(_db, items, _tenant.Locale, ct);
     }
 }
 
@@ -188,7 +201,7 @@ public sealed class GetStudentCalendarQueryHandler
             .Select(p => p.SessionId)
             .ToListAsync(ct);
 
-        return await _db.Sessions.AsNoTracking()
+        var items = await _db.Sessions.AsNoTracking()
             .Where(s => s.CorporationId == corporationId
                      && sessionIds.Contains(s.Id)
                      && s.StartsAt < req.To
@@ -196,9 +209,11 @@ public sealed class GetStudentCalendarQueryHandler
             .Select(s => new SessionListItemDto(
                 s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
                 s.RoomId, null, s.Title, s.StartsAt, s.EndsAt, s.Status, s.IsMakeup,
-                s.Participants.Count(), s.Educators.Count()))
+                s.Participants.Count(), s.Educators.Count(),
+                _db.Campuses.Where(c => c.Id == s.CampusId).Select(c => c.Name).FirstOrDefault(), null))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
+        return await SchedulingProjection.WithSessionTypeNamesAsync(_db, items, _tenant.Locale, ct);
     }
 }
 
@@ -261,6 +276,7 @@ file static class CalendarHelpers
         return q.Select(s => new SessionListItemDto(
             s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
             s.RoomId, null, s.Title, s.StartsAt, s.EndsAt, s.Status, s.IsMakeup,
-            s.Participants.Count(), s.Educators.Count()));
+            s.Participants.Count(), s.Educators.Count(),
+                db.Campuses.Where(c => c.Id == s.CampusId).Select(c => c.Name).FirstOrDefault(), null));
     }
 }

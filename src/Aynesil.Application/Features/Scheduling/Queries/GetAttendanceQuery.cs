@@ -14,8 +14,13 @@ public sealed class GetSessionAttendanceQueryHandler
     : IRequestHandler<GetSessionAttendanceQuery, IReadOnlyList<AttendanceDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSessionAttendanceQueryHandler(IAppDbContext db) => _db = db;
+    public GetSessionAttendanceQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<AttendanceDto>> Handle(
         GetSessionAttendanceQuery req, CancellationToken ct)
@@ -30,11 +35,12 @@ public sealed class GetSessionAttendanceQueryHandler
             .Select(s => new { s.Id, s.FirstName, s.LastName })
             .ToDictionaryAsync(s => s.Id, s => $"{s.FirstName} {s.LastName}".Trim(), ct);
 
-        return records.Select(a => new AttendanceDto(
+        var dtos = records.Select(a => new AttendanceDto(
             a.Id, a.SessionId, a.StudentId,
             students.GetValueOrDefault(a.StudentId, ""),
             a.Status, a.ReasonId, a.MinutesAttended,
             a.Note, a.RecordedBy, a.RecordedAt)).ToList();
+        return await SchedulingProjection.WithAttendanceLabelsAsync(_db, dtos, _tenant.Locale, ct);
     }
 }
 
@@ -82,7 +88,7 @@ public sealed class GetStudentAttendanceQueryHandler
         var query = q.Select(a => new AttendanceDto(
             a.Id, a.SessionId, a.StudentId, studentName,
             a.Status, a.ReasonId, a.MinutesAttended,
-            a.Note, a.RecordedBy, a.RecordedAt));
+            a.Note, a.RecordedBy, a.RecordedAt, null, null));
 
         query = req.SortBy?.ToLower() switch
         {
@@ -93,6 +99,7 @@ public sealed class GetStudentAttendanceQueryHandler
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        items = await SchedulingProjection.WithAttendanceLabelsAsync(_db, items, _tenant.Locale, ct);
         return PaginatedResult<AttendanceDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

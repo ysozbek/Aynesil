@@ -51,7 +51,8 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
         return new SessionNoteDto(
             note.Id, req.SessionId, note.AuthoredBy,
             note.Body, note.ParentVisible,
-            note.CreatedAt, note.UpdatedAt, note.RowVersion);
+            note.CreatedAt, note.UpdatedAt, note.RowVersion,
+            _currentUser.UserName);
     }
 }
 
@@ -89,10 +90,15 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
         note.Edit(req.Body, req.ParentVisible);
         await _db.SaveChangesAsync(ct);
 
+        // Düzenleyen değil, notu yazan kullanıcının adı.
+        var authors = await SchedulingProjection.LoadUserNamesAsync(
+            _db, note.AuthoredBy.HasValue ? [note.AuthoredBy.Value] : [], ct);
+
         return new SessionNoteDto(
             note.Id, note.SessionId, note.AuthoredBy,
             note.Body, note.ParentVisible,
-            note.CreatedAt, note.UpdatedAt, note.RowVersion);
+            note.CreatedAt, note.UpdatedAt, note.RowVersion,
+            note.AuthoredBy.HasValue ? authors.GetValueOrDefault(note.AuthoredBy.Value) : null);
     }
 }
 

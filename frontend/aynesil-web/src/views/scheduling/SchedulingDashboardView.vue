@@ -6,6 +6,7 @@ import { useSessionStore } from '@/stores/session.store'
 import { useMakeupSessionStore } from '@/stores/makeupSession.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import { toLocalDateString, startOfDayIso, endOfDayIso } from '@/utils/datetime'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -13,15 +14,15 @@ const sessionStore = useSessionStore()
 const makeupStore = useMakeupSessionStore()
 const { can } = usePermission()
 
-const todayStr = new Date().toISOString().slice(0, 10)
+const todayStr = toLocalDateString()
 const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
 const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 
 onMounted(async () => {
   await Promise.all([
     sessionStore.fetchSessions({
-      from: todayStr,
-      to: todayStr,
+      from: startOfDayIso(todayStr),
+      to: endOfDayIso(todayStr),
       page: 1,
       pageSize: 10,
     }),

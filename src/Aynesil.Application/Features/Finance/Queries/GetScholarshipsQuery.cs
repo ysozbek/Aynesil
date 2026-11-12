@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,7 @@ public sealed class GetScholarshipsQueryHandler
 
         var typeIds = items.Where(i => i.ScholarshipTypeId.HasValue)
             .Select(i => i.ScholarshipTypeId!.Value).Distinct().ToList();
-        var typeNames = await FinanceProjection.LoadRefLabelsAsync(_db, typeIds, _tenant.Locale, ct);
+        var typeNames = await RefLabelLoader.LoadAsync(_db, typeIds, _tenant.Locale, ct);
         items = items
             .Select(i => i.ScholarshipTypeId.HasValue
                 ? i with { ScholarshipTypeName = typeNames.GetValueOrDefault(i.ScholarshipTypeId.Value) }

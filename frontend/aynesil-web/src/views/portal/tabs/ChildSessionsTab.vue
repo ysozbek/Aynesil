@@ -1,18 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Filters -->
-    <div class="flex flex-wrap gap-3 items-end">
-      <div>
-        <label class="label label-text text-xs">{{ $t('common.from') }}</label>
-        <input v-model="filters.from" type="date" class="input input-bordered input-sm" />
-      </div>
-      <div>
-        <label class="label label-text text-xs">{{ $t('common.to') }}</label>
-        <input v-model="filters.to" type="date" class="input input-bordered input-sm" />
-      </div>
-      <button class="btn btn-sm btn-primary mt-5" @click="load(1)">{{ $t('common.filter') }}</button>
-    </div>
-
     <!-- Loading -->
     <div v-if="store.loading" class="flex justify-center py-8">
       <span class="loading loading-spinner text-primary"></span>
@@ -49,10 +36,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!store.sessionList.items.length">
+              <tr v-if="!store.sessionList.length">
                 <td colspan="3" class="text-center text-gray-400 py-6">{{ $t('common.noData') }}</td>
               </tr>
-              <tr v-for="s in store.sessionList.items" :key="s.id">
+              <tr v-for="s in store.sessionList" :key="s.id">
                 <td>{{ s.title ?? $t('portal.sessions.session') }}</td>
                 <td>{{ formatDateTime(s.startsAt) }}</td>
                 <td><span :class="['badge badge-sm', sessionStatusClass(s.status)]">{{ s.status }}</span></td>
@@ -62,10 +49,10 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="store.sessionList.totalPages > 1" class="flex justify-center mt-4 gap-2">
-          <button class="btn btn-sm" :disabled="!store.sessionList.hasPreviousPage" @click="load(store.sessionList.page - 1)">«</button>
-          <span class="btn btn-sm btn-disabled">{{ store.sessionList.page }} / {{ store.sessionList.totalPages }}</span>
-          <button class="btn btn-sm" :disabled="!store.sessionList.hasNextPage" @click="load(store.sessionList.page + 1)">»</button>
+        <div v-if="store.sessionPage > 1 || store.sessionHasNext" class="flex justify-center mt-4 gap-2">
+          <button class="btn btn-sm" :disabled="store.sessionPage <= 1" @click="load(store.sessionPage - 1)">«</button>
+          <span class="btn btn-sm btn-disabled">{{ store.sessionPage }}</span>
+          <button class="btn btn-sm" :disabled="!store.sessionHasNext" @click="load(store.sessionPage + 1)">»</button>
         </div>
       </div>
     </template>
@@ -73,16 +60,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useParentPortalStore } from '@/stores/parentPortal.store'
 
 const props = defineProps<{ studentId: string }>()
 const store = useParentPortalStore()
 
-const filters = ref({ from: '', to: '' })
-
 const upcomingSessions = computed(() =>
-  store.sessionList.items.filter(s => {
+  store.sessionList.filter(s => {
     const start = new Date(s.startsAt)
     return start >= new Date() && s.status !== 'cancelled'
   })
@@ -109,8 +94,6 @@ async function load(page = 1) {
     studentId: props.studentId,
     page,
     pageSize: 20,
-    from: filters.value.from || undefined,
-    to: filters.value.to || undefined,
   })
 }
 

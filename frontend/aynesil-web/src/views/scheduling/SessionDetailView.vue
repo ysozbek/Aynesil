@@ -242,9 +242,9 @@ function getAttendance(studentId: string) {
         <div class="rounded-xl border border-border bg-card shadow-sm p-5 space-y-3">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.session.info') }}</h3>
           <dl class="space-y-2 text-sm">
-            <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.type') }}:</dt><dd>{{ session.sessionTypeLabel ?? '—' }}</dd></div>
+            <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.type') }}:</dt><dd>{{ session.sessionTypeName ?? '—' }}</dd></div>
             <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.room') }}:</dt><dd>{{ session.roomName ?? t('scheduling.session.noRoom') }}</dd></div>
-            <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.campus') }}:</dt><dd>{{ session.campusName }}</dd></div>
+            <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.campus') }}:</dt><dd>{{ session.campusName ?? '—' }}</dd></div>
             <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.startsAt') }}:</dt><dd>{{ formatDateTime(session.startsAt) }}</dd></div>
             <div class="flex gap-2"><dt class="text-muted-foreground w-32 shrink-0">{{ t('scheduling.session.endsAt') }}:</dt><dd>{{ formatDateTime(session.endsAt) }}</dd></div>
             <div class="flex gap-2">
@@ -457,7 +457,7 @@ function getAttendance(studentId: string) {
               </button>
             </div>
             <div class="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-              <span>{{ note.authorName }}</span>
+              <span>{{ note.authorName ?? '—' }}</span>
               <span>{{ new Date(note.createdAt).toLocaleString('tr-TR') }}</span>
               <span v-if="note.parentVisible" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
                 {{ t('scheduling.session.parentVisible') }}

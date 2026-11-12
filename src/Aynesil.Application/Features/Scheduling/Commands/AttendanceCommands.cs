@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
 using FluentValidation;
@@ -37,9 +38,11 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public RecordAttendanceCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public RecordAttendanceCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -79,10 +82,16 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
 
         await _db.SaveChangesAsync(ct);
 
+        var reasonLabel = attendance.ReasonId.HasValue
+            ? (await RefLabelLoader.LoadAsync(_db, [attendance.ReasonId.Value], _tenant.Locale, ct))
+                .GetValueOrDefault(attendance.ReasonId.Value)
+            : null;
+
         return new AttendanceDto(
             attendance.Id, attendance.SessionId, attendance.StudentId, studentName,
             attendance.Status, attendance.ReasonId, attendance.MinutesAttended,
-            attendance.Note, attendance.RecordedBy, attendance.RecordedAt);
+            attendance.Note, attendance.RecordedBy, attendance.RecordedAt,
+            reasonLabel, _currentUser.UserName);
     }
 }
 
@@ -123,9 +132,11 @@ public sealed class BulkRecordAttendanceCommandHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public BulkRecordAttendanceCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public BulkRecordAttendanceCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -147,6 +158,9 @@ public sealed class BulkRecordAttendanceCommandHandler
             .Where(s => studentIds.Contains(s.Id))
             .Select(s => new { s.Id, s.FirstName, s.LastName })
             .ToDictionaryAsync(s => s.Id, s => $"{s.FirstName} {s.LastName}".Trim(), ct);
+
+        var reasonIds = req.Entries.Where(e => e.ReasonId.HasValue).Select(e => e.ReasonId!.Value).Distinct().ToList();
+        var reasonLabels = await RefLabelLoader.LoadAsync(_db, reasonIds, _tenant.Locale, ct);
 
         var results = new List<AttendanceDto>();
 
@@ -173,7 +187,9 @@ public sealed class BulkRecordAttendanceCommandHandler
             results.Add(new AttendanceDto(
                 attendance.Id, attendance.SessionId, attendance.StudentId, name ?? "",
                 attendance.Status, attendance.ReasonId, attendance.MinutesAttended,
-                attendance.Note, attendance.RecordedBy, attendance.RecordedAt));
+                attendance.Note, attendance.RecordedBy, attendance.RecordedAt,
+                entry.ReasonId.HasValue ? reasonLabels.GetValueOrDefault(entry.ReasonId.Value) : null,
+                _currentUser.UserName));
         }
 
         await _db.SaveChangesAsync(ct);

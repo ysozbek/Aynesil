@@ -16,7 +16,6 @@ import type {
   PortalMeetingDto,
   PortalSessionListQuery,
   PortalAttendanceListQuery,
-  PortalDocumentListQuery,
 } from '@/types/portal.types'
 import type { NotificationListItemDto, NotificationListQuery } from '@/types/notification.types'
 
@@ -47,7 +46,7 @@ export const portalService = {
 
   getSessions: (query: PortalSessionListQuery) => {
     const { studentId, ...rest } = query
-    return apiService.get<PaginatedResult<PortalSessionDto>>(
+    return apiService.get<PortalSessionDto[]>(
       `/portal/students/${studentId}/sessions${qs(rest)}`
     )
   },
@@ -56,7 +55,7 @@ export const portalService = {
 
   getAttendance: (query: PortalAttendanceListQuery) => {
     const { studentId, ...rest } = query
-    return apiService.get<PaginatedResult<PortalAttendanceDto>>(
+    return apiService.get<PortalAttendanceDto[]>(
       `/portal/students/${studentId}/attendance${qs(rest)}`
     )
   },
@@ -68,12 +67,8 @@ export const portalService = {
 
   // ── Documents ──────────────────────────────────────────────────────────────
 
-  getDocuments: (query: PortalDocumentListQuery) => {
-    const { studentId, ...rest } = query
-    return apiService.get<PaginatedResult<PortalDocumentDto>>(
-      `/portal/students/${studentId}/documents${qs(rest)}`
-    )
-  },
+  getDocuments: (studentId: string) =>
+    apiService.get<PortalDocumentDto[]>(`/portal/students/${studentId}/documents`),
 
   // ── Education Plan (BEP) ───────────────────────────────────────────────────
 
@@ -98,7 +93,7 @@ export const portalService = {
   // ── Portal Notifications ───────────────────────────────────────────────────
 
   getNotifications: (query?: Omit<NotificationListQuery, 'corporationId'>) =>
-    apiService.get<PaginatedResult<NotificationListItemDto>>(
+    apiService.get<NotificationListItemDto[]>(
       `/portal/notifications${qs((query ?? {}) as Record<string, unknown>)}`
     ),
 }

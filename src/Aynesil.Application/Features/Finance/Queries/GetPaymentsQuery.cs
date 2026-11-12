@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,7 @@ public sealed class GetPaymentsQueryHandler
 
         var methodIds = items.Where(i => i.PaymentMethodId.HasValue)
             .Select(i => i.PaymentMethodId!.Value).Distinct().ToList();
-        var methodNames = await FinanceProjection.LoadRefLabelsAsync(_db, methodIds, _tenant.Locale, ct);
+        var methodNames = await RefLabelLoader.LoadAsync(_db, methodIds, _tenant.Locale, ct);
         items = items
             .Select(i => i.PaymentMethodId.HasValue
                 ? i with { PaymentMethodName = methodNames.GetValueOrDefault(i.PaymentMethodId.Value) }
@@ -131,7 +132,7 @@ public sealed class GetPaymentQueryHandler : IRequestHandler<GetPaymentQuery, Pa
         string? methodName = null;
         if (p.PaymentMethodId.HasValue)
         {
-            var labels = await FinanceProjection.LoadRefLabelsAsync(
+            var labels = await RefLabelLoader.LoadAsync(
                 _db, [p.PaymentMethodId.Value], _tenant.Locale, ct);
             methodName = labels.GetValueOrDefault(p.PaymentMethodId.Value);
         }

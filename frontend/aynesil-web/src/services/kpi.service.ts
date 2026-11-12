@@ -112,7 +112,7 @@ export const kpiService = {
       `/performance-kpi/trends/corporation${qs(query)}`,
     ),
 
-  getRanking: (query: { kpiId?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
+  getRanking: (query: { kpiCode?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
     apiService.get<RankingItemDto[]>(`/performance-kpi/ranking${qs(query)}`),
 
   // ── Reports ────────────────────────────────────────────────────────────────

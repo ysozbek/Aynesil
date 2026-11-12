@@ -225,7 +225,8 @@ export interface SessionNoteDto {
   sessionId: string
   body: string
   parentVisible: boolean
-  authorName: string
+  authoredBy?: string
+  authorName?: string
   createdAt: string
   rowVersion: number
 }
@@ -241,18 +242,19 @@ export interface AttendanceDto {
   minutesAttended?: number
   note?: string
   recordedAt: string
-  recordedByName: string
+  recordedBy?: string
+  recordedByName?: string
 }
 
 export interface SessionDto {
   id: string
   corporationId: string
   campusId: string
-  campusName: string
+  campusName?: string
   roomId?: string
   roomName?: string
   sessionTypeId: string
-  sessionTypeLabel?: string
+  sessionTypeName?: string
   recurringScheduleId?: string
   title: string
   startsAt: string
@@ -270,9 +272,11 @@ export interface SessionDto {
 
 export interface SessionListItemDto {
   id: string
-  campusName: string
+  campusId?: string
+  campusName?: string
   roomName?: string
-  sessionTypeLabel?: string
+  sessionTypeId: string
+  sessionTypeName?: string
   title: string
   startsAt: string
   endsAt: string
@@ -359,11 +363,11 @@ export interface AttendanceSummaryDto {
   studentId: string
   studentFullName: string
   totalSessions: number
-  present: number
-  absent: number
-  late: number
-  excused: number
-  leftEarly: number
+  presentCount: number
+  absentCount: number
+  lateCount: number
+  excusedCount: number
+  leftEarlyCount: number
   attendanceRate: number
 }
 

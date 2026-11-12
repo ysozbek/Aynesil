@@ -240,7 +240,6 @@ export interface KpiReportQuery {
 export interface DashboardQuery {
   campusId?: string
   educatorId?: string
-  periodType?: 'Monthly' | 'Quarterly' | 'Annual'
   periodStart?: string
   periodEnd?: string
 }

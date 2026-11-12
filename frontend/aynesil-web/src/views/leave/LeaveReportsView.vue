@@ -49,7 +49,9 @@ async function doFetch() {
     periodYear: filters.periodYear || undefined,
     leaveTypeId: filters.leaveTypeId || undefined,
   }
-  await Promise.all([leaveStore.fetchUsageReport(q), leaveStore.fetchTrendReport(q)])
+  const year = filters.periodYear || new Date().getFullYear()
+  const trendQuery = { fromYear: year, toYear: year, leaveTypeId: q.leaveTypeId }
+  await Promise.all([leaveStore.fetchUsageReport(q), leaveStore.fetchTrendReport(trendQuery)])
 }
 
 onMounted(async () => {

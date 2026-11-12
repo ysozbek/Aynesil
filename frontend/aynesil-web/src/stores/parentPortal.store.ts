@@ -19,7 +19,6 @@ import type {
   PortalMeetingDto,
   PortalSessionListQuery,
   PortalAttendanceListQuery,
-  PortalDocumentListQuery,
 } from '@/types/portal.types'
 import type { NotificationListItemDto } from '@/types/notification.types'
 
@@ -35,16 +34,18 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
   const dashboard = ref<PortalDashboardDto | null>(null)
 
   // ── Sessions ───────────────────────────────────────────────────────────────
-  const sessionList = ref<PaginatedResult<PortalSessionDto>>(emptyPage<PortalSessionDto>())
+  const sessionList = ref<PortalSessionDto[]>([])
+  const sessionPage = ref(1)
+  const sessionHasNext = ref(false)
 
   // ── Attendance ─────────────────────────────────────────────────────────────
-  const attendanceList = ref<PaginatedResult<PortalAttendanceDto>>(emptyPage<PortalAttendanceDto>())
+  const attendanceList = ref<PortalAttendanceDto[]>([])
 
   // ── Packages ───────────────────────────────────────────────────────────────
   const packages = ref<PortalPackageDto[]>([])
 
   // ── Documents ──────────────────────────────────────────────────────────────
-  const documentList = ref<PaginatedResult<PortalDocumentDto>>(emptyPage<PortalDocumentDto>())
+  const documentList = ref<PortalDocumentDto[]>([])
   const reportList = ref<PortalDocumentDto[]>([])
 
   // ── BEP ────────────────────────────────────────────────────────────────────
@@ -57,7 +58,9 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
   const meetingHistory = ref<PortalMeetingDto[]>([])
 
   // ── Notifications ──────────────────────────────────────────────────────────
-  const portalNotifications = ref<PaginatedResult<NotificationListItemDto>>(emptyPage<NotificationListItemDto>())
+  const portalNotifications = ref<NotificationListItemDto[]>([])
+  const notificationPage = ref(1)
+  const notificationHasNext = ref(false)
 
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -102,8 +105,15 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
   async function fetchSessions(query: PortalSessionListQuery) {
     loading.value = true
     try {
-      const res = await portalService.getSessions(query)
-      if (res.success && res.data) sessionList.value = res.data
+      const page = query.page ?? 1
+      const pageSize = query.pageSize ?? 20
+      const res = await portalService.getSessions({ ...query, page, pageSize })
+      if (res.success && res.data) {
+        sessionList.value = res.data
+        sessionPage.value = page
+        // Backend toplam sayı döndürmez; dolu bir sayfa sonraki sayfa olabileceği anlamına gelir.
+        sessionHasNext.value = res.data.length >= pageSize
+      }
     } finally {
       loading.value = false
     }
@@ -129,10 +139,10 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
     }
   }
 
-  async function fetchDocuments(query: PortalDocumentListQuery) {
+  async function fetchDocuments(studentId: string) {
     loading.value = true
     try {
-      const res = await portalService.getDocuments(query)
+      const res = await portalService.getDocuments(studentId)
       if (res.success && res.data) documentList.value = res.data
     } finally {
       loading.value = false
@@ -183,7 +193,11 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
     loading.value = true
     try {
       const res = await portalService.getNotifications({ page, pageSize })
-      if (res.success && res.data) portalNotifications.value = res.data
+      if (res.success && res.data) {
+        portalNotifications.value = res.data
+        notificationPage.value = page
+        notificationHasNext.value = res.data.length >= pageSize
+      }
     } finally {
       loading.value = false
     }
@@ -192,10 +206,12 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
   function clearStudent() {
     currentStudent.value = null
     dashboard.value = null
-    sessionList.value = emptyPage()
-    attendanceList.value = emptyPage()
+    sessionList.value = []
+    sessionPage.value = 1
+    sessionHasNext.value = false
+    attendanceList.value = []
     packages.value = []
-    documentList.value = emptyPage()
+    documentList.value = []
     reportList.value = []
     bepList.value = []
     goalProgress.value = []
@@ -204,10 +220,10 @@ export const useParentPortalStore = defineStore('parentPortal', () => {
 
   return {
     myStudents, currentStudent, dashboard,
-    sessionList, attendanceList,
+    sessionList, sessionPage, sessionHasNext, attendanceList,
     packages, documentList, reportList,
     bepList, goalProgress, meetingHistory,
-    portalNotifications,
+    portalNotifications, notificationPage, notificationHasNext,
     loading, error,
     fetchMyStudents, fetchStudent, fetchDashboard,
     fetchSessions, fetchAttendance, fetchPackages,

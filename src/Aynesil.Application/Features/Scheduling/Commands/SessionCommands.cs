@@ -95,7 +95,7 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
         _db.Sessions.Add(session);
         await _db.SaveChangesAsync(ct);
 
-        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
+        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, _tenant.Locale, ct))!;
     }
 }
 
@@ -123,10 +123,12 @@ public sealed class RescheduleSessionCommandHandler : IRequestHandler<Reschedule
     private readonly IAppDbContext _db;
     private readonly ISessionRepository _sessions;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
     public RescheduleSessionCommandHandler(
-        IAppDbContext db, ISessionRepository sessions, ICurrentUserService currentUser)
+        IAppDbContext db, ISessionRepository sessions, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _sessions = sessions;
         _currentUser = currentUser;
@@ -152,7 +154,7 @@ public sealed class RescheduleSessionCommandHandler : IRequestHandler<Reschedule
         session.Reschedule(req.NewStartsAt, req.NewEndsAt, req.RoomId, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
-        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
+        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, _tenant.Locale, ct))!;
     }
 }
 
@@ -164,9 +166,11 @@ public sealed class CompleteSessionCommandHandler : IRequestHandler<CompleteSess
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CompleteSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CompleteSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -183,7 +187,7 @@ public sealed class CompleteSessionCommandHandler : IRequestHandler<CompleteSess
         // Same SaveChanges: completion and credit consumption commit together.
         await SessionCreditConsumer.ConsumeForCompletedSessionAsync(_db, session, _currentUser.UserId, ct);
         await _db.SaveChangesAsync(ct);
-        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
+        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, _tenant.Locale, ct))!;
     }
 }
 
@@ -195,9 +199,11 @@ public sealed class CancelSessionCommandHandler : IRequestHandler<CancelSessionC
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CancelSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CancelSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -212,7 +218,7 @@ public sealed class CancelSessionCommandHandler : IRequestHandler<CancelSessionC
 
         session.Cancel(req.Reason, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
-        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
+        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, _tenant.Locale, ct))!;
     }
 }
 
@@ -224,9 +230,11 @@ public sealed class MarkSessionNoShowCommandHandler : IRequestHandler<MarkSessio
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public MarkSessionNoShowCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public MarkSessionNoShowCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -241,7 +249,7 @@ public sealed class MarkSessionNoShowCommandHandler : IRequestHandler<MarkSessio
 
         session.MarkNoShow(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
-        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, ct))!;
+        return (await SchedulingProjection.LoadSessionAsync(_db, session.Id, _tenant.Locale, ct))!;
     }
 }
 

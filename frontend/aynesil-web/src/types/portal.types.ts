@@ -111,24 +111,14 @@ export interface PortalMeetingDto {
 
 // ── Query types ────────────────────────────────────────────────────────────────
 
+// Backend yalnızca sayfalama alır (page/pageSize) ve düz dizi döner; from/to/status filtresi yoktur.
 export interface PortalSessionListQuery {
   studentId: string
   page?: number
   pageSize?: number
-  from?: string
-  to?: string
-  status?: string
 }
 
 export interface PortalAttendanceListQuery {
-  studentId: string
-  page?: number
-  pageSize?: number
-  from?: string
-  to?: string
-}
-
-export interface PortalDocumentListQuery {
   studentId: string
   page?: number
   pageSize?: number

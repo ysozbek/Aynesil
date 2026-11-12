@@ -9,6 +9,7 @@ import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { PaymentListItemDto } from '@/types/finance.types'
+import { dateRangeToIso } from '@/utils/datetime'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -29,13 +30,14 @@ onMounted(loadList)
 
 async function loadList() {
   // Backend paidFrom/paidTo DateTimeOffset bekler; "to" günün sonunu kapsamalı.
+  const range = dateRangeToIso(query.from, query.to)
   await store.fetchTransactions({
     page: query.page,
     pageSize: query.pageSize,
     studentId: query.studentId || undefined,
     status: query.status || undefined,
-    paidFrom: query.from ? new Date(`${query.from}T00:00:00`).toISOString() : undefined,
-    paidTo: query.to ? new Date(`${query.to}T23:59:59.999`).toISOString() : undefined,
+    paidFrom: range.from,
+    paidTo: range.to,
   })
 }
 

@@ -76,8 +76,11 @@ public sealed class GetSessionsQueryHandler
                 x.s.Id, x.s.CorporationId, x.s.CampusId, x.s.SessionTypeId,
                 x.s.RoomId, x.r != null ? x.r.Name : null,
                 x.s.Title, x.s.StartsAt, x.s.EndsAt, x.s.Status, x.s.IsMakeup,
-                x.s.Participants.Count(), x.s.Educators.Count()))
+                x.s.Participants.Count(), x.s.Educators.Count(),
+                _db.Campuses.Where(c => c.Id == x.s.CampusId).Select(c => c.Name).FirstOrDefault(),
+                null))
             .ToListAsync(ct);
+        items = await SchedulingProjection.WithSessionTypeNamesAsync(_db, items, _tenant.Locale, ct);
         return PaginatedResult<SessionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }
@@ -89,10 +92,15 @@ public record GetSessionQuery(Guid Id) : IRequest<SessionDto>;
 public sealed class GetSessionQueryHandler : IRequestHandler<GetSessionQuery, SessionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSessionQueryHandler(IAppDbContext db) => _db = db;
+    public GetSessionQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<SessionDto> Handle(GetSessionQuery req, CancellationToken ct)
-        => await SchedulingProjection.LoadSessionAsync(_db, req.Id, ct)
+        => await SchedulingProjection.LoadSessionAsync(_db, req.Id, _tenant.Locale, ct)
            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
 }

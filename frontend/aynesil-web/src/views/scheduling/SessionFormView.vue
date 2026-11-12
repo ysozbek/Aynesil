@@ -6,6 +6,7 @@ import { useSessionStore } from '@/stores/session.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { campusService } from '@/services/campus.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import { localInputToIso, isoToLocalInput } from '@/utils/datetime'
 import RoomPicker from '@/components/pickers/RoomPicker.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
@@ -56,8 +57,8 @@ onMounted(async () => {
       form.roomId = s.roomId ?? ''
       form.sessionTypeId = s.sessionTypeId
       form.title = s.title
-      form.startsAt = s.startsAt.slice(0, 16)
-      form.endsAt = s.endsAt.slice(0, 16)
+      form.startsAt = isoToLocalInput(s.startsAt)
+      form.endsAt = isoToLocalInput(s.endsAt)
     }
   }
 })
@@ -79,8 +80,8 @@ async function submit() {
       // and `RowVersion` as int — see src/Aynesil.Api/Controllers/SchedulingController.cs
       // and src/Aynesil.Application/Features/Scheduling/Commands/SessionCommands.cs.
       await store.rescheduleSession(sessionId, {
-        newStartsAt: new Date(form.startsAt).toISOString(),
-        newEndsAt: new Date(form.endsAt).toISOString(),
+        newStartsAt: localInputToIso(form.startsAt),
+        newEndsAt: localInputToIso(form.endsAt),
         roomId: form.roomId || undefined,
         rowVersion: store.currentSession!.rowVersion,
       })
@@ -91,8 +92,8 @@ async function submit() {
         roomId: form.roomId || undefined,
         sessionTypeId: form.sessionTypeId,
         title: form.title,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
+        startsAt: localInputToIso(form.startsAt),
+        endsAt: localInputToIso(form.endsAt),
         isMakeup: false,
         participantStudentIds: form.studentId ? [form.studentId] : [],
         educatorAssignments: form.educatorId ? [{ educatorId: form.educatorId, role: 'lead' }] : [],

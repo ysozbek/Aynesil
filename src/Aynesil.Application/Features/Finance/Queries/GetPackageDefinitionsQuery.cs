@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,7 @@ public sealed class GetPackageDefinitionsQueryHandler
 
         var typeIds = items.Where(i => i.PackageTypeId.HasValue)
             .Select(i => i.PackageTypeId!.Value).Distinct().ToList();
-        var typeNames = await FinanceProjection.LoadRefLabelsAsync(_db, typeIds, _tenant.Locale, ct);
+        var typeNames = await RefLabelLoader.LoadAsync(_db, typeIds, _tenant.Locale, ct);
         items = items
             .Select(i => i.PackageTypeId.HasValue
                 ? i with { PackageTypeName = typeNames.GetValueOrDefault(i.PackageTypeId.Value) }

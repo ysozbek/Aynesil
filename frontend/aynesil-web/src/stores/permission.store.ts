@@ -37,11 +37,8 @@ export const usePermissionStore = defineStore('permission', () => {
     if (catalogLoaded.value && !force) return
     catalogLoading.value = true
     try {
-      const res = await permissionService.listAll()
-      if (res.success && res.data) {
-        catalog.value = res.data.items
-        catalogLoaded.value = true
-      }
+      catalog.value = await permissionService.listAll()
+      catalogLoaded.value = true
     } finally {
       catalogLoading.value = false
     }

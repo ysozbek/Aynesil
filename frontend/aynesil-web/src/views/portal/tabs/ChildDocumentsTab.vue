@@ -6,7 +6,7 @@
 
     <template v-else>
       <!-- Documents list -->
-      <div v-if="store.documentList.items.length" class="overflow-x-auto">
+      <div v-if="store.documentList.length" class="overflow-x-auto">
         <table class="table table-sm">
           <thead>
             <tr>
@@ -17,7 +17,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="doc in store.documentList.items" :key="doc.fileId">
+            <tr v-for="doc in store.documentList" :key="doc.fileId">
               <td>
                 <div class="flex items-center gap-2">
                   <span>{{ fileIcon(doc.mimeType) }}</span>
@@ -31,11 +31,6 @@
           </tbody>
         </table>
 
-        <div v-if="store.documentList.totalPages > 1" class="flex justify-center mt-4 gap-2">
-          <button class="btn btn-sm" :disabled="!store.documentList.hasPreviousPage" @click="load(store.documentList.page - 1)">«</button>
-          <span class="btn btn-sm btn-disabled">{{ store.documentList.page }} / {{ store.documentList.totalPages }}</span>
-          <button class="btn btn-sm" :disabled="!store.documentList.hasNextPage" @click="load(store.documentList.page + 1)">»</button>
-        </div>
       </div>
 
       <div v-else class="card bg-base-100 shadow">
@@ -73,9 +68,5 @@ function fileIcon(mime?: string): string {
   return '📄'
 }
 
-function load(page = 1) {
-  store.fetchDocuments({ studentId: props.studentId, page, pageSize: 20 })
-}
-
-onMounted(() => load())
+onMounted(() => store.fetchDocuments(props.studentId))
 </script>

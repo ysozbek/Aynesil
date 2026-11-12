@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMeetingStore } from '@/stores/meeting.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import { localInputToIso, isoToLocalInput } from '@/utils/datetime'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -47,16 +48,16 @@ async function submit() {
       await store.updateMeeting(route.params.id as string, {
         title: form.value.title,
         location: form.value.location || undefined,
-        scheduledAt: form.value.scheduledAt || undefined,
-        endsAt: form.value.endsAt || undefined,
+        scheduledAt: form.value.scheduledAt ? localInputToIso(form.value.scheduledAt) : undefined,
+        endsAt: form.value.endsAt ? localInputToIso(form.value.endsAt) : undefined,
         rowVersion: m.rowVersion,
       })
     } else {
       const createdId = await store.scheduleMeeting({
         title: form.value.title,
         location: form.value.location || undefined,
-        scheduledAt: form.value.scheduledAt || undefined,
-        endsAt: form.value.endsAt || undefined,
+        scheduledAt: form.value.scheduledAt ? localInputToIso(form.value.scheduledAt) : undefined,
+        endsAt: form.value.endsAt ? localInputToIso(form.value.endsAt) : undefined,
         participants: form.value.participants.length ? form.value.participants : undefined,
       })
       router.push({ name: 'meeting-detail', params: { id: createdId } })
@@ -75,8 +76,8 @@ onMounted(async () => {
       const m = store.currentMeeting
       form.value.title = m.title
       form.value.location = m.location ?? ''
-      form.value.scheduledAt = m.scheduledAt ? m.scheduledAt.slice(0, 16) : ''
-      form.value.endsAt = m.endsAt ? m.endsAt.slice(0, 16) : ''
+      form.value.scheduledAt = isoToLocalInput(m.scheduledAt)
+      form.value.endsAt = isoToLocalInput(m.endsAt)
     }
   }
 })

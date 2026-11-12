@@ -70,15 +70,15 @@ function statusColor(status: string): string {
       <!-- Summary cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
-          <p class="text-3xl font-bold text-green-600">{{ store.summary.present }}</p>
+          <p class="text-3xl font-bold text-green-600">{{ store.summary.presentCount }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.present') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
-          <p class="text-3xl font-bold text-red-600">{{ store.summary.absent }}</p>
+          <p class="text-3xl font-bold text-red-600">{{ store.summary.absentCount }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.absent') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
-          <p class="text-3xl font-bold text-amber-600">{{ store.summary.late }}</p>
+          <p class="text-3xl font-bold text-amber-600">{{ store.summary.lateCount }}</p>
           <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.late') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">

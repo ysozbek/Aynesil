@@ -59,7 +59,8 @@ public sealed class GetRoomsQueryHandler
             .Take(req.PageSize)
             .Select(r => new RoomListItemDto(
                 r.Id, r.CorporationId, r.CampusId,
-                r.Code, r.Name, r.Capacity, r.IsVirtual, r.IsActive))
+                r.Code, r.Name, r.Capacity, r.IsVirtual, r.IsActive,
+                _db.Campuses.Where(c => c.Id == r.CampusId).Select(c => c.Name).FirstOrDefault()))
             .ToListAsync(ct);
         return PaginatedResult<RoomListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
@@ -81,6 +82,12 @@ public sealed class GetRoomQueryHandler : IRequestHandler<GetRoomQuery, RoomDto>
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
 
-        return SchedulingProjection.ToRoomDto(room);
+        var campusName = room.CampusId is null ? null
+            : await _db.Campuses.AsNoTracking()
+                .Where(c => c.Id == room.CampusId)
+                .Select(c => c.Name)
+                .FirstOrDefaultAsync(ct);
+
+        return SchedulingProjection.ToRoomDto(room, campusName);
     }
 }

@@ -1,17 +1,34 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { EducatorSummaryDto, RankingItemDto } from '@/types/kpi.types'
+import { periodRange, shiftPeriod, isFuturePeriod, periodLabel, type KpiPeriodType } from '@/utils/datetime'
 
 const { t } = useI18n()
 const kpiStore = useKpiStore()
 
 const tab = ref<'manager' | 'executive' | 'ranking'>('manager')
-const periodType = ref<'Monthly' | 'Quarterly' | 'Annual'>('Monthly')
+const periodType = ref<KpiPeriodType>('Monthly')
+const kpiCode = ref('')
+// Seçili dönemi içeren bir tarih; varsayılan: bir önceki tamamlanmış dönem.
+const anchor = ref<Date>(shiftPeriod('Monthly', new Date(), -1))
+const canGoNext = computed(() => !isFuturePeriod(periodType.value, shiftPeriod(periodType.value, anchor.value, 1)))
+const currentPeriodLabel = computed(() => periodLabel(periodType.value, anchor.value))
+
+function onPeriodTypeChange() {
+  anchor.value = shiftPeriod(periodType.value, new Date(), -1)
+  loadDashboard()
+}
+
+function movePeriod(delta: number) {
+  if (delta > 0 && !canGoNext.value) return
+  anchor.value = shiftPeriod(periodType.value, anchor.value, delta)
+  loadDashboard()
+}
 
 const tabs = [
   { key: 'manager' as const, label: () => t('kpi.dashboard.managerView') },
@@ -47,16 +64,26 @@ function rankClass(rank: number) {
   return 'bg-gray-100 text-gray-600'
 }
 
+// Backend `periodType` bilmez; seçilen dönem tipinden periodStart/periodEnd hesaplanır.
+async function loadRanking() {
+  if (!kpiCode.value) { kpiStore.ranking = []; return }
+  await kpiStore.fetchRanking({ kpiCode: kpiCode.value, ...periodRange(periodType.value, anchor.value) })
+}
+
 async function loadDashboard() {
-  const q = { periodType: periodType.value }
+  const q = periodRange(periodType.value, anchor.value)
   await Promise.all([
     kpiStore.fetchManagerDashboard(q),
     kpiStore.fetchExecutiveDashboard(q),
-    kpiStore.fetchRanking({}),
+    loadRanking(),
   ])
 }
 
-onMounted(loadDashboard)
+onMounted(async () => {
+  await kpiStore.fetchDefinitions({ page: 1, pageSize: 200, isActive: true })
+  kpiCode.value = kpiStore.definitions.items[0]?.code ?? ''
+  await loadDashboard()
+})
 </script>
 
 <template>
@@ -65,12 +92,28 @@ onMounted(loadDashboard)
       <select
         v-model="periodType"
         class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
-        @change="loadDashboard"
+        @change="onPeriodTypeChange"
       >
         <option value="Monthly">{{ t('kpi.period.monthly') }}</option>
         <option value="Quarterly">{{ t('kpi.period.quarterly') }}</option>
         <option value="Annual">{{ t('kpi.period.annual') }}</option>
       </select>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="h-9 w-9 rounded-lg border border-border hover:bg-accent"
+          :title="t('pagination.previous')"
+          @click="movePeriod(-1)"
+        >‹</button>
+        <span class="min-w-28 text-center text-sm font-medium text-foreground">{{ currentPeriodLabel }}</span>
+        <button
+          type="button"
+          class="h-9 w-9 rounded-lg border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
+          :title="t('pagination.next')"
+          :disabled="!canGoNext"
+          @click="movePeriod(1)"
+        >›</button>
+      </div>
     </PageHeader>
 
     <div class="flex gap-1 mb-6 border-b border-border">
@@ -183,7 +226,16 @@ onMounted(loadDashboard)
 
     <!-- Ranking -->
     <div v-else-if="tab === 'ranking'">
-      <h3 class="font-semibold text-foreground mb-3">{{ t('kpi.dashboard.ranking') }}</h3>
+      <div class="flex items-center justify-between mb-3 gap-3">
+        <h3 class="font-semibold text-foreground">{{ t('kpi.dashboard.ranking') }}</h3>
+        <select
+          v-model="kpiCode"
+          class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          @change="loadRanking"
+        >
+          <option v-for="d in kpiStore.definitions.items" :key="d.code" :value="d.code">{{ d.name }}</option>
+        </select>
+      </div>
       <DataTable
           :columns="rankingColumns"
           :rows="kpiStore.ranking"
