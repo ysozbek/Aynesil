@@ -21,7 +21,6 @@ public static class DependencyInjection
 
         Common.Validation.ValidationLocalization.Configure();
         services.AddValidatorsFromAssembly(assembly);
-        services.AddAutoMapper(assembly);
 
         return services;
     }

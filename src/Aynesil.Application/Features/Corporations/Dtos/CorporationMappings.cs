@@ -4,7 +4,7 @@ namespace Aynesil.Application.Features.Corporations.Dtos;
 
 /// <summary>
 /// Extension methods that project Corporation domain entities to DTOs.
-/// Kept close to the DTOs to avoid a separate AutoMapper profile for this straightforward mapping.
+/// Kept close to the DTOs for this straightforward mapping.
 /// </summary>
 internal static class CorporationMappings
 {

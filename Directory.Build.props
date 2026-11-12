@@ -16,4 +16,13 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
+
+  <!-- NuGet denetimi: doğrudan referans verilen bir pakette yüksek/kritik bilinen açık derlemeyi kırar.
+       Geçişli paketler şimdilik yalnızca uyarı (all moduna geçmek için önce Hangfire/Testcontainers kaynaklı
+       Newtonsoft.Json, System.Text.Encodings.Web ve SSH.NET sürümlerinin sabitlenmesi gerekir). -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
 </Project>

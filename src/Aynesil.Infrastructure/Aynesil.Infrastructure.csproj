@@ -32,9 +32,6 @@
     <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
 
-    <!-- Email -->
-    <PackageReference Include="MailKit" Version="4.10.0" />
-
     <!-- File storage -->
     <PackageReference Include="AWSSDK.S3" Version="3.7.414.1" />
 
