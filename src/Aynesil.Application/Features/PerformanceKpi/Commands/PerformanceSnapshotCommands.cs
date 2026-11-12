@@ -27,7 +27,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Commands;
 ///   2. core.kpi_value (upsert by kpi_id + subject + period) for each metric
 /// </summary>
 public record ComputePerformanceSnapshotCommand(
-    Guid CorporationId,
     Guid EducatorId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<EducatorPerformanceSnapshotDto>;
@@ -37,7 +36,6 @@ public class ComputePerformanceSnapshotCommandValidator
 {
     public ComputePerformanceSnapshotCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.PeriodStart).NotEmpty();
         RuleFor(x => x.PeriodEnd).NotEmpty()
@@ -50,16 +48,23 @@ public sealed class ComputePerformanceSnapshotCommandHandler
     : IRequestHandler<ComputePerformanceSnapshotCommand, EducatorPerformanceSnapshotDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public ComputePerformanceSnapshotCommandHandler(IAppDbContext db) => _db = db;
+    public ComputePerformanceSnapshotCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<EducatorPerformanceSnapshotDto> Handle(
         ComputePerformanceSnapshotCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var educator = await _db.Educators
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == req.EducatorId
-                                   && e.CorporationId == req.CorporationId
+                                   && e.CorporationId == corporationId
                                    && e.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException(
                 $"Educator {req.EducatorId} not found in this corporation.");
@@ -77,7 +82,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
             from se in _db.SessionEducators
             join s in _db.Sessions on se.SessionId equals s.Id
             where se.EducatorId == req.EducatorId
-               && s.CorporationId == req.CorporationId
+               && s.CorporationId == corporationId
                && s.StartsAt >= periodFrom && s.StartsAt <= periodTo
                && s.DeletedAt == null
             select new { s.Id, s.Status }
@@ -134,7 +139,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
         var feedbackRatings = await _db.ParentFeedbacks
             .AsNoTracking()
             .Where(pf => pf.EducatorId == req.EducatorId
-                      && pf.CorporationId == req.CorporationId
+                      && pf.CorporationId == corporationId
                       && pf.CreatedAt >= periodFrom && pf.CreatedAt <= periodTo
                       && pf.Rating.HasValue)
             .Select(pf => (decimal)pf.Rating!.Value)
@@ -180,7 +185,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
 
         // ── 8. Upsert educator_performance_snapshot ───────────────────────────
         var existing = await _db.EducatorPerformanceSnapshots
-            .FirstOrDefaultAsync(s => s.EducatorId == req.EducatorId
+            .FirstOrDefaultAsync(s => s.CorporationId == corporationId && s.EducatorId == req.EducatorId
                                    && s.PeriodStart == req.PeriodStart
                                    && s.PeriodEnd == req.PeriodEnd, ct);
 
@@ -194,7 +199,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
         else
         {
             snapshot = EducatorPerformanceSnapshot.Compute(
-                req.CorporationId, req.EducatorId,
+                corporationId, req.EducatorId,
                 req.PeriodStart, req.PeriodEnd,
                 sessionCount, attendanceRate, goalAchievementRate,
                 parentFeedbackAvg, utilizationRate, detail);
@@ -205,7 +210,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
         var kpiDefs = await _db.KpiDefinitions
             .AsNoTracking()
             .Where(k => k.IsActive
-                     && (k.CorporationId == null || k.CorporationId == req.CorporationId)
+                     && (k.CorporationId == null || k.CorporationId == corporationId)
                      && k.Code.StartsWith("educator."))
             .ToDictionaryAsync(k => k.Code, ct);
 
@@ -225,7 +230,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
 
             var kpiValue = await _db.KpiValues
                 .FirstOrDefaultAsync(kv =>
-                    kv.CorporationId == req.CorporationId
+                    kv.CorporationId == corporationId
                  && kv.KpiId == kpiDef.Id
                  && kv.SubjectType == "educator"
                  && kv.SubjectId == req.EducatorId
@@ -243,7 +248,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
             {
                 _db.KpiValues.Add(new KpiValue
                 {
-                    CorporationId = req.CorporationId,
+                    CorporationId = corporationId,
                     KpiId         = kpiDef.Id,
                     SubjectType   = "educator",
                     SubjectId     = req.EducatorId,
@@ -276,7 +281,6 @@ public sealed class ComputePerformanceSnapshotCommandHandler
 /// Returns the count of successfully computed snapshots.
 /// </summary>
 public record BulkComputeSnapshotsCommand(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<int>;
 
@@ -285,7 +289,6 @@ public class BulkComputeSnapshotsCommandValidator
 {
     public BulkComputeSnapshotsCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.PeriodStart).NotEmpty();
         RuleFor(x => x.PeriodEnd).NotEmpty()
             .GreaterThan(x => x.PeriodStart)
@@ -297,19 +300,23 @@ public sealed class BulkComputeSnapshotsCommandHandler
     : IRequestHandler<BulkComputeSnapshotsCommand, int>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ISender _sender;
 
-    public BulkComputeSnapshotsCommandHandler(IAppDbContext db, ISender sender)
+    public BulkComputeSnapshotsCommandHandler(IAppDbContext db, ISender sender, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db     = db;
         _sender = sender;
     }
 
     public async Task<int> Handle(BulkComputeSnapshotsCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var educatorIds = await _db.Educators
             .AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId
+            .Where(e => e.CorporationId == corporationId
                      && e.IsActive
                      && e.DeletedAt == null)
             .Select(e => e.Id)
@@ -321,7 +328,7 @@ public sealed class BulkComputeSnapshotsCommandHandler
             try
             {
                 await _sender.Send(new ComputePerformanceSnapshotCommand(
-                    req.CorporationId, educatorId,
+                    educatorId,
                     req.PeriodStart, req.PeriodEnd), ct);
                 success++;
             }

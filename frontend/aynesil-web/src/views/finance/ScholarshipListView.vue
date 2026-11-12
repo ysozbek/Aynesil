@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { financeService } from '@/services/finance.service'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -14,11 +13,9 @@ import type { PaginatedResult as PR } from '@/types/api.types'
 import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const scholarshipTypes = ref<RefValueItem[]>([])
 
 const list = ref<PR<ScholarshipListItemDto>>({ items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false })
@@ -26,7 +23,6 @@ const loading = ref(false)
 const saving = ref(false)
 
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   scholarshipTypeId: '',
   page: 1,
@@ -52,7 +48,6 @@ async function loadList() {
   try {
     const res = await financeService.listScholarships({
       ...query,
-      corporationId: corporationId.value,
       studentId: query.studentId || undefined,
       scholarshipTypeId: query.scholarshipTypeId || undefined,
     })
@@ -66,7 +61,6 @@ async function submitForm() {
   saving.value = true
   try {
     await financeService.createScholarship({
-      corporationId: corporationId.value,
       studentId: formData.studentId,
       scholarshipTypeId: formData.scholarshipTypeId,
       percentage: formData.percentage ? Number(formData.percentage) : undefined,

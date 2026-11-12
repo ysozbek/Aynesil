@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Goals.Commands;
 // ── CreateGoalLibraryCommand ──────────────────────────────────────────────────
 
 public record CreateGoalLibraryCommand(
-    Guid? CorporationId,
     string Name,
     string? Description) : IRequest<GoalLibraryDto>;
 
@@ -26,12 +25,19 @@ public sealed class CreateGoalLibraryCommandHandler
     : IRequestHandler<CreateGoalLibraryCommand, GoalLibraryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateGoalLibraryCommandHandler(IAppDbContext db) => _db = db;
+    public CreateGoalLibraryCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<GoalLibraryDto> Handle(CreateGoalLibraryCommand req, CancellationToken ct)
     {
-        var library = GoalLibrary.Create(req.CorporationId, req.Name, req.Description);
+        var corporationId = _tenant.RequireCorporationId();
+
+        var library = GoalLibrary.Create(corporationId, req.Name, req.Description);
 
         _db.GoalLibraries.Add(library);
         await _db.SaveChangesAsync(ct);

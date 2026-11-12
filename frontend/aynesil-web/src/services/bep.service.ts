@@ -67,9 +67,9 @@ export const bepService = {
   getPlan: (id: string) =>
     apiService.get<EducationPlanDto>(`/education-plans/${id}`),
 
-  getGuardianVisiblePlan: (corporationId: string, studentId: string) =>
+  getGuardianVisiblePlan: (studentId: string) =>
     apiService.get<EducationPlanDto>(
-      `/education-plans/guardian-visible?corporationId=${corporationId}&studentId=${studentId}`
+      `/education-plans/guardian-visible?studentId=${studentId}`
     ),
 
   // ── Education Plans — CRUD ──────────────────────────────────────────────────
@@ -124,13 +124,13 @@ export const bepService = {
 
   // ── Reports ─────────────────────────────────────────────────────────────────
 
-  getStudentGoalSummaryReport: (corporationId: string, studentId: string) =>
+  getStudentGoalSummaryReport: (studentId: string) =>
     apiService.get<StudentGoalSummaryReportDto>(
-      `/education-plans/reports/student-summary?corporationId=${corporationId}&studentId=${studentId}`
+      `/education-plans/reports/student-summary?studentId=${studentId}`
     ),
 
-  getTrendReport: (corporationId: string, studentId: string, from?: string, to?: string) =>
+  getTrendReport: (studentId: string, from?: string, to?: string) =>
     apiService.get<TrendReportRowDto[]>(
-      `/education-plans/reports/trend${qs({ corporationId, studentId, from, to })}`
+      `/education-plans/reports/trend${qs({ studentId, from, to })}`
     ),
 }

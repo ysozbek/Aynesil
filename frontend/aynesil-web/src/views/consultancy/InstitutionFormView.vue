@@ -3,7 +3,6 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import type { RefValueItem } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -12,7 +11,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const authStore = useAuthStore()
 const refDataStore = useRefDataStore()
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
@@ -31,7 +29,6 @@ const form = reactive({
 
 async function handleSubmit() {
   errorMsg.value = ''
-  const corp = authStore.user?.corporationId ?? ''
   try {
     const payload = {
       name: form.name,
@@ -48,7 +45,7 @@ async function handleSubmit() {
       await consultancyStore.updateInstitution(id, { ...payload, rowVersion: cur.rowVersion })
       router.push(`/consultancy/institutions/${id}`)
     } else {
-      const result = await consultancyStore.createInstitution({ ...payload, corporationId: corp })
+      const result = await consultancyStore.createInstitution({ ...payload })
       router.push(`/consultancy/institutions/${result.id}`)
     }
   } catch (e: unknown) {

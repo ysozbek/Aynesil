@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useBepStore } from '@/stores/bep.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -11,11 +10,9 @@ import StudentPicker from '@/components/pickers/StudentPicker.vue'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const auth = useAuthStore()
 const goalStore = useGoalStore()
 const bepStore = useBepStore()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
 const loading = ref(false)
@@ -31,9 +28,9 @@ async function loadStudentData() {
   loading.value = true
   try {
     await Promise.all([
-      goalStore.fetchStudentSummary(corporationId.value, loadedStudentId.value),
-      goalStore.fetchSuccessRates({ corporationId: corporationId.value }),
-      bepStore.fetchTrendReport(corporationId.value, loadedStudentId.value),
+      goalStore.fetchStudentSummary(loadedStudentId.value),
+      goalStore.fetchSuccessRates({}),
+      bepStore.fetchTrendReport(loadedStudentId.value),
     ])
   } finally {
     loading.value = false

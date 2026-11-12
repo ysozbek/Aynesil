@@ -24,7 +24,6 @@ public sealed class LeadsController : BaseController
     [HasPermission(Permissions.Leads.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<LeadListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? statusId = null,
         [FromQuery] Guid? pipelineStageId = null,
@@ -41,7 +40,6 @@ public sealed class LeadsController : BaseController
     {
         var result = await Sender.Send(new GetLeadsQuery
         {
-            CorporationId = corporationId,
             CampusId = campusId,
             StatusId = statusId,
             PipelineStageId = pipelineStageId,
@@ -78,11 +76,10 @@ public sealed class LeadsController : BaseController
     [HasPermission(Permissions.Leads.Read)]
     [ProducesResponseType(typeof(ApiResponse<PipelineSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPipelineSummary(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid? campusId = null,
         CancellationToken ct = default)
     {
-        var result = await Sender.Send(new GetPipelineSummaryQuery(corporationId, campusId), ct);
+        var result = await Sender.Send(new GetPipelineSummaryQuery(campusId), ct);
         return OkResult(result);
     }
 
@@ -94,7 +91,6 @@ public sealed class LeadsController : BaseController
     [HasPermission(Permissions.Leads.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<LeadActivityDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFollowUpsDue(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid? campusId = null,
         [FromQuery] DateTimeOffset? dueBy = null,
         [FromQuery] int page = 1,
@@ -103,7 +99,6 @@ public sealed class LeadsController : BaseController
     {
         var result = await Sender.Send(new GetFollowUpsDueQuery
         {
-            CorporationId = corporationId,
             CampusId = campusId,
             DueBy = dueBy,
             Page = page,
@@ -121,13 +116,12 @@ public sealed class LeadsController : BaseController
     [HasPermission(Permissions.Leads.Read)]
     [ProducesResponseType(typeof(ApiResponse<ConversionReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetConversionReport(
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         [FromQuery] Guid? campusId = null,
         CancellationToken ct = default)
     {
-        var result = await Sender.Send(new GetConversionReportQuery(corporationId, from, to, campusId), ct);
+        var result = await Sender.Send(new GetConversionReportQuery(from, to, campusId), ct);
         return OkResult(result);
     }
 
@@ -177,7 +171,7 @@ public sealed class LeadsController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateLeadRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateLeadCommand(
-            req.CorporationId, req.ContactName, req.CampusId,
+            req.ContactName, req.CampusId,
             req.SourceId, req.StatusId, req.PipelineStageId,
             req.ChildName, req.ChildBirthDate,
             req.ContactPhone, req.ContactEmail,
@@ -290,7 +284,6 @@ public sealed class LeadsController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateLeadRequest(
-    Guid CorporationId,
     string ContactName,
     Guid? CampusId,
     Guid? SourceId,

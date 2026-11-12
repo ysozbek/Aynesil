@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { financeService } from '@/services/finance.service'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -13,16 +12,13 @@ import type { PromotionListItemDto } from '@/types/finance.types'
 import type { PaginatedResult } from '@/types/api.types'
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const { can } = usePermission()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const list = ref<PaginatedResult<PromotionListItemDto>>({ items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false })
 const loading = ref(false)
 const saving = ref(false)
 
-const query = reactive({ corporationId: corporationId.value, isActive: '' as '' | 'true' | 'false', page: 1, pageSize: 20 })
+const query = reactive({ isActive: '' as '' | 'true' | 'false', page: 1, pageSize: 20 })
 const showForm = ref(false)
 const editTarget = ref<PromotionListItemDto | null>(null)
 const formData = reactive({
@@ -38,7 +34,6 @@ async function loadList() {
   try {
     const res = await financeService.listPromotions({
       ...query,
-      corporationId: corporationId.value,
       isActive: query.isActive === 'true' ? true : query.isActive === 'false' ? false : undefined,
     })
     if (res.success && res.data) list.value = res.data
@@ -62,7 +57,7 @@ async function submitForm() {
       }
     } else {
       await financeService.createPromotion({
-        corporationId: corporationId.value, code: formData.code, name: formData.name,
+        code: formData.code, name: formData.name,
         value: formData.value, isPercentage: formData.isPercentage,
         maxRedemptions: formData.maxRedemptions ? Number(formData.maxRedemptions) : undefined,
         validFrom: formData.validFrom || undefined, validTo: formData.validTo || undefined,

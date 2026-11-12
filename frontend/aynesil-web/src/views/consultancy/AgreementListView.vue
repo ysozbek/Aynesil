@@ -3,7 +3,6 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -15,7 +14,6 @@ import type { ConsultancyAgreementListItemDto, AgreementListQuery } from '@/type
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
 const refDataStore = useRefDataStore()
 const { can } = usePermission()
 
@@ -24,7 +22,6 @@ const filters = reactive<AgreementListQuery>({
   pageSize: 20,
   status: '',
   agreementTypeId: '',
-  corporationId: authStore.user?.corporationId,
 })
 
 const agreementTypes = ref<Awaited<ReturnType<typeof refDataStore.getValues>>>([])

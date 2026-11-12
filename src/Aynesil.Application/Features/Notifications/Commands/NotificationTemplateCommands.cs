@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Notifications.Commands;
 // ── CreateNotificationTemplateCommand ─────────────────────────────────────────
 
 public record CreateNotificationTemplateCommand(
-    Guid? CorporationId,
     string Code,
     Guid? CategoryId,
     Guid? TypeId,
@@ -40,10 +39,12 @@ public sealed class CreateNotificationTemplateCommandHandler
     : IRequestHandler<CreateNotificationTemplateCommand, NotificationTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly IMediator _mediator;
 
-    public CreateNotificationTemplateCommandHandler(IAppDbContext db, IMediator mediator)
+    public CreateNotificationTemplateCommandHandler(IAppDbContext db, IMediator mediator, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _mediator = mediator;
     }
@@ -51,15 +52,17 @@ public sealed class CreateNotificationTemplateCommandHandler
     public async Task<NotificationTemplateDto> Handle(
         CreateNotificationTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var existing = await _db.NotificationTemplates.AnyAsync(
-            t => t.Code == req.Code && t.CorporationId == req.CorporationId, ct);
+            t => t.Code == req.Code && t.CorporationId == corporationId, ct);
         if (existing)
             throw new InvalidOperationException(
                 $"Notification template with code '{req.Code}' already exists for this corporation.");
 
         var template = new NotificationTemplate
         {
-            CorporationId = req.CorporationId,
+            CorporationId = corporationId,
             Code          = req.Code.Trim().ToLowerInvariant(),
             CategoryId    = req.CategoryId,
             TypeId        = req.TypeId,

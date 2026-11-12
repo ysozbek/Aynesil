@@ -3,14 +3,12 @@ import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
 
 const isEdit = computed(() => !!route.params.id)
 const id = route.params.id as string | undefined
@@ -62,7 +60,6 @@ async function handleSubmit() {
       router.push(`/consultancy/follow-ups/${id}`)
     } else {
       const result = await store.createFollowUp({
-        corporationId: authStore.user?.corporationId ?? '',
         consultancyPlanId: planId,
         schoolVisitId: visitId,
         observationRecordId: observationId,

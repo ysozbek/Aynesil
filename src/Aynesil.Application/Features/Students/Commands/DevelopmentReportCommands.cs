@@ -13,7 +13,6 @@ public record AddDevelopmentReportCommand(
     Guid StudentId,
     string? PeriodLabel,
     DateOnly? ReportDate,
-    Guid? AuthoredBy,
     string? Content,
     Guid? FileId) : IRequest<DevelopmentReportDto>;
 
@@ -52,7 +51,7 @@ public sealed class AddDevelopmentReportCommandHandler
             StudentId     = req.StudentId,
             PeriodLabel   = req.PeriodLabel,
             ReportDate    = req.ReportDate,
-            AuthoredBy    = req.AuthoredBy ?? _currentUser.UserId,
+            AuthoredBy    = _currentUser.UserId,
             Content       = req.Content,
             FileId        = req.FileId,
             CreatedAt     = DateTimeOffset.UtcNow,
@@ -73,7 +72,6 @@ public record UpdateDevelopmentReportCommand(
     Guid Id,
     string? PeriodLabel,
     DateOnly? ReportDate,
-    Guid? AuthoredBy,
     string? Content,
     Guid? FileId,
     int RowVersion) : IRequest<DevelopmentReportDto>;
@@ -92,8 +90,13 @@ public sealed class UpdateDevelopmentReportCommandHandler
     : IRequestHandler<UpdateDevelopmentReportCommand, DevelopmentReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateDevelopmentReportCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateDevelopmentReportCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<DevelopmentReportDto> Handle(UpdateDevelopmentReportCommand req, CancellationToken ct)
     {
@@ -106,7 +109,7 @@ public sealed class UpdateDevelopmentReportCommandHandler
 
         report.PeriodLabel = req.PeriodLabel;
         report.ReportDate  = req.ReportDate;
-        report.AuthoredBy  = req.AuthoredBy ?? report.AuthoredBy;
+        // AuthoredBy is set once at creation; editing does not change the author.
         report.Content     = req.Content;
         report.FileId      = req.FileId;
         report.UpdatedAt   = DateTimeOffset.UtcNow;

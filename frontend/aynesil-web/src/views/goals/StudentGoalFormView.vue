@@ -2,7 +2,6 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { goalService } from '@/services/goal.service'
@@ -16,7 +15,6 @@ import type { GoalTemplateListItemDto, StudentGoalListItemDto } from '@/types/go
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGoalStore()
 const refData = useRefDataStore()
 
@@ -30,7 +28,6 @@ const templateCache = new Map<string, GoalTemplateListItemDto>()
 const parentGoals = ref<StudentGoalListItemDto[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   studentId: typeof route.query.studentId === 'string' ? route.query.studentId : '',
   statement: '',
   horizon: 'long_term',
@@ -78,7 +75,6 @@ onMounted(async () => {
 
 async function searchTemplates(term: string): Promise<PickerOption[]> {
   const res = await goalService.listTemplates({
-    corporationId: form.corporationId,
     categoryId: form.categoryId || undefined,
     developmentAreaId: form.developmentAreaId || undefined,
     search: term || undefined,
@@ -105,7 +101,6 @@ watch(() => form.studentId, async (studentId) => {
   parentGoals.value = []
   if (!studentId || isEdit.value) return
   const res = await goalService.listStudentGoals({
-    corporationId: form.corporationId,
     studentId,
     horizon: 'long_term',
     page: 1,
@@ -152,7 +147,6 @@ async function submit() {
       router.push({ name: 'student-goal-detail', params: { id: id.value } })
     } else {
       const result = await store.createStudentGoal({
-        corporationId: form.corporationId,
         studentId: form.studentId,
         statement: form.statement,
         horizon: form.horizon,

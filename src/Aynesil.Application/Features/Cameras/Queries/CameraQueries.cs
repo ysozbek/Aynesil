@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Cameras.Queries;
 /// <summary>Paginated camera list. Filterable by campus, type, active status, and free-text.</summary>
 public class GetCamerasQuery : PagedQuery, IRequest<PaginatedResult<CameraListItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? CameraTypeId { get; set; }
     public bool? IsActive { get; set; }
@@ -21,14 +20,21 @@ public sealed class GetCamerasQueryHandler
     : IRequestHandler<GetCamerasQuery, PaginatedResult<CameraListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCamerasQueryHandler(IAppDbContext db) => _db = db;
+    public GetCamerasQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<CameraListItemDto>> Handle(
         GetCamerasQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Cameras.AsNoTracking()
-            .Where(c => c.CorporationId == req.CorporationId);
+            .Where(c => c.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             q = q.Where(c => c.CampusId == req.CampusId.Value);
@@ -218,7 +224,6 @@ public sealed class GetCameraAssignmentsQueryHandler
 public class GetViewingAuthorizationsQuery : PagedQuery,
     IRequest<PaginatedResult<ViewingAuthorizationDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? GuardianId { get; set; }
     public Guid? StudentId { get; set; }
     public Guid? SessionId { get; set; }
@@ -229,16 +234,23 @@ public sealed class GetViewingAuthorizationsQueryHandler
     : IRequestHandler<GetViewingAuthorizationsQuery, PaginatedResult<ViewingAuthorizationDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetViewingAuthorizationsQueryHandler(IAppDbContext db) => _db = db;
+    public GetViewingAuthorizationsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ViewingAuthorizationDto>> Handle(
         GetViewingAuthorizationsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var now = DateTimeOffset.UtcNow;
 
         var q = _db.ViewingAuthorizations.AsNoTracking()
-            .Where(a => a.CorporationId == req.CorporationId);
+            .Where(a => a.CorporationId == corporationId);
 
         if (req.GuardianId.HasValue)
             q = q.Where(a => a.GuardianId == req.GuardianId.Value);
@@ -348,7 +360,6 @@ public sealed class GetViewingAuthorizationQueryHandler
 /// </summary>
 public class GetViewingLogsQuery : PagedQuery, IRequest<PaginatedResult<ViewingLogDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? GuardianId { get; set; }
     public Guid? SessionId { get; set; }
     public Guid? CameraId { get; set; }
@@ -360,14 +371,21 @@ public sealed class GetViewingLogsQueryHandler
     : IRequestHandler<GetViewingLogsQuery, PaginatedResult<ViewingLogDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetViewingLogsQueryHandler(IAppDbContext db) => _db = db;
+    public GetViewingLogsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ViewingLogDto>> Handle(
         GetViewingLogsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ViewingLogs.AsNoTracking()
-            .Where(l => l.CorporationId == req.CorporationId);
+            .Where(l => l.CorporationId == corporationId);
 
         if (req.GuardianId.HasValue)
             q = q.Where(l => l.GuardianId == req.GuardianId.Value);

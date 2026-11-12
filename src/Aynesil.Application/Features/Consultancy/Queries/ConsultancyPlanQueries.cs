@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 public class GetConsultancyPlansQuery
     : PagedQuery, IRequest<PaginatedResult<ConsultancyPlanListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? Status { get; set; }
     public Guid? ConsultancyTypeId { get; set; }
@@ -21,16 +20,22 @@ public sealed class GetConsultancyPlansQueryHandler
     : IRequestHandler<GetConsultancyPlansQuery, PaginatedResult<ConsultancyPlanListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsultancyPlansQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsultancyPlansQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ConsultancyPlanListItemDto>> Handle(
         GetConsultancyPlansQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ConsultancyPlans.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.InstitutionId.HasValue)
             q = q.Where(p => p.InstitutionId == req.InstitutionId.Value);
         if (!string.IsNullOrWhiteSpace(req.Status))

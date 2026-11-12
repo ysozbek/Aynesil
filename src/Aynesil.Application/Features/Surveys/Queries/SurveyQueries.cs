@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Surveys.Queries;
 
 public class GetSurveysQuery : PagedQuery, IRequest<PaginatedResult<SurveyDefinitionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? TypeId { get; set; }
     public string? Target { get; set; }
     public bool? IsActive { get; set; }
@@ -20,17 +19,23 @@ public sealed class GetSurveysQueryHandler
     : IRequestHandler<GetSurveysQuery, PaginatedResult<SurveyDefinitionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSurveysQueryHandler(IAppDbContext db) => _db = db;
+    public GetSurveysQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<SurveyDefinitionListItemDto>> Handle(
         GetSurveysQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.SurveyDefinitions.AsNoTracking()
             .Where(s => s.DeletedAt == null);
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(s => s.CorporationId == req.CorporationId.Value);
+        q = q.Where(s => s.CorporationId == corporationId);
 
         if (req.TypeId.HasValue)
             q = q.Where(s => s.TypeId == req.TypeId.Value);

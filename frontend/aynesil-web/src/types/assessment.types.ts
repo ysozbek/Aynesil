@@ -136,7 +136,6 @@ export interface ProgramRecommendationDto {
 // ── Request payloads ───────────────────────────────────────────────────────────
 
 export interface CreateTemplatePayload {
-  corporationId?: string
   code: string
   name: string
   typeId?: string
@@ -187,7 +186,6 @@ export interface AddItemPayload {
 export interface UpdateItemPayload extends AddItemPayload {}
 
 export interface CreateSessionPayload {
-  corporationId: string
   templateId: string
   leadId?: string
   studentId?: string
@@ -216,7 +214,6 @@ export interface ResponseItemPayload {
 }
 
 export interface CreateReportPayload {
-  corporationId: string
   summary?: string
   findings?: string
   fileId?: string
@@ -236,7 +233,6 @@ export interface FinalizeReportPayload {
 }
 
 export interface CreateRecommendationPayload {
-  corporationId: string
   leadId?: string
   studentId?: string
   recommendedProgramId?: string
@@ -256,7 +252,6 @@ export interface UpdateRecommendationPayload {
 // ── Query types ────────────────────────────────────────────────────────────────
 
 export interface TemplateListQuery {
-  corporationId?: string
   typeId?: string
   categoryId?: string
   isActive?: boolean
@@ -268,7 +263,6 @@ export interface TemplateListQuery {
 }
 
 export interface SessionListQuery {
-  corporationId?: string
   campusId?: string
   templateId?: string
   status?: string

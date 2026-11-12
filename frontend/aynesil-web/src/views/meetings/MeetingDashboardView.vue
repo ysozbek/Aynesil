@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMeetingStore } from '@/stores/meeting.store'
 import { useFollowUpStore } from '@/stores/followUp.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import { meetingService } from '@/services/meeting.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -13,7 +12,6 @@ const { t } = useI18n()
 const router = useRouter()
 const store = useMeetingStore()
 const followUpStore = useFollowUpStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const scheduledCount = computed(() =>
@@ -92,7 +90,6 @@ onMounted(async () => {
   const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const to = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString().split('T')[0]
   await store.fetchMeetings({
-    corporationId: auth.user?.corporationId,
     page: 1,
     pageSize: 50,
     from,

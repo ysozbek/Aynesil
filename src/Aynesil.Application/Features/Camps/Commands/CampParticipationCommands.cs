@@ -10,12 +10,10 @@ namespace Aynesil.Application.Features.Camps.Commands;
 // ── RegisterParticipationCommand ──────────────────────────────────────────────
 
 public record RegisterParticipationCommand(
-    Guid CorporationId,
     Guid CampActivityId,
     Guid CampEnrollmentId,
     string Status = "registered",
-    string? Notes = null,
-    Guid? RecordedBy = null) : IRequest<CampActivityParticipationDto>;
+    string? Notes = null) : IRequest<CampActivityParticipationDto>;
 
 public class RegisterParticipationCommandValidator
     : AbstractValidator<RegisterParticipationCommand>
@@ -25,7 +23,6 @@ public class RegisterParticipationCommandValidator
 
     public RegisterParticipationCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampActivityId).NotEmpty();
         RuleFor(x => x.CampEnrollmentId).NotEmpty();
         RuleFor(x => x.Status)
@@ -38,20 +35,29 @@ public sealed class RegisterParticipationCommandHandler
     : IRequestHandler<RegisterParticipationCommand, CampActivityParticipationDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public RegisterParticipationCommandHandler(IAppDbContext db) => _db = db;
+    public RegisterParticipationCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampActivityParticipationDto> Handle(
         RegisterParticipationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var activity = await _db.CampActivities
-            .FirstOrDefaultAsync(a => a.Id == req.CampActivityId
+            .FirstOrDefaultAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId
                                    && a.DeletedAt == null
                                    && a.IsActive, ct)
             ?? throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
 
         var enrollment = await _db.CampEnrollments
-            .FirstOrDefaultAsync(e => e.Id == req.CampEnrollmentId
+            .FirstOrDefaultAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                                    && e.Status == "enrolled", ct)
             ?? throw new InvalidOperationException(
                 $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
@@ -61,7 +67,7 @@ public sealed class RegisterParticipationCommandHandler
                 "Enrollment and activity must belong to the same camp period.");
 
         var duplicate = await _db.CampActivityParticipations
-            .AnyAsync(p => p.CampActivityId == req.CampActivityId
+            .AnyAsync(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
                         && p.CampEnrollmentId == req.CampEnrollmentId, ct);
         if (duplicate)
             throw new InvalidOperationException(
@@ -70,15 +76,15 @@ public sealed class RegisterParticipationCommandHandler
         if (activity.Capacity.HasValue && req.Status is "registered" or "attended")
         {
             var count = await _db.CampActivityParticipations
-                .CountAsync(p => p.CampActivityId == req.CampActivityId
-                              && (p.Status == "registered" || p.Status == "attended"), ct);
+                .CountAsync(p => p.CorporationId == corporationId && (p.CampActivityId == req.CampActivityId
+                              && (p.Status == "registered" || p.Status == "attended")), ct);
             if (count >= activity.Capacity.Value)
                 throw new InvalidOperationException("Activity is at full capacity.");
         }
 
         var participation = CampActivityParticipation.Register(
-            req.CorporationId, req.CampActivityId, req.CampEnrollmentId,
-            req.Status, req.Notes, req.RecordedBy);
+            corporationId, req.CampActivityId, req.CampEnrollmentId,
+            req.Status, req.Notes, _currentUser.UserId);
 
         _db.CampActivityParticipations.Add(participation);
         await _db.SaveChangesAsync(ct);
@@ -96,8 +102,7 @@ public sealed class RegisterParticipationCommandHandler
 public record UpdateParticipationCommand(
     Guid Id,
     string Status,
-    string? Notes = null,
-    Guid? RecordedBy = null) : IRequest;
+    string? Notes = null) : IRequest;
 
 public class UpdateParticipationCommandValidator : AbstractValidator<UpdateParticipationCommand>
 {
@@ -116,8 +121,13 @@ public class UpdateParticipationCommandValidator : AbstractValidator<UpdateParti
 public sealed class UpdateParticipationCommandHandler : IRequestHandler<UpdateParticipationCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateParticipationCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateParticipationCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateParticipationCommand req, CancellationToken ct)
     {
@@ -125,7 +135,7 @@ public sealed class UpdateParticipationCommandHandler : IRequestHandler<UpdatePa
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Participation {req.Id} not found.");
 
-        participation.UpdateStatus(req.Status, req.Notes, req.RecordedBy);
+        participation.UpdateStatus(req.Status, req.Notes, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -135,10 +145,8 @@ public sealed class UpdateParticipationCommandHandler : IRequestHandler<UpdatePa
 public record BulkParticipationInput(Guid EnrollmentId, string Status, string? Notes);
 
 public record BulkRegisterParticipationCommand(
-    Guid CorporationId,
     Guid CampActivityId,
-    IReadOnlyList<BulkParticipationInput> Records,
-    Guid? RecordedBy = null) : IRequest<int>;
+    IReadOnlyList<BulkParticipationInput> Records) : IRequest<int>;
 
 public class BulkRegisterParticipationCommandValidator
     : AbstractValidator<BulkRegisterParticipationCommand>
@@ -148,7 +156,6 @@ public class BulkRegisterParticipationCommandValidator
 
     public BulkRegisterParticipationCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampActivityId).NotEmpty();
         RuleFor(x => x.Records).NotEmpty();
         RuleForEach(x => x.Records).ChildRules(r =>
@@ -165,19 +172,28 @@ public sealed class BulkRegisterParticipationCommandHandler
     : IRequestHandler<BulkRegisterParticipationCommand, int>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public BulkRegisterParticipationCommandHandler(IAppDbContext db) => _db = db;
+    public BulkRegisterParticipationCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<int> Handle(BulkRegisterParticipationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var activityExists = await _db.CampActivities
-            .AnyAsync(a => a.Id == req.CampActivityId && a.DeletedAt == null, ct);
+            .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId && a.DeletedAt == null, ct);
         if (!activityExists)
             throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
 
         var enrollmentIds = req.Records.Select(r => r.EnrollmentId).ToList();
         var existing = await _db.CampActivityParticipations
-            .Where(p => p.CampActivityId == req.CampActivityId
+            .Where(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
                      && enrollmentIds.Contains(p.CampEnrollmentId))
             .Select(p => p.CampEnrollmentId)
             .ToHashSetAsync(ct);
@@ -189,8 +205,8 @@ public sealed class BulkRegisterParticipationCommandHandler
                 continue;
 
             _db.CampActivityParticipations.Add(CampActivityParticipation.Register(
-                req.CorporationId, req.CampActivityId, record.EnrollmentId,
-                record.Status, record.Notes, req.RecordedBy));
+                corporationId, req.CampActivityId, record.EnrollmentId,
+                record.Status, record.Notes, _currentUser.UserId));
             added++;
         }
 

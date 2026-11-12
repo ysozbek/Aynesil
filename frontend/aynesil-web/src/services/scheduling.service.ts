@@ -83,9 +83,9 @@ export const schedulingService = {
 
   // ── Calendar Entries ───────────────────────────────────────────────────────
 
-  listCalendarEntries: (corporationId: string, campusId?: string, from?: string, to?: string) =>
+  listCalendarEntries: (campusId?: string, from?: string, to?: string) =>
     apiService.get<CalendarEntryDto[]>(
-      `/scheduling/calendar-entries${qs({ corporationId, campusId, from, to })}`
+      `/scheduling/calendar-entries${qs({ campusId, from, to })}`
     ),
 
   createCalendarEntry: (payload: CreateCalendarEntryPayload) =>
@@ -203,25 +203,14 @@ export const schedulingService = {
   bulkRecordAttendance: (sessionId: string, payload: BulkAttendancePayload) =>
     apiService.post<AttendanceDto[]>(`/scheduling/sessions/${sessionId}/attendance/bulk`, payload),
 
-  /**
-   * API requires `corporationId` on both student-attendance endpoints
-   * (`SchedulingController.cs` /scheduling/students/{id}/attendance[+/summary]).
-   */
-  getStudentAttendance: (
-    studentId: string,
-    corporationId: string,
-    query?: StudentAttendanceQuery
-  ) =>
+  getStudentAttendance: (studentId: string, query?: StudentAttendanceQuery) =>
     apiService.get<PaginatedResult<AttendanceDto>>(
-      `/scheduling/students/${studentId}/attendance${qs({
-        corporationId,
-        ...(query ?? {}),
-      } as Record<string, unknown>)}`
+      `/scheduling/students/${studentId}/attendance${qs((query ?? {}) as Record<string, unknown>)}`
     ),
 
-  getAttendanceSummary: (studentId: string, corporationId: string) =>
+  getAttendanceSummary: (studentId: string) =>
     apiService.get<AttendanceSummaryDto>(
-      `/scheduling/students/${studentId}/attendance/summary${qs({ corporationId })}`
+      `/scheduling/students/${studentId}/attendance/summary`
     ),
 
   // ── Makeup Requests ────────────────────────────────────────────────────────
@@ -252,16 +241,15 @@ export const schedulingService = {
   // ── Calendar Views ─────────────────────────────────────────────────────────
   // School + campus return `CalendarViewDto` ({ sessions, entries }).
   // Room / educator / student return `SessionListItemDto[]`.
-  // Campus / educator / student all require `corporationId`.
 
-  getSchoolCalendar: (corporationId: string, query: CalendarQuery) =>
+  getSchoolCalendar: (query: CalendarQuery) =>
     apiService.get<CalendarViewDto>(
-      `/scheduling/calendar/school${qs({ corporationId, ...query })}`
+      `/scheduling/calendar/school${qs({ ...query })}`
     ),
 
-  getCampusCalendar: (campusId: string, corporationId: string, query: CalendarQuery) =>
+  getCampusCalendar: (campusId: string, query: CalendarQuery) =>
     apiService.get<CalendarViewDto>(
-      `/scheduling/calendar/campus/${campusId}${qs({ corporationId, ...query })}`
+      `/scheduling/calendar/campus/${campusId}${qs({ ...query })}`
     ),
 
   getRoomCalendar: (roomId: string, query: CalendarQuery) =>
@@ -269,13 +257,13 @@ export const schedulingService = {
       `/scheduling/calendar/room/${roomId}${qs(query)}`
     ),
 
-  getEducatorCalendar: (educatorId: string, corporationId: string, query: CalendarQuery) =>
+  getEducatorCalendar: (educatorId: string, query: CalendarQuery) =>
     apiService.get<SessionListItemDto[]>(
-      `/scheduling/calendar/educator/${educatorId}${qs({ corporationId, ...query })}`
+      `/scheduling/calendar/educator/${educatorId}${qs({ ...query })}`
     ),
 
-  getStudentCalendar: (studentId: string, corporationId: string, query: CalendarQuery) =>
+  getStudentCalendar: (studentId: string, query: CalendarQuery) =>
     apiService.get<SessionListItemDto[]>(
-      `/scheduling/calendar/student/${studentId}${qs({ corporationId, ...query })}`
+      `/scheduling/calendar/student/${studentId}${qs({ ...query })}`
     ),
 }

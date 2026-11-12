@@ -3,7 +3,6 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,7 +14,6 @@ import type { FollowUpActivityListItemDto } from '@/types/consultancy.types'
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 const showCreateModal = ref(false)
 
@@ -24,7 +22,6 @@ const filters = reactive({
   pageSize: 20,
   status: '',
   overdueOnly: false,
-  corporationId: authStore.user?.corporationId,
 })
 
 const createForm = reactive({
@@ -104,7 +101,6 @@ async function doComplete() {
 async function doCreate() {
   if (!createForm.title.trim()) return
   await store.createFollowUp({
-    corporationId: authStore.user?.corporationId ?? '',
     title: createForm.title,
     description: createForm.description || undefined,
     dueDate: createForm.dueDate || undefined,

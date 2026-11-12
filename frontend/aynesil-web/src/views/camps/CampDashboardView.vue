@@ -139,5 +139,5 @@ const totalEnrolled = computed(() => campStore.campList.items.reduce((acc, c) =>
 }, 0))
 const totalPeriods = computed(() => campStore.campList.items.reduce((acc, c) => acc + c.periodCount, 0))
 
-onMounted(() => campStore.fetchCamps({ corporationId: authStore.user?.corporationId, pageSize: 50 }))
+onMounted(() => campStore.fetchCamps({ pageSize: 50 }))
 </script>

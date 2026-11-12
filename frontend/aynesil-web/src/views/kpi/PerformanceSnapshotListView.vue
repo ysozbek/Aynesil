@@ -2,7 +2,6 @@
 import { reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -12,13 +11,11 @@ import type { EducatorPerformanceSnapshotListItemDto, SnapshotListQuery } from '
 
 const { t } = useI18n()
 const kpiStore = useKpiStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive<SnapshotListQuery>({
   page: 1,
   pageSize: 50,
-  corporationId: authStore.user?.corporationId,
   periodStart: '',
   periodEnd: '',
 })

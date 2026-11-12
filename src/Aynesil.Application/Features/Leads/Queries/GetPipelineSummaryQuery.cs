@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Leads.Queries;
 /// count of leads per pipeline stage + totals for converted and lost leads.
 /// </summary>
 public record GetPipelineSummaryQuery(
-    Guid CorporationId,
     Guid? CampusId) : IRequest<PipelineSummaryDto>;
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -19,12 +18,19 @@ public sealed class GetPipelineSummaryQueryHandler
     : IRequestHandler<GetPipelineSummaryQuery, PipelineSummaryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPipelineSummaryQueryHandler(IAppDbContext db) => _db = db;
+    public GetPipelineSummaryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PipelineSummaryDto> Handle(GetPipelineSummaryQuery req, CancellationToken ct)
     {
-        var leadsQuery = _db.Leads.Where(l => l.CorporationId == req.CorporationId);
+        var corporationId = _tenant.RequireCorporationId();
+
+        var leadsQuery = _db.Leads.Where(l => l.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             leadsQuery = leadsQuery.Where(l => l.CampusId == req.CampusId.Value);

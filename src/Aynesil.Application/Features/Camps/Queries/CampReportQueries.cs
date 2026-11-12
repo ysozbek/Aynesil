@@ -75,7 +75,6 @@ public sealed class GetCampEnrollmentSummaryQueryHandler
 /// </summary>
 public class GetCampPerformanceQuery : IRequest<IReadOnlyList<CampPerformanceDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? CampTypeId { get; set; }
 }
@@ -84,14 +83,21 @@ public sealed class GetCampPerformanceQueryHandler
     : IRequestHandler<GetCampPerformanceQuery, IReadOnlyList<CampPerformanceDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCampPerformanceQueryHandler(IAppDbContext db) => _db = db;
+    public GetCampPerformanceQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<CampPerformanceDto>> Handle(
         GetCampPerformanceQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Camps.AsNoTracking()
-            .Where(c => c.CorporationId == req.CorporationId && c.DeletedAt == null);
+            .Where(c => c.CorporationId == corporationId && c.DeletedAt == null);
 
         if (req.CampusId.HasValue)
             q = q.Where(c => c.CampusId == req.CampusId.Value);

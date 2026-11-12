@@ -10,24 +10,28 @@ namespace Aynesil.Application.Features.Goals.Queries;
 
 public class GetGoalLibrariesQuery : PagedQuery, IRequest<PaginatedResult<GoalLibraryListItemDto>>
 {
-    /// <summary>Null returns platform + tenant libraries. Pass a specific ID to filter by tenant.</summary>
-    public Guid? CorporationId { get; set; }
 }
 
 public sealed class GetGoalLibrariesQueryHandler
     : IRequestHandler<GetGoalLibrariesQuery, PaginatedResult<GoalLibraryListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetGoalLibrariesQueryHandler(IAppDbContext db) => _db = db;
+    public GetGoalLibrariesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<GoalLibraryListItemDto>> Handle(
         GetGoalLibrariesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.GoalLibraries.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(l => l.CorporationId == null || l.CorporationId == req.CorporationId.Value);
+        q = q.Where(l => l.CorporationId == null || l.CorporationId == corporationId);
 
         if (!string.IsNullOrWhiteSpace(req.Search))
         {

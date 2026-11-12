@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Educators.Queries;
 
 public class GetEducatorsQuery : PagedQuery, IRequest<PaginatedResult<EducatorListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? TitleId { get; set; }
     public Guid? SpecialtyId { get; set; }
@@ -22,16 +21,22 @@ public sealed class GetEducatorsQueryHandler
     : IRequestHandler<GetEducatorsQuery, PaginatedResult<EducatorListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorsQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<EducatorListItemDto>> Handle(
         GetEducatorsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Educators.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(e => e.CorporationId == req.CorporationId.Value);
+        q = q.Where(e => e.CorporationId == corporationId);
         if (req.TitleId.HasValue)
             q = q.Where(e => e.TitleId == req.TitleId.Value);
         if (req.IsActive.HasValue)
@@ -168,7 +173,6 @@ public sealed class GetEducatorAvailabilityQueryHandler
 /// </summary>
 public class GetEducatorUtilizationQuery : IRequest<IReadOnlyList<EducatorUtilizationDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public bool ActiveOnly { get; set; } = true;
 }
@@ -177,14 +181,21 @@ public sealed class GetEducatorUtilizationQueryHandler
     : IRequestHandler<GetEducatorUtilizationQuery, IReadOnlyList<EducatorUtilizationDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorUtilizationQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorUtilizationQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<EducatorUtilizationDto>> Handle(
         GetEducatorUtilizationQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Educators.AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId);
+            .Where(e => e.CorporationId == corporationId);
 
         if (req.ActiveOnly)
             q = q.Where(e => e.IsActive);

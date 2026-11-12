@@ -3,7 +3,6 @@ import { computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,7 +13,6 @@ import type { OpenFollowUpReportItemDto } from '@/types/consultancy.types'
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 
 const completeModal = reactive({ show: false, followUpId: '', notes: '' })
@@ -74,7 +72,7 @@ async function doComplete() {
 }
 
 async function reload() {
-  await store.fetchOpenFollowUps({ corporationId: authStore.user?.corporationId })
+  await store.fetchOpenFollowUps({})
 }
 
 onMounted(reload)

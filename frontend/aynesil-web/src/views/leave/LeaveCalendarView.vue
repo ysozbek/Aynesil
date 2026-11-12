@@ -3,13 +3,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const leaveStore = useLeaveStore()
-const auth = useAuthStore()
 
 const currentDate = ref(new Date())
 const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
@@ -50,7 +48,6 @@ async function fetchCalendar() {
   const from = new Date(year, month, 1).toISOString()
   const to = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
   await leaveStore.fetchCalendar({
-    corporationId: auth.user?.corporationId,
     from,
     to,
   })

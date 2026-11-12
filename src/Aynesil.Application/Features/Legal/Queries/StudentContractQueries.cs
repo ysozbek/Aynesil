@@ -8,7 +8,6 @@ namespace Aynesil.Application.Features.Legal.Queries;
 // ── GetStudentContractsQuery ──────────────────────────────────────────────────
 
 public record GetStudentContractsQuery(
-    Guid CorporationId,
     Guid? StudentId = null,
     Guid? GuardianId = null,
     string? Status = null,
@@ -20,15 +19,22 @@ public sealed class GetStudentContractsQueryHandler
     : IRequestHandler<GetStudentContractsQuery, PaginatedResult<StudentContractListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentContractsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentContractsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<StudentContractListItemDto>> Handle(
         GetStudentContractsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.StudentContracts
             .AsNoTracking()
-            .Where(c => c.CorporationId == req.CorporationId);
+            .Where(c => c.CorporationId == corporationId);
 
         if (req.StudentId.HasValue)   query = query.Where(c => c.StudentId == req.StudentId);
         if (req.GuardianId.HasValue)  query = query.Where(c => c.GuardianId == req.GuardianId);

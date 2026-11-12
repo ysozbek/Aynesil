@@ -10,20 +10,17 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── CreateConsultancyReportCommand ────────────────────────────────────────────
 
 public record CreateConsultancyReportCommand(
-    Guid CorporationId,
     string Title,
     Guid? ConsultancyPlanId,
     Guid? SchoolVisitId,
     string? Summary,
-    Guid? FileId,
-    Guid? AuthoredBy = null) : IRequest<ConsultancyReportDto>;
+    Guid? FileId) : IRequest<ConsultancyReportDto>;
 
 public class CreateConsultancyReportCommandValidator
     : AbstractValidator<CreateConsultancyReportCommand>
 {
     public CreateConsultancyReportCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
             .Must(x => x.ConsultancyPlanId.HasValue || x.SchoolVisitId.HasValue)
@@ -38,16 +35,25 @@ public sealed class CreateConsultancyReportCommandHandler
     : IRequestHandler<CreateConsultancyReportCommand, ConsultancyReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateConsultancyReportCommandHandler(IAppDbContext db) => _db = db;
+    public CreateConsultancyReportCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConsultancyReportDto> Handle(
         CreateConsultancyReportCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.ConsultancyPlanId.HasValue)
         {
             var planExists = await _db.ConsultancyPlans
-                .AnyAsync(p => p.Id == req.ConsultancyPlanId.Value, ct);
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value, ct);
             if (!planExists)
                 throw new KeyNotFoundException(
                     $"Consultancy plan {req.ConsultancyPlanId} not found.");
@@ -56,30 +62,30 @@ public sealed class CreateConsultancyReportCommandHandler
         if (req.SchoolVisitId.HasValue)
         {
             var visitExists = await _db.SchoolVisits
-                .AnyAsync(v => v.Id == req.SchoolVisitId.Value, ct);
+                .AnyAsync(v => v.CorporationId == corporationId && v.Id == req.SchoolVisitId.Value, ct);
             if (!visitExists)
                 throw new KeyNotFoundException(
                     $"School visit {req.SchoolVisitId} not found.");
         }
 
         var report = ConsultancyReport.Create(
-            req.CorporationId, req.Title,
+            corporationId, req.Title,
             req.ConsultancyPlanId, req.SchoolVisitId,
-            req.Summary, req.FileId, req.AuthoredBy);
+            req.Summary, req.FileId, _currentUser.UserId);
 
         _db.ConsultancyReports.Add(report);
         await _db.SaveChangesAsync(ct);
 
         var planName = req.ConsultancyPlanId.HasValue
             ? await _db.ConsultancyPlans.AsNoTracking()
-                .Where(p => p.Id == req.ConsultancyPlanId.Value)
+                .Where(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value)
                 .Select(p => p.Name)
                 .FirstOrDefaultAsync(ct)
             : null;
 
         DateOnly? visitDate = req.SchoolVisitId.HasValue
             ? await _db.SchoolVisits.AsNoTracking()
-                .Where(v => v.Id == req.SchoolVisitId.Value)
+                .Where(v => v.CorporationId == corporationId && v.Id == req.SchoolVisitId.Value)
                 .Select(v => v.VisitDate)
                 .FirstOrDefaultAsync(ct)
             : null;

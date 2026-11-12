@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePackageStore } from '@/stores/package.store'
 import { usePaymentStore } from '@/stores/payment.store'
 import { useInvoiceStore } from '@/stores/invoice.store'
@@ -13,13 +12,10 @@ import type { RevenueReportDto, PackageReportDto } from '@/types/finance.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const packageStore = usePackageStore()
 const paymentStore = usePaymentStore()
 const invoiceStore = useInvoiceStore()
 const { can } = usePermission()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const today = new Date()
 const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
@@ -38,8 +34,8 @@ const reportQuery = reactive({
 onMounted(async () => {
   await Promise.all([
     loadReports(),
-    paymentStore.fetchTransactions({ corporationId: corporationId.value, page: 1, pageSize: 5, status: 'pending' }),
-    invoiceStore.fetchInvoices({ corporationId: corporationId.value, page: 1, pageSize: 5, overdue: true }),
+    paymentStore.fetchTransactions({ page: 1, pageSize: 5, status: 'pending' }),
+    invoiceStore.fetchInvoices({ page: 1, pageSize: 5, overdue: true }),
   ])
 })
 
@@ -48,8 +44,8 @@ async function loadReports() {
   reportError.value = null
   try {
     const [rev, pkg] = await Promise.all([
-      financeService.getRevenueReport({ corporationId: corporationId.value, ...reportQuery }),
-      financeService.getPackageReport({ corporationId: corporationId.value, ...reportQuery }),
+      financeService.getRevenueReport({ ...reportQuery }),
+      financeService.getPackageReport({ ...reportQuery }),
     ])
     if (rev.success) revenueReport.value = rev.data ?? null
     if (pkg.success) packageReport.value = pkg.data ?? null

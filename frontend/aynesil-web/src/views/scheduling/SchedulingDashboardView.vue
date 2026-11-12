@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useMakeupSessionStore } from '@/stores/makeupSession.store'
 import { usePermission } from '@/composables/usePermission'
@@ -10,12 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const sessionStore = useSessionStore()
 const makeupStore = useMakeupSessionStore()
 const { can } = usePermission()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const todayStr = new Date().toISOString().slice(0, 10)
 const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
@@ -24,14 +20,12 @@ const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 onMounted(async () => {
   await Promise.all([
     sessionStore.fetchSessions({
-      corporationId: corporationId.value,
       from: todayStr,
       to: todayStr,
       page: 1,
       pageSize: 10,
     }),
     makeupStore.fetchMakeupRequests({
-      corporationId: corporationId.value,
       // Backend status token for "awaiting approval" is `requested`
       // (MakeupRequest domain + db/layer2_sped/06_scheduling.sql).
       status: 'requested',

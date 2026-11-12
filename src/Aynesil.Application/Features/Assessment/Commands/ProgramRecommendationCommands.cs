@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Assessment.Commands;
 // ── Create recommendation ─────────────────────────────────────────────────────
 
 public record CreateProgramRecommendationCommand(
-    Guid CorporationId,
     Guid? AssessmentSessionId,
     Guid? LeadId,
     Guid? StudentId,
@@ -24,7 +23,6 @@ public class CreateProgramRecommendationCommandValidator
 {
     public CreateProgramRecommendationCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.RecommendedIntensity).MaximumLength(200)
             .When(x => x.RecommendedIntensity is not null);
         RuleFor(x => x.Rationale).MaximumLength(2000)
@@ -36,10 +34,12 @@ public sealed class CreateProgramRecommendationCommandHandler
     : IRequestHandler<CreateProgramRecommendationCommand, ProgramRecommendationDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateProgramRecommendationCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateProgramRecommendationCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -47,8 +47,10 @@ public sealed class CreateProgramRecommendationCommandHandler
     public async Task<ProgramRecommendationDto> Handle(
         CreateProgramRecommendationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var recommendation = ProgramRecommendation.Create(
-            req.CorporationId,
+            corporationId,
             req.AssessmentSessionId,
             req.LeadId,
             req.StudentId,

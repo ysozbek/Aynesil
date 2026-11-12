@@ -15,7 +15,6 @@ namespace Aynesil.Application.Features.Assessment.Queries;
 /// </summary>
 public class GetAssessmentTemplatesQuery : PagedQuery, IRequest<PaginatedResult<AssessmentTemplateListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? TypeId { get; set; }
     public Guid? CategoryId { get; set; }
     public bool? IsActive { get; set; }
@@ -27,18 +26,24 @@ public sealed class GetAssessmentTemplatesQueryHandler
     : IRequestHandler<GetAssessmentTemplatesQuery, PaginatedResult<AssessmentTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetAssessmentTemplatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetAssessmentTemplatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<AssessmentTemplateListItemDto>> Handle(
         GetAssessmentTemplatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Filter on the entity first — EF cannot translate Where on projected DTOs
         // that embed collection aggregates (Sections.Count).
         var q = _db.AssessmentTemplates.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(t => t.CorporationId == null || t.CorporationId == req.CorporationId);
+        q = q.Where(t => t.CorporationId == null || t.CorporationId == corporationId);
 
         if (req.TypeId.HasValue)
             q = q.Where(t => t.TypeId == req.TypeId);

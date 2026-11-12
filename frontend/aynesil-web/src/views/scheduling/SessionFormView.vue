@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { campusService } from '@/services/campus.service'
@@ -16,13 +15,11 @@ import type { CampusListItemDto } from '@/types/campus.types'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useSessionStore()
 const refData = useRefDataStore()
 
 const sessionId = route.params.id as string | undefined
 const isEdit = !!sessionId
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const sessionTypes = ref<RefValueItem[]>([])
 const campuses = ref<CampusListItemDto[]>([])
@@ -90,7 +87,6 @@ async function submit() {
       router.push({ name: 'session-detail', params: { id: sessionId } })
     } else {
       const created = await store.createSession({
-        corporationId: corporationId.value,
         campusId: form.campusId || undefined,
         roomId: form.roomId || undefined,
         sessionTypeId: form.sessionTypeId,

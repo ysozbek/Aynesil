@@ -130,7 +130,6 @@ export interface EducatorUtilizationDto {
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export interface EducatorListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   titleId?: string
   specialtyId?: string
@@ -139,7 +138,6 @@ export interface EducatorListQuery extends PagedQuery {
 }
 
 export interface UtilizationQuery {
-  corporationId: string
   campusId?: string
   activeOnly?: boolean
 }
@@ -147,7 +145,6 @@ export interface UtilizationQuery {
 // ── Payloads ──────────────────────────────────────────────────────────────────
 
 export interface CreateEducatorPayload {
-  corporationId: string
   firstName: string
   lastName: string
   titleId: string | null

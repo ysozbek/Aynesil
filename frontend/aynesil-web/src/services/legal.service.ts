@@ -99,12 +99,12 @@ export const legalService = {
     apiService.post(`/legal/consents/${id}/evidence`, { fileId }),
 
   // ── Reports ────────────────────────────────────────────────────────────────
-  getContractReport: (query: { corporationId?: string } & Record<string, unknown>) =>
+  getContractReport: (query: Record<string, unknown>) =>
     apiService.get<ContractReportItemDto[]>(`/legal/reports/contracts${qs(query)}`),
 
-  getConsentReport: (query: { corporationId?: string } & Record<string, unknown>) =>
+  getConsentReport: (query: Record<string, unknown>) =>
     apiService.get<ConsentReportItemDto[]>(`/legal/reports/consents${qs(query)}`),
 
-  getSignatureReport: (query: { corporationId?: string } & Record<string, unknown>) =>
+  getSignatureReport: (query: Record<string, unknown>) =>
     apiService.get<SignatureReportItemDto[]>(`/legal/reports/signatures${qs(query)}`),
 }

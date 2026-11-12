@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 public class GetSchoolVisitsQuery
     : PagedQuery, IRequest<PaginatedResult<SchoolVisitListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? InstitutionId { get; set; }
     public Guid? ConsultancyPlanId { get; set; }
     public Guid? VisitorId { get; set; }
@@ -23,16 +22,22 @@ public sealed class GetSchoolVisitsQueryHandler
     : IRequestHandler<GetSchoolVisitsQuery, PaginatedResult<SchoolVisitListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSchoolVisitsQueryHandler(IAppDbContext db) => _db = db;
+    public GetSchoolVisitsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<SchoolVisitListItemDto>> Handle(
         GetSchoolVisitsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.SchoolVisits.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(v => v.CorporationId == req.CorporationId.Value);
+        q = q.Where(v => v.CorporationId == corporationId);
         if (req.InstitutionId.HasValue)
             q = q.Where(v => v.InstitutionId == req.InstitutionId.Value);
         if (req.ConsultancyPlanId.HasValue)

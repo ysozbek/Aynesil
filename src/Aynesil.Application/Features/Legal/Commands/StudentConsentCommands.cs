@@ -10,20 +10,17 @@ namespace Aynesil.Application.Features.Legal.Commands;
 // ── GrantConsentCommand ───────────────────────────────────────────────────────
 
 public record GrantConsentCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid? GuardianId,
     Guid? TemplateId,
     Guid? ConsentTypeId,
     DateOnly? ValidUntil,
-    Guid? EvidenceFileId,
-    Guid? CreatedBy = null) : IRequest<StudentConsentDto>;
+    Guid? EvidenceFileId) : IRequest<StudentConsentDto>;
 
 public class GrantConsentCommandValidator : AbstractValidator<GrantConsentCommand>
 {
     public GrantConsentCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x)
             .Must(x => x.TemplateId.HasValue || x.ConsentTypeId.HasValue)
@@ -35,13 +32,22 @@ public sealed class GrantConsentCommandHandler
     : IRequestHandler<GrantConsentCommand, StudentConsentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public GrantConsentCommandHandler(IAppDbContext db) => _db = db;
+    public GrantConsentCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<StudentConsentDto> Handle(GrantConsentCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var studentExists = await _db.Students
-            .AnyAsync(s => s.Id == req.StudentId && s.DeletedAt == null, ct);
+            .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId && s.DeletedAt == null, ct);
 
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
@@ -52,7 +58,7 @@ public sealed class GrantConsentCommandHandler
         if (req.TemplateId.HasValue)
         {
             var tpl = await _db.ConsentTemplates.AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == req.TemplateId.Value, ct)
+                .FirstOrDefaultAsync(t => t.CorporationId == corporationId && t.Id == req.TemplateId.Value, ct)
                 ?? throw new KeyNotFoundException($"Consent template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
@@ -64,11 +70,11 @@ public sealed class GrantConsentCommandHandler
         }
 
         var consent = StudentConsent.Grant(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.GuardianId,
             req.TemplateId, templateVersion,
             resolvedConsentTypeId,
-            req.ValidUntil, req.EvidenceFileId, req.CreatedBy);
+            req.ValidUntil, req.EvidenceFileId, _currentUser.UserId);
 
         _db.StudentConsents.Add(consent);
         await _db.SaveChangesAsync(ct);
@@ -114,13 +120,18 @@ public sealed class GrantConsentCommandHandler
 
 // ── WithdrawConsentCommand ────────────────────────────────────────────────────
 
-public record WithdrawConsentCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record WithdrawConsentCommand(Guid Id) : IRequest;
 
 public sealed class WithdrawConsentCommandHandler : IRequestHandler<WithdrawConsentCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public WithdrawConsentCommandHandler(IAppDbContext db) => _db = db;
+    public WithdrawConsentCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(WithdrawConsentCommand req, CancellationToken ct)
     {
@@ -128,7 +139,7 @@ public sealed class WithdrawConsentCommandHandler : IRequestHandler<WithdrawCons
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student consent {req.Id} not found.");
 
-        consent.Withdraw(req.UpdatedBy);
+        consent.Withdraw(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -137,8 +148,7 @@ public sealed class WithdrawConsentCommandHandler : IRequestHandler<WithdrawCons
 
 public record AttachConsentEvidenceCommand(
     Guid Id,
-    Guid EvidenceFileId,
-    Guid? UpdatedBy = null) : IRequest;
+    Guid EvidenceFileId) : IRequest;
 
 public class AttachConsentEvidenceCommandValidator
     : AbstractValidator<AttachConsentEvidenceCommand>
@@ -154,8 +164,13 @@ public sealed class AttachConsentEvidenceCommandHandler
     : IRequestHandler<AttachConsentEvidenceCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public AttachConsentEvidenceCommandHandler(IAppDbContext db) => _db = db;
+    public AttachConsentEvidenceCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(AttachConsentEvidenceCommand req, CancellationToken ct)
     {
@@ -169,7 +184,7 @@ public sealed class AttachConsentEvidenceCommandHandler
         if (!fileExists)
             throw new KeyNotFoundException($"File {req.EvidenceFileId} not found.");
 
-        consent.AttachEvidence(req.EvidenceFileId, req.UpdatedBy);
+        consent.AttachEvidence(req.EvidenceFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

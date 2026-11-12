@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetStudentPackagesQuery : PagedQuery, IRequest<PaginatedResult<StudentPackageListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public Guid? PackageDefinitionId { get; set; }
     public string? Status { get; set; }
@@ -20,15 +19,22 @@ public sealed class GetStudentPackagesQueryHandler
     : IRequestHandler<GetStudentPackagesQuery, PaginatedResult<StudentPackageListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentPackagesQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentPackagesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<StudentPackageListItemDto>> Handle(
         GetStudentPackagesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.StudentPackages.AsNoTracking();
 
-        if (req.CorporationId.HasValue)      q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.StudentId.HasValue)          q = q.Where(p => p.StudentId == req.StudentId.Value);
         if (req.PackageDefinitionId.HasValue) q = q.Where(p => p.PackageDefinitionId == req.PackageDefinitionId.Value);
         if (req.Status is not null)          q = q.Where(p => p.Status == req.Status);

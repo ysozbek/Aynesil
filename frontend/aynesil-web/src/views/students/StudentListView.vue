@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useStudentStore } from '@/stores/student.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -17,17 +16,14 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useStudentStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const statuses = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   statusId: '',
   page: 1,
@@ -59,7 +55,6 @@ onMounted(async () => {
 function buildQuery() {
   return {
     ...query,
-    corporationId: corporationId.value,
     campusId: query.campusId || undefined,
     statusId: query.statusId || undefined,
     search: query.search || undefined,

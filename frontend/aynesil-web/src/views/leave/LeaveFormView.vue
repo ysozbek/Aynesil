@@ -37,7 +37,6 @@ const form = reactive({
 
 async function handleSubmit() {
   errorMsg.value = ''
-  const corp = auth.user?.corporationId ?? ''
   if (!isEdit.value && !form.educatorId) {
     errorMsg.value = t('validation.required', { field: t('leave.fields.educator') })
     return
@@ -58,7 +57,6 @@ async function handleSubmit() {
       router.push({ name: 'leave-detail', params: { id } })
     } else {
       const result = await leaveStore.createLeave({
-        corporationId: corp,
         educatorId: form.educatorId,
         leaveTypeId: form.leaveTypeId || undefined,
         unit: form.unit,

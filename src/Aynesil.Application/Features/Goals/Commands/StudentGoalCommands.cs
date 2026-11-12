@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Goals.Commands;
 // ── CreateStudentGoalCommand ──────────────────────────────────────────────────
 
 public record CreateStudentGoalCommand(
-    Guid CorporationId,
     Guid StudentId,
     string Statement,
     string Horizon,
@@ -28,7 +27,6 @@ public class CreateStudentGoalCommandValidator : AbstractValidator<CreateStudent
 {
     public CreateStudentGoalCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Statement).NotEmpty().MaximumLength(2000);
         RuleFor(x => x.Horizon)
@@ -42,20 +40,25 @@ public sealed class CreateStudentGoalCommandHandler
     : IRequestHandler<CreateStudentGoalCommand, StudentGoalDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateStudentGoalCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateStudentGoalCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<StudentGoalDto> Handle(CreateStudentGoalCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.TemplateId.HasValue)
         {
             var templateExists = await _db.GoalTemplates.AnyAsync(
-                t => t.Id == req.TemplateId.Value, ct);
+                t => t.Id == req.TemplateId.Value
+                  && (t.CorporationId == null || t.CorporationId == corporationId), ct);
             if (!templateExists)
                 throw new KeyNotFoundException($"GoalTemplate {req.TemplateId} not found.");
         }
@@ -64,7 +67,7 @@ public sealed class CreateStudentGoalCommandHandler
         {
             var parentExists = await _db.StudentGoals.AnyAsync(
                 g => g.Id == req.ParentGoalId.Value
-                  && g.CorporationId == req.CorporationId
+                  && g.CorporationId == corporationId
                   && g.StudentId == req.StudentId
                   && g.Horizon == "long_term", ct);
             if (!parentExists)
@@ -73,7 +76,7 @@ public sealed class CreateStudentGoalCommandHandler
         }
 
         var goal = StudentGoal.Create(
-            req.CorporationId, req.StudentId, req.Statement, req.Horizon,
+            corporationId, req.StudentId, req.Statement, req.Horizon,
             req.TemplateId, req.CategoryId, req.DevelopmentAreaId,
             req.ParentGoalId, req.MasteryCriteria, req.Baseline,
             req.TargetValue, req.StartDate, req.TargetDate,

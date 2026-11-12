@@ -24,7 +24,6 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.Rooms.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<RoomListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRooms(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] bool? isVirtual = null,
         [FromQuery] bool? isActive = null,
@@ -37,7 +36,6 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(new GetRoomsQuery
         {
-            CorporationId = corporationId,
             CampusId      = campusId,
             IsVirtual     = isVirtual,
             IsActive      = isActive,
@@ -64,7 +62,7 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(
             new CreateRoomCommand(
-                req.CorporationId, req.Code, req.Name, req.Capacity,
+                req.Code, req.Name, req.Capacity,
                 req.IsVirtual, req.CampusId, req.RoomTypeId, req.MeetingUrl), ct);
         return CreatedResult(result, $"/api/scheduling/rooms/{result.Id}");
     }
@@ -104,13 +102,12 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CalendarEntryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCalendarEntries(
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         [FromQuery] Guid? campusId = null,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetCalendarEntriesQuery(corporationId, from, to, campusId), ct));
+            new GetCalendarEntriesQuery(from, to, campusId), ct));
 
     [HttpPost("calendar-entries")]
     [HasPermission(Permissions.Sessions.ManageCalendar)]
@@ -120,7 +117,7 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(
             new CreateCalendarEntryCommand(
-                req.CorporationId, req.Title, req.EntryType,
+                req.Title, req.EntryType,
                 req.StartsAt, req.EndsAt, req.IsAllDay, req.CampusId), ct);
         return CreatedResult(result, $"/api/scheduling/calendar-entries/{result.Id}");
     }
@@ -142,7 +139,6 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<RecurringScheduleListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecurringSchedules(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] int page = 1,
@@ -153,7 +149,6 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(new GetRecurringSchedulesQuery
         {
-            CorporationId = corporationId,
             CampusId      = campusId,
             IsActive      = isActive,
             Page          = page,
@@ -178,7 +173,7 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(
             new CreateRecurringScheduleCommand(
-                req.CorporationId, req.Frequency, req.StartTime, req.DurationMinutes,
+                req.Frequency, req.StartTime, req.DurationMinutes,
                 req.RangeStart, req.CampusId, req.StudentProgramId, req.SessionTypeId,
                 req.RoomId, req.IntervalCount, req.ByWeekday, req.ByMonthday,
                 req.RangeEnd, req.MaxOccurrences,
@@ -239,7 +234,6 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<SessionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSessions(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? roomId = null,
         [FromQuery] Guid? sessionTypeId = null,
@@ -257,7 +251,6 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(new GetSessionsQuery
         {
-            CorporationId       = corporationId,
             CampusId            = campusId,
             RoomId              = roomId,
             SessionTypeId       = sessionTypeId,
@@ -289,7 +282,7 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(
             new ScheduleSessionCommand(
-                req.CorporationId, req.SessionTypeId,
+                req.SessionTypeId,
                 req.StartsAt, req.EndsAt,
                 req.CampusId, req.RoomId, req.RecurringScheduleId,
                 req.ProgramServiceId, req.Title, req.IsMakeup,
@@ -471,7 +464,6 @@ public sealed class SchedulingController : BaseController
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<AttendanceDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentAttendance(
         Guid studentId,
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] string? status = null,
@@ -481,7 +473,6 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(new GetStudentAttendanceQuery
         {
-            CorporationId = corporationId,
             StudentId     = studentId,
             From          = from,
             To            = to,
@@ -497,12 +488,11 @@ public sealed class SchedulingController : BaseController
     [ProducesResponseType(typeof(ApiResponse<AttendanceSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAttendanceSummary(
         Guid studentId,
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetAttendanceSummaryQuery(corporationId, studentId, from, to), ct));
+            new GetAttendanceSummaryQuery(studentId, from, to), ct));
 
     // ══════════════════════════════════════════════════════════════════════════
     // MAKEUP REQUESTS
@@ -512,7 +502,6 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.MakeupRequests.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<MakeupRequestListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMakeupRequests(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] string? status = null,
         [FromQuery] int page = 1,
@@ -523,7 +512,6 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(new GetMakeupRequestsQuery
         {
-            CorporationId = corporationId,
             StudentId     = studentId,
             Status        = status,
             Page          = page,
@@ -548,7 +536,7 @@ public sealed class SchedulingController : BaseController
     {
         var result = await Sender.Send(
             new RequestMakeupCommand(
-                req.CorporationId, req.StudentId,
+                req.StudentId,
                 req.MissedSessionId, req.MissedReasonId,
                 req.Note, req.ExpiresOn), ct);
         return CreatedResult(result, $"/api/scheduling/makeup-requests/{result.Id}");
@@ -591,24 +579,22 @@ public sealed class SchedulingController : BaseController
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<CalendarViewDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSchoolCalendar(
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetSchoolCalendarQuery(corporationId, from, to), ct));
+            new GetSchoolCalendarQuery(from, to), ct));
 
     [HttpGet("calendar/campus/{campusId:guid}")]
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<CalendarViewDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCampusCalendar(
         Guid campusId,
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetCampusCalendarQuery(corporationId, campusId, from, to), ct));
+            new GetCampusCalendarQuery(campusId, from, to), ct));
 
     [HttpGet("calendar/room/{roomId:guid}")]
     [HasPermission(Permissions.Rooms.Read)]
@@ -625,31 +611,28 @@ public sealed class SchedulingController : BaseController
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<SessionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEducatorCalendar(
         Guid educatorId,
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetEducatorCalendarQuery(corporationId, educatorId, from, to), ct));
+            new GetEducatorCalendarQuery(educatorId, from, to), ct));
 
     [HttpGet("calendar/student/{studentId:guid}")]
     [HasPermission(Permissions.Sessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<SessionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentCalendar(
         Guid studentId,
-        [FromQuery] Guid corporationId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetStudentCalendarQuery(corporationId, studentId, from, to), ct));
+            new GetStudentCalendarQuery(studentId, from, to), ct));
 }
 
 // ── Request Records ───────────────────────────────────────────────────────────
 
 // Rooms
 public record CreateRoomRequest(
-    Guid CorporationId,
     string Code,
     string Name,
     int Capacity,
@@ -668,7 +651,6 @@ public record UpdateRoomRequest(
 
 // Calendar Entries
 public record CreateCalendarEntryRequest(
-    Guid CorporationId,
     string Title,
     string EntryType,
     DateTimeOffset StartsAt,
@@ -678,7 +660,6 @@ public record CreateCalendarEntryRequest(
 
 // Recurring Schedules
 public record CreateRecurringScheduleRequest(
-    Guid CorporationId,
     string Frequency,
     TimeOnly StartTime,
     int DurationMinutes,
@@ -707,7 +688,6 @@ public record BulkReassignRoomRequest(Guid? NewRoomId, DateOnly From);
 
 // Sessions
 public record ScheduleSessionRequest(
-    Guid CorporationId,
     Guid SessionTypeId,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
@@ -755,7 +735,6 @@ public record BulkRecordAttendanceRequest(List<BulkAttendanceEntry> Entries);
 
 // Makeup
 public record RequestMakeupRequest(
-    Guid CorporationId,
     Guid StudentId,
     Guid? MissedSessionId,
     Guid? MissedReasonId,

@@ -2,7 +2,6 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,7 +14,6 @@ import type { ViewingAuthorizationDto } from '@/types/camera.types'
 
 const { t } = useI18n()
 const cameraStore = useCameraStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const showCreateModal = ref(false)
@@ -56,7 +54,6 @@ function authStatusLabel(a: ViewingAuthorizationDto) {
 
 async function doFetch() {
   await cameraStore.fetchAuthorizations({
-    corporationId: auth.user?.corporationId,
     isRevoked: filters.isRevoked,
     isCurrentlyValid: filters.isCurrentlyValid,
   })

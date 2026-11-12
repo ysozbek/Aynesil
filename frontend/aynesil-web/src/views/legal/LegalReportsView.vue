@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
 import { useConsentStore } from '@/stores/consent.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
@@ -16,7 +15,6 @@ import type {
 const { t } = useI18n()
 const contractStore = useContractStore()
 const consentStore = useConsentStore()
-const auth = useAuthStore()
 const tab = ref<'contracts' | 'consents' | 'signatures'>('contracts')
 
 type ConsentReportRow = ConsentReportItemDto & { id: string } & Record<string, unknown>
@@ -76,8 +74,7 @@ function statusLabel(s: string) {
 }
 
 onMounted(async () => {
-  const corp = auth.user?.corporationId
-  const q = { corporationId: corp }
+  const q = {}
   await Promise.all([
     contractStore.fetchContractReport(q),
     consentStore.fetchConsentReport(q),

@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Assessment.Commands;
 // ── Request ───────────────────────────────────────────────────────────────────
 
 public record CreateAssessmentSessionCommand(
-    Guid CorporationId,
     Guid TemplateId,
     Guid? LeadId,
     Guid? StudentId,
@@ -25,7 +24,6 @@ public class CreateAssessmentSessionCommandValidator
 {
     public CreateAssessmentSessionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.TemplateId).NotEmpty();
         RuleFor(x => x)
             .Must(x => x.LeadId.HasValue || x.StudentId.HasValue)
@@ -39,10 +37,12 @@ public sealed class CreateAssessmentSessionCommandHandler
     : IRequestHandler<CreateAssessmentSessionCommand, AssessmentSessionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateAssessmentSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateAssessmentSessionCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -50,14 +50,17 @@ public sealed class CreateAssessmentSessionCommandHandler
     public async Task<AssessmentSessionDto> Handle(
         CreateAssessmentSessionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = await _db.AssessmentTemplates
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == req.TemplateId && t.IsActive, ct)
+            .FirstOrDefaultAsync(t => t.Id == req.TemplateId && t.IsActive
+                                   && (t.CorporationId == null || t.CorporationId == corporationId), ct)
             ?? throw new KeyNotFoundException(
                 $"Active assessment template {req.TemplateId} not found.");
 
         var session = AssessmentSession.Create(
-            req.CorporationId, req.TemplateId, template.Version,
+            corporationId, req.TemplateId, template.Version,
             req.LeadId, req.StudentId,
             req.CampusId, req.AssessorId, req.ScheduledAt,
             _currentUser.UserId);

@@ -199,7 +199,6 @@ export const useConsultancyStore = defineStore('consultancy', () => {
   }
 
   async function createReport(payload: {
-    corporationId: string
     title: string
     consultancyPlanId?: string
     schoolVisitId?: string
@@ -388,7 +387,7 @@ export const useConsultancyStore = defineStore('consultancy', () => {
   }
 
   // ── Analytics ─────────────────────────────────────────────────────────────
-  async function fetchInstitutionReport(query: { corporationId?: string; institutionTypeId?: string }) {
+  async function fetchInstitutionReport(query: { institutionTypeId?: string }) {
     loading.value = true
     try {
       const res = await consultancyService.getInstitutionReport(query)
@@ -397,7 +396,7 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     finally { loading.value = false }
   }
 
-  async function fetchOutcomes(query: { corporationId?: string; institutionId?: string; status?: string }) {
+  async function fetchOutcomes(query: { institutionId?: string; status?: string }) {
     loading.value = true
     try {
       const res = await consultancyService.getOutcomes(query)

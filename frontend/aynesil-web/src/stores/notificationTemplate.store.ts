@@ -93,11 +93,11 @@ export const useNotificationTemplateStore = defineStore('notificationTemplate', 
 
   // ── Trigger Config Actions ─────────────────────────────────────────────────
 
-  async function fetchTriggers(corporationId?: string) {
+  async function fetchTriggers() {
     loading.value = true
     error.value = null
     try {
-      const res = await notificationService.listTriggers(corporationId)
+      const res = await notificationService.listTriggers()
       if (res.success && res.data) triggerList.value = res.data
     } catch (e: unknown) {
       error.value = (e as Error).message

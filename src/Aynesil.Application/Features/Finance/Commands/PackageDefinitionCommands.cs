@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── CreatePackageDefinitionCommand ────────────────────────────────────────────
 
 public record CreatePackageDefinitionCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     decimal ListPrice,
@@ -25,7 +24,6 @@ public class CreatePackageDefinitionCommandValidator
 {
     public CreatePackageDefinitionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.ListPrice).GreaterThanOrEqualTo(0);
@@ -39,21 +37,28 @@ public sealed class CreatePackageDefinitionCommandHandler
     : IRequestHandler<CreatePackageDefinitionCommand, PackageDefinitionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreatePackageDefinitionCommandHandler(IAppDbContext db) => _db = db;
+    public CreatePackageDefinitionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PackageDefinitionDto> Handle(
         CreatePackageDefinitionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.PackageDefinitions.AnyAsync(
-            p => p.CorporationId == req.CorporationId && p.Code == req.Code, ct);
+            p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
             throw new InvalidOperationException(
                 $"Package definition with code '{req.Code}' already exists for this corporation.");
 
         var definition = PackageDefinition.Create(
-            req.CorporationId, req.Code, req.Name, req.ListPrice,
+            corporationId, req.Code, req.Name, req.ListPrice,
             req.PackageTypeId, req.ProgramId,
             req.TotalCredits, req.ValidityDays, req.Currency);
 

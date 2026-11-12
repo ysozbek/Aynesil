@@ -25,8 +25,8 @@ public sealed class PerformanceKpiController : BaseController
     [HasPermission(Permissions.Kpi.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<KpiCategoryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCategories(
-        [FromQuery] Guid? corporationId, CancellationToken ct)
-        => OkResult(await Sender.Send(new GetKpiCategoriesQuery(corporationId), ct));
+        CancellationToken ct)
+        => OkResult(await Sender.Send(new GetKpiCategoriesQuery(), ct));
 
     // ── KPI Definitions ───────────────────────────────────────────────────────
 

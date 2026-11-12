@@ -21,7 +21,7 @@ const id = computed(() => route.params.id as string)
 
 onMounted(async () => {
   await store.fetchOne(id.value)
-  await branchStore.fetchList({ corporationId: id.value, pageSize: 100 })
+  await branchStore.fetchList({ pageSize: 100 })
 })
 
 const campusColumns: Column<CampusListItemDto>[] = [
@@ -118,7 +118,7 @@ function formatDate(val: string | undefined) {
         </h2>
         <button
           v-if="can('campus:read')"
-          @click="router.push({ name: 'campuses', query: { corporationId: id } })"
+          @click="router.push({ name: 'campuses' })"
           class="text-xs text-primary hover:underline"
         >
           {{ t('common.viewAll') }}

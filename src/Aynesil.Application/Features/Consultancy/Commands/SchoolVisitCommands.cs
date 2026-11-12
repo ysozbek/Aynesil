@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── ScheduleSchoolVisitCommand ────────────────────────────────────────────────
 
 public record ScheduleSchoolVisitCommand(
-    Guid CorporationId,
     Guid InstitutionId,
     DateOnly VisitDate,
     Guid? ConsultancyPlanId,
@@ -22,7 +21,6 @@ public class ScheduleSchoolVisitCommandValidator
 {
     public ScheduleSchoolVisitCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.InstitutionId).NotEmpty();
         RuleFor(x => x.VisitDate).NotEmpty();
         RuleFor(x => x.Purpose).MaximumLength(500)
@@ -34,21 +32,28 @@ public sealed class ScheduleSchoolVisitCommandHandler
     : IRequestHandler<ScheduleSchoolVisitCommand, SchoolVisitDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public ScheduleSchoolVisitCommandHandler(IAppDbContext db) => _db = db;
+    public ScheduleSchoolVisitCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<SchoolVisitDto> Handle(
         ScheduleSchoolVisitCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var institutionExists = await _db.Institutions
-            .AnyAsync(i => i.Id == req.InstitutionId && i.DeletedAt == null, ct);
+            .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InstitutionId && i.DeletedAt == null, ct);
         if (!institutionExists)
             throw new KeyNotFoundException($"Institution {req.InstitutionId} not found.");
 
         if (req.ConsultancyPlanId.HasValue)
         {
             var planExists = await _db.ConsultancyPlans
-                .AnyAsync(p => p.Id == req.ConsultancyPlanId.Value
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value
                             && p.InstitutionId == req.InstitutionId
                             && p.Status == "active", ct);
             if (!planExists)
@@ -57,20 +62,20 @@ public sealed class ScheduleSchoolVisitCommandHandler
         }
 
         var visit = SchoolVisit.Schedule(
-            req.CorporationId, req.InstitutionId, req.VisitDate,
+            corporationId, req.InstitutionId, req.VisitDate,
             req.ConsultancyPlanId, req.VisitorId, req.Purpose);
 
         _db.SchoolVisits.Add(visit);
         await _db.SaveChangesAsync(ct);
 
         var institutionName = await _db.Institutions.AsNoTracking()
-            .Where(i => i.Id == req.InstitutionId)
+            .Where(i => i.CorporationId == corporationId && i.Id == req.InstitutionId)
             .Select(i => i.Name)
             .FirstOrDefaultAsync(ct) ?? string.Empty;
 
         var planName = req.ConsultancyPlanId.HasValue
             ? await _db.ConsultancyPlans.AsNoTracking()
-                .Where(p => p.Id == req.ConsultancyPlanId.Value)
+                .Where(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value)
                 .Select(p => p.Name)
                 .FirstOrDefaultAsync(ct)
             : null;

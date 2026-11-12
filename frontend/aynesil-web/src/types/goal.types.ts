@@ -168,18 +168,15 @@ export interface GoalSuccessRateDto {
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export interface GoalLibraryListQuery extends PagedQuery {
-  corporationId?: string
 }
 
 export interface GoalTemplateListQuery extends PagedQuery {
-  corporationId?: string
   libraryId?: string
   categoryId?: string
   developmentAreaId?: string
 }
 
 export interface StudentGoalListQuery extends PagedQuery {
-  corporationId?: string
   studentId?: string
   horizon?: string
   status?: string
@@ -193,7 +190,6 @@ export interface GoalProgressQuery {
 }
 
 export interface SuccessRatesQuery {
-  corporationId: string
   campusId?: string
   from?: string
   to?: string
@@ -202,7 +198,6 @@ export interface SuccessRatesQuery {
 // ── Payloads ──────────────────────────────────────────────────────────────────
 
 export interface CreateGoalLibraryPayload {
-  corporationId: string | null
   name: string
   description: string | null
 }
@@ -214,7 +209,6 @@ export interface UpdateGoalLibraryPayload {
 }
 
 export interface CreateGoalTemplatePayload {
-  corporationId: string | null
   libraryId: string | null
   categoryId: string | null
   developmentAreaId: string | null
@@ -239,7 +233,6 @@ export interface SetGoalTemplateTranslationPayload {
 }
 
 export interface CreateStudentGoalPayload {
-  corporationId: string
   studentId: string
   statement: string
   horizon: string

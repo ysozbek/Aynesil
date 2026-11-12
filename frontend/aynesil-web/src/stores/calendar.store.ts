@@ -37,11 +37,11 @@ export const useCalendarStore = defineStore('calendar', () => {
     entries.value = []
   }
 
-  async function fetchSchoolCalendar(corporationId: string, query: CalendarQuery) {
+  async function fetchSchoolCalendar(query: CalendarQuery) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getSchoolCalendar(corporationId, query)
+      const res = await schedulingService.getSchoolCalendar(query)
       if (res.success && res.data) {
         sessions.value = res.data.sessions
         entries.value = res.data.entries
@@ -58,13 +58,12 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   async function fetchCampusCalendar(
     campusId: string,
-    corporationId: string,
     query: CalendarQuery
   ) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getCampusCalendar(campusId, corporationId, query)
+      const res = await schedulingService.getCampusCalendar(campusId, query)
       if (res.success && res.data) {
         sessions.value = res.data.sessions
         entries.value = res.data.entries
@@ -100,13 +99,12 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   async function fetchEducatorCalendar(
     educatorId: string,
-    corporationId: string,
     query: CalendarQuery
   ) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getEducatorCalendar(educatorId, corporationId, query)
+      const res = await schedulingService.getEducatorCalendar(educatorId, query)
       if (res.success && res.data) {
         sessions.value = res.data
         entries.value = []
@@ -123,13 +121,12 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   async function fetchStudentCalendar(
     studentId: string,
-    corporationId: string,
     query: CalendarQuery
   ) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getStudentCalendar(studentId, corporationId, query)
+      const res = await schedulingService.getStudentCalendar(studentId, query)
       if (res.success && res.data) {
         sessions.value = res.data
         entries.value = []

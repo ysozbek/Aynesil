@@ -14,8 +14,6 @@ namespace Aynesil.Application.Features.Campuses.Queries;
 /// </summary>
 public class GetCampusesQuery : PagedQuery, IRequest<PaginatedResult<CampusListItemDto>>
 {
-    /// <summary>Filter by corporation. Null = all visible corporations (platform admin only).</summary>
-    public Guid? CorporationId { get; set; }
 
     /// <summary>Filter by active status. Null = all.</summary>
     public bool? IsActive { get; set; }
@@ -26,20 +24,26 @@ public sealed class GetCampusesQueryHandler
     : IRequestHandler<GetCampusesQuery, PaginatedResult<CampusListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCampusesQueryHandler(IAppDbContext db) => _db = db;
+    public GetCampusesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<CampusListItemDto>> Handle(
         GetCampusesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.Campuses
             .AsNoTracking()
             .Include(c => c.Corporation);
 
         var filtered = query.AsQueryable();
 
-        if (req.CorporationId.HasValue)
-            filtered = filtered.Where(c => c.CorporationId == req.CorporationId.Value);
+        filtered = filtered.Where(c => c.CorporationId == corporationId);
 
         if (req.IsActive.HasValue)
             filtered = filtered.Where(c => c.IsActive == req.IsActive.Value);

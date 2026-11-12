@@ -257,7 +257,6 @@ export interface StudentStatusHistoryDto {
 // ── Query / Payload Types ─────────────────────────────────────────────────────
 
 export interface StudentListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   statusId?: string
   hasLead?: boolean
@@ -266,7 +265,6 @@ export interface StudentListQuery extends PagedQuery {
 }
 
 export interface GuardianListQuery extends PagedQuery {
-  corporationId?: string
   hasPortalAccount?: boolean
 }
 
@@ -281,7 +279,6 @@ export interface CaseNoteListQuery {
 // ── Create / Update Payloads ──────────────────────────────────────────────────
 
 export interface CreateStudentPayload {
-  corporationId: string
   firstName: string
   lastName: string
   studentNo: string | null
@@ -381,7 +378,6 @@ export interface UpdateMedicalReportPayload extends AddMedicalReportPayload {
 export interface AddDevelopmentReportPayload {
   periodLabel: string | null
   reportDate: string | null
-  authoredBy: string | null
   content: string | null
   fileId: string | null
 }
@@ -402,7 +398,6 @@ export interface AddCaseNotePayload {
   noteType: string | null
   body: string
   isConfidential: boolean
-  authoredBy: string | null
 }
 
 export interface UpdateCaseNotePayload {
@@ -413,7 +408,6 @@ export interface UpdateCaseNotePayload {
 }
 
 export interface CreateGuardianPayload {
-  corporationId: string
   firstName: string
   lastName: string
   nationalId: string | null

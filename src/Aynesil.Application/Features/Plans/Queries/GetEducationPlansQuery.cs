@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Plans.Queries;
 
 public class GetEducationPlansQuery : PagedQuery, IRequest<PaginatedResult<EducationPlanListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? AcademicPeriodId { get; set; }
@@ -23,10 +22,12 @@ public sealed class GetEducationPlansQueryHandler
     : IRequestHandler<GetEducationPlansQuery, PaginatedResult<EducationPlanListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public GetEducationPlansQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GetEducationPlansQueryHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -34,6 +35,8 @@ public sealed class GetEducationPlansQueryHandler
     public async Task<PaginatedResult<EducationPlanListItemDto>> Handle(
         GetEducationPlansQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // When querying for a specific student, apply care-team pre-filter.
         if (req.StudentId.HasValue &&
             !CareTeamFilter.HasBypass(_currentUser) &&
@@ -42,8 +45,7 @@ public sealed class GetEducationPlansQueryHandler
 
         var q = _db.EducationPlans.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.StudentId.HasValue)
             q = q.Where(p => p.StudentId == req.StudentId.Value);
         if (req.CampusId.HasValue)
@@ -108,16 +110,18 @@ public sealed class GetEducationPlanQueryHandler : IRequestHandler<GetEducationP
 // ── GetGuardianVisiblePlanQuery ───────────────────────────────────────────────
 
 /// <summary>Returns the guardian-accessible (approved, guardian_visible) plan for a student.</summary>
-public record GetGuardianVisiblePlanQuery(Guid CorporationId, Guid StudentId) : IRequest<EducationPlanDto?>;
+public record GetGuardianVisiblePlanQuery( Guid StudentId) : IRequest<EducationPlanDto?>;
 
 public sealed class GetGuardianVisiblePlanQueryHandler
     : IRequestHandler<GetGuardianVisiblePlanQuery, EducationPlanDto?>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public GetGuardianVisiblePlanQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GetGuardianVisiblePlanQueryHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -125,6 +129,8 @@ public sealed class GetGuardianVisiblePlanQueryHandler
     public async Task<EducationPlanDto?> Handle(
         GetGuardianVisiblePlanQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Care-team pre-filter for the educator access path.
         // NOTE: Guardian portal users (authenticated via guardian.user_id) are NOT educators
         // and will not have a care-team assignment. When care_team_abac_enabled = true,
@@ -137,7 +143,7 @@ public sealed class GetGuardianVisiblePlanQueryHandler
 
         var plan = await _db.EducationPlans
             .AsNoTracking()
-            .Where(p => p.CorporationId == req.CorporationId
+            .Where(p => p.CorporationId == corporationId
                      && p.StudentId == req.StudentId
                      && p.GuardianVisible
                      && (p.Status == "approved" || p.Status == "active"))

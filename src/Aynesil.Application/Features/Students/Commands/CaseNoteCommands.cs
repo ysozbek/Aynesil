@@ -14,8 +14,7 @@ public record AddCaseNoteCommand(
     Guid StudentId,
     string? NoteType,
     string Body,
-    bool IsConfidential,
-    Guid? AuthoredBy) : IRequest<CaseNoteDto>;
+    bool IsConfidential) : IRequest<CaseNoteDto>;
 
 public class AddCaseNoteCommandValidator : AbstractValidator<AddCaseNoteCommand>
 {
@@ -52,7 +51,7 @@ public sealed class AddCaseNoteCommandHandler
             NoteType       = req.NoteType,
             Body           = req.Body,
             IsConfidential = req.IsConfidential,
-            AuthoredBy     = req.AuthoredBy ?? _currentUser.UserId,
+            AuthoredBy     = _currentUser.UserId,
             CreatedAt      = DateTimeOffset.UtcNow,
             UpdatedAt      = DateTimeOffset.UtcNow
         };

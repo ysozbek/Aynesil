@@ -29,7 +29,6 @@ public sealed class AssessmentTemplatesController : BaseController
     [HasPermission(Permissions.AssessmentTemplates.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<AssessmentTemplateListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? typeId = null,
         [FromQuery] Guid? categoryId = null,
         [FromQuery] bool? isActive = null,
@@ -42,7 +41,6 @@ public sealed class AssessmentTemplatesController : BaseController
     {
         var result = await Sender.Send(new GetAssessmentTemplatesQuery
         {
-            CorporationId = corporationId,
             TypeId        = typeId,
             CategoryId    = categoryId,
             IsActive      = isActive,
@@ -78,7 +76,7 @@ public sealed class AssessmentTemplatesController : BaseController
         [FromBody] CreateAssessmentTemplateRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateAssessmentTemplateCommand(
-            req.CorporationId, req.Code, req.Name,
+            req.Code, req.Name,
             req.TypeId, req.CategoryId, req.ScoringModel,
             req.Translations?.Select(t =>
                 new CreateTemplateTranslationRequest(t.Locale, t.Name, t.Description))
@@ -236,7 +234,6 @@ public sealed class AssessmentTemplatesController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateAssessmentTemplateRequest(
-    Guid? CorporationId,
     string Code,
     string Name,
     Guid? TypeId,

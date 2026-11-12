@@ -5,7 +5,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useAssessmentStore } from '@/stores/assessment.store'
 import { useAssessmentTemplateStore } from '@/stores/assessmentTemplate.store'
 import { useBranchStore } from '@/stores/branch.store'
@@ -17,7 +16,6 @@ import StudentPicker from '@/components/pickers/StudentPicker.vue'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useAssessmentStore()
 const templateStore = useAssessmentTemplateStore()
 const branchStore = useBranchStore()
@@ -27,7 +25,6 @@ const isEdit = computed(() => !!route.params.id)
 const id = computed(() => route.params.id as string | undefined)
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   templateId: '',
   leadId: '',
   studentId: '',
@@ -71,7 +68,6 @@ function validate(): boolean {
   Object.keys(errors).forEach(k => delete errors[k])
   let valid = true
   if (!form.templateId) { errors.templateId = t('validation.required', { field: t('assessment.session.template') }); valid = false }
-  if (!form.corporationId) { errors.corporationId = t('validation.required', { field: t('crm.lead.corporation') }); valid = false }
   if (!form.leadId && !form.studentId) {
     errors.subject = t('assessment.session.subjectRequired')
     valid = false
@@ -94,7 +90,6 @@ async function submit() {
       router.push({ name: 'assessment-session-detail', params: { id: id.value } })
     } else {
       const result = await store.create({
-        corporationId: form.corporationId,
         templateId: form.templateId,
         leadId: form.leadId || undefined,
         studentId: form.studentId || undefined,

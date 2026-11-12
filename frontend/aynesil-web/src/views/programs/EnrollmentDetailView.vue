@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useProgramStore } from '@/stores/program.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -15,14 +14,12 @@ import type { ProgramListItemDto, StudentProgramDto } from '@/types/program.type
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useProgramStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
 const id = computed(() => route.params.id as string)
 const enrollment = computed(() => store.currentEnrollment)
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const statuses = ref<RefValueItem[]>([])
 const programs = ref<ProgramListItemDto[]>([])
 
@@ -30,7 +27,7 @@ onMounted(async () => {
   await Promise.all([
     store.fetchEnrollment(id.value),
     refData.getValues('enrollment_status').then((v) => { statuses.value = v }),
-    store.fetchPrograms({ corporationId: corporationId.value, isActive: true, page: 1, pageSize: 200 }).then(() => {
+    store.fetchPrograms({ isActive: true, page: 1, pageSize: 200 }).then(() => {
       programs.value = store.programList.items
     }),
   ])
@@ -132,7 +129,6 @@ async function submitAssign() {
   }
   try {
     await store.assignStudentToProgram({
-      corporationId: corporationId.value,
       studentId: enrollment.value.studentId,
       programId: assignForm.programId,
       enrollmentId: enrollment.value.id,

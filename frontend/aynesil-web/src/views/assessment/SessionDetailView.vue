@@ -152,7 +152,6 @@ async function submitReport() {
       })
     } else {
       await store.createReport(id.value, {
-        corporationId: session.value!.corporationId,
         summary: reportForm.value.summary || undefined,
         findings: reportForm.value.findings || undefined,
       })
@@ -185,7 +184,6 @@ async function submitRecommendation() {
   if (!session.value) return
   try {
     await store.createRecommendation(id.value, {
-      corporationId: session.value.corporationId,
       leadId: session.value.leadId ?? undefined,
       studentId: session.value.studentId ?? undefined,
       recommendedIntensity: recForm.value.recommendedIntensity || undefined,

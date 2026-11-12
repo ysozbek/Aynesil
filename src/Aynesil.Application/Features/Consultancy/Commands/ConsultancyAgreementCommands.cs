@@ -10,21 +10,18 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── CreateConsultancyAgreementCommand ─────────────────────────────────────────
 
 public record CreateConsultancyAgreementCommand(
-    Guid CorporationId,
     Guid ConsultancyPlanId,
     string Title,
     Guid? AgreementTypeId,
     string? Description,
     DateOnly? StartDate,
-    DateOnly? EndDate,
-    Guid? CreatedBy = null) : IRequest<ConsultancyAgreementDto>;
+    DateOnly? EndDate) : IRequest<ConsultancyAgreementDto>;
 
 public class CreateConsultancyAgreementCommandValidator
     : AbstractValidator<CreateConsultancyAgreementCommand>
 {
     public CreateConsultancyAgreementCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.ConsultancyPlanId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
@@ -37,14 +34,23 @@ public sealed class CreateConsultancyAgreementCommandHandler
     : IRequestHandler<CreateConsultancyAgreementCommand, ConsultancyAgreementDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public CreateConsultancyAgreementCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConsultancyAgreementDto> Handle(
         CreateConsultancyAgreementCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var plan = await _db.ConsultancyPlans.AsNoTracking()
-            .Where(p => p.Id == req.ConsultancyPlanId)
+            .Where(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId)
             .Select(p => new { p.Id, p.InstitutionId, p.Name, p.Status })
             .FirstOrDefaultAsync(ct)
             ?? throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
@@ -53,9 +59,9 @@ public sealed class CreateConsultancyAgreementCommandHandler
             throw new InvalidOperationException("Cannot create an agreement for a cancelled plan.");
 
         var agreement = ConsultancyAgreement.Create(
-            req.CorporationId, req.ConsultancyPlanId, plan.InstitutionId,
+            corporationId, req.ConsultancyPlanId, plan.InstitutionId,
             req.Title, req.AgreementTypeId, req.Description,
-            req.StartDate, req.EndDate, req.CreatedBy);
+            req.StartDate, req.EndDate, _currentUser.UserId);
 
         _db.ConsultancyAgreements.Add(agreement);
         await _db.SaveChangesAsync(ct);
@@ -98,8 +104,7 @@ public record UpdateConsultancyAgreementCommand(
     string? Description,
     DateOnly? StartDate,
     DateOnly? EndDate,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateConsultancyAgreementCommandValidator
     : AbstractValidator<UpdateConsultancyAgreementCommand>
@@ -119,8 +124,13 @@ public sealed class UpdateConsultancyAgreementCommandHandler
     : IRequestHandler<UpdateConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -129,7 +139,7 @@ public sealed class UpdateConsultancyAgreementCommandHandler
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
         agreement.Update(req.Title, req.AgreementTypeId, req.Description,
-            req.StartDate, req.EndDate, req.UpdatedBy);
+            req.StartDate, req.EndDate, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -137,14 +147,19 @@ public sealed class UpdateConsultancyAgreementCommandHandler
 
 // ── SendConsultancyAgreementCommand ───────────────────────────────────────────
 
-public record SendConsultancyAgreementCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record SendConsultancyAgreementCommand(Guid Id) : IRequest;
 
 public sealed class SendConsultancyAgreementCommandHandler
     : IRequestHandler<SendConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public SendConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public SendConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(SendConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -152,7 +167,7 @@ public sealed class SendConsultancyAgreementCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
-        agreement.Send(req.UpdatedBy);
+        agreement.Send(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -163,8 +178,7 @@ public record SignConsultancyAgreementCommand(
     Guid Id,
     DateOnly SignedDate,
     string? SignedByName,
-    Guid? FileId,
-    Guid? UpdatedBy = null) : IRequest;
+    Guid? FileId) : IRequest;
 
 public class SignConsultancyAgreementCommandValidator
     : AbstractValidator<SignConsultancyAgreementCommand>
@@ -182,8 +196,13 @@ public sealed class SignConsultancyAgreementCommandHandler
     : IRequestHandler<SignConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public SignConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public SignConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(SignConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -191,21 +210,26 @@ public sealed class SignConsultancyAgreementCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
-        agreement.Sign(req.SignedDate, req.SignedByName, req.FileId, req.UpdatedBy);
+        agreement.Sign(req.SignedDate, req.SignedByName, req.FileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── ExpireConsultancyAgreementCommand ─────────────────────────────────────────
 
-public record ExpireConsultancyAgreementCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record ExpireConsultancyAgreementCommand(Guid Id) : IRequest;
 
 public sealed class ExpireConsultancyAgreementCommandHandler
     : IRequestHandler<ExpireConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ExpireConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public ExpireConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(ExpireConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -213,21 +237,26 @@ public sealed class ExpireConsultancyAgreementCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
-        agreement.MarkExpired(req.UpdatedBy);
+        agreement.MarkExpired(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── CancelConsultancyAgreementCommand ─────────────────────────────────────────
 
-public record CancelConsultancyAgreementCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record CancelConsultancyAgreementCommand(Guid Id) : IRequest;
 
 public sealed class CancelConsultancyAgreementCommandHandler
     : IRequestHandler<CancelConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public CancelConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public CancelConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(CancelConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -235,21 +264,26 @@ public sealed class CancelConsultancyAgreementCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
-        agreement.Cancel(req.UpdatedBy);
+        agreement.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── DeleteConsultancyAgreementCommand ─────────────────────────────────────────
 
-public record DeleteConsultancyAgreementCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteConsultancyAgreementCommand(Guid Id) : IRequest;
 
 public sealed class DeleteConsultancyAgreementCommandHandler
     : IRequestHandler<DeleteConsultancyAgreementCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteConsultancyAgreementCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteConsultancyAgreementCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteConsultancyAgreementCommand req, CancellationToken ct)
     {
@@ -261,7 +295,7 @@ public sealed class DeleteConsultancyAgreementCommandHandler
             throw new InvalidOperationException(
                 "A signed or expired agreement cannot be deleted.");
 
-        agreement.SoftDelete(req.DeletedBy);
+        agreement.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

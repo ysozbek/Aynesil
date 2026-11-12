@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── ApplyDiscountCommand ──────────────────────────────────────────────────────
 
 public record ApplyDiscountCommand(
-    Guid CorporationId,
     decimal Value,
     bool IsPercentage = true,
     Guid? InvoiceId = null,
@@ -22,7 +21,6 @@ public class ApplyDiscountCommandValidator : AbstractValidator<ApplyDiscountComm
 {
     public ApplyDiscountCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Value).GreaterThan(0);
         RuleFor(x => x.Value)
             .LessThanOrEqualTo(100)
@@ -41,17 +39,24 @@ public sealed class ApplyDiscountCommandHandler
     : IRequestHandler<ApplyDiscountCommand, DiscountDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public ApplyDiscountCommandHandler(IAppDbContext db) => _db = db;
+    public ApplyDiscountCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<DiscountDto> Handle(ApplyDiscountCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.InvoiceId.HasValue)
         {
             var invoice = await _db.Invoices
                 .Include(i => i.Lines)
                 .Include(i => i.Discounts)
-                .FirstOrDefaultAsync(i => i.Id == req.InvoiceId.Value, ct)
+                .FirstOrDefaultAsync(i => i.CorporationId == corporationId && i.Id == req.InvoiceId.Value, ct)
                 ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
 
             if (invoice.Status != "draft")
@@ -59,7 +64,7 @@ public sealed class ApplyDiscountCommandHandler
                     "Discounts can only be applied to draft invoices.");
 
             var discount = Discount.Apply(
-                req.CorporationId, req.Value, req.IsPercentage,
+                corporationId, req.Value, req.IsPercentage,
                 req.InvoiceId, req.StudentPackageId, req.DiscountTypeId, req.Reason);
 
             _db.Discounts.Add(discount);
@@ -73,13 +78,13 @@ public sealed class ApplyDiscountCommandHandler
         else
         {
             var packageExists = await _db.StudentPackages
-                .AnyAsync(p => p.Id == req.StudentPackageId!.Value, ct);
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.StudentPackageId!.Value, ct);
 
             if (!packageExists)
                 throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
 
             var discount = Discount.Apply(
-                req.CorporationId, req.Value, req.IsPercentage,
+                corporationId, req.Value, req.IsPercentage,
                 req.InvoiceId, req.StudentPackageId, req.DiscountTypeId, req.Reason);
 
             _db.Discounts.Add(discount);

@@ -58,14 +58,12 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import type { RefValueItem } from '@/stores/refdata.store'
 
 const route = useRoute()
 const router = useRouter()
 const campStore = useCampStore()
-const authStore = useAuthStore()
 const refDataStore = useRefDataStore()
 
 const isEdit = computed(() => !!route.params.id)
@@ -76,7 +74,6 @@ const form = reactive({ code: '', name: '', campTypeId: '', capacity: undefined 
 
 async function handleSubmit() {
   errorMsg.value = ''
-  const corp = authStore.user?.corporationId ?? ''
   try {
     if (isEdit.value && id) {
       const cur = campStore.currentCamp
@@ -90,7 +87,7 @@ async function handleSubmit() {
       router.push(`/camps/${id}`)
     } else {
       const result = await campStore.createCamp({
-        corporationId: corp, code: form.code, name: form.name,
+        code: form.code, name: form.name,
         campTypeId: form.campTypeId || undefined,
         capacity: form.capacity, location: form.location || undefined,
         description: form.description || undefined,

@@ -62,7 +62,8 @@ export const consultancyService = {
     apiService.post<ConsultancyPlanDto>('/consultancy/plans', payload),
 
   updatePlan: (id: string, payload: Partial<CreatePlanPayload> & { rowVersion: number }) =>
-    apiService.put<ConsultancyPlanDto>(`/consultancy/plans/${id}`, payload),
+    // Backend returns 204 NoContent (no body) — callers should refetch the plan.
+    apiService.put<null>(`/consultancy/plans/${id}`, payload),
 
   activatePlan: (id: string) =>
     apiService.post(`/consultancy/plans/${id}/activate`),
@@ -96,7 +97,7 @@ export const consultancyService = {
     apiService.post(`/consultancy/visits/${visitId}/observations`, payload),
 
   // ── Reports ────────────────────────────────────────────────────────────────
-  listReports: (query: { corporationId?: string; consultancyPlanId?: string } & Record<string, unknown>) =>
+  listReports: (query: { consultancyPlanId?: string } & Record<string, unknown>) =>
     apiService.get<PaginatedResult<ConsultancyReportListItemDto>>(
       `/consultancy/reports${qs(query)}`
     ),
@@ -176,17 +177,17 @@ export const consultancyService = {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   // URL corrected: /consultancy/reporting/* (not /consultancy/reports/*)
-  getInstitutionReport: (query: { corporationId?: string; institutionTypeId?: string }) =>
+  getInstitutionReport: (query: { institutionTypeId?: string }) =>
     apiService.get<InstitutionReportDto[]>(
       `/consultancy/reporting/institutions${qs(query)}`
     ),
 
-  getOutcomes: (query: { corporationId?: string; institutionId?: string; status?: string }) =>
+  getOutcomes: (query: { institutionId?: string; status?: string }) =>
     apiService.get<ConsultancyOutcomesDto[]>(
       `/consultancy/reporting/outcomes${qs(query)}`
     ),
 
-  getVisitHistory: (query: { corporationId?: string; institutionId?: string; from?: string; to?: string }) =>
+  getVisitHistory: (query: { institutionId?: string; from?: string; to?: string }) =>
     apiService.get<unknown[]>(
       `/consultancy/reporting/visit-history${qs(query)}`
     ),

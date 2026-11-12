@@ -10,19 +10,16 @@ namespace Aynesil.Application.Features.PerformanceKpi.Commands;
 // ── CreateKpiDefinitionCommand ────────────────────────────────────────────────
 
 public record CreateKpiDefinitionCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     Guid? CategoryId,
     string? Unit,
-    string? Spec,
-    Guid? CreatedBy = null) : IRequest<KpiDefinitionDto>;
+    string? Spec) : IRequest<KpiDefinitionDto>;
 
 public class CreateKpiDefinitionCommandValidator : AbstractValidator<CreateKpiDefinitionCommand>
 {
     public CreateKpiDefinitionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100)
             .Matches(@"^[a-z][a-z0-9_.]*$")
             .WithMessage("Code must be lowercase alphanumeric with dots or underscores.");
@@ -35,16 +32,23 @@ public sealed class CreateKpiDefinitionCommandHandler
     : IRequestHandler<CreateKpiDefinitionCommand, KpiDefinitionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateKpiDefinitionCommandHandler(IAppDbContext db) => _db = db;
+    public CreateKpiDefinitionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<KpiDefinitionDto> Handle(
         CreateKpiDefinitionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var code = req.Code.Trim().ToLowerInvariant();
 
         var duplicate = await _db.KpiDefinitions.AnyAsync(
-            k => (k.CorporationId == req.CorporationId || k.CorporationId == null)
+            k => (k.CorporationId == corporationId || k.CorporationId == null)
               && k.Code == code, ct);
 
         if (duplicate)
@@ -53,7 +57,7 @@ public sealed class CreateKpiDefinitionCommandHandler
 
         var kpi = new KpiDefinition
         {
-            CorporationId = req.CorporationId,
+            CorporationId = corporationId,
             Code          = code,
             Name          = req.Name.Trim(),
             CategoryId    = req.CategoryId,
@@ -87,8 +91,7 @@ public record UpdateKpiDefinitionCommand(
     Guid? CategoryId,
     string? Unit,
     string? Spec,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest<KpiDefinitionDto>;
+    int RowVersion) : IRequest<KpiDefinitionDto>;
 
 public class UpdateKpiDefinitionCommandValidator : AbstractValidator<UpdateKpiDefinitionCommand>
 {

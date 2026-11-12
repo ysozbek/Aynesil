@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Campuses.Commands;
 
 // ── Request ──────────────────────────────────────────────────────────────────
 public record CreateCampusCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     string? City,
@@ -28,7 +27,6 @@ public class CreateCampusCommandValidator : AbstractValidator<CreateCampusComman
 {
     public CreateCampusCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code)
             .NotEmpty()
             .MaximumLength(50)
@@ -51,32 +49,36 @@ public class CreateCampusCommandValidator : AbstractValidator<CreateCampusComman
 public sealed class CreateCampusCommandHandler : IRequestHandler<CreateCampusCommand, CampusDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateCampusCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateCampusCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<CampusDto> Handle(CreateCampusCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var corp = await _db.Corporations
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == req.CorporationId, ct)
-            ?? throw new NotFoundException("Corporation", req.CorporationId);
+            .FirstOrDefaultAsync(c => c.Id == corporationId, ct)
+            ?? throw new NotFoundException("Corporation", corporationId);
 
         var codeNormalized = req.Code.Trim().ToUpperInvariant();
         // Unique (corporation_id, code) applies to soft-deleted rows too.
         var codeExists = await _db.Campuses
             .IgnoreQueryFilters()
-            .AnyAsync(c => c.CorporationId == req.CorporationId && c.Code == codeNormalized, ct);
+            .AnyAsync(c => c.CorporationId == corporationId && c.Code == codeNormalized, ct);
         if (codeExists)
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(
                 "Code", $"Campus code '{codeNormalized}' already exists in this corporation.")]);
 
         var campus = Campus.Create(
-            req.CorporationId,
+            corporationId,
             codeNormalized,
             req.Name,
             req.City,

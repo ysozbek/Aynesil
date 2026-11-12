@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Students.Commands;
 // ── CreateStudentCommand ──────────────────────────────────────────────────────
 
 public record CreateStudentCommand(
-    Guid CorporationId,
     string FirstName,
     string LastName,
     string? StudentNo,
@@ -27,7 +26,6 @@ public class CreateStudentCommandValidator : AbstractValidator<CreateStudentComm
 {
     public CreateStudentCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StudentNo).MaximumLength(50).When(x => x.StudentNo is not null);
@@ -38,20 +36,24 @@ public sealed class CreateStudentCommandHandler
     : IRequestHandler<CreateStudentCommand, StudentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateStudentCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateStudentCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<StudentDto> Handle(CreateStudentCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.StudentNo is not null)
         {
             var taken = await _db.Students
-                .AnyAsync(s => s.CorporationId == req.CorporationId && s.StudentNo == req.StudentNo, ct);
+                .AnyAsync(s => s.CorporationId == corporationId && s.StudentNo == req.StudentNo, ct);
             if (taken)
                 throw new InvalidOperationException(
                     $"Student number '{req.StudentNo}' is already in use within this corporation.");
@@ -66,7 +68,7 @@ public sealed class CreateStudentCommandHandler
         }
 
         var student = Student.Create(
-            req.CorporationId, req.FirstName, req.LastName,
+            corporationId, req.FirstName, req.LastName,
             req.StudentNo, req.NationalId, req.BirthDate, req.Gender,
             req.PrimaryCampusId, req.StatusId, req.LeadId, req.Notes,
             _currentUser.UserId);
@@ -78,14 +80,14 @@ public sealed class CreateStudentCommandHandler
         {
             var enrollment = new StudentCampus
             {
-                CorporationId = req.CorporationId,
+                CorporationId = corporationId,
                 StudentId     = student.Id,
                 CampusId      = req.PrimaryCampusId.Value,
                 IsPrimary     = true,
                 ActiveFrom    = DateOnly.FromDateTime(DateTime.UtcNow)
             };
             enrollment.AddDomainEvent(new StudentEnrolledEvent(
-                student.Id, req.CorporationId, req.PrimaryCampusId.Value, true, _currentUser.UserId));
+                student.Id, corporationId, req.PrimaryCampusId.Value, true, _currentUser.UserId));
             _db.StudentCampuses.Add(enrollment);
         }
 

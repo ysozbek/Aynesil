@@ -3,14 +3,12 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 
 const upcomingVisits = computed(() =>
@@ -40,12 +38,11 @@ function followUpStatusClass(s: string) {
 }
 
 onMounted(async () => {
-  const corp = authStore.user?.corporationId
   await Promise.all([
-    consultancyStore.fetchInstitutions({ corporationId: corp }),
-    consultancyStore.fetchPlans({ corporationId: corp, status: 'Active' }),
-    consultancyStore.fetchVisits({ corporationId: corp, pageSize: 10 }),
-    consultancyStore.fetchFollowUps({ corporationId: corp, status: 'Open', pageSize: 10 }),
+    consultancyStore.fetchInstitutions({}),
+    consultancyStore.fetchPlans({ status: 'Active' }),
+    consultancyStore.fetchVisits({ pageSize: 10 }),
+    consultancyStore.fetchFollowUps({ status: 'Open', pageSize: 10 }),
   ])
 })
 </script>

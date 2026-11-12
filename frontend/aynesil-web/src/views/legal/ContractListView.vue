@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,14 +13,12 @@ import type { ContractListQuery, StudentContractListItemDto } from '@/types/lega
 const { t } = useI18n()
 const router = useRouter()
 const contractStore = useContractStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive<ContractListQuery>({
   page: 1,
   pageSize: 20,
   status: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<StudentContractListItemDto>[] = [

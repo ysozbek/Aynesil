@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useBepStore } from '@/stores/bep.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -16,16 +15,12 @@ import type { EducationPlanListItemDto } from '@/types/bep.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useBepStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   campusId: '',
   academicPeriodId: '',
@@ -52,14 +47,13 @@ onMounted(async () => {
   await Promise.all([
     loadList(),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
-    store.periodList.items.length === 0 ? store.fetchPeriods({ corporationId: corporationId.value, pageSize: 200 }) : Promise.resolve(),
+    store.periodList.items.length === 0 ? store.fetchPeriods({ pageSize: 200 }) : Promise.resolve(),
   ])
 })
 
 function buildQuery() {
   return {
     ...query,
-    corporationId: corporationId.value,
     studentId: query.studentId || undefined,
     campusId: query.campusId || undefined,
     academicPeriodId: query.academicPeriodId || undefined,

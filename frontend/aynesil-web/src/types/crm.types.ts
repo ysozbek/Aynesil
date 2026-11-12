@@ -111,7 +111,6 @@ export interface ConversionBySourceDto {
 // ── Request payloads ───────────────────────────────────────────────────────────
 
 export interface CreateLeadPayload {
-  corporationId: string
   contactName: string
   campusId?: string
   sourceId?: string
@@ -188,7 +187,6 @@ export interface RescheduleInterviewPayload {
 // ── Query types ────────────────────────────────────────────────────────────────
 
 export interface LeadListQuery {
-  corporationId?: string
   campusId?: string
   statusId?: string
   pipelineStageId?: string
@@ -204,7 +202,6 @@ export interface LeadListQuery {
 }
 
 export interface FollowUpsQuery {
-  corporationId: string
   campusId?: string
   dueBy?: string
   page?: number
@@ -212,7 +209,6 @@ export interface FollowUpsQuery {
 }
 
 export interface ConversionReportQuery {
-  corporationId: string
   from: string
   to: string
   campusId?: string

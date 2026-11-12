@@ -23,8 +23,8 @@ function qs(params: object): string {
 
 export const kpiService = {
   // ── Categories ─────────────────────────────────────────────────────────────
-  listCategories: (corporationId?: string) =>
-    apiService.get<KpiCategoryDto[]>(`/performance-kpi/categories${corporationId ? `?corporationId=${corporationId}` : ''}`),
+  listCategories: () =>
+    apiService.get<KpiCategoryDto[]>('/performance-kpi/categories'),
 
   // ── Definitions ────────────────────────────────────────────────────────────
   listDefinitions: (query: KpiDefinitionListQuery) =>
@@ -43,7 +43,7 @@ export const kpiService = {
 
   // ── KPI Values ─────────────────────────────────────────────────────────────
   // Backend returns PaginatedResult<KpiValueDto> (see KpiValueQueries.cs).
-  listKpiValues: (query: { corporationId?: string; kpiId?: string; educatorId?: string } & Record<string, unknown>) =>
+  listKpiValues: (query: { kpiId?: string; educatorId?: string } & Record<string, unknown>) =>
     apiService.get<PaginatedResult<KpiValueDto>>(`/performance-kpi/kpi-values${qs(query)}`),
 
   listEducatorKpiValues: (
@@ -58,7 +58,7 @@ export const kpiService = {
   // Body: { CorporationId, PeriodStart, PeriodEnd } (CorporationId required).
   computeEducator: (
     educatorId: string,
-    payload: { corporationId: string; periodStart: string; periodEnd: string },
+    payload: { periodStart: string; periodEnd: string },
   ) =>
     apiService.post<EducatorPerformanceSnapshotDto>(
       `/performance-kpi/educators/${educatorId}/compute`,
@@ -66,7 +66,7 @@ export const kpiService = {
     ),
 
   // Backend route: /performance-kpi/compute/bulk
-  bulkCompute: (payload: { corporationId: string; periodStart: string; periodEnd: string }) =>
+  bulkCompute: (payload: { periodStart: string; periodEnd: string }) =>
     apiService.post('/performance-kpi/compute/bulk', payload),
 
   // ── Snapshots ──────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ export const kpiService = {
 
   // ── Parent Feedback ────────────────────────────────────────────────────────
   // Backend returns PaginatedResult<ParentFeedbackDto>.
-  listParentFeedback: (query: { corporationId?: string; educatorId?: string } & Record<string, unknown>) =>
+  listParentFeedback: (query: { educatorId?: string } & Record<string, unknown>) =>
     apiService.get<PaginatedResult<ParentFeedbackDto>>(`/performance-kpi/parent-feedback${qs(query)}`),
 
   submitFeedback: (payload: Partial<ParentFeedbackDto>) =>
@@ -112,7 +112,7 @@ export const kpiService = {
       `/performance-kpi/trends/corporation${qs(query)}`,
     ),
 
-  getRanking: (query: { corporationId?: string; kpiId?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
+  getRanking: (query: { kpiId?: string; periodStart?: string; periodEnd?: string } & Record<string, unknown>) =>
     apiService.get<RankingItemDto[]>(`/performance-kpi/ranking${qs(query)}`),
 
   // ── Reports ────────────────────────────────────────────────────────────────

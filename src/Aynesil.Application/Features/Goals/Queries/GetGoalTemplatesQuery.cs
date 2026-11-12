@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Goals.Queries;
 
 public class GetGoalTemplatesQuery : PagedQuery, IRequest<PaginatedResult<GoalTemplateListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? LibraryId { get; set; }
     public Guid? CategoryId { get; set; }
     public Guid? DevelopmentAreaId { get; set; }
@@ -20,16 +19,22 @@ public sealed class GetGoalTemplatesQueryHandler
     : IRequestHandler<GetGoalTemplatesQuery, PaginatedResult<GoalTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetGoalTemplatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetGoalTemplatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<GoalTemplateListItemDto>> Handle(
         GetGoalTemplatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.GoalTemplates.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(t => t.CorporationId == null || t.CorporationId == req.CorporationId.Value);
+        q = q.Where(t => t.CorporationId == null || t.CorporationId == corporationId);
 
         if (req.LibraryId.HasValue)
             q = q.Where(t => t.LibraryId == req.LibraryId.Value);

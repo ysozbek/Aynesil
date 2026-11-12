@@ -13,7 +13,7 @@ export const useSignatureStore = defineStore('signature', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchSignatureReport(query: { corporationId?: string } & Record<string, unknown>) {
+  async function fetchSignatureReport(query: Record<string, unknown>) {
     loading.value = true
     error.value = null
     try {

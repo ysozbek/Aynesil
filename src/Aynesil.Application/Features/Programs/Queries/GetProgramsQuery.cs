@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Programs.Queries;
 
 public class GetProgramsQuery : PagedQuery, IRequest<PaginatedResult<ProgramListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? ProgramTypeId { get; set; }
     public bool? IsActive { get; set; }
 }
@@ -19,16 +18,22 @@ public sealed class GetProgramsQueryHandler
     : IRequestHandler<GetProgramsQuery, PaginatedResult<ProgramListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetProgramsQueryHandler(IAppDbContext db) => _db = db;
+    public GetProgramsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ProgramListItemDto>> Handle(
         GetProgramsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.EducationPrograms.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.ProgramTypeId.HasValue)
             q = q.Where(p => p.ProgramTypeId == req.ProgramTypeId.Value);
         if (req.IsActive.HasValue)

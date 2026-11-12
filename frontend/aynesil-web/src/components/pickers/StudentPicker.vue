@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { studentService } from '@/services/student.service'
 import EntityPicker from './EntityPicker.vue'
 import type { PickerOption } from './types'
@@ -20,12 +18,9 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const auth = useAuthStore()
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 async function search(term: string): Promise<PickerOption[]> {
   const res = await studentService.listStudents({
-    corporationId: corporationId.value,
     search: term || undefined,
     page: 1,
     pageSize: 20,

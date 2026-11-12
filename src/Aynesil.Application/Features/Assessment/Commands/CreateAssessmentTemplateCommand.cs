@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Assessment.Commands;
 // ── Request ───────────────────────────────────────────────────────────────────
 
 public record CreateAssessmentTemplateCommand(
-    Guid? CorporationId,
     string Code,
     string Name,
     Guid? TypeId,
@@ -46,10 +45,12 @@ public sealed class CreateAssessmentTemplateCommandHandler
     : IRequestHandler<CreateAssessmentTemplateCommand, AssessmentTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateAssessmentTemplateCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateAssessmentTemplateCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -57,9 +58,11 @@ public sealed class CreateAssessmentTemplateCommandHandler
     public async Task<AssessmentTemplateDto> Handle(
         CreateAssessmentTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var template = AssessmentTemplate.Create(
             req.Code, req.Name,
-            req.CorporationId, req.TypeId, req.CategoryId,
+            corporationId, req.TypeId, req.CategoryId,
             req.ScoringModel, _currentUser.UserId);
 
         if (req.Translations is { Count: > 0 })

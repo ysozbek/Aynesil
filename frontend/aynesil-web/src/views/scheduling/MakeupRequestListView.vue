@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useMakeupSessionStore } from '@/stores/makeupSession.store'
 import { useStudentStore } from '@/stores/student.store'
 import { usePermission } from '@/composables/usePermission'
@@ -16,15 +15,11 @@ import type { MakeupRequestListItemDto } from '@/types/scheduling.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useMakeupSessionStore()
 const studentStore = useStudentStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   status: '',
   page: 1,
@@ -34,14 +29,13 @@ const query = reactive({
 watch(() => [query.status, query.studentId, query.page], () => loadList())
 onMounted(async () => {
   await loadList()
-  if (studentStore.list.items.length === 0 && corporationId.value) {
-    await studentStore.fetchList({ pageSize: 200, corporationId: corporationId.value })
+  if (studentStore.list.items.length === 0) {
+    await studentStore.fetchList({ pageSize: 200 })
   }
 })
 
 async function loadList() {
   await store.fetchMakeupRequests({
-    corporationId: corporationId.value,
     status: query.status || undefined,
     studentId: query.studentId || undefined,
     page: query.page,
@@ -105,7 +99,6 @@ async function submitCreate() {
   }
   try {
     await store.createMakeupRequest({
-      corporationId: corporationId.value,
       studentId: createForm.studentId,
       missedSessionId: createForm.missedSessionId || undefined,
       note: createForm.note || undefined,

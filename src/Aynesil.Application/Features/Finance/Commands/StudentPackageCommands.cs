@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── PurchaseStudentPackageCommand ─────────────────────────────────────────────
 
 public record PurchaseStudentPackageCommand(
-    Guid CorporationId,
     Guid StudentId,
     decimal TotalCredits,
     decimal Price,
@@ -23,7 +22,6 @@ public class PurchaseStudentPackageCommandValidator
 {
     public PurchaseStudentPackageCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.TotalCredits).GreaterThan(0);
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
@@ -35,11 +33,14 @@ public sealed class PurchaseStudentPackageCommandHandler
     : IRequestHandler<PurchaseStudentPackageCommand, StudentPackageDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
     public PurchaseStudentPackageCommandHandler(
-        IAppDbContext db, ICurrentUserService currentUser)
+        IAppDbContext db, ICurrentUserService currentUser,
+        ITenantContext tenant)
     {
+        _tenant = tenant;
         _db          = db;
         _currentUser = currentUser;
     }
@@ -47,8 +48,10 @@ public sealed class PurchaseStudentPackageCommandHandler
     public async Task<StudentPackageDto> Handle(
         PurchaseStudentPackageCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var studentExists = await _db.Students
-            .AnyAsync(s => s.Id == req.StudentId, ct);
+            .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
 
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
@@ -57,7 +60,7 @@ public sealed class PurchaseStudentPackageCommandHandler
         {
             var def = await _db.PackageDefinitions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == req.PackageDefinitionId, ct)
+                .FirstOrDefaultAsync(p => p.CorporationId == corporationId && p.Id == req.PackageDefinitionId, ct)
                 ?? throw new KeyNotFoundException(
                     $"Package definition {req.PackageDefinitionId} not found.");
 
@@ -67,7 +70,7 @@ public sealed class PurchaseStudentPackageCommandHandler
         }
 
         var package = StudentPackage.Purchase(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.TotalCredits, req.Price,
             req.PackageDefinitionId, req.ExpiresOn,
             req.Currency, _currentUser.UserId);

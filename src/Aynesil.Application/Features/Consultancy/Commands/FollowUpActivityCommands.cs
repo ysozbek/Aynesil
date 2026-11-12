@@ -10,22 +10,19 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── CreateFollowUpActivityCommand ─────────────────────────────────────────────
 
 public record CreateFollowUpActivityCommand(
-    Guid CorporationId,
     string Title,
     Guid? ConsultancyPlanId,
     Guid? SchoolVisitId,
     Guid? ObservationRecordId,
     string? Description,
     DateOnly? DueDate,
-    Guid? AssignedTo,
-    Guid? CreatedBy = null) : IRequest<FollowUpActivityDto>;
+    Guid? AssignedTo) : IRequest<FollowUpActivityDto>;
 
 public class CreateFollowUpActivityCommandValidator
     : AbstractValidator<CreateFollowUpActivityCommand>
 {
     public CreateFollowUpActivityCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
             .Must(x => x.ConsultancyPlanId.HasValue || x.SchoolVisitId.HasValue)
@@ -37,16 +34,25 @@ public sealed class CreateFollowUpActivityCommandHandler
     : IRequestHandler<CreateFollowUpActivityCommand, FollowUpActivityDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateFollowUpActivityCommandHandler(IAppDbContext db) => _db = db;
+    public CreateFollowUpActivityCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<FollowUpActivityDto> Handle(
         CreateFollowUpActivityCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.ConsultancyPlanId.HasValue)
         {
             var planExists = await _db.ConsultancyPlans
-                .AnyAsync(p => p.Id == req.ConsultancyPlanId.Value, ct);
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value, ct);
             if (!planExists)
                 throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
         }
@@ -54,15 +60,15 @@ public sealed class CreateFollowUpActivityCommandHandler
         if (req.SchoolVisitId.HasValue)
         {
             var visitExists = await _db.SchoolVisits
-                .AnyAsync(v => v.Id == req.SchoolVisitId.Value, ct);
+                .AnyAsync(v => v.CorporationId == corporationId && v.Id == req.SchoolVisitId.Value, ct);
             if (!visitExists)
                 throw new KeyNotFoundException($"School visit {req.SchoolVisitId} not found.");
         }
 
         var activity = FollowUpActivity.Create(
-            req.CorporationId, req.Title,
+            corporationId, req.Title,
             req.ConsultancyPlanId, req.SchoolVisitId, req.ObservationRecordId,
-            req.Description, req.DueDate, req.AssignedTo, req.CreatedBy);
+            req.Description, req.DueDate, req.AssignedTo, _currentUser.UserId);
 
         _db.FollowUpActivities.Add(activity);
         await _db.SaveChangesAsync(ct);
@@ -105,8 +111,7 @@ public record UpdateFollowUpActivityCommand(
     DateOnly? DueDate,
     Guid? AssignedTo,
     string? Notes,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateFollowUpActivityCommandValidator
     : AbstractValidator<UpdateFollowUpActivityCommand>
@@ -123,8 +128,13 @@ public sealed class UpdateFollowUpActivityCommandHandler
     : IRequestHandler<UpdateFollowUpActivityCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateFollowUpActivityCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateFollowUpActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateFollowUpActivityCommand req, CancellationToken ct)
     {
@@ -133,7 +143,7 @@ public sealed class UpdateFollowUpActivityCommandHandler
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
         activity.Update(req.Title, req.Description, req.DueDate,
-            req.AssignedTo, req.Notes, req.UpdatedBy);
+            req.AssignedTo, req.Notes, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -141,14 +151,19 @@ public sealed class UpdateFollowUpActivityCommandHandler
 
 // ── StartFollowUpActivityCommand ──────────────────────────────────────────────
 
-public record StartFollowUpActivityCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record StartFollowUpActivityCommand(Guid Id) : IRequest;
 
 public sealed class StartFollowUpActivityCommandHandler
     : IRequestHandler<StartFollowUpActivityCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public StartFollowUpActivityCommandHandler(IAppDbContext db) => _db = db;
+    public StartFollowUpActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(StartFollowUpActivityCommand req, CancellationToken ct)
     {
@@ -156,7 +171,7 @@ public sealed class StartFollowUpActivityCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
-        activity.StartProgress(req.UpdatedBy);
+        activity.StartProgress(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -165,15 +180,19 @@ public sealed class StartFollowUpActivityCommandHandler
 
 public record CompleteFollowUpActivityCommand(
     Guid Id,
-    string? Notes,
-    Guid? CompletedBy = null) : IRequest;
+    string? Notes) : IRequest;
 
 public sealed class CompleteFollowUpActivityCommandHandler
     : IRequestHandler<CompleteFollowUpActivityCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public CompleteFollowUpActivityCommandHandler(IAppDbContext db) => _db = db;
+    public CompleteFollowUpActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(CompleteFollowUpActivityCommand req, CancellationToken ct)
     {
@@ -181,21 +200,26 @@ public sealed class CompleteFollowUpActivityCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
-        activity.Complete(req.Notes, req.CompletedBy);
+        activity.Complete(req.Notes, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── CancelFollowUpActivityCommand ─────────────────────────────────────────────
 
-public record CancelFollowUpActivityCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record CancelFollowUpActivityCommand(Guid Id) : IRequest;
 
 public sealed class CancelFollowUpActivityCommandHandler
     : IRequestHandler<CancelFollowUpActivityCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public CancelFollowUpActivityCommandHandler(IAppDbContext db) => _db = db;
+    public CancelFollowUpActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(CancelFollowUpActivityCommand req, CancellationToken ct)
     {
@@ -203,7 +227,7 @@ public sealed class CancelFollowUpActivityCommandHandler
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
-        activity.Cancel(req.UpdatedBy);
+        activity.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

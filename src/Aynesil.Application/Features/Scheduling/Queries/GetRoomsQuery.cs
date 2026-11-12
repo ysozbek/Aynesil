@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Queries;
 
 public class GetRoomsQuery : PagedQuery, IRequest<PaginatedResult<RoomListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public bool? IsVirtual { get; set; }
     public bool? IsActive { get; set; }
@@ -20,15 +19,22 @@ public sealed class GetRoomsQueryHandler
     : IRequestHandler<GetRoomsQuery, PaginatedResult<RoomListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetRoomsQueryHandler(IAppDbContext db) => _db = db;
+    public GetRoomsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<RoomListItemDto>> Handle(
         GetRoomsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Rooms.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(r => r.CorporationId == req.CorporationId.Value);
+        q = q.Where(r => r.CorporationId == corporationId);
         if (req.CampusId.HasValue)      q = q.Where(r => r.CampusId == req.CampusId.Value);
         if (req.IsVirtual.HasValue)     q = q.Where(r => r.IsVirtual == req.IsVirtual.Value);
         if (req.IsActive.HasValue)      q = q.Where(r => r.IsActive == req.IsActive.Value);

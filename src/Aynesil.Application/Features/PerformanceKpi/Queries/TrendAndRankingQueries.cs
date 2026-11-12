@@ -12,7 +12,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Queries;
 /// Returns up to <c>MaxPeriods</c> data points (oldest→newest) from kpi_value.
 /// </summary>
 public record GetEducatorKpiTrendQuery(
-    Guid CorporationId,
     Guid EducatorId,
     string KpiCode,
     DateOnly? FromPeriodStart = null,
@@ -22,12 +21,19 @@ public sealed class GetEducatorKpiTrendQueryHandler
     : IRequestHandler<GetEducatorKpiTrendQuery, KpiTrendDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorKpiTrendQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorKpiTrendQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<KpiTrendDto> Handle(
         GetEducatorKpiTrendQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
@@ -36,7 +42,7 @@ public sealed class GetEducatorKpiTrendQueryHandler
 
         var q = _db.KpiValues
             .AsNoTracking()
-            .Where(kv => kv.CorporationId == req.CorporationId
+            .Where(kv => kv.CorporationId == corporationId
                       && kv.KpiId == kpiDef.Id
                       && kv.SubjectType == "educator"
                       && kv.SubjectId == req.EducatorId);
@@ -65,7 +71,6 @@ public sealed class GetEducatorKpiTrendQueryHandler
 /// Each data point is the average NumericValue across all educator kpi_value rows for that period.
 /// </summary>
 public record GetCorporationKpiTrendQuery(
-    Guid CorporationId,
     string KpiCode,
     DateOnly? FromPeriodStart = null,
     int MaxPeriods = 12) : IRequest<KpiTrendDto>;
@@ -74,12 +79,19 @@ public sealed class GetCorporationKpiTrendQueryHandler
     : IRequestHandler<GetCorporationKpiTrendQuery, KpiTrendDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCorporationKpiTrendQueryHandler(IAppDbContext db) => _db = db;
+    public GetCorporationKpiTrendQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<KpiTrendDto> Handle(
         GetCorporationKpiTrendQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
@@ -88,7 +100,7 @@ public sealed class GetCorporationKpiTrendQueryHandler
 
         var q = _db.KpiValues
             .AsNoTracking()
-            .Where(kv => kv.CorporationId == req.CorporationId
+            .Where(kv => kv.CorporationId == corporationId
                       && kv.KpiId == kpiDef.Id
                       && kv.SubjectType == "educator"
                       && kv.NumericValue.HasValue);
@@ -129,7 +141,6 @@ public sealed class GetCorporationKpiTrendQueryHandler
 /// when <c>RankAscending</c> = true, e.g. for error rates).
 /// </summary>
 public record GetEducatorRankingQuery(
-    Guid CorporationId,
     string KpiCode,
     DateOnly PeriodStart,
     DateOnly PeriodEnd,
@@ -140,12 +151,19 @@ public sealed class GetEducatorRankingQueryHandler
     : IRequestHandler<GetEducatorRankingQuery, IReadOnlyList<RankingItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorRankingQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorRankingQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<RankingItemDto>> Handle(
         GetEducatorRankingQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
@@ -154,7 +172,7 @@ public sealed class GetEducatorRankingQueryHandler
 
         var kpiValues = await _db.KpiValues
             .AsNoTracking()
-            .Where(kv => kv.CorporationId == req.CorporationId
+            .Where(kv => kv.CorporationId == corporationId
                       && kv.KpiId == kpiDef.Id
                       && kv.SubjectType == "educator"
                       && kv.SubjectId.HasValue

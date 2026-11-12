@@ -3,13 +3,11 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useEducatorStore } from '@/stores/educator.store'
-import { useAuthStore } from '@/stores/auth.store'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useEducatorStore()
-const auth = useAuthStore()
 
 const id = computed(() => route.params.id as string)
 const educator = computed(() => store.current)
@@ -20,7 +18,6 @@ onMounted(async () => {
     store.fetchOne(id.value),
     store.fetchAvailability(id.value),
     store.fetchUtilization({
-      corporationId: auth.user?.corporationId ?? '',
       activeOnly: true,
     }),
   ])

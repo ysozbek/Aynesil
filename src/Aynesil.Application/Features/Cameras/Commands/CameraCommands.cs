@@ -9,20 +9,17 @@ namespace Aynesil.Application.Features.Cameras.Commands;
 // ── RegisterCameraCommand ─────────────────────────────────────────────────────
 
 public record RegisterCameraCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     Guid? CampusId,
     Guid? CameraTypeId,
     Guid? StreamProviderId,
-    string? StreamRef,
-    Guid? CreatedBy = null) : IRequest<Guid>;
+    string? StreamRef) : IRequest<Guid>;
 
 public class RegisterCameraCommandValidator : AbstractValidator<RegisterCameraCommand>
 {
     public RegisterCameraCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StreamRef).MaximumLength(500).When(x => x.StreamRef != null);
@@ -32,23 +29,32 @@ public class RegisterCameraCommandValidator : AbstractValidator<RegisterCameraCo
 public sealed class RegisterCameraCommandHandler : IRequestHandler<RegisterCameraCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public RegisterCameraCommandHandler(IAppDbContext db) => _db = db;
+    public RegisterCameraCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(RegisterCameraCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.Cameras
-            .AnyAsync(c => c.CorporationId == req.CorporationId && c.Code == req.Code, ct);
+            .AnyAsync(c => c.CorporationId == corporationId && c.Code == req.Code, ct);
 
         if (duplicate)
             throw new InvalidOperationException(
                 $"A camera with code '{req.Code}' already exists in this corporation.");
 
         var camera = Camera.Register(
-            req.CorporationId, req.Code, req.Name,
+            corporationId, req.Code, req.Name,
             req.CampusId, req.CameraTypeId,
             req.StreamProviderId, req.StreamRef,
-            req.CreatedBy);
+            _currentUser.UserId);
 
         _db.Cameras.Add(camera);
         await _db.SaveChangesAsync(ct);
@@ -65,8 +71,7 @@ public record UpdateCameraCommand(
     Guid? CameraTypeId,
     Guid? StreamProviderId,
     string? StreamRef,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateCameraCommandValidator : AbstractValidator<UpdateCameraCommand>
 {
@@ -82,8 +87,13 @@ public class UpdateCameraCommandValidator : AbstractValidator<UpdateCameraComman
 public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateCameraCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateCameraCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateCameraCommand req, CancellationToken ct)
     {
@@ -92,7 +102,7 @@ public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCom
             ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
 
         camera.Update(req.Name, req.CampusId, req.CameraTypeId,
-            req.StreamProviderId, req.StreamRef, req.UpdatedBy);
+            req.StreamProviderId, req.StreamRef, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -100,13 +110,18 @@ public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCom
 
 // ── DeleteCameraCommand ───────────────────────────────────────────────────────
 
-public record DeleteCameraCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteCameraCommand(Guid Id) : IRequest;
 
 public sealed class DeleteCameraCommandHandler : IRequestHandler<DeleteCameraCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteCameraCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteCameraCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteCameraCommand req, CancellationToken ct)
     {
@@ -114,14 +129,14 @@ public sealed class DeleteCameraCommandHandler : IRequestHandler<DeleteCameraCom
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
 
-        camera.SoftDelete(req.DeletedBy);
+        camera.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── SetCameraActiveCommand ────────────────────────────────────────────────────
 
-public record SetCameraActiveCommand(Guid Id, bool IsActive, Guid? UpdatedBy = null) : IRequest;
+public record SetCameraActiveCommand(Guid Id, bool IsActive) : IRequest;
 
 public class SetCameraActiveCommandValidator : AbstractValidator<SetCameraActiveCommand>
 {
@@ -134,8 +149,13 @@ public class SetCameraActiveCommandValidator : AbstractValidator<SetCameraActive
 public sealed class SetCameraActiveCommandHandler : IRequestHandler<SetCameraActiveCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public SetCameraActiveCommandHandler(IAppDbContext db) => _db = db;
+    public SetCameraActiveCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(SetCameraActiveCommand req, CancellationToken ct)
     {
@@ -144,9 +164,9 @@ public sealed class SetCameraActiveCommandHandler : IRequestHandler<SetCameraAct
             ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
 
         if (req.IsActive)
-            camera.Activate(req.UpdatedBy);
+            camera.Activate(_currentUser.UserId);
         else
-            camera.Deactivate(req.UpdatedBy);
+            camera.Deactivate(_currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }

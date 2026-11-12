@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useInvoiceStore } from '@/stores/invoice.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,14 +13,10 @@ import type { InvoiceListItemDto } from '@/types/finance.types'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const auth = useAuthStore()
 const store = useInvoiceStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   status: typeof route.query.status === 'string' ? route.query.status : '',
   from: '',
@@ -37,7 +32,6 @@ async function loadList() {
   await store.fetchInvoices({
     page: query.page,
     pageSize: query.pageSize,
-    corporationId: corporationId.value,
     studentId: query.studentId || undefined,
     // 'overdue' is derived (issued/partial past due date), so it maps to the overdue flag
     status: query.status && query.status !== 'overdue' ? query.status : undefined,

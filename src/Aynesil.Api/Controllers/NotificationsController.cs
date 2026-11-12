@@ -68,8 +68,7 @@ public sealed class NotificationsController : BaseController
     public async Task<IActionResult> UpdatePreferences(
         [FromBody] UpdateNotificationPreferencesCommand command, CancellationToken ct)
     {
-        var cmd = command with { UserId = GetCurrentUserId() };
-        await Sender.Send(cmd, ct);
+        await Sender.Send(command, ct);
         return NoContentResult();
     }
 

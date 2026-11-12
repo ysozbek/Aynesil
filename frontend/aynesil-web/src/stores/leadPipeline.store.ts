@@ -11,11 +11,11 @@ export const useLeadPipelineStore = defineStore('leadPipeline', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchSummary(corporationId: string, campusId?: string) {
+  async function fetchSummary(campusId?: string) {
     loading.value = true
     error.value = null
     try {
-      const res = await leadService.getPipelineSummary(corporationId, campusId)
+      const res = await leadService.getPipelineSummary(campusId)
       if (res.success && res.data) summary.value = res.data
     } catch (e: unknown) {
       error.value = (e as Error).message

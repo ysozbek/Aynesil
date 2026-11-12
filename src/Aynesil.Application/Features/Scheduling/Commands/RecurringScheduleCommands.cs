@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 // ── CreateRecurringScheduleCommand ────────────────────────────────────────────
 
 public record CreateRecurringScheduleCommand(
-    Guid CorporationId,
     string Frequency,
     TimeOnly StartTime,
     int DurationMinutes,
@@ -35,7 +34,6 @@ public class CreateRecurringScheduleCommandValidator
 
     public CreateRecurringScheduleCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Frequency)
             .Must(f => new[] { "weekly", "biweekly", "monthly" }.Contains(f))
             .WithMessage("Frequency must be weekly, biweekly, or monthly.");
@@ -65,10 +63,12 @@ public sealed class CreateRecurringScheduleCommandHandler
     : IRequestHandler<CreateRecurringScheduleCommand, RecurringScheduleDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateRecurringScheduleCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateRecurringScheduleCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -76,6 +76,8 @@ public sealed class CreateRecurringScheduleCommandHandler
     public async Task<RecurringScheduleDto> Handle(
         CreateRecurringScheduleCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.ProgramServiceId.HasValue)
             await EnsureServiceMatchesStudentProgramAsync(req.ProgramServiceId.Value, req.StudentProgramId, ct);
 
@@ -90,7 +92,7 @@ public sealed class CreateRecurringScheduleCommandHandler
         }
 
         var schedule = RecurringSchedule.Create(
-            req.CorporationId, req.Frequency, req.StartTime, req.DurationMinutes,
+            corporationId, req.Frequency, req.StartTime, req.DurationMinutes,
             req.RangeStart, req.CampusId, req.StudentProgramId, req.SessionTypeId,
             req.RoomId, req.IntervalCount, req.ByWeekday, req.ByMonthday,
             req.RangeEnd, req.MaxOccurrences, _currentUser.UserId,

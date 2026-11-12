@@ -46,12 +46,12 @@ public sealed class LegalController : BaseController
     /// All versions (including archived) for a given template code.
     /// Use for version history UI.
     /// </summary>
-    [HttpGet("contract-templates/{corporationId:guid}/{code}/versions")]
+    [HttpGet("contract-templates/{code}/versions")]
     [HasPermission(Permissions.ContractTemplates.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ContractTemplateListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetContractTemplateVersions(
-        Guid corporationId, string code, CancellationToken ct)
-        => OkResult(await Sender.Send(new GetContractTemplateVersionsQuery(corporationId, code), ct));
+        string code, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetContractTemplateVersionsQuery(code), ct));
 
     /// <summary>Create a new contract template (v1, is_current = true).</summary>
     [HttpPost("contract-templates")]
@@ -238,12 +238,12 @@ public sealed class LegalController : BaseController
         => OkResult(await Sender.Send(new GetConsentTemplateQuery(id), ct));
 
     /// <summary>All versions (including archived) for a consent template code.</summary>
-    [HttpGet("consent-templates/{corporationId:guid}/{code}/versions")]
+    [HttpGet("consent-templates/{code}/versions")]
     [HasPermission(Permissions.ConsentTemplates.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ConsentTemplateListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetConsentTemplateVersions(
-        Guid corporationId, string code, CancellationToken ct)
-        => OkResult(await Sender.Send(new GetConsentTemplateVersionsQuery(corporationId, code), ct));
+        string code, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetConsentTemplateVersionsQuery(code), ct));
 
     /// <summary>Create a new consent template (v1).</summary>
     [HttpPost("consent-templates")]

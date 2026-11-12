@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── CreateInvoiceCommand ──────────────────────────────────────────────────────
 
 public record CreateInvoiceCommand(
-    Guid CorporationId,
     DateOnly IssueDate,
     string Currency = "TRY",
     Guid? StudentId = null,
@@ -21,7 +20,6 @@ public class CreateInvoiceCommandValidator : AbstractValidator<CreateInvoiceComm
 {
     public CreateInvoiceCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Currency).NotEmpty().Length(3);
         RuleFor(x => x.DueDate)
             .GreaterThanOrEqualTo(x => x.IssueDate)
@@ -34,13 +32,20 @@ public sealed class CreateInvoiceCommandHandler
     : IRequestHandler<CreateInvoiceCommand, InvoiceDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateInvoiceCommandHandler(IAppDbContext db) => _db = db;
+    public CreateInvoiceCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<InvoiceDto> Handle(CreateInvoiceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var invoice = Invoice.Create(
-            req.CorporationId, req.IssueDate, req.Currency,
+            corporationId, req.IssueDate, req.Currency,
             req.StudentId, req.GuardianId, req.DueDate);
 
         _db.Invoices.Add(invoice);

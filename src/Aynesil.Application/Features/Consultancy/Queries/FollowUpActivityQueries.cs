@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 public class GetFollowUpActivitiesQuery
     : PagedQuery, IRequest<PaginatedResult<FollowUpActivityListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? ConsultancyPlanId { get; set; }
     public Guid? SchoolVisitId { get; set; }
     public Guid? AssignedTo { get; set; }
@@ -24,16 +23,22 @@ public sealed class GetFollowUpActivitiesQueryHandler
     : IRequestHandler<GetFollowUpActivitiesQuery, PaginatedResult<FollowUpActivityListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetFollowUpActivitiesQueryHandler(IAppDbContext db) => _db = db;
+    public GetFollowUpActivitiesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<FollowUpActivityListItemDto>> Handle(
         GetFollowUpActivitiesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.FollowUpActivities.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(a => a.CorporationId == req.CorporationId.Value);
+        q = q.Where(a => a.CorporationId == corporationId);
         if (req.ConsultancyPlanId.HasValue)
             q = q.Where(a => a.ConsultancyPlanId == req.ConsultancyPlanId.Value);
         if (req.SchoolVisitId.HasValue)
@@ -111,7 +116,6 @@ public sealed class GetFollowUpActivityQueryHandler
 /// </summary>
 public class GetOpenFollowUpsReportQuery : IRequest<IReadOnlyList<OpenFollowUpReportItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? ConsultancyPlanId { get; set; }
     public Guid? AssignedTo { get; set; }
     public bool OverdueOnly { get; set; }
@@ -121,16 +125,23 @@ public sealed class GetOpenFollowUpsReportQueryHandler
     : IRequestHandler<GetOpenFollowUpsReportQuery, IReadOnlyList<OpenFollowUpReportItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetOpenFollowUpsReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetOpenFollowUpsReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<OpenFollowUpReportItemDto>> Handle(
         GetOpenFollowUpsReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var q = _db.FollowUpActivities.AsNoTracking()
-            .Where(a => a.CorporationId == req.CorporationId
+            .Where(a => a.CorporationId == corporationId
                      && (a.Status == "pending" || a.Status == "in_progress"));
 
         if (req.ConsultancyPlanId.HasValue)

@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Plans.Commands;
 // ── CreateAcademicPeriodCommand ───────────────────────────────────────────────
 
 public record CreateAcademicPeriodCommand(
-    Guid CorporationId,
     string Name,
     DateOnly StartDate,
     DateOnly EndDate,
@@ -21,7 +20,6 @@ public class CreateAcademicPeriodCommandValidator : AbstractValidator<CreateAcad
 {
     public CreateAcademicPeriodCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StartDate).NotEmpty();
         RuleFor(x => x.EndDate).NotEmpty().GreaterThan(x => x.StartDate)
@@ -33,16 +31,23 @@ public sealed class CreateAcademicPeriodCommandHandler
     : IRequestHandler<CreateAcademicPeriodCommand, AcademicPeriodDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateAcademicPeriodCommandHandler(IAppDbContext db) => _db = db;
+    public CreateAcademicPeriodCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AcademicPeriodDto> Handle(CreateAcademicPeriodCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.IsCurrent)
-            await UnmarkCurrentAsync(req.CorporationId, ct);
+            await UnmarkCurrentAsync(corporationId, ct);
 
         var period = AcademicPeriod.Create(
-            req.CorporationId, req.Name, req.StartDate, req.EndDate, req.TermId, req.IsCurrent);
+            corporationId, req.Name, req.StartDate, req.EndDate, req.TermId, req.IsCurrent);
 
         _db.AcademicPeriods.Add(period);
         await _db.SaveChangesAsync(ct);

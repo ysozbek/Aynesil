@@ -12,19 +12,16 @@ namespace Aynesil.Application.Features.Legal.Commands;
 public record ConsentTranslationRequest(string Locale, string Title, string Body);
 
 public record CreateConsentTemplateCommand(
-    Guid CorporationId,
     string Code,
     Guid? ConsentTypeId,
     bool IsMandatory,
     DateOnly? EffectiveFrom,
-    IReadOnlyList<ConsentTranslationRequest>? Translations,
-    Guid? CreatedBy = null) : IRequest<ConsentTemplateDto>;
+    IReadOnlyList<ConsentTranslationRequest>? Translations) : IRequest<ConsentTemplateDto>;
 
 public class CreateConsentTemplateCommandValidator : AbstractValidator<CreateConsentTemplateCommand>
 {
     public CreateConsentTemplateCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100)
             .Matches(@"^[a-z0-9_]+$").WithMessage("Code must be lowercase alphanumeric with underscores.");
         RuleForEach(x => x.Translations).ChildRules(t =>
@@ -40,14 +37,21 @@ public sealed class CreateConsentTemplateCommandHandler
     : IRequestHandler<CreateConsentTemplateCommand, ConsentTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateConsentTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public CreateConsentTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConsentTemplateDto> Handle(
         CreateConsentTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var alreadyExists = await _db.ConsentTemplates
-            .AnyAsync(t => t.CorporationId == req.CorporationId
+            .AnyAsync(t => t.CorporationId == corporationId
                         && t.Code == req.Code.Trim().ToLowerInvariant()
                         && t.IsCurrent, ct);
 
@@ -56,7 +60,7 @@ public sealed class CreateConsentTemplateCommandHandler
                 $"A current consent template with code '{req.Code}' already exists for this corporation.");
 
         var template = ConsentTemplate.Create(
-            req.CorporationId, req.Code, req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);
+            corporationId, req.Code, req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);
 
         if (req.Translations is { Count: > 0 })
             foreach (var tr in req.Translations)
@@ -101,8 +105,7 @@ public record UpdateConsentTemplateCommand(
     bool IsMandatory,
     DateOnly? EffectiveFrom,
     IReadOnlyList<ConsentTranslationRequest>? Translations,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateConsentTemplateCommandValidator : AbstractValidator<UpdateConsentTemplateCommand>
 {
@@ -147,8 +150,7 @@ public sealed class UpdateConsentTemplateCommandHandler : IRequestHandler<Update
 public record NewVersionConsentTemplateCommand(
     Guid CurrentTemplateId,
     DateOnly? EffectiveFrom,
-    IReadOnlyList<ConsentTranslationRequest>? Translations,
-    Guid? CreatedBy = null) : IRequest<ConsentTemplateDto>;
+    IReadOnlyList<ConsentTranslationRequest>? Translations) : IRequest<ConsentTemplateDto>;
 
 public class NewVersionConsentTemplateCommandValidator
     : AbstractValidator<NewVersionConsentTemplateCommand>
@@ -209,13 +211,18 @@ public sealed class NewVersionConsentTemplateCommandHandler
 
 // ── DeleteConsentTemplateCommand ──────────────────────────────────────────────
 
-public record DeleteConsentTemplateCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteConsentTemplateCommand(Guid Id) : IRequest;
 
 public sealed class DeleteConsentTemplateCommandHandler : IRequestHandler<DeleteConsentTemplateCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteConsentTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteConsentTemplateCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteConsentTemplateCommand req, CancellationToken ct)
     {
@@ -230,7 +237,7 @@ public sealed class DeleteConsentTemplateCommandHandler : IRequestHandler<Delete
             throw new InvalidOperationException(
                 "Cannot delete a consent template that is referenced by student consent records.");
 
-        template.Delete(req.DeletedBy);
+        template.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

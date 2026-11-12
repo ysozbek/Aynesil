@@ -33,6 +33,7 @@ export const useCameraStore = defineStore('camera', () => {
   const currentAuthorization = ref<ViewingAuthorizationDto | null>(null)
   const viewingLogs = ref<PaginatedResult<ViewingLogDto>>(emptyPage<ViewingLogDto>())
   const activeLogId = ref<number | null>(null)
+  const activeLogStartedAt = ref<string | null>(null)
   const loading = ref(false)
   const saving = ref(false)
   const error = ref<string | null>(null)
@@ -202,17 +203,19 @@ export const useCameraStore = defineStore('camera', () => {
       const res = await cameraService.startViewing(payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'İzleme başlatılamadı.')
       activeLogId.value = res.data.logId
+      activeLogStartedAt.value = res.data.startedAt
     } finally {
       saving.value = false
     }
   }
 
   async function endViewing() {
-    if (!activeLogId.value) return
+    if (!activeLogId.value || !activeLogStartedAt.value) return
     saving.value = true
     try {
-      await cameraService.endViewing(activeLogId.value)
+      await cameraService.endViewing(activeLogId.value, activeLogStartedAt.value)
       activeLogId.value = null
+      activeLogStartedAt.value = null
     } finally {
       saving.value = false
     }

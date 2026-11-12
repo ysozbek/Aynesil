@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useBepStore } from '@/stores/bep.store'
 import { useBranchStore } from '@/stores/branch.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -10,7 +9,6 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useBepStore()
 const branchStore = useBranchStore()
 
@@ -18,7 +16,6 @@ const isEdit = computed(() => !!route.params.id)
 const id = computed(() => route.params.id as string | undefined)
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   studentId: '',
   title: '',
   academicPeriodId: '',
@@ -36,7 +33,7 @@ const generalError = ref('')
 onMounted(async () => {
   await Promise.all([
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
-    store.periodList.items.length === 0 ? store.fetchPeriods({ corporationId: form.corporationId, pageSize: 200 }) : Promise.resolve(),
+    store.periodList.items.length === 0 ? store.fetchPeriods({ pageSize: 200 }) : Promise.resolve(),
   ])
 
   if (isEdit.value && id.value) {
@@ -87,7 +84,6 @@ async function submit() {
       router.push({ name: 'bep-detail', params: { id: id.value } })
     } else {
       const result = await store.createPlan({
-        corporationId: form.corporationId,
         studentId: form.studentId,
         title: form.title,
         academicPeriodId: form.academicPeriodId || null,

@@ -9,20 +9,20 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 
 // ── CreateObservationCommand ──────────────────────────────────────────────────
 
+/// <summary>
+/// CorporationId and CreatedBy are taken from the request context (JWT), never from the client.
+/// </summary>
 public record CreateObservationCommand(
-    Guid CorporationId,
     Guid SchoolVisitId,
     string Observation,
     Guid? ObservationTypeId,
     string? Subject,
-    string? Recommendations,
-    Guid? CreatedBy = null) : IRequest<ObservationRecordDto>;
+    string? Recommendations) : IRequest<ObservationRecordDto>;
 
 public class CreateObservationCommandValidator : AbstractValidator<CreateObservationCommand>
 {
     public CreateObservationCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.SchoolVisitId).NotEmpty();
         RuleFor(x => x.Observation).NotEmpty().MaximumLength(4000);
         RuleFor(x => x.Subject).MaximumLength(300)
@@ -36,14 +36,25 @@ public sealed class CreateObservationCommandHandler
     : IRequestHandler<CreateObservationCommand, ObservationRecordDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateObservationCommandHandler(IAppDbContext db) => _db = db;
+    public CreateObservationCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task<ObservationRecordDto> Handle(
         CreateObservationCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var visitExists = await _db.SchoolVisits
             .AnyAsync(v => v.Id == req.SchoolVisitId
+                        && v.CorporationId == corporationId
                         && v.Status != "cancelled", ct);
 
         if (!visitExists)
@@ -51,9 +62,9 @@ public sealed class CreateObservationCommandHandler
                 $"School visit {req.SchoolVisitId} not found or has been cancelled.");
 
         var record = ObservationRecord.Record(
-            req.CorporationId, req.SchoolVisitId,
+            corporationId, req.SchoolVisitId,
             req.Observation, req.ObservationTypeId,
-            req.Subject, req.Recommendations, req.CreatedBy);
+            req.Subject, req.Recommendations, _currentUser.UserId);
 
         _db.ObservationRecords.Add(record);
         await _db.SaveChangesAsync(ct);

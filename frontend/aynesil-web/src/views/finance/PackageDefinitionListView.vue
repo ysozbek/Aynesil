@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePackageStore } from '@/stores/package.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -16,16 +15,13 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = usePackageStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const packageTypes = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   isActive: '' as '' | 'true' | 'false',
   packageTypeId: '',
   page: 1,
@@ -50,7 +46,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchDefinitions({
     ...query,
-    corporationId: corporationId.value,
     isActive: query.isActive === 'true' ? true : query.isActive === 'false' ? false : undefined,
     packageTypeId: query.packageTypeId || undefined,
     search: query.search || undefined,

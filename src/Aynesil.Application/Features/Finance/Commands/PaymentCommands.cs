@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── RecordPaymentCommand ──────────────────────────────────────────────────────
 
 public record RecordPaymentCommand(
-    Guid CorporationId,
     decimal Amount,
     string Currency = "TRY",
     Guid? InvoiceId = null,
@@ -24,7 +23,6 @@ public class RecordPaymentCommandValidator : AbstractValidator<RecordPaymentComm
 {
     public RecordPaymentCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.Currency).NotEmpty().Length(3);
     }
@@ -34,22 +32,29 @@ public sealed class RecordPaymentCommandHandler
     : IRequestHandler<RecordPaymentCommand, PaymentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public RecordPaymentCommandHandler(IAppDbContext db) => _db = db;
+    public RecordPaymentCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaymentDto> Handle(RecordPaymentCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.InvoiceId.HasValue)
         {
             var invoiceExists = await _db.Invoices
-                .AnyAsync(i => i.Id == req.InvoiceId.Value, ct);
+                .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InvoiceId.Value, ct);
 
             if (!invoiceExists)
                 throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
         }
 
         var payment = Payment.Record(
-            req.CorporationId, req.Amount, req.Currency,
+            corporationId, req.Amount, req.Currency,
             req.InvoiceId, req.StudentId, req.PaymentMethodId,
             req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey);
 

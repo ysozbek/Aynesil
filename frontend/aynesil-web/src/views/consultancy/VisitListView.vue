@@ -3,7 +3,6 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,7 +13,6 @@ import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy
 const { t } = useI18n()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 const showCreateModal = ref(false)
 
@@ -24,7 +22,6 @@ const filters = reactive<VisitListQuery>({
   status: '',
   from: '',
   to: '',
-  corporationId: authStore.user?.corporationId,
 })
 const createForm = reactive({ institutionId: '', visitDate: '', purpose: '' })
 
@@ -62,7 +59,6 @@ async function doFetch() {
 
 async function doCreate() {
   const result = await consultancyStore.createVisit({
-    corporationId: authStore.user?.corporationId ?? '',
     institutionId: createForm.institutionId,
     visitDate: createForm.visitDate,
     purpose: createForm.purpose || undefined,

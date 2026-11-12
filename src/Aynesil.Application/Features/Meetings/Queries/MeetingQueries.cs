@@ -14,7 +14,6 @@ namespace Aynesil.Application.Features.Meetings.Queries;
 /// </summary>
 public class GetMeetingsQuery : PagedQuery, IRequest<PaginatedResult<MeetingListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? MeetingTypeId { get; set; }
     public string? Status { get; set; }
@@ -27,17 +26,23 @@ public sealed class GetMeetingsQueryHandler
     : IRequestHandler<GetMeetingsQuery, PaginatedResult<MeetingListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetMeetingsQueryHandler(IAppDbContext db) => _db = db;
+    public GetMeetingsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<MeetingListItemDto>> Handle(
         GetMeetingsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Meetings.AsNoTracking()
             .Where(m => m.DeletedAt == null);
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(m => m.CorporationId == req.CorporationId.Value);
+        q = q.Where(m => m.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             q = q.Where(m => m.CampusId == req.CampusId.Value);
@@ -172,7 +177,6 @@ public sealed class GetMeetingQueryHandler : IRequestHandler<GetMeetingQuery, Me
 /// </summary>
 public class GetMeetingCalendarQuery : IRequest<IReadOnlyList<MeetingCalendarItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? OrganizerId { get; set; }
 
@@ -190,15 +194,22 @@ public sealed class GetMeetingCalendarQueryHandler
     : IRequestHandler<GetMeetingCalendarQuery, IReadOnlyList<MeetingCalendarItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetMeetingCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetMeetingCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<MeetingCalendarItemDto>> Handle(
         GetMeetingCalendarQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Meetings.AsNoTracking()
             .Where(m => m.DeletedAt == null
-                     && m.CorporationId == req.CorporationId
+                     && m.CorporationId == corporationId
                      && m.Status != "cancelled");
 
         // Date range: meetings that overlap with the requested window

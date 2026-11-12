@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useProgramStore } from '@/stores/program.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -11,7 +10,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useProgramStore()
 const refData = useRefDataStore()
 
@@ -21,7 +19,6 @@ const id = computed(() => route.params.id as string | undefined)
 const programTypes = ref<RefValueItem[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   code: '',
   name: '',
   programTypeId: '',
@@ -79,7 +76,6 @@ async function submit() {
       router.push({ name: 'program-detail', params: { id: id.value } })
     } else {
       const result = await store.createProgram({
-        corporationId: form.corporationId,
         code: form.code,
         name: form.name,
         programTypeId: form.programTypeId || null,

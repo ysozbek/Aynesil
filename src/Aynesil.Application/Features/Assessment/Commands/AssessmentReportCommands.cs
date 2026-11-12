@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Assessment.Commands;
 // ── Create report ─────────────────────────────────────────────────────────────
 
 public record CreateAssessmentReportCommand(
-    Guid CorporationId,
     Guid AssessmentSessionId,
     string? Summary,
     string? Findings,
@@ -21,7 +20,6 @@ public class CreateAssessmentReportCommandValidator
 {
     public CreateAssessmentReportCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.AssessmentSessionId).NotEmpty();
     }
 }
@@ -30,15 +28,22 @@ public sealed class CreateAssessmentReportCommandHandler
     : IRequestHandler<CreateAssessmentReportCommand, AssessmentReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateAssessmentReportCommandHandler(IAppDbContext db) => _db = db;
+    public CreateAssessmentReportCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AssessmentReportDto> Handle(
         CreateAssessmentReportCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var session = await _db.AssessmentSessions
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == req.AssessmentSessionId, ct)
+            .FirstOrDefaultAsync(s => s.CorporationId == corporationId && s.Id == req.AssessmentSessionId, ct)
             ?? throw new KeyNotFoundException(
                 $"Assessment session {req.AssessmentSessionId} not found.");
 
@@ -47,7 +52,7 @@ public sealed class CreateAssessmentReportCommandHandler
                 "Reports can only be created for completed assessment sessions.");
 
         var report = AssessmentReport.Create(
-            req.CorporationId, req.AssessmentSessionId,
+            corporationId, req.AssessmentSessionId,
             req.Summary, req.Findings, req.FileId);
 
         _db.AssessmentReports.Add(report);

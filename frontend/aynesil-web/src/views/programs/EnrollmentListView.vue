@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useProgramStore } from '@/stores/program.store'
 import { useStudentStore } from '@/stores/student.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -22,13 +21,11 @@ import type { StudentListItemDto } from '@/types/student.types'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useProgramStore()
 const studentStore = useStudentStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const statuses = ref<RefValueItem[]>([])
 const campuses = ref<CampusListItemDto[]>([])
 const students = ref<StudentListItemDto[]>([])
@@ -57,10 +54,10 @@ onMounted(async () => {
     campusService.list({ page: 1, pageSize: 200 }).then((res) => {
       if (res.success && res.data) campuses.value = res.data.items
     }),
-    studentStore.fetchList({ page: 1, pageSize: 200, corporationId: corporationId.value }).then(() => {
+    studentStore.fetchList({ page: 1, pageSize: 200 }).then(() => {
       students.value = studentStore.list.items
     }),
-    store.fetchPrograms({ corporationId: corporationId.value, isActive: true, page: 1, pageSize: 200 }).then(() => {
+    store.fetchPrograms({ isActive: true, page: 1, pageSize: 200 }).then(() => {
       programs.value = store.programList.items
     }),
   ])
@@ -68,7 +65,6 @@ onMounted(async () => {
 
 async function loadList() {
   await store.fetchEnrollments({
-    corporationId: corporationId.value || undefined,
     campusId: query.campusId || undefined,
     statusId: query.statusId || undefined,
     studentId: query.studentId || undefined,
@@ -124,7 +120,6 @@ watch(() => createForm.studentId, async (studentId) => {
   if (!studentId) return
   try {
     const res = await enrollmentService.listEnrollments({
-      corporationId: corporationId.value || undefined,
       studentId,
       isActive: true,
       page: 1,
@@ -167,7 +162,6 @@ async function submitCreate() {
     const target = existingEnrollment.value
     try {
       await store.assignStudentToProgram({
-        corporationId: corporationId.value,
         studentId: createForm.studentId,
         programId: createForm.programId,
         enrollmentId: target.id,
@@ -185,7 +179,6 @@ async function submitCreate() {
 
   try {
     const created = await store.createEnrollment({
-      corporationId: corporationId.value,
       studentId: createForm.studentId,
       campusId: createForm.campusId || null,
       statusId: createForm.statusId || null,
@@ -198,7 +191,6 @@ async function submitCreate() {
     let assignFailure: string | null = null
     try {
       await store.assignStudentToProgram({
-        corporationId: corporationId.value,
         studentId: createForm.studentId,
         programId: createForm.programId,
         enrollmentId: created.id,

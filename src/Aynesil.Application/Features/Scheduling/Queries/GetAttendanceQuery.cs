@@ -42,7 +42,6 @@ public sealed class GetSessionAttendanceQueryHandler
 
 public class GetStudentAttendanceQuery : PagedQuery, IRequest<PaginatedResult<AttendanceDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid StudentId { get; set; }
     public DateTimeOffset? From { get; set; }
     public DateTimeOffset? To { get; set; }
@@ -53,12 +52,19 @@ public sealed class GetStudentAttendanceQueryHandler
     : IRequestHandler<GetStudentAttendanceQuery, PaginatedResult<AttendanceDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentAttendanceQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentAttendanceQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<AttendanceDto>> Handle(
         GetStudentAttendanceQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var student = await _db.Students.AsNoTracking()
             .Where(s => s.Id == req.StudentId)
             .Select(s => new { s.FirstName, s.LastName })
@@ -66,7 +72,7 @@ public sealed class GetStudentAttendanceQueryHandler
         var studentName = student is null ? "" : $"{student.FirstName} {student.LastName}".Trim();
 
         var q = _db.Attendances.AsNoTracking()
-            .Where(a => a.CorporationId == req.CorporationId
+            .Where(a => a.CorporationId == corporationId
                      && a.StudentId     == req.StudentId);
 
         if (req.From.HasValue)   q = q.Where(a => a.RecordedAt >= req.From.Value);
@@ -94,7 +100,6 @@ public sealed class GetStudentAttendanceQueryHandler
 // ── GetAttendanceSummaryQuery ─────────────────────────────────────────────────
 
 public record GetAttendanceSummaryQuery(
-    Guid CorporationId,
     Guid StudentId,
     DateTimeOffset? From,
     DateTimeOffset? To) : IRequest<AttendanceSummaryDto>;
@@ -103,12 +108,19 @@ public sealed class GetAttendanceSummaryQueryHandler
     : IRequestHandler<GetAttendanceSummaryQuery, AttendanceSummaryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetAttendanceSummaryQueryHandler(IAppDbContext db) => _db = db;
+    public GetAttendanceSummaryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<AttendanceSummaryDto> Handle(
         GetAttendanceSummaryQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var student = await _db.Students.AsNoTracking()
             .Where(s => s.Id == req.StudentId)
             .Select(s => new { s.FirstName, s.LastName })
@@ -118,7 +130,7 @@ public sealed class GetAttendanceSummaryQueryHandler
         var studentName = $"{student.FirstName} {student.LastName}".Trim();
 
         var q = _db.Attendances.AsNoTracking()
-            .Where(a => a.CorporationId == req.CorporationId && a.StudentId == req.StudentId);
+            .Where(a => a.CorporationId == corporationId && a.StudentId == req.StudentId);
 
         if (req.From.HasValue) q = q.Where(a => a.RecordedAt >= req.From.Value);
         if (req.To.HasValue)   q = q.Where(a => a.RecordedAt <= req.To.Value);

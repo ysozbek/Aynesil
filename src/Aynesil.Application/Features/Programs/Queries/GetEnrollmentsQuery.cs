@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Programs.Queries;
 public class GetStudentEnrollmentsQuery : PagedQuery, IRequest<PaginatedResult<EnrollmentListItemDto>>
 {
     public Guid? StudentId { get; set; }
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? StatusId { get; set; }
     public bool? IsActive { get; set; }
@@ -21,18 +20,24 @@ public sealed class GetStudentEnrollmentsQueryHandler
     : IRequestHandler<GetStudentEnrollmentsQuery, PaginatedResult<EnrollmentListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentEnrollmentsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentEnrollmentsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<EnrollmentListItemDto>> Handle(
         GetStudentEnrollmentsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Enrollments.AsNoTracking();
 
         if (req.StudentId.HasValue)
             q = q.Where(e => e.StudentId == req.StudentId.Value);
-        if (req.CorporationId.HasValue)
-            q = q.Where(e => e.CorporationId == req.CorporationId.Value);
+        q = q.Where(e => e.CorporationId == corporationId);
         if (req.CampusId.HasValue)
             q = q.Where(e => e.CampusId == req.CampusId.Value);
         if (req.StatusId.HasValue)

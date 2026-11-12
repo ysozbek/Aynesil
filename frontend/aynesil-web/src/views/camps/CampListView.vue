@@ -104,7 +104,6 @@ const authStore = useAuthStore()
 
 const filters = reactive<CampListQuery>({
   page: 1, pageSize: 20, search: '', isActive: undefined,
-  corporationId: authStore.user?.corporationId,
 })
 
 function hasPermission(p: string) { return authStore.hasPermission(p) }

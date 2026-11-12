@@ -103,7 +103,7 @@ public sealed class CameraController : BaseController
         Guid id, [FromBody] AssignCameraToRoomRequest body, CancellationToken ct)
     {
         var assignmentId = await Sender.Send(
-            new AssignCameraToRoomCommand(body.CorporationId, id, body.RoomId), ct);
+            new AssignCameraToRoomCommand(id, body.RoomId), ct);
         return CreatedResult(assignmentId, $"/api/cameras/assignments");
     }
 
@@ -128,7 +128,7 @@ public sealed class CameraController : BaseController
         Guid id, [FromBody] AssignCameraToSessionRequest body, CancellationToken ct)
     {
         var assignmentId = await Sender.Send(
-            new AssignCameraToSessionCommand(body.CorporationId, id, body.SessionId), ct);
+            new AssignCameraToSessionCommand(id, body.SessionId), ct);
         return CreatedResult(assignmentId, $"/api/cameras/assignments");
     }
 
@@ -205,7 +205,8 @@ public sealed class CameraController : BaseController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> StartViewing(
         [FromBody] StartViewingSessionCommand command, CancellationToken ct)
-        => OkResult(await Sender.Send(command, ct));
+        => OkResult(await Sender.Send(
+            command with { IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() }, ct));
 
     /// <summary>End a viewing session (close the viewing_log entry). Duration is recorded.</summary>
     [HttpPost("viewing/{logId:long}/end")]
@@ -236,6 +237,6 @@ public sealed class CameraController : BaseController
 // ── Inline request body models ────────────────────────────────────────────────
 
 public record SetCameraActiveRequest(bool IsActive);
-public record AssignCameraToRoomRequest(Guid CorporationId, Guid RoomId);
-public record AssignCameraToSessionRequest(Guid CorporationId, Guid SessionId);
+public record AssignCameraToRoomRequest(Guid RoomId);
+public record AssignCameraToSessionRequest(Guid SessionId);
 public record EndViewingSessionRequest(DateTimeOffset StartedAt);

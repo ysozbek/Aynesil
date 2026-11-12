@@ -3,14 +3,12 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const leaveStore = useLeaveStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 function formatDate(dt: string) {
@@ -33,10 +31,9 @@ const upcomingCount = computed(() => {
 })
 
 onMounted(async () => {
-  const corp = auth.user?.corporationId
   await Promise.all([
-    leaveStore.fetchLeaves({ corporationId: corp, pageSize: 50 }),
-    leaveStore.fetchBalances({ corporationId: corp }),
+    leaveStore.fetchLeaves({ pageSize: 50 }),
+    leaveStore.fetchBalances({}),
   ])
 })
 </script>

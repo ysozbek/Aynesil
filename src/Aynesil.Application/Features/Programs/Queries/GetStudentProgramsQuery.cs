@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Programs.Queries;
 public class GetStudentProgramsQuery : PagedQuery, IRequest<PaginatedResult<StudentProgramListItemDto>>
 {
     public Guid? StudentId { get; set; }
-    public Guid? CorporationId { get; set; }
     public Guid? ProgramId { get; set; }
     public Guid? CampusId { get; set; }
     public string? Status { get; set; }
@@ -22,18 +21,24 @@ public sealed class GetStudentProgramsQueryHandler
     : IRequestHandler<GetStudentProgramsQuery, PaginatedResult<StudentProgramListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentProgramsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentProgramsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<StudentProgramListItemDto>> Handle(
         GetStudentProgramsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.StudentPrograms.AsNoTracking();
 
         if (req.StudentId.HasValue)
             q = q.Where(sp => sp.StudentId == req.StudentId.Value);
-        if (req.CorporationId.HasValue)
-            q = q.Where(sp => sp.CorporationId == req.CorporationId.Value);
+        q = q.Where(sp => sp.CorporationId == corporationId);
         if (req.ProgramId.HasValue)
             q = q.Where(sp => sp.ProgramId == req.ProgramId.Value);
         if (req.CampusId.HasValue)

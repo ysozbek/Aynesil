@@ -146,12 +146,10 @@ export interface TrendReportRowDto {
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export interface AcademicPeriodListQuery extends PagedQuery {
-  corporationId?: string
   isCurrent?: boolean
 }
 
 export interface EducationPlanListQuery extends PagedQuery {
-  corporationId?: string
   studentId?: string
   campusId?: string
   academicPeriodId?: string
@@ -162,7 +160,6 @@ export interface EducationPlanListQuery extends PagedQuery {
 // ── Payloads ──────────────────────────────────────────────────────────────────
 
 export interface CreateAcademicPeriodPayload {
-  corporationId: string
   name: string
   startDate: string
   endDate: string
@@ -179,7 +176,6 @@ export interface UpdateAcademicPeriodPayload {
 }
 
 export interface CreateEducationPlanPayload {
-  corporationId: string
   studentId: string
   title: string
   academicPeriodId: string | null

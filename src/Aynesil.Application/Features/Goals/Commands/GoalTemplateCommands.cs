@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Goals.Commands;
 // ── CreateGoalTemplateCommand ─────────────────────────────────────────────────
 
 public record CreateGoalTemplateCommand(
-    Guid? CorporationId,
     Guid? LibraryId,
     Guid? CategoryId,
     Guid? DevelopmentAreaId,
@@ -31,15 +30,22 @@ public sealed class CreateGoalTemplateCommandHandler
     : IRequestHandler<CreateGoalTemplateCommand, GoalTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateGoalTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public CreateGoalTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<GoalTemplateDto> Handle(CreateGoalTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         await ValidateRefsAsync(req.LibraryId, req.CategoryId, req.DevelopmentAreaId, ct);
 
         var template = GoalTemplate.Create(
-            req.CorporationId, req.Statement, req.LibraryId,
+            corporationId, req.Statement, req.LibraryId,
             req.CategoryId, req.DevelopmentAreaId, req.Code, req.DefaultCriteria);
 
         _db.GoalTemplates.Add(template);

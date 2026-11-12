@@ -220,13 +220,11 @@ export interface KpiReportRowDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface KpiDefinitionListQuery extends PagedQuery {
-  corporationId?: string
   categoryId?: string
   isActive?: boolean
 }
 
 export interface SnapshotListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   periodStart?: string
   periodEnd?: string
@@ -234,14 +232,12 @@ export interface SnapshotListQuery extends PagedQuery {
 }
 
 export interface KpiReportQuery {
-  corporationId?: string
   campusId?: string
   periodStart?: string
   periodEnd?: string
 }
 
 export interface DashboardQuery {
-  corporationId?: string
   campusId?: string
   educatorId?: string
   periodType?: 'Monthly' | 'Quarterly' | 'Annual'

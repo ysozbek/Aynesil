@@ -8,7 +8,6 @@ namespace Aynesil.Application.Features.Legal.Queries;
 // ── GetContractTemplatesQuery ─────────────────────────────────────────────────
 
 public record GetContractTemplatesQuery(
-    Guid CorporationId,
     Guid? ContractTypeId = null,
     bool? IsCurrent = null,
     int Page = 1,
@@ -18,15 +17,22 @@ public sealed class GetContractTemplatesQueryHandler
     : IRequestHandler<GetContractTemplatesQuery, PaginatedResult<ContractTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetContractTemplatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetContractTemplatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ContractTemplateListItemDto>> Handle(
         GetContractTemplatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.ContractTemplates
             .AsNoTracking()
-            .Where(t => t.CorporationId == req.CorporationId);
+            .Where(t => t.CorporationId == corporationId);
 
         if (req.ContractTypeId.HasValue)
             query = query.Where(t => t.ContractTypeId == req.ContractTypeId);
@@ -105,24 +111,30 @@ public sealed class GetContractTemplateQueryHandler
 
 /// <summary>Returns all versions (including archived) for a given template code.</summary>
 public record GetContractTemplateVersionsQuery(
-    Guid CorporationId,
     string Code) : IRequest<IReadOnlyList<ContractTemplateListItemDto>>;
 
 public sealed class GetContractTemplateVersionsQueryHandler
     : IRequestHandler<GetContractTemplateVersionsQuery, IReadOnlyList<ContractTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetContractTemplateVersionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetContractTemplateVersionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<ContractTemplateListItemDto>> Handle(
         GetContractTemplateVersionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // IgnoreQueryFilters to include soft-deleted archived versions.
         var items = await _db.ContractTemplates
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(t => t.CorporationId == req.CorporationId
+            .Where(t => t.CorporationId == corporationId
                      && t.Code == req.Code.ToLowerInvariant())
             .OrderByDescending(t => t.Version)
             .Select(t => new

@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 // ── CreateCalendarEntryCommand ────────────────────────────────────────────────
 
 public record CreateCalendarEntryCommand(
-    Guid CorporationId,
     string Title,
     string EntryType,
     DateTimeOffset StartsAt,
@@ -22,7 +21,6 @@ public class CreateCalendarEntryCommandValidator : AbstractValidator<CreateCalen
 {
     public CreateCalendarEntryCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.EntryType)
             .Must(t => new[] { "holiday", "closure", "event", "term_break" }.Contains(t))
@@ -36,13 +34,20 @@ public sealed class CreateCalendarEntryCommandHandler
     : IRequestHandler<CreateCalendarEntryCommand, CalendarEntryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateCalendarEntryCommandHandler(IAppDbContext db) => _db = db;
+    public CreateCalendarEntryCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CalendarEntryDto> Handle(CreateCalendarEntryCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var entry = CalendarEntry.Create(
-            req.CorporationId, req.Title, req.EntryType,
+            corporationId, req.Title, req.EntryType,
             req.StartsAt, req.EndsAt, req.IsAllDay, req.CampusId);
 
         _db.CalendarEntries.Add(entry);

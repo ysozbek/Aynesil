@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePackageStore } from '@/stores/package.store'
 import { useStudentStore } from '@/stores/student.store'
 import { financeService } from '@/services/finance.service'
@@ -13,11 +12,8 @@ import type { PackageDefinitionListItemDto } from '@/types/finance.types'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const auth = useAuthStore()
 const store = usePackageStore()
 const studentStore = useStudentStore()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const students = ref<StudentListItemDto[]>([])
 const definitions = ref<PackageDefinitionListItemDto[]>([])
@@ -37,11 +33,11 @@ const errors = reactive<Record<string, string>>({})
 
 onMounted(async () => {
   await Promise.all([
-    studentStore.fetchList({ page: 1, pageSize: 200, corporationId: corporationId.value }).then(() => {
+    studentStore.fetchList({ page: 1, pageSize: 200 }).then(() => {
       students.value = studentStore.list.items
     }),
     financeService
-      .listPackageDefinitions({ corporationId: corporationId.value, isActive: true, page: 1, pageSize: 100 })
+      .listPackageDefinitions({ isActive: true, page: 1, pageSize: 100 })
       .then((res) => {
         if (res.success && res.data) definitions.value = res.data.items
       }),
@@ -78,7 +74,6 @@ async function submit() {
   if (!validate()) return
   try {
     await store.createStudentPackage({
-      corporationId: corporationId.value,
       studentId: form.studentId,
       packageDefinitionId: form.packageDefinitionId || undefined,
       totalCredits: Number(form.totalCredits),

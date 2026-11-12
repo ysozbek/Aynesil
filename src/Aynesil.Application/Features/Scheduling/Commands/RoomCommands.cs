@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 // ── CreateRoomCommand ─────────────────────────────────────────────────────────
 
 public record CreateRoomCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     int Capacity,
@@ -23,7 +22,6 @@ public class CreateRoomCommandValidator : AbstractValidator<CreateRoomCommand>
 {
     public CreateRoomCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Capacity).GreaterThanOrEqualTo(0);
@@ -37,13 +35,20 @@ public class CreateRoomCommandValidator : AbstractValidator<CreateRoomCommand>
 public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, RoomDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateRoomCommandHandler(IAppDbContext db) => _db = db;
+    public CreateRoomCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<RoomDto> Handle(CreateRoomCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.Rooms.AnyAsync(
-            r => r.CorporationId == req.CorporationId
+            r => r.CorporationId == corporationId
               && r.CampusId == req.CampusId
               && r.Code == req.Code, ct);
 
@@ -52,7 +57,7 @@ public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand
                 $"Room with code '{req.Code}' already exists in this campus.");
 
         var room = Room.Create(
-            req.CorporationId, req.Code, req.Name, req.Capacity,
+            corporationId, req.Code, req.Name, req.Capacity,
             req.IsVirtual, req.CampusId, req.RoomTypeId, req.MeetingUrl);
 
         _db.Rooms.Add(room);

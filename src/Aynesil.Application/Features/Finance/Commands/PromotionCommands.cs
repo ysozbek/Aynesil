@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── CreatePromotionCommand ────────────────────────────────────────────────────
 
 public record CreatePromotionCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     decimal Value,
@@ -23,7 +22,6 @@ public class CreatePromotionCommandValidator : AbstractValidator<CreatePromotion
 {
     public CreatePromotionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Value).GreaterThan(0);
@@ -43,20 +41,27 @@ public sealed class CreatePromotionCommandHandler
     : IRequestHandler<CreatePromotionCommand, PromotionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreatePromotionCommandHandler(IAppDbContext db) => _db = db;
+    public CreatePromotionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PromotionDto> Handle(CreatePromotionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.Promotions.AnyAsync(
-            p => p.CorporationId == req.CorporationId && p.Code == req.Code, ct);
+            p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
             throw new InvalidOperationException(
                 $"Promotion with code '{req.Code}' already exists for this corporation.");
 
         var promotion = Promotion.Create(
-            req.CorporationId, req.Code, req.Name, req.Value,
+            corporationId, req.Code, req.Name, req.Value,
             req.IsPercentage, req.ValidFrom, req.ValidTo, req.MaxRedemptions);
 
         _db.Promotions.Add(promotion);

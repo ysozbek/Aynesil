@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePaymentStore } from '@/stores/payment.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { financeService } from '@/services/finance.service'
@@ -14,11 +13,9 @@ import type { InvoiceListItemDto } from '@/types/finance.types'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const auth = useAuthStore()
 const store = usePaymentStore()
 const refData = useRefDataStore()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const paymentMethods = ref<RefValueItem[]>([])
 const invoices = ref<InvoiceListItemDto[]>([])
 
@@ -44,7 +41,6 @@ watch(() => form.studentId, async (studentId) => {
   invoices.value = []
   if (!studentId) return
   const res = await financeService.listInvoices({
-    corporationId: corporationId.value,
     studentId,
     page: 1,
     pageSize: 50,
@@ -69,7 +65,6 @@ async function submit() {
   if (!validate()) return
   try {
     const created = await store.createTransaction({
-      corporationId: corporationId.value,
       studentId: form.studentId,
       invoiceId: form.invoiceId || undefined,
       amount: form.amount,

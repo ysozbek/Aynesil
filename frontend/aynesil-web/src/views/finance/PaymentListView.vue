@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePaymentStore } from '@/stores/payment.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -15,16 +14,13 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = usePaymentStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const paymentMethods = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   status: '',
   from: '',
@@ -44,7 +40,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchTransactions({
     ...query,
-    corporationId: corporationId.value,
     studentId: query.studentId || undefined,
     status: query.status || undefined,
     from: query.from || undefined,

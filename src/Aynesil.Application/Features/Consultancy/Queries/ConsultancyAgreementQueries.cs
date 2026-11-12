@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 public class GetConsultancyAgreementsQuery
     : PagedQuery, IRequest<PaginatedResult<ConsultancyAgreementListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? ConsultancyPlanId { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? Status { get; set; }
@@ -22,17 +21,23 @@ public sealed class GetConsultancyAgreementsQueryHandler
     : IRequestHandler<GetConsultancyAgreementsQuery, PaginatedResult<ConsultancyAgreementListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsultancyAgreementsQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsultancyAgreementsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ConsultancyAgreementListItemDto>> Handle(
         GetConsultancyAgreementsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ConsultancyAgreements.AsNoTracking()
             .Where(a => a.DeletedAt == null);
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(a => a.CorporationId == req.CorporationId.Value);
+        q = q.Where(a => a.CorporationId == corporationId);
         if (req.ConsultancyPlanId.HasValue)
             q = q.Where(a => a.ConsultancyPlanId == req.ConsultancyPlanId.Value);
         if (req.InstitutionId.HasValue)
@@ -104,7 +109,6 @@ public sealed class GetConsultancyAgreementQueryHandler
 /// <summary>Agreement status summary grouped by consultancy plan.</summary>
 public class GetAgreementSummaryQuery : IRequest<IReadOnlyList<AgreementSummaryDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? InstitutionId { get; set; }
 }
 
@@ -112,14 +116,21 @@ public sealed class GetAgreementSummaryQueryHandler
     : IRequestHandler<GetAgreementSummaryQuery, IReadOnlyList<AgreementSummaryDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetAgreementSummaryQueryHandler(IAppDbContext db) => _db = db;
+    public GetAgreementSummaryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<AgreementSummaryDto>> Handle(
         GetAgreementSummaryQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var plansQ = _db.ConsultancyPlans.AsNoTracking()
-            .Where(p => p.CorporationId == req.CorporationId);
+            .Where(p => p.CorporationId == corporationId);
 
         if (req.InstitutionId.HasValue)
             plansQ = plansQ.Where(p => p.InstitutionId == req.InstitutionId.Value);

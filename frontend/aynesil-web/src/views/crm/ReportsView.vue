@@ -2,19 +2,15 @@
 /**
  * CRM Reports — Conversion analysis by lead source and date range.
  */
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { leadService } from '@/services/lead.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { ConversionReportDto } from '@/types/crm.types'
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const branchStore = useBranchStore()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const filters = reactive({
   campusId: '',
@@ -32,12 +28,10 @@ onMounted(async () => {
 })
 
 async function loadReport() {
-  if (!corporationId.value) return
   loading.value = true
   error.value = ''
   try {
     const res = await leadService.getConversionReport({
-      corporationId: corporationId.value,
       from: new Date(filters.from).toISOString(),
       to: new Date(filters.to + 'T23:59:59').toISOString(),
       campusId: filters.campusId || undefined,

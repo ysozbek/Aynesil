@@ -8,7 +8,6 @@ namespace Aynesil.Application.Features.Legal.Queries;
 // ── GetConsentTemplatesQuery ──────────────────────────────────────────────────
 
 public record GetConsentTemplatesQuery(
-    Guid CorporationId,
     Guid? ConsentTypeId = null,
     bool? IsCurrent = null,
     bool? IsMandatory = null,
@@ -19,15 +18,22 @@ public sealed class GetConsentTemplatesQueryHandler
     : IRequestHandler<GetConsentTemplatesQuery, PaginatedResult<ConsentTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsentTemplatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsentTemplatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ConsentTemplateListItemDto>> Handle(
         GetConsentTemplatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.ConsentTemplates
             .AsNoTracking()
-            .Where(t => t.CorporationId == req.CorporationId);
+            .Where(t => t.CorporationId == corporationId);
 
         if (req.ConsentTypeId.HasValue)
             query = query.Where(t => t.ConsentTypeId == req.ConsentTypeId);
@@ -108,23 +114,29 @@ public sealed class GetConsentTemplateQueryHandler
 // ── GetConsentTemplateVersionsQuery ──────────────────────────────────────────
 
 public record GetConsentTemplateVersionsQuery(
-    Guid CorporationId,
     string Code) : IRequest<IReadOnlyList<ConsentTemplateListItemDto>>;
 
 public sealed class GetConsentTemplateVersionsQueryHandler
     : IRequestHandler<GetConsentTemplateVersionsQuery, IReadOnlyList<ConsentTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsentTemplateVersionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsentTemplateVersionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<ConsentTemplateListItemDto>> Handle(
         GetConsentTemplateVersionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var items = await _db.ConsentTemplates
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(t => t.CorporationId == req.CorporationId
+            .Where(t => t.CorporationId == corporationId
                      && t.Code == req.Code.ToLowerInvariant())
             .OrderByDescending(t => t.Version)
             .Select(t => new

@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetRefundsQuery : PagedQuery, IRequest<PaginatedResult<RefundDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? PaymentId { get; set; }
     public string? Status { get; set; }
     public DateTimeOffset? From { get; set; }
@@ -20,15 +19,22 @@ public sealed class GetRefundsQueryHandler
     : IRequestHandler<GetRefundsQuery, PaginatedResult<RefundDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetRefundsQueryHandler(IAppDbContext db) => _db = db;
+    public GetRefundsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<RefundDto>> Handle(
         GetRefundsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Refunds.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(r => r.CorporationId == req.CorporationId.Value);
+        q = q.Where(r => r.CorporationId == corporationId);
         if (req.PaymentId.HasValue)     q = q.Where(r => r.PaymentId == req.PaymentId.Value);
         if (req.Status is not null)     q = q.Where(r => r.Status == req.Status);
         if (req.From.HasValue)          q = q.Where(r => r.CreatedAt >= req.From.Value);

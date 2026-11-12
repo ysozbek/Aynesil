@@ -38,14 +38,12 @@ export interface PackageDefinitionListItemDto {
 }
 
 export interface PackageDefinitionListQuery extends PagedQuery {
-  corporationId: string
   isActive?: boolean
   packageTypeId?: string
   programId?: string
 }
 
 export interface CreatePackageDefinitionPayload {
-  corporationId: string
   code: string
   name: string
   packageTypeId: string
@@ -114,7 +112,6 @@ export interface PackageBalanceDto {
 }
 
 export interface StudentPackageListQuery extends PagedQuery {
-  corporationId: string
   studentId?: string
   status?: string
   packageDefinitionId?: string
@@ -122,7 +119,6 @@ export interface StudentPackageListQuery extends PagedQuery {
 
 /** Mirrors PurchasePackageRequest on the API. */
 export interface CreateStudentPackagePayload {
-  corporationId: string
   studentId: string
   totalCredits: number
   price: number
@@ -158,7 +154,6 @@ export interface CreditSummaryDto {
 export interface CreditLedgerQuery extends PagedQuery {
   studentPackageId?: string
   studentId?: string
-  corporationId: string
   entryType?: string
   from?: string
   to?: string
@@ -235,7 +230,6 @@ export interface InvoiceListItemDto {
 }
 
 export interface InvoiceListQuery extends PagedQuery {
-  corporationId: string
   studentId?: string
   status?: string
   overdue?: boolean
@@ -244,7 +238,6 @@ export interface InvoiceListQuery extends PagedQuery {
 }
 
 export interface CreateInvoicePayload {
-  corporationId: string
   studentId: string
   dueDate?: string
   currency: string
@@ -289,7 +282,6 @@ export interface PaymentListItemDto {
 }
 
 export interface PaymentListQuery extends PagedQuery {
-  corporationId: string
   studentId?: string
   invoiceId?: string
   status?: string
@@ -298,7 +290,6 @@ export interface PaymentListQuery extends PagedQuery {
 }
 
 export interface CreatePaymentPayload {
-  corporationId: string
   studentId: string
   invoiceId?: string
   amount: number
@@ -336,7 +327,6 @@ export interface RefundListItemDto {
 }
 
 export interface RefundListQuery extends PagedQuery {
-  corporationId: string
   paymentId?: string
   status?: string
 }
@@ -363,7 +353,6 @@ export interface DiscountDto {
 }
 
 export interface CreateDiscountPayload {
-  corporationId: string
   invoiceId?: string
   studentPackageId?: string
   discountTypeId: string
@@ -401,13 +390,11 @@ export interface ScholarshipListItemDto {
 }
 
 export interface ScholarshipListQuery extends PagedQuery {
-  corporationId: string
   studentId?: string
   scholarshipTypeId?: string
 }
 
 export interface CreateScholarshipPayload {
-  corporationId: string
   studentId: string
   scholarshipTypeId: string
   percentage?: number
@@ -457,12 +444,10 @@ export interface PromotionListItemDto {
 }
 
 export interface PromotionListQuery extends PagedQuery {
-  corporationId: string
   isActive?: boolean
 }
 
 export interface CreatePromotionPayload {
-  corporationId: string
   code: string
   name: string
   value: number
@@ -536,7 +521,6 @@ export interface CreditUsageReportDto {
 }
 
 export interface ReportQuery {
-  corporationId: string
   from: string
   to: string
   campusId?: string

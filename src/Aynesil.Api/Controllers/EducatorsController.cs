@@ -22,7 +22,6 @@ public sealed class EducatorsController : BaseController
     [HasPermission(Permissions.Educators.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<EducatorListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? titleId = null,
         [FromQuery] Guid? specialtyId = null,
@@ -37,7 +36,6 @@ public sealed class EducatorsController : BaseController
     {
         var result = await Sender.Send(new GetEducatorsQuery
         {
-            CorporationId  = corporationId,
             CampusId       = campusId,
             TitleId        = titleId,
             SpecialtyId    = specialtyId,
@@ -77,14 +75,12 @@ public sealed class EducatorsController : BaseController
     [HasPermission(Permissions.Educators.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<EducatorUtilizationDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUtilization(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid? campusId = null,
         [FromQuery] bool activeOnly = true,
         CancellationToken ct = default)
     {
         var result = await Sender.Send(new GetEducatorUtilizationQuery
         {
-            CorporationId = corporationId,
             CampusId      = campusId,
             ActiveOnly    = activeOnly
         }, ct);
@@ -100,7 +96,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateEducatorRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateEducatorCommand(
-            req.CorporationId, req.FirstName, req.LastName,
+            req.FirstName, req.LastName,
             req.TitleId, req.Email, req.Phone,
             req.EmploymentType, req.HireDate, req.PrimaryCampusId), ct);
         return CreatedResult(result, $"/api/educators/{result.Id}");
@@ -263,7 +259,6 @@ public sealed class EducatorsController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateEducatorRequest(
-    Guid CorporationId,
     string FirstName,
     string LastName,
     Guid? TitleId,

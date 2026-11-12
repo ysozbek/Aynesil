@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Portal;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
 using FluentValidation;
@@ -17,7 +18,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Commands;
 /// guardians may submit multiple ratings for the same session.
 /// </summary>
 public record SubmitParentFeedbackCommand(
-    Guid CorporationId,
     Guid? GuardianId,
     Guid? EducatorId,
     Guid? SessionId,
@@ -29,7 +29,6 @@ public class SubmitParentFeedbackCommandValidator
 {
     public SubmitParentFeedbackCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Rating).InclusiveBetween((short)1, (short)5)
             .When(x => x.Rating.HasValue);
         RuleFor(x => x).Must(x => x.Rating.HasValue || !string.IsNullOrWhiteSpace(x.Comment))
@@ -43,17 +42,29 @@ public sealed class SubmitParentFeedbackCommandHandler
     : IRequestHandler<SubmitParentFeedbackCommand, ParentFeedbackDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public SubmitParentFeedbackCommandHandler(IAppDbContext db) => _db = db;
+    public SubmitParentFeedbackCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task<ParentFeedbackDto> Handle(
         SubmitParentFeedbackCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+        var (guardianId, _) = await PortalGuardian.ResolveAsync(
+            _db, corporationId, _currentUser.UserId, req.GuardianId, ct);
+
         if (req.SessionId.HasValue)
         {
             var sessionExists = await _db.Sessions.AnyAsync(
                 s => s.Id == req.SessionId.Value
-                  && s.CorporationId == req.CorporationId
+                  && s.CorporationId == corporationId
                   && s.DeletedAt == null, ct);
 
             if (!sessionExists)
@@ -65,7 +76,7 @@ public sealed class SubmitParentFeedbackCommandHandler
         {
             var educatorExists = await _db.Educators.AnyAsync(
                 e => e.Id == req.EducatorId.Value
-                  && e.CorporationId == req.CorporationId
+                  && e.CorporationId == corporationId
                   && e.DeletedAt == null, ct);
 
             if (!educatorExists)
@@ -74,8 +85,8 @@ public sealed class SubmitParentFeedbackCommandHandler
         }
 
         var feedback = ParentFeedback.Create(
-            req.CorporationId,
-            req.GuardianId,
+            corporationId,
+            guardianId,
             req.EducatorId,
             req.SessionId,
             req.Rating,

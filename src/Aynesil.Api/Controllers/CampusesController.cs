@@ -26,7 +26,6 @@ public sealed class CampusesController : BaseController
     [HasPermission(Permissions.Campus.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<CampusListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -37,7 +36,6 @@ public sealed class CampusesController : BaseController
     {
         var result = await Sender.Send(new GetCampusesQuery
         {
-            CorporationId = corporationId,
             IsActive = isActive,
             Page = page,
             PageSize = pageSize,
@@ -71,7 +69,6 @@ public sealed class CampusesController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateCampusRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateCampusCommand(
-            req.CorporationId,
             req.Code,
             req.Name,
             req.City,
@@ -150,7 +147,6 @@ public sealed class CampusesController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateCampusRequest(
-    Guid CorporationId,
     string Code,
     string Name,
     string? City,

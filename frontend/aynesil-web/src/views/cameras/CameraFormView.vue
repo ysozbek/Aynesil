@@ -3,7 +3,6 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
@@ -11,7 +10,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const cameraStore = useCameraStore()
-const auth = useAuthStore()
 const refData = useRefDataStore()
 
 const isEdit = computed(() => !!route.params.id)
@@ -23,7 +21,6 @@ const form = reactive({ code: '', name: '', cameraTypeId: '', streamRef: '' })
 
 async function handleSubmit() {
   errorMsg.value = ''
-  const corp = auth.user?.corporationId ?? ''
   try {
     if (isEdit.value && id) {
       const cur = cameraStore.currentCamera
@@ -38,7 +35,6 @@ async function handleSubmit() {
       router.push({ name: 'camera-detail', params: { id } })
     } else {
       const result = await cameraStore.createCamera({
-        corporationId: corp,
         code: form.code,
         name: form.name,
         cameraTypeId: form.cameraTypeId || undefined,

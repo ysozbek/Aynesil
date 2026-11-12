@@ -76,9 +76,9 @@ export const notificationService = {
 
   // ── Trigger Configs ────────────────────────────────────────────────────────
 
-  listTriggers: (corporationId?: string) =>
+  listTriggers: () =>
     apiService.get<PaginatedResult<NotificationTriggerConfigListItemDto>>(
-      `/notification-triggers${qs({ corporationId })}`
+      '/notification-triggers'
     ),
 
   upsertTrigger: (payload: UpsertTriggerConfigPayload) =>

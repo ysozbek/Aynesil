@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Queries;
 
 public class GetSessionsQuery : PagedQuery, IRequest<PaginatedResult<SessionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? RoomId { get; set; }
     public Guid? SessionTypeId { get; set; }
@@ -25,15 +24,22 @@ public sealed class GetSessionsQueryHandler
     : IRequestHandler<GetSessionsQuery, PaginatedResult<SessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSessionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetSessionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<SessionListItemDto>> Handle(
         GetSessionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Sessions.AsNoTracking();
 
-        if (req.CorporationId.HasValue)       q = q.Where(s => s.CorporationId == req.CorporationId.Value);
+        q = q.Where(s => s.CorporationId == corporationId);
         if (req.CampusId.HasValue)            q = q.Where(s => s.CampusId == req.CampusId.Value);
         if (req.RoomId.HasValue)              q = q.Where(s => s.RoomId == req.RoomId.Value);
         if (req.SessionTypeId.HasValue)       q = q.Where(s => s.SessionTypeId == req.SessionTypeId.Value);

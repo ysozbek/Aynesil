@@ -24,7 +24,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.PackageDefinitions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<PackageDefinitionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPackageDefinitions(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? packageTypeId = null,
         [FromQuery] Guid? programId = null,
         [FromQuery] bool? isActive = null,
@@ -37,7 +36,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetPackageDefinitionsQuery
         {
-            CorporationId = corporationId,
             PackageTypeId = packageTypeId,
             ProgramId     = programId,
             IsActive      = isActive,
@@ -63,7 +61,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] CreatePackageDefinitionRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreatePackageDefinitionCommand(
-            req.CorporationId, req.Code, req.Name, req.ListPrice,
+            req.Code, req.Name, req.ListPrice,
             req.PackageTypeId, req.ProgramId,
             req.TotalCredits, req.ValidityDays, req.Currency), ct);
         return CreatedResult(result, $"/api/payments/package-definitions/{result.Id}");
@@ -114,7 +112,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.StudentPackages.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<StudentPackageListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentPackages(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] Guid? packageDefinitionId = null,
         [FromQuery] string? status = null,
@@ -127,7 +124,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetStudentPackagesQuery
         {
-            CorporationId        = corporationId,
             StudentId            = studentId,
             PackageDefinitionId  = packageDefinitionId,
             Status               = status,
@@ -159,7 +155,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] PurchasePackageRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new PurchaseStudentPackageCommand(
-            req.CorporationId, req.StudentId,
+            req.StudentId,
             req.TotalCredits, req.Price,
             req.PackageDefinitionId, req.ExpiresOn, req.Currency), ct);
         return CreatedResult(result, $"/api/payments/packages/{result.Id}");
@@ -182,7 +178,6 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> GetCreditLedger(
         [FromQuery] Guid? studentPackageId = null,
         [FromQuery] Guid? studentId = null,
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] string? entryType = null,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
@@ -194,7 +189,6 @@ public sealed class PaymentsController : BaseController
         {
             StudentPackageId = studentPackageId,
             StudentId        = studentId,
-            CorporationId    = corporationId,
             EntryType        = entryType,
             From             = from,
             To               = to,
@@ -209,9 +203,8 @@ public sealed class PaymentsController : BaseController
     [ProducesResponseType(typeof(ApiResponse<CreditSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCreditSummary(
         Guid studentId,
-        [FromQuery] Guid? corporationId = null,
         CancellationToken ct = default)
-        => OkResult(await Sender.Send(new GetCreditSummaryQuery(studentId, corporationId), ct));
+        => OkResult(await Sender.Send(new GetCreditSummaryQuery(studentId), ct));
 
     [HttpPost("credits/consume")]
     [HasPermission(Permissions.CreditLedger.Consume)]
@@ -253,7 +246,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.Invoices.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<InvoiceListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetInvoices(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] string? status = null,
         [FromQuery] DateOnly? issuedFrom = null,
@@ -270,7 +262,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetInvoicesQuery
         {
-            CorporationId = corporationId,
             StudentId     = studentId,
             Status        = status,
             IssuedFrom    = issuedFrom,
@@ -300,7 +291,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] CreateInvoiceRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateInvoiceCommand(
-            req.CorporationId, req.IssueDate, req.Currency,
+            req.IssueDate, req.Currency,
             req.StudentId, req.GuardianId, req.DueDate), ct);
         return CreatedResult(result, $"/api/payments/invoices/{result.Id}");
     }
@@ -344,7 +335,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.FinancePayments.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<PaymentListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPayments(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? invoiceId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] Guid? paymentMethodId = null,
@@ -359,7 +349,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetPaymentsQuery
         {
-            CorporationId   = corporationId,
             InvoiceId       = invoiceId,
             StudentId       = studentId,
             PaymentMethodId = paymentMethodId,
@@ -387,7 +376,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] RecordPaymentRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new RecordPaymentCommand(
-            req.CorporationId, req.Amount, req.Currency,
+            req.Amount, req.Currency,
             req.InvoiceId, req.StudentId, req.PaymentMethodId,
             req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey), ct);
         return CreatedResult(result, $"/api/payments/transactions/{result.Id}");
@@ -416,7 +405,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.Refunds.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<RefundDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRefunds(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? paymentId = null,
         [FromQuery] string? status = null,
         [FromQuery] DateTimeOffset? from = null,
@@ -429,7 +417,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetRefundsQuery
         {
-            CorporationId = corporationId,
             PaymentId     = paymentId,
             Status        = status,
             From          = from,
@@ -482,7 +469,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] ApplyDiscountRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new ApplyDiscountCommand(
-            req.CorporationId, req.Value, req.IsPercentage,
+            req.Value, req.IsPercentage,
             req.InvoiceId, req.StudentPackageId,
             req.DiscountTypeId, req.Reason), ct);
         return CreatedResult(result, null);
@@ -496,7 +483,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.Scholarships.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<ScholarshipListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetScholarships(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] Guid? scholarshipTypeId = null,
         [FromQuery] bool? activeOn = null,
@@ -508,7 +494,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetScholarshipsQuery
         {
-            CorporationId     = corporationId,
             StudentId         = studentId,
             ScholarshipTypeId = scholarshipTypeId,
             ActiveOn          = activeOn,
@@ -533,7 +518,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] GrantScholarshipRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new GrantScholarshipCommand(
-            req.CorporationId, req.StudentId,
+            req.StudentId,
             req.ScholarshipTypeId, req.Percentage, req.Amount,
             req.ValidFrom, req.ValidTo, req.Note), ct);
         return CreatedResult(result, $"/api/payments/scholarships/{result.Id}");
@@ -558,7 +543,6 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.Promotions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<PromotionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPromotions(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] bool? validToday = null,
         [FromQuery] string? search = null,
@@ -570,7 +554,6 @@ public sealed class PaymentsController : BaseController
     {
         var result = await Sender.Send(new GetPromotionsQuery
         {
-            CorporationId = corporationId,
             IsActive      = isActive,
             ValidToday    = validToday,
             Search        = search,
@@ -592,10 +575,9 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.Promotions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PromotionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ValidatePromotionCode(
-        [FromQuery] Guid corporationId,
         [FromQuery] string code,
         CancellationToken ct)
-        => OkResult(await Sender.Send(new ValidatePromotionCodeQuery(corporationId, code), ct));
+        => OkResult(await Sender.Send(new ValidatePromotionCodeQuery(code), ct));
 
     [HttpPost("promotions")]
     [HasPermission(Permissions.Promotions.Create)]
@@ -604,7 +586,7 @@ public sealed class PaymentsController : BaseController
         [FromBody] CreatePromotionRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreatePromotionCommand(
-            req.CorporationId, req.Code, req.Name, req.Value,
+            req.Code, req.Name, req.Value,
             req.IsPercentage, req.ValidFrom, req.ValidTo, req.MaxRedemptions), ct);
         return CreatedResult(result, $"/api/payments/promotions/{result.Id}");
     }
@@ -644,38 +626,34 @@ public sealed class PaymentsController : BaseController
     [HasPermission(Permissions.FinanceReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<RevenueReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRevenueReport(
-        [FromQuery] Guid corporationId,
         [FromQuery] DateOnly periodStart,
         [FromQuery] DateOnly periodEnd,
         CancellationToken ct)
         => OkResult(await Sender.Send(new GetRevenueReportQuery(
-            corporationId, periodStart, periodEnd), ct));
+            periodStart, periodEnd), ct));
 
     [HttpGet("reports/packages")]
     [HasPermission(Permissions.FinanceReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<PackageReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPackageReport(
-        [FromQuery] Guid corporationId,
         CancellationToken ct)
-        => OkResult(await Sender.Send(new GetPackageReportQuery(corporationId), ct));
+        => OkResult(await Sender.Send(new GetPackageReportQuery(), ct));
 
     [HttpGet("reports/credit-usage")]
     [HasPermission(Permissions.FinanceReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<CreditUsageReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCreditUsageReport(
-        [FromQuery] Guid corporationId,
         [FromQuery] DateOnly periodStart,
         [FromQuery] DateOnly periodEnd,
         CancellationToken ct)
         => OkResult(await Sender.Send(new GetCreditUsageReportQuery(
-            corporationId, periodStart, periodEnd), ct));
+            periodStart, periodEnd), ct));
 }
 
 // ── Request Records ───────────────────────────────────────────────────────────
 
 // Package Definitions
 public record CreatePackageDefinitionRequest(
-    Guid CorporationId,
     string Code,
     string Name,
     decimal ListPrice,
@@ -698,7 +676,6 @@ public record UpdatePackageDefinitionRequest(
 
 // Student Packages
 public record PurchasePackageRequest(
-    Guid CorporationId,
     Guid StudentId,
     decimal TotalCredits,
     decimal Price,
@@ -732,7 +709,6 @@ public record AdjustCreditsRequest(
 
 // Invoices
 public record CreateInvoiceRequest(
-    Guid CorporationId,
     DateOnly IssueDate,
     string Currency = "TRY",
     Guid? StudentId = null,
@@ -751,7 +727,6 @@ public record VoidInvoiceRequest(int RowVersion);
 
 // Payments
 public record RecordPaymentRequest(
-    Guid CorporationId,
     decimal Amount,
     string Currency = "TRY",
     Guid? InvoiceId = null,
@@ -774,7 +749,6 @@ public record RequestRefundRequest(
 
 // Discounts
 public record ApplyDiscountRequest(
-    Guid CorporationId,
     decimal Value,
     bool IsPercentage = true,
     Guid? InvoiceId = null,
@@ -784,7 +758,6 @@ public record ApplyDiscountRequest(
 
 // Scholarships
 public record GrantScholarshipRequest(
-    Guid CorporationId,
     Guid StudentId,
     Guid? ScholarshipTypeId,
     decimal? Percentage,
@@ -804,7 +777,6 @@ public record UpdateScholarshipRequest(
 
 // Promotions
 public record CreatePromotionRequest(
-    Guid CorporationId,
     string Code,
     string Name,
     decimal Value,

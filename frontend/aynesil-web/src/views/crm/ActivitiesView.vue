@@ -2,10 +2,9 @@
 /**
  * Activities view — global follow-up tracker across all leads.
  */
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { useBranchStore } from '@/stores/branch.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -13,14 +12,10 @@ import Pagination from '@/components/shared/Pagination.vue'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const activityStore = useLeadActivityStore()
 const branchStore = useBranchStore()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   page: 1,
   pageSize: 20,
@@ -35,7 +30,6 @@ watch(() => [query.campusId, query.page, query.pageSize], loadFollowUps)
 
 async function loadFollowUps() {
   await activityStore.fetchFollowUps({
-    corporationId: query.corporationId,
     campusId: query.campusId || undefined,
     page: query.page,
     pageSize: query.pageSize,

@@ -30,7 +30,6 @@ public sealed class StudentsController : BaseController
     [HasPermission(Permissions.Students.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<StudentListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? statusId = null,
         [FromQuery] bool? hasLead = null,
@@ -45,7 +44,6 @@ public sealed class StudentsController : BaseController
     {
         var result = await Sender.Send(new GetStudentsQuery
         {
-            CorporationId = corporationId,
             CampusId      = campusId,
             StatusId      = statusId,
             HasLead       = hasLead,
@@ -193,7 +191,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateStudentCommand(
-            req.CorporationId, req.FirstName, req.LastName,
+            req.FirstName, req.LastName,
             req.StudentNo, req.NationalId, req.BirthDate, req.Gender,
             req.PrimaryCampusId, req.StatusId, req.LeadId, req.Notes), ct);
         return CreatedResult(result, $"/api/students/{result.Id}");
@@ -411,7 +409,7 @@ public sealed class StudentsController : BaseController
         Guid id, [FromBody] AddDevelopmentReportRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new AddDevelopmentReportCommand(
-            id, req.PeriodLabel, req.ReportDate, req.AuthoredBy, req.Content, req.FileId), ct);
+            id, req.PeriodLabel, req.ReportDate, req.Content, req.FileId), ct);
         return CreatedResult(result, $"/api/students/{id}/development-reports/{result.Id}");
     }
 
@@ -422,7 +420,7 @@ public sealed class StudentsController : BaseController
         Guid id, Guid reportId, [FromBody] UpdateDevelopmentReportRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new UpdateDevelopmentReportCommand(
-            reportId, req.PeriodLabel, req.ReportDate, req.AuthoredBy, req.Content, req.FileId, req.RowVersion), ct);
+            reportId, req.PeriodLabel, req.ReportDate, req.Content, req.FileId, req.RowVersion), ct);
         return OkResult(result);
     }
 
@@ -466,7 +464,7 @@ public sealed class StudentsController : BaseController
         Guid id, [FromBody] AddCaseNoteRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new AddCaseNoteCommand(
-            id, req.NoteType, req.Body, req.IsConfidential, req.AuthoredBy), ct);
+            id, req.NoteType, req.Body, req.IsConfidential), ct);
         return CreatedResult(result, $"/api/students/{id}/case-notes/{result.Id}");
     }
 
@@ -494,7 +492,6 @@ public sealed class StudentsController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateStudentRequest(
-    Guid CorporationId,
     string FirstName,
     string LastName,
     string? StudentNo,
@@ -585,14 +582,12 @@ public record UpdateMedicalReportRequest(
 public record AddDevelopmentReportRequest(
     string? PeriodLabel,
     DateOnly? ReportDate,
-    Guid? AuthoredBy,
     string? Content,
     Guid? FileId);
 
 public record UpdateDevelopmentReportRequest(
     string? PeriodLabel,
     DateOnly? ReportDate,
-    Guid? AuthoredBy,
     string? Content,
     Guid? FileId,
     int RowVersion);
@@ -607,8 +602,7 @@ public record AddExternalReportRequest(
 public record AddCaseNoteRequest(
     string? NoteType,
     string Body,
-    bool IsConfidential,
-    Guid? AuthoredBy);
+    bool IsConfidential);
 
 public record UpdateCaseNoteRequest(
     string? NoteType,

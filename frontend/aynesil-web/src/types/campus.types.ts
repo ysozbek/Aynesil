@@ -24,7 +24,6 @@ export interface CampusDto extends CampusListItemDto {
 }
 
 export interface CreateCampusRequest {
-  corporationId: string
   code: string
   name: string
   city?: string
@@ -51,6 +50,5 @@ export interface UpdateCampusRequest {
 }
 
 export interface CampusQuery extends PagedQuery {
-  corporationId?: string
   isActive?: boolean
 }

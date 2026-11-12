@@ -290,20 +290,17 @@ export interface ConsultancyOutcomesDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface InstitutionListQuery extends PagedQuery {
-  corporationId?: string
   institutionTypeId?: string
   city?: string
 }
 
 export interface PlanListQuery extends PagedQuery {
-  corporationId?: string
   institutionId?: string
   consultancyTypeId?: string
   status?: string
 }
 
 export interface VisitListQuery extends PagedQuery {
-  corporationId?: string
   consultancyPlanId?: string
   institutionId?: string
   status?: string
@@ -312,7 +309,6 @@ export interface VisitListQuery extends PagedQuery {
 }
 
 export interface AgreementListQuery extends PagedQuery {
-  corporationId?: string
   consultancyPlanId?: string
   institutionId?: string
   agreementTypeId?: string
@@ -320,7 +316,6 @@ export interface AgreementListQuery extends PagedQuery {
 }
 
 export interface FollowUpListQuery extends PagedQuery {
-  corporationId?: string
   consultancyPlanId?: string
   schoolVisitId?: string
   observationRecordId?: string
@@ -330,20 +325,17 @@ export interface FollowUpListQuery extends PagedQuery {
 }
 
 export interface OpenFollowUpReportQuery {
-  corporationId?: string
   consultancyPlanId?: string
   assignedTo?: string
 }
 
 export interface AgreementSummaryQuery {
-  corporationId?: string
   institutionId?: string
 }
 
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateInstitutionPayload {
-  corporationId: string
   institutionTypeId?: string
   name: string
   city?: string
@@ -365,7 +357,6 @@ export interface UpdateInstitutionPayload {
 }
 
 export interface CreatePlanPayload {
-  corporationId: string
   institutionId: string
   consultancyTypeId?: string
   name: string
@@ -376,7 +367,6 @@ export interface CreatePlanPayload {
 }
 
 export interface CreateVisitPayload {
-  corporationId: string
   consultancyPlanId?: string
   institutionId: string
   visitDate: string
@@ -392,7 +382,6 @@ export interface AddObservationPayload {
 }
 
 export interface CreateAgreementPayload {
-  corporationId: string
   consultancyPlanId: string
   institutionId: string
   agreementTypeId?: string
@@ -418,7 +407,6 @@ export interface SignAgreementPayload {
 }
 
 export interface CreateFollowUpPayload {
-  corporationId: string
   consultancyPlanId?: string
   schoolVisitId?: string
   observationRecordId?: string

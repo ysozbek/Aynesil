@@ -12,22 +12,28 @@ namespace Aynesil.Application.Features.Goals.Queries;
 /// broken down by development area. Used for Student Progress reports.
 /// </summary>
 public record GetStudentGoalSummaryQuery(
-    Guid CorporationId,
     Guid StudentId) : IRequest<StudentGoalSummaryDto>;
 
 public sealed class GetStudentGoalSummaryQueryHandler
     : IRequestHandler<GetStudentGoalSummaryQuery, StudentGoalSummaryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentGoalSummaryQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentGoalSummaryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<StudentGoalSummaryDto> Handle(
         GetStudentGoalSummaryQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var goals = await _db.StudentGoals
             .AsNoTracking()
-            .Where(g => g.CorporationId == req.CorporationId && g.StudentId == req.StudentId)
+            .Where(g => g.CorporationId == corporationId && g.StudentId == req.StudentId)
             .ToListAsync(ct);
 
         var studentName = await _db.Students.AsNoTracking()
@@ -79,7 +85,6 @@ public sealed class GetStudentGoalSummaryQueryHandler
 /// Used for Goal Success reports and Therapy Progress reports.
 /// </summary>
 public record GetGoalSuccessRatesQuery(
-    Guid CorporationId,
     Guid? CampusId = null,
     DateOnly? From = null,
     DateOnly? To = null) : IRequest<IReadOnlyList<GoalSuccessRateDto>>;
@@ -88,14 +93,21 @@ public sealed class GetGoalSuccessRatesQueryHandler
     : IRequestHandler<GetGoalSuccessRatesQuery, IReadOnlyList<GoalSuccessRateDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetGoalSuccessRatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetGoalSuccessRatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<GoalSuccessRateDto>> Handle(
         GetGoalSuccessRatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.StudentGoals.AsNoTracking()
-            .Where(g => g.CorporationId == req.CorporationId);
+            .Where(g => g.CorporationId == corporationId);
 
         if (req.From.HasValue)
             q = q.Where(g => g.StartDate == null || g.StartDate >= req.From.Value);

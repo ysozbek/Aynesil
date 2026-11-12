@@ -21,7 +21,6 @@ public sealed class ProgramsController : BaseController
     [HasPermission(Permissions.Programs.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<ProgramListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? programTypeId = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] int page = 1,
@@ -33,7 +32,6 @@ public sealed class ProgramsController : BaseController
     {
         var result = await Sender.Send(new GetProgramsQuery
         {
-            CorporationId = corporationId,
             ProgramTypeId = programTypeId,
             IsActive      = isActive,
             Page          = page,
@@ -64,7 +62,7 @@ public sealed class ProgramsController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateProgramRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateProgramCommand(
-            req.CorporationId, req.Code, req.Name, req.ProgramTypeId, req.Description), ct);
+            req.Code, req.Name, req.ProgramTypeId, req.Description), ct);
         return CreatedResult(result, $"/api/programs/{result.Id}");
     }
 
@@ -150,7 +148,6 @@ public sealed class EnrollmentsController : BaseController
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<EnrollmentListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? studentId = null,
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? statusId = null,
         [FromQuery] bool? isActive = null,
@@ -163,7 +160,6 @@ public sealed class EnrollmentsController : BaseController
         var result = await Sender.Send(new GetStudentEnrollmentsQuery
         {
             StudentId     = studentId,
-            CorporationId = corporationId,
             CampusId      = campusId,
             StatusId      = statusId,
             IsActive      = isActive,
@@ -190,7 +186,7 @@ public sealed class EnrollmentsController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateEnrollmentRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateEnrollmentCommand(
-            req.CorporationId, req.StudentId, req.CampusId, req.StatusId, req.EnrolledOn), ct);
+            req.StudentId, req.CampusId, req.StatusId, req.EnrolledOn), ct);
         return CreatedResult(result, $"/api/enrollments/{result.Id}");
     }
 
@@ -224,7 +220,7 @@ public sealed class EnrollmentsController : BaseController
         Guid id, [FromBody] AssignStudentToProgramRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new AssignStudentToProgramCommand(
-            req.CorporationId, req.StudentId, req.ProgramId,
+            req.StudentId, req.ProgramId,
             id, req.CampusId, req.StartDate, req.EndDate), ct);
         return CreatedResult(result, $"/api/enrollments/{id}/programs/{result.Id}");
     }
@@ -264,7 +260,6 @@ public sealed class StudentProgramsController : BaseController
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<StudentProgramListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? studentId = null,
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? programId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] string? status = null,
@@ -278,7 +273,6 @@ public sealed class StudentProgramsController : BaseController
         var result = await Sender.Send(new GetStudentProgramsQuery
         {
             StudentId     = studentId,
-            CorporationId = corporationId,
             ProgramId     = programId,
             CampusId      = campusId,
             Status        = status,
@@ -306,7 +300,7 @@ public sealed class StudentProgramsController : BaseController
     public async Task<IActionResult> Assign([FromBody] AssignStudentToProgramRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new AssignStudentToProgramCommand(
-            req.CorporationId, req.StudentId, req.ProgramId,
+            req.StudentId, req.ProgramId,
             req.EnrollmentId, req.CampusId, req.StartDate, req.EndDate), ct);
         return CreatedResult(result, $"/api/student-programs/{result.Id}");
     }
@@ -315,7 +309,6 @@ public sealed class StudentProgramsController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateProgramRequest(
-    Guid CorporationId,
     string Code,
     string Name,
     Guid? ProgramTypeId,
@@ -345,7 +338,6 @@ public record UpdateProgramServiceRequest(
     int SortOrder);
 
 public record CreateEnrollmentRequest(
-    Guid CorporationId,
     Guid StudentId,
     Guid? CampusId,
     Guid? StatusId,
@@ -356,7 +348,6 @@ public record ChangeEnrollmentStatusRequest(Guid NewStatusId, int RowVersion);
 public record EndProgramEnrollmentRequest(DateOnly? EndedOn, string? TerminationReason, int RowVersion);
 
 public record AssignStudentToProgramRequest(
-    Guid CorporationId,
     Guid StudentId,
     Guid ProgramId,
     Guid? EnrollmentId,

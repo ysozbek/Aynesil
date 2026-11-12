@@ -45,8 +45,8 @@ export const leadService = {
   getById: (id: string) =>
     apiService.get<LeadDto>(`/leads/${id}`),
 
-  getPipelineSummary: (corporationId: string, campusId?: string) =>
-    apiService.get<PipelineSummaryDto>(`/leads/pipeline${qs({ corporationId, campusId })}`),
+  getPipelineSummary: (campusId?: string) =>
+    apiService.get<PipelineSummaryDto>(`/leads/pipeline${qs({ campusId })}`),
 
   getFollowUpsDue: (query: FollowUpsQuery) =>
     apiService.get<PaginatedResult<LeadActivityDto>>(`/leads/followups${qs(query)}`),

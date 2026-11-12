@@ -12,13 +12,11 @@ namespace Aynesil.Application.Features.Notifications.Commands;
 // ChannelIds: list of ref_value(notification_channel) IDs — replaces existing channels.
 
 public record UpsertNotificationTriggerConfigCommand(
-    Guid? CorporationId,
     string TriggerCode,
     Guid? TemplateId,
     int OffsetMinutes,
     bool IsActive,
-    IReadOnlyList<Guid> ChannelIds,
-    Guid? CreatedBy = null) : IRequest<NotificationTriggerConfigDto>;
+    IReadOnlyList<Guid> ChannelIds) : IRequest<NotificationTriggerConfigDto>;
 
 public class UpsertNotificationTriggerConfigCommandValidator
     : AbstractValidator<UpsertNotificationTriggerConfigCommand>
@@ -33,23 +31,32 @@ public sealed class UpsertNotificationTriggerConfigCommandHandler
     : IRequestHandler<UpsertNotificationTriggerConfigCommand, NotificationTriggerConfigDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public UpsertNotificationTriggerConfigCommandHandler(IAppDbContext db) => _db = db;
+    public UpsertNotificationTriggerConfigCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<NotificationTriggerConfigDto> Handle(
         UpsertNotificationTriggerConfigCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var config = await _db.NotificationTriggerConfigs
             .Include(c => c.Channels)
             .FirstOrDefaultAsync(c =>
                 c.TriggerCode == req.TriggerCode &&
-                c.CorporationId == req.CorporationId, ct);
+                c.CorporationId == corporationId, ct);
 
         if (config is null)
         {
             config = NotificationTriggerConfig.Create(
                 req.TriggerCode, req.TemplateId, req.OffsetMinutes,
-                req.CorporationId, req.CreatedBy);
+                corporationId, _currentUser.UserId);
             _db.NotificationTriggerConfigs.Add(config);
         }
         else
@@ -102,9 +109,11 @@ public sealed class DeleteNotificationTriggerConfigCommandHandler
 
 // ── UpdateNotificationPreferencesCommand ──────────────────────────────────────
 
+/// <summary>
+/// Updates the authenticated user's own preferences. CorporationId and UserId are taken
+/// from the request context (JWT), never from the client.
+/// </summary>
 public record UpdateNotificationPreferencesCommand(
-    Guid CorporationId,
-    Guid UserId,
     IReadOnlyList<PreferenceInput> Preferences) : IRequest;
 
 public record PreferenceInput(Guid? CategoryId, Guid? ChannelId, bool IsEnabled);
@@ -114,8 +123,6 @@ public class UpdateNotificationPreferencesCommandValidator
 {
     public UpdateNotificationPreferencesCommandValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Preferences).NotNull();
     }
 }
@@ -124,15 +131,26 @@ public sealed class UpdateNotificationPreferencesCommandHandler
     : IRequestHandler<UpdateNotificationPreferencesCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateNotificationPreferencesCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateNotificationPreferencesCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateNotificationPreferencesCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+        var userId = _currentUser.RequireUserId();
+
         foreach (var pref in req.Preferences)
         {
             var existing = await _db.NotificationPreferences.FirstOrDefaultAsync(
-                p => p.UserId == req.UserId
+                p => p.UserId == userId
                   && p.CategoryId == pref.CategoryId
                   && p.ChannelId == pref.ChannelId, ct);
 
@@ -140,8 +158,8 @@ public sealed class UpdateNotificationPreferencesCommandHandler
             {
                 _db.NotificationPreferences.Add(new NotificationPreference
                 {
-                    CorporationId = req.CorporationId,
-                    UserId        = req.UserId,
+                    CorporationId = corporationId,
+                    UserId        = userId,
                     CategoryId    = pref.CategoryId,
                     ChannelId     = pref.ChannelId,
                     IsEnabled     = pref.IsEnabled

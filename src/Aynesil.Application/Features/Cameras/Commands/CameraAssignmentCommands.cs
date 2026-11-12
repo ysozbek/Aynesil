@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Cameras.Commands;
 // ── AssignCameraToRoomCommand ─────────────────────────────────────────────────
 
 public record AssignCameraToRoomCommand(
-    Guid CorporationId,
     Guid CameraId,
     Guid RoomId) : IRequest<Guid>;
 
@@ -17,7 +16,6 @@ public class AssignCameraToRoomCommandValidator : AbstractValidator<AssignCamera
 {
     public AssignCameraToRoomCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CameraId).NotEmpty();
         RuleFor(x => x.RoomId).NotEmpty();
     }
@@ -26,18 +24,25 @@ public class AssignCameraToRoomCommandValidator : AbstractValidator<AssignCamera
 public sealed class AssignCameraToRoomCommandHandler : IRequestHandler<AssignCameraToRoomCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AssignCameraToRoomCommandHandler(IAppDbContext db) => _db = db;
+    public AssignCameraToRoomCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(AssignCameraToRoomCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var cameraExists = await _db.Cameras
-            .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == req.CorporationId, ct);
+            .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == corporationId, ct);
         if (!cameraExists)
             throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
 
         var roomExists = await _db.Rooms
-            .AnyAsync(r => r.Id == req.RoomId && r.CorporationId == req.CorporationId, ct);
+            .AnyAsync(r => r.Id == req.RoomId && r.CorporationId == corporationId, ct);
         if (!roomExists)
             throw new KeyNotFoundException($"Room {req.RoomId} not found.");
 
@@ -46,7 +51,7 @@ public sealed class AssignCameraToRoomCommandHandler : IRequestHandler<AssignCam
         if (duplicate)
             throw new InvalidOperationException("Camera is already assigned to this room.");
 
-        var assignment = RoomCamera.Assign(req.CorporationId, req.RoomId, req.CameraId);
+        var assignment = RoomCamera.Assign(corporationId, req.RoomId, req.CameraId);
         _db.RoomCameras.Add(assignment);
         await _db.SaveChangesAsync(ct);
         return assignment.Id;
@@ -87,7 +92,6 @@ public sealed class UnassignCameraFromRoomCommandHandler : IRequestHandler<Unass
 // ── AssignCameraToSessionCommand ──────────────────────────────────────────────
 
 public record AssignCameraToSessionCommand(
-    Guid CorporationId,
     Guid CameraId,
     Guid SessionId) : IRequest<Guid>;
 
@@ -95,7 +99,6 @@ public class AssignCameraToSessionCommandValidator : AbstractValidator<AssignCam
 {
     public AssignCameraToSessionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CameraId).NotEmpty();
         RuleFor(x => x.SessionId).NotEmpty();
     }
@@ -104,18 +107,25 @@ public class AssignCameraToSessionCommandValidator : AbstractValidator<AssignCam
 public sealed class AssignCameraToSessionCommandHandler : IRequestHandler<AssignCameraToSessionCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AssignCameraToSessionCommandHandler(IAppDbContext db) => _db = db;
+    public AssignCameraToSessionCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(AssignCameraToSessionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var cameraExists = await _db.Cameras
-            .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == req.CorporationId, ct);
+            .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == corporationId, ct);
         if (!cameraExists)
             throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
 
         var sessionExists = await _db.Sessions
-            .AnyAsync(s => s.Id == req.SessionId && s.CorporationId == req.CorporationId, ct);
+            .AnyAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct);
         if (!sessionExists)
             throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
@@ -124,7 +134,7 @@ public sealed class AssignCameraToSessionCommandHandler : IRequestHandler<Assign
         if (duplicate)
             throw new InvalidOperationException("Camera is already assigned to this session.");
 
-        var assignment = SessionCamera.Assign(req.CorporationId, req.SessionId, req.CameraId);
+        var assignment = SessionCamera.Assign(corporationId, req.SessionId, req.CameraId);
         _db.SessionCameras.Add(assignment);
         await _db.SaveChangesAsync(ct);
         return assignment.Id;

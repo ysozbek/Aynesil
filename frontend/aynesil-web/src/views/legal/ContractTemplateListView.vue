@@ -3,7 +3,6 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
@@ -12,7 +11,6 @@ import type { ContractTemplateListItemDto } from '@/types/legal.types'
 const { t } = useI18n()
 const router = useRouter()
 const contractStore = useContractStore()
-const auth = useAuthStore()
 
 const columns: Column<ContractTemplateListItemDto>[] = [
   { key: 'code', label: t('legal.template.fields.code') },
@@ -23,7 +21,7 @@ const columns: Column<ContractTemplateListItemDto>[] = [
 ]
 
 onMounted(() => {
-  contractStore.fetchTemplates({ corporationId: auth.user?.corporationId })
+  contractStore.fetchTemplates({})
 })
 </script>
 

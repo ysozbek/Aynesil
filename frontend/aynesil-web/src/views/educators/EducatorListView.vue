@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useEducatorStore } from '@/stores/educator.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -17,19 +16,15 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useEducatorStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const titles = ref<RefValueItem[]>([])
 const employmentTypes = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   titleId: '',
   employmentType: '',
@@ -64,7 +59,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchList({
     ...query,
-    corporationId: corporationId.value,
     campusId: query.campusId || undefined,
     titleId: query.titleId || undefined,
     employmentType: query.employmentType || undefined,

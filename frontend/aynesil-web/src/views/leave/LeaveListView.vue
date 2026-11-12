@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,7 +14,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const leaveStore = useLeaveStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive<LeaveRequestListQuery>({
@@ -26,7 +24,6 @@ const filters = reactive<LeaveRequestListQuery>({
   unit: '',
   from: '',
   to: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<LeaveRequestListItemDto>[] = [

@@ -2,7 +2,6 @@
 import { reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -11,14 +10,12 @@ import type { ViewingLogDto, ViewingLogQuery } from '@/types/camera.types'
 
 const { t } = useI18n()
 const cameraStore = useCameraStore()
-const auth = useAuthStore()
 
 const filters = reactive<ViewingLogQuery>({
   page: 1,
   pageSize: 20,
   from: '',
   to: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<ViewingLogDto>[] = [

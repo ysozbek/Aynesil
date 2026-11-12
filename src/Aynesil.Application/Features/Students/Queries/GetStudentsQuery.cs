@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Students.Queries;
 
 public class GetStudentsQuery : PagedQuery, IRequest<PaginatedResult<StudentListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? StatusId { get; set; }
     public bool? HasLead { get; set; }
@@ -21,16 +20,22 @@ public sealed class GetStudentsQueryHandler
     : IRequestHandler<GetStudentsQuery, PaginatedResult<StudentListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<StudentListItemDto>> Handle(
         GetStudentsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var baseQuery = _db.Students.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            baseQuery = baseQuery.Where(s => s.CorporationId == req.CorporationId.Value);
+        baseQuery = baseQuery.Where(s => s.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             baseQuery = baseQuery.Where(s => s.PrimaryCampusId == req.CampusId.Value);

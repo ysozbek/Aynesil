@@ -7,7 +7,7 @@
 
 ## 1. Özet
 
-Toplam **85** bulgu: Kritik: **18**, Yüksek: **35**, Orta: **19**, Düşük: **13**, Şüpheli: **0**.
+Toplam **86** bulgu: Kritik: **19**, Yüksek: **35**, Orta: **19**, Düşük: **13**, Şüpheli: **0**.
 
 | Modül | Kritik | Yüksek | Orta | Düşük | Şüpheli | Toplam |
 |---|---|---|---|---|---|---|
@@ -26,32 +26,32 @@ Toplam **85** bulgu: Kritik: **18**, Yüksek: **35**, Orta: **19**, Düşük: **
 | Okul Danışmanlığı | 0 | 2 | 3 | 1 | 0 | 6 |
 | Performans / KPI | 0 | 1 | 0 | 1 | 0 | 2 |
 | Roller / İzinler | 0 | 1 | 0 | 0 | 0 | 1 |
-| Genel | 0 | 0 | 2 | 1 | 0 | 3 |
+| Genel | 1 | 0 | 2 | 1 | 0 | 4 |
 | Değerlendirme | 0 | 0 | 0 | 1 | 0 | 1 |
 | Platform | 0 | 0 | 0 | 1 | 0 | 1 |
 | Programlar / Kayıtlar | 0 | 0 | 0 | 1 | 0 | 1 |
-| **Toplam** | **18** | **35** | **19** | **13** | **0** | **85** |
+| **Toplam** | **19** | **35** | **19** | **13** | **0** | **86** |
 
 ## 2. Bulgular
 
 | # | Önem | Modül | Kategori | Ekran / Akış | Frontend (dosya:satır) | Backend veya DB (dosya:satır) | Sorun | Kullanıcıya etkisi | Önerilen düzeltme |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | Kritik | Bildirimler | f | Bildirim tercihleri → Kaydet | types/notification.types.ts:153-159; stores/notificationPreference.store.ts:35-37; services/notification.service.ts:56 | Features/Notifications/Commands/NotificationTriggerCommands.cs:105 (`Guid CorporationId`) ve validator (`RuleFor(x => x.CorporationId).NotEmpty()`); Api/Controllers/NotificationsController.cs:68-73 (yalnızca UserId set ediliyor) | Backend `corporationId` zorunlu tutuyor; frontend yalnızca `preferences` gönderiyor. | Tercihler kaydedilemez (422). | Payload'a `corporationId` ekle veya controller'da JWT'den doldur. |
+| 1 ✅ | Kritik | Bildirimler | f | Bildirim tercihleri → Kaydet | types/notification.types.ts:153-159; stores/notificationPreference.store.ts:35-37; services/notification.service.ts:56 | Features/Notifications/Commands/NotificationTriggerCommands.cs:105 (`Guid CorporationId`) ve validator (`RuleFor(x => x.CorporationId).NotEmpty()`); Api/Controllers/NotificationsController.cs:68-73 (yalnızca UserId set ediliyor) | Backend `corporationId` zorunlu tutuyor; frontend yalnızca `preferences` gönderiyor. | Tercihler kaydedilemez (422). | Payload'a `corporationId` ekle veya controller'da JWT'den doldur. |
 | 2 | Kritik | Finans | f | Paket tanımı düzenle | views/finance/PackageDefinitionFormView.vue:70-80; types/finance.types.ts:60-70 | Features/Finance/Commands/PackageDefinitionCommands.cs:75 (UpdatePackageDefinitionCommand: `string Code` zorunlu) | Güncelleme payload'ında `code` yok (backend'in tanımadığı `description` var). Non-nullable `Code` eksik olduğundan istek model doğrulamasında 400 alır. | Paket tanımı güncellenemez. | Payload'a `code` ekle, `description`ı kaldır (ya da backend'e ekle). |
 | 3 | Kritik | Finans | f | Promosyon düzenle | views/finance/PromotionListView.vue:56-61; types/finance.types.ts:475-483 | Features/Finance/Commands/PromotionCommands.cs:71,86 (`RuleFor(x => x.Code).NotEmpty()`) | Güncelleme payload'ı `code` göndermiyor; backend zorunlu tutuyor. Gönderilen `rowVersion` ise komutta yok. | Promosyon güncelleme her zaman reddedilir. | Payload'a `code` ekle. |
 | 4 | Kritik | Finans | g | Kredi ver / Kredi düzelt / İade oluştur / Burs ekle butonları | views/finance/CreditLedgerView.vue:143,150 (`credit:grant`, `credit:adjust`); views/finance/PaymentDetailView.vue:80 (`refund:create`); views/finance/ScholarshipListView.vue:105 (`scholarship:create`) | Shared/Constants/Permissions.cs:409-410 (`credit_ledger:grant`, `credit_ledger:adjust`), :435 (`refund:request`), :450 (`scholarship:grant`) | Frontend'in kontrol ettiği dört izin kodu backend'de ve seed'de yok; doğru kodlar farklı. | Hiçbir kullanıcıda (admin dahil) bu butonlar görünmez; kredi verme/düzeltme, iade ve burs ekleme arayüzden yapılamaz. | İzin kodlarını Permissions.cs'teki değerlerle değiştir. |
-| 5 | Kritik | Kameralar | f | Kamera detayı → Dersliğe ata | views/cameras/CameraDetailView.vue:28; types/camera.types.ts:146-152; services/camera.service.ts:58,66 | Api/Controllers/CameraController.cs:102-106,127-131,239-240 (`AssignCameraToRoomRequest(Guid CorporationId, Guid RoomId)`); Features/Cameras/Commands/CameraAssignmentCommands.cs:20,98 (`CorporationId` NotEmpty) | Frontend yalnızca `{ roomId }` / `{ sessionId }` gönderiyor; backend gövdede `corporationId` zorunlu tutuyor. | Kamera–derslik (ve seans) ataması her zaman 422 ile reddedilir. | Payload'a `corporationId` ekle. |
-| 6 | Kritik | Kameralar | f | İzleme yetkileri → Yetki ver | views/cameras/ViewingAuthorizationsView.vue:80; types/camera.types.ts:154-162; services/camera.service.ts:82 | Features/Cameras/Commands/ViewingCommands.cs:20 (`Guid CorporationId`) ve validator (`RuleFor(x => x.CorporationId).NotEmpty()`) | Payload'da zorunlu `corporationId` yok. | Veliye izleme yetkisi verilemez (422). | Payload'a `corporationId` ekle. |
+| 5 ✅ | Kritik | Kameralar | f | Kamera detayı → Dersliğe ata | views/cameras/CameraDetailView.vue:28; types/camera.types.ts:146-152; services/camera.service.ts:58,66 | Api/Controllers/CameraController.cs:102-106,127-131,239-240 (`AssignCameraToRoomRequest(Guid CorporationId, Guid RoomId)`); Features/Cameras/Commands/CameraAssignmentCommands.cs:20,98 (`CorporationId` NotEmpty) | Frontend yalnızca `{ roomId }` / `{ sessionId }` gönderiyor; backend gövdede `corporationId` zorunlu tutuyor. | Kamera–derslik (ve seans) ataması her zaman 422 ile reddedilir. | Payload'a `corporationId` ekle. |
+| 6 ✅ | Kritik | Kameralar | f | İzleme yetkileri → Yetki ver | views/cameras/ViewingAuthorizationsView.vue:80; types/camera.types.ts:154-162; services/camera.service.ts:82 | Features/Cameras/Commands/ViewingCommands.cs:20 (`Guid CorporationId`) ve validator (`RuleFor(x => x.CorporationId).NotEmpty()`) | Payload'da zorunlu `corporationId` yok. | Veliye izleme yetkisi verilemez (422). | Payload'a `corporationId` ekle. |
 | 7 | Kritik | Kamplar | a | Kamp dönemi → Kayıt listesi (CampEnrollmentView) | services/camp.service.ts:56-59; stores/camp.store.ts:92 | Api/Controllers/CampsController.cs:168 (GET /api/camps/enrollments), :184 (aynı yol yalnızca POST) | Frontend `GET /camps/periods/{periodId}/enrollments` çağırıyor; backend'de bu yolun GET'i yok (yalnızca POST). Liste endpoint'i `GET /camps/enrollments?campPeriodId=…`. | 405 döner; store hatayı yutar, kayıt tablosu her zaman "veri yok" gösterir. | Servisi `GET /camps/enrollments` + `campPeriodId` query parametresine çevir (ya da backend'e GET route'u ekle). |
-| 8 | Kritik | Kamplar | a, f | Kamp dönemi → Öğrenci kaydet | services/camp.service.ts:64-65; views/camps/CampEnrollmentView.vue:155 (`{ studentId }`); types/camp.types.ts:252-255 | Api/Controllers/CampsController.cs:184 (POST periods/{periodId}/enrollments); Features/Camps/Commands/CampEnrollmentCommands.cs:12,19 (CorporationId NotEmpty) | Frontend `POST /camps/periods/{id}/enroll` çağırıyor, backend yolu `/enrollments`. Ayrıca payload'da zorunlu `corporationId` yok. | Kayıt işlemi 404 ile hiç çalışmıyor; yol düzeltilse bile 422 alır. | Yolu `/camps/periods/{id}/enrollments` yap, payload'a `corporationId` ekle. |
-| 9 | Kritik | Kamplar | f | Kamp detayı → Dönem ekle | types/camp.types.ts:245-250; views/camps/CampDetailView.vue:175,181 | Features/Camps/Commands/CampPeriodCommands.cs:12,25 (`RuleFor(x => x.CorporationId).NotEmpty()`) | Backend `corporationId` zorunlu tutuyor; form/payload bu alanı hiç göndermiyor (Guid.Empty olarak bağlanır). | Dönem oluşturma her zaman 422 Validation failed ile reddedilir. | Payload'a `corporationId` ekle veya handler'da kampın corporation'ından türet. |
+| 8 ✅ | Kritik | Kamplar | a, f | Kamp dönemi → Öğrenci kaydet | services/camp.service.ts:64-65; views/camps/CampEnrollmentView.vue:155 (`{ studentId }`); types/camp.types.ts:252-255 | Api/Controllers/CampsController.cs:184 (POST periods/{periodId}/enrollments); Features/Camps/Commands/CampEnrollmentCommands.cs:12,19 (CorporationId NotEmpty) | Frontend `POST /camps/periods/{id}/enroll` çağırıyor, backend yolu `/enrollments`. Ayrıca payload'da zorunlu `corporationId` yok. | Kayıt işlemi 404 ile hiç çalışmıyor; yol düzeltilse bile 422 alır. | Yolu `/camps/periods/{id}/enrollments` yap, payload'a `corporationId` ekle. |
+| 9 ✅ | Kritik | Kamplar | f | Kamp detayı → Dönem ekle | types/camp.types.ts:245-250; views/camps/CampDetailView.vue:175,181 | Features/Camps/Commands/CampPeriodCommands.cs:12,25 (`RuleFor(x => x.CorporationId).NotEmpty()`) | Backend `corporationId` zorunlu tutuyor; form/payload bu alanı hiç göndermiyor (Guid.Empty olarak bağlanır). | Dönem oluşturma her zaman 422 Validation failed ile reddedilir. | Payload'a `corporationId` ekle veya handler'da kampın corporation'ından türet. |
 | 10 | Kritik | Kullanıcılar | e | Kullanıcı listesi/detayı → Askıya al / Etkinleştir | views/users/UsersView.vue:139-140; views/users/UserDetailView.vue:71,157-158; stores/user.store.ts:93-94,100-101 | db/layer1_core/04_identity_access.sql:16 (`status in ('invited','active','suspended','disabled')`); Domain/Modules/Iam/Entities/UserAccount.cs:88,99; Features/Users/Dtos/UserMappings.cs:10,14 | Frontend durumu `'Active'`/`'Suspended'` (PascalCase) ile karşılaştırıyor; backend küçük harf döndürüyor. | Listede satır aksiyonları hiç çıkmaz; detayda buton hep "Etkinleştir" görünür ve aktif kullanıcıya activate çağrılır — kullanıcı arayüzden askıya alınamaz. | Karşılaştırmaları ve store'daki atamaları küçük harfe çevir. |
 | 11 | Kritik | Kurumlar | e | Kurum listesi → Pasifleştir / Etkinleştir düğmesi | views/corporations/CorporationListView.vue:165,255,258; stores/corporation.store.ts:100-101,107-108 | db/layer1_core/02_tenancy.sql:16 (`status in ('active','suspended','closed')`); Domain/Modules/Core/Entities/Corporation.cs:64,75 | Frontend `row.status === 'Active'` kontrol ediyor; backend `active` döndürüyor. Store ayrıca yerel durumu DB'de olmayan `'Inactive'` yapıyor. | Aktif kurumda düğme "Etkinleştir" olarak görünür ve activate çağırır; kurum arayüzden pasifleştirilemez. | Küçük harf DB değerlerini (`active`/`suspended`) kullan. |
 | 12 | Kritik | Seans Planlama | f | Derslikler → Derslik düzenle | views/scheduling/RoomListView.vue:94-99; types/scheduling.types.ts:49-54 | Features/Scheduling/Commands/RoomCommands.cs:67 (UpdateRoomCommand.Code), :81 (`RuleFor(x => x.Code).NotEmpty()`) | Güncelleme payload'ı `code` göndermiyor (name, capacity, isVirtual, rowVersion); backend `Code` alanını zorunlu tutuyor. `isVirtual` ise backend komutunda yok, yok sayılır. | Derslik düzenleme her zaman 400/422 ile reddedilir. | Payload'a `code` (ve varsa roomTypeId/meetingUrl) ekle; `isVirtual`ı kaldır. |
 | 13 | Kritik | Sözleşme / Rıza | e | Sözleşme detayı → Gönder / İmzala / Feshet butonları | views/legal/ContractDetailView.vue:85,93,101 | db/layer2_sped/08_legal.sql:62 (`status in ('draft','sent','signed','active','expired','terminated')`) | Frontend durumu `'Draft'`, `'Sent'`, `'Active'` (PascalCase) ile karşılaştırıyor; backend/DB küçük harf döndürüyor. | İş akışı butonları hiçbir zaman görünmez; sözleşme arayüzden gönderilemez, imzalanamaz, feshedilemez. | Karşılaştırmaları küçük harfli DB değerlerine çevir. |
 | 14 | Kritik | Sözleşme / Rıza | e, f | Sözleşme imzala modalı | views/legal/ContractDetailView.vue:21,52-53,191-192; types/legal.types.ts:242-246 | Features/Legal/Commands/StudentContractCommands.cs:166 (`string SignedByName`, `string SignatureMethod`), :176 (`["wet","e_sign","click_wrap"]`); db/layer2_sped/08_legal.sql:65 | Form `signatureMethod` için `Manual`/`Electronic` gönderiyor (geçerli değerler wet/e_sign/click_wrap) ve zorunlu `signedByName` alanını hiç göndermiyor. | İmzalama isteği her zaman doğrulamadan döner (buton görünür hale getirilse bile). | Seçenekleri DB değerleriyle değiştir, `signedByName` alanını forma ekle. |
 | 15 | Kritik | Toplantılar | e | Takip görevini tamamla butonu (toplantı detayı ve takip listesi) | views/meetings/MeetingDetailView.vue:147; views/meetings/FollowUpListView.vue:36,65,93,108-111 | Features/Meetings/Commands/MeetingCommands.cs:499 + validator (`["open","in_progress","done","cancelled"]`); db/layer2_sped/10_ops.sql:58 | Frontend `status: 'completed'` gönderiyor ve `pending/completed` ile filtreliyor; geçerli değerler `open/in_progress/done/cancelled`. | Tamamla işlemi 422 alır; "Bekliyor"/"Tamamlandı" filtreleri boş döner, biten görevler gecikmiş görünür. | `completed`→`done`, `pending`→`open`. |
-| 16 | Kritik | Toplantılar | f | Toplantı detayı → Sonuç ekle / Takip görevi ekle | views/meetings/MeetingDetailView.vue:132,138; types/meeting.types.ts:159-162,169-173; services/meeting.service.ts:73,81 | Features/Meetings/Commands/MeetingCommands.cs:325,414 ve validator'lar (`RuleFor(x => x.CorporationId).NotEmpty()`); Api/Controllers/MeetingsController.cs:148,175 (yalnızca MeetingId set ediliyor) | Backend `corporationId` zorunlu tutuyor; frontend payload'larında yok ve controller da doldurmuyor (katılımcı ekleme servisi için de aynı, :62). | Sonuç ve takip görevi ekleme her zaman 422 ile reddedilir. | Payload'a `corporationId` ekle veya handler'da toplantıdan türet. |
+| 16 ✅ | Kritik | Toplantılar | f | Toplantı detayı → Sonuç ekle / Takip görevi ekle | views/meetings/MeetingDetailView.vue:132,138; types/meeting.types.ts:159-162,169-173; services/meeting.service.ts:73,81 | Features/Meetings/Commands/MeetingCommands.cs:325,414 ve validator'lar (`RuleFor(x => x.CorporationId).NotEmpty()`); Api/Controllers/MeetingsController.cs:148,175 (yalnızca MeetingId set ediliyor) | Backend `corporationId` zorunlu tutuyor; frontend payload'larında yok ve controller da doldurmuyor (katılımcı ekleme servisi için de aynı, :62). | Sonuç ve takip görevi ekleme her zaman 422 ile reddedilir. | Payload'a `corporationId` ekle veya handler'da toplantıdan türet. |
 | 17 | Kritik | Veli Portalı | c | Çocuklarım → çocuk detayına geçiş; portal panosu öğrenci seçimi | types/portal.types.ts:9-23; views/portal/MyChildrenView.vue:23,25,59; views/portal/PortalDashboardView.vue:30-32,129 | Features/Students/Dtos/StudentProjection.cs:238-251 (PortalStudentDto: `StudentId`, `BirthDate`, `CanViewPlan`, `CanViewAttendance`…) | Frontend öğrenci kimliğini `id` alanından okuyor; backend `studentId` gönderiyor. `dateOfBirth`↔`birthDate`, `canViewGoals`/`canViewDocuments`/`enrollmentStatus` backend'de yok (`canViewPlan`, `canViewAttendance`, `canViewCamera` var). | Çocuk kartına tıklayınca `studentId: undefined` ile yönlenir; pano ilk öğrenciyi seçemez — portalın tüm öğrenci ekranları açılmaz. Hedefler ve Belgeler sekmeleri hiç görünmez, doğum tarihi boş. | TS tipini backend DTO'suna göre yeniden yaz (`studentId`, `birthDate`, `canViewPlan`…). |
 | 18 | Kritik | İzin Yönetimi | f | İzin bakiyeleri → Devret (carry forward) | views/leave/LeaveBalanceView.vue:61-63; types/leave.types.ts:195-200; services/leave.service.ts:91 | Features/Leaves/Commands/LeaveCommands.cs:389 (`Guid EducatorId`), :401 (`RuleFor(x => x.EducatorId).NotEmpty()`) | Backend devri eğitmen bazında yapıyor ve `educatorId` zorunlu; frontend payload'ında bu alan yok. | Devir işlemi her zaman 422 ile reddedilir. | Forma eğitmen seçimi ekle ya da backend'e toplu devir desteği ekle. |
 | 19 | Yüksek | CRM (Aday) | c | Aday listesi → Kaynak, Aşama, Durum sütunları; Pipeline kartları; LeadPicker | views/crm/LeadsView.vue:92-94,221,228; views/crm/PipelineView.vue:207; components/pickers/LeadPicker.vue:44; types/crm.types.ts:3 | Features/Leads/Dtos/LeadListItemDto.cs:4 (yalnızca SourceCode, StatusCode, PipelineStageCode) | Frontend `sourceName`, `statusName`, `pipelineStageName` okuyor; backend yalnızca `*Code` alanlarını gönderiyor. | Üç sütun boş, rozetler görünmez. | DTO'ya ad alanlarını ekle ya da `*Code` + ref-data etiketi kullan. |
@@ -112,9 +112,9 @@ Toplam **85** bulgu: Kritik: **18**, Yüksek: **35**, Orta: **19**, Düşük: **
 | 74 | Düşük | Değerlendirme | c | Şablon/seans detayı → bölüm başlığındaki gelişim alanı adı | views/assessment/SessionDetailView.vue:359; views/assessment/TemplateDetailView.vue:280; types/assessment.types.ts:36 | Features/Assessment/Dtos/AssessmentTemplateDto.cs:31 (DevelopmentAreaId, DevelopmentAreaCode) | `developmentAreaName` backend'de yok. | Gelişim alanı etiketi hiç görünmez (v-if ile gizli). | `developmentAreaCode` kullan veya DTO'ya ad ekle. |
 | 75 | Düşük | Finans | b, d | View'e bağlı olmayan/etkisiz sözleşme farkları | services/finance.service.ts:128,144,180,199,228; types/finance.types.ts:180,246,328,365,485 | Features/Finance/Commands/InvoiceCommands.cs:12 (IssueDate zorunlu DateOnly); CreditLedgerCommands.cs:127; DiscountCommands.cs:12; Api/Controllers/PaymentsController.cs:591 (PromotionDto? döner) | `createInvoice` payload'ında `issueDate` yok (0001-01-01 kaydedilir); `refundCredits.sessionId` ve iade/kredi listesi `search` yok sayılır; `validatePromotion` `ValidatePromotionResult` yerine `PromotionDto` döner; refunds listesi `RefundDto` döner (`currency` yok); TS'de `rowVersion: string`, backend `int`. | Bu çağrılar şu an hiçbir view'den tetiklenmiyor veya etkisi görünmüyor; ekran bağlanınca hatalı veri üretir. | Tipleri backend'le eşitle. |
 | 76 | Düşük | Genel | — | tr.ts'te tanımlı olmayan i18n anahtarları (43 anahtar, 20 view) | ör. views/educators/EducatorDetailView.vue:343,580,630; views/goals/StudentGoalDetailView.vue:45-48,58,62-64; views/students/StudentDashboardView.vue:131-139,222,232 (tam liste: Ek A) | frontend/aynesil-web/src/i18n/locales/tr.ts (anahtar yok) | `t()` ile kullanılan 43 anahtar tr.ts'te yok (ör. `common.inactive`, `common.deleteConfirmTitle`, `goal.studentGoal.status.*`, `goal.progress.trend.*`, `scheduling.session.status.rescheduled`). | Ekranda çeviri yerine ham anahtar metni görünür. | Anahtarları tr.ts'e ekle veya mevcut anahtarlara yönlendir. |
-| 77 | Düşük | Kameralar | f | İzleme başlat / bitir (view'e bağlı değil) | stores/camera.store.ts:202-204,214; services/camera.service.ts:90,93; types/camera.types.ts:164-168 | Features/Cameras/Commands/ViewingCommands.cs:164,180 (`CorporationId` NotEmpty); Api/Controllers/CameraController.cs:215-219,241 (`EndViewingSessionRequest(StartedAt)` gövdesi zorunlu) | `startViewing` payload'ında `corporationId` yok; `endViewing` gövde göndermiyor ama backend `startedAt` bekliyor. | Şu an ekrandan çağrılmıyor; bağlanınca 422/400. | Payload'ları tamamla. |
+| 77 ✅ | Düşük | Kameralar | f | İzleme başlat / bitir (view'e bağlı değil) | stores/camera.store.ts:202-204,214; services/camera.service.ts:90,93; types/camera.types.ts:164-168 | Features/Cameras/Commands/ViewingCommands.cs:164,180 (`CorporationId` NotEmpty); Api/Controllers/CameraController.cs:215-219,241 (`EndViewingSessionRequest(StartedAt)` gövdesi zorunlu) | `startViewing` payload'ında `corporationId` yok; `endViewing` gövde göndermiyor ama backend `startedAt` bekliyor. | Şu an ekrandan çağrılmıyor; bağlanınca 422/400. | Payload'ları tamamla. |
 | 78 | Düşük | Kamplar | a | Kullanılmayan store/servis fonksiyonları (recordAttendance, getAttendanceSummary, getPerformance, getCampReport, listActivities, listParticipations) | services/camp.service.ts:77-78, 80-81, 87-88, 90-91, 94-95, 108-109 | Api/Controllers/CampsController.cs:105 (GET performance), :258 (periods/{id}/attendance-summary), :265 (POST attendance), :300 (enrollments/{id}/reports), :321 (GET activities), :419 (GET participations) | Bu servis fonksiyonlarının yolları backend'le uyuşmuyor (ör. `/camps/enrollments/{id}/attendance`, `/camps/{id}/performance`, `/camps/enrollments/{id}/report`, `/camps/periods/{id}/activities` GET, `/camps/activities/{id}/participations` GET). Hiçbir view çağırmıyor. | Şu an etkisi yok; ekran bağlandığında 404/405 verecek. | Yolları backend'e göre düzelt ya da ölü kodu kaldır. |
-| 79 | Düşük | Okul Danışmanlığı | f, c | Kullanılmayan store fonksiyonları (addObservation, updatePlan) | services/consultancy.service.ts:65,96; types/consultancy.types.ts:387-392 | Features/Consultancy/Commands/ObservationCommands.cs:12,25 (CorporationId NotEmpty); Api/Controllers/ConsultancyController.cs (PUT plans/{id} NoContent) | `addObservation` payload'ında zorunlu `corporationId` yok; `updatePlan` gövdesiz yanıtı `ConsultancyPlanDto` sanıyor. | View'ler çağırmıyor; bağlanınca 422 / boş veri. | Tipleri düzelt. |
+| 79 ✅ | Düşük | Okul Danışmanlığı | f, c | Kullanılmayan store fonksiyonları (addObservation, updatePlan) | services/consultancy.service.ts:65,96; types/consultancy.types.ts:387-392 | Features/Consultancy/Commands/ObservationCommands.cs:12,25 (CorporationId NotEmpty); Api/Controllers/ConsultancyController.cs (PUT plans/{id} NoContent) | `addObservation` payload'ında zorunlu `corporationId` yok; `updatePlan` gövdesiz yanıtı `ConsultancyPlanDto` sanıyor. | View'ler çağırmıyor; bağlanınca 422 / boş veri. | Tipleri düzelt. |
 | 80 | Düşük | Performans / KPI | b | View'e bağlı olmayan KPI servisleri (trend, kpi-values, educator kpi-values) | services/kpi.service.ts:47,53,106,111 | Features/PerformanceKpi/Queries/TrendAndRankingQueries.cs (`kpiCode`, `fromPeriodStart`, `maxPeriods`); KpiValueQueries.cs:14,70 (`periodStart`, `periodEnd`, `kpiCodePrefix`, `subjectId`) | Servis parametre adları (`kpiId`, `educatorId`, `from`, `to`, `periodType`) backend sorgularıyla uyuşmuyor. | Şu an çağrılmıyor. | Tipleri eşitle. |
 | 81 | Düşük | Platform | a | Dil mesajlarını yükleme (locale store) | stores/locale.store.ts:24-26 | — (Api/Controllers altında `localization` route'u yok) | `GET /localization/messages` backend'de yok. | Çağrı 404 alır, hata yutulur; şu an yalnızca `setLocale` içinden tetiklenir. | Endpoint'i ekle ya da çağrıyı kaldır. |
 | 82 | Düşük | Programlar / Kayıtlar | h | Kayıt ve öğrenci-program listeleri arama kutusu | types/program.types.ts (EnrollmentListQuery.search, StudentProgramListQuery.search); services/program.service.ts:81,115 | Api/Controllers/ProgramsController.cs (GET enrollments, GET student-programs — `search` parametresi yok) | Frontend `search` gönderiyor; backend kabul etmiyor. | Arama metni listeyi daraltmaz. | Backend'e search ekle ya da tipten kaldır. |
@@ -270,3 +270,151 @@ Notlar: `SurveysController` ve `CareTeamController` için frontend'de hiç servi
 
 Tüm modüller tarandı; yarım kalan modül yok.
 
+### Düzeltme partisi — CorporationId backend'de belirleniyor (2026-11-12)
+
+✅ işaretli satırlar: **#1, #5, #6, #8, #9, #16, #77, #79** (+ aynı kök nedenli toplantı katılımcısı ekleme, `meeting.service.ts:62`).
+
+- **Karar:** İstemcinin gönderdiği `corporationId` alanına güvenilmiyor. İlgili komutlardan `CorporationId` kaldırıldı; handler'lar değeri `ITenantContext` üzerinden (JWT `corporation_id`) alıyor. Yardımcı metot: `Application/Common/Interfaces/RequestContextExtensions.cs` (`RequireCorporationId`, `RequireUserId`). Tenant yoksa 401 dönüyor (mevcut `RefValueCommands` deseniyle aynı). Platform yöneticisi gibi `corporation_id` claim'i olmayan bir kullanıcı tipi yok: `iam.user_account.corporation_id NOT NULL` ve token bu claim'i her zaman içeriyor.
+- **Üst kayıt doğrulaması:** Kamp, dönem, toplantı, okul ziyareti, kamera/derslik/seans, izleme yetkisi, veli portal erişimi ve izleme kaydı sorguları artık açıkça `CorporationId == tenant` filtresi içeriyor. Bu filtre RLS'e ek bir savunma katmanı.
+- **Aktör id'leri:** `GrantedBy` (izleme yetkisi), `RevokedBy`, `StartViewing.UserId`, `EndViewing.UserId`, `CreatedBy` (toplantı sonucu, gözlem) ve bildirim tercihlerindeki `UserId` istek bağlamından (`ICurrentUserService`) dolduruluyor ve komutlardan kaldırıldı. "İşlemi yapan kişi" anlamı taşımadığı için dokunulmayanlar: `AddMeetingFollowUp.AssigneeId` (sorumlu kişi), `AddMeetingParticipant.UserId/GuardianId/LeadId` (katılımcı), `GrantViewingAuthorization.GuardianId` (yetki verilen veli), `StartViewingSession.GuardianId` (izleyen veli; portal kullanıcısından türetilmesi ayrı bir iş).
+- **Request record'ları:** `AssignCameraToRoomRequest` ve `AssignCameraToSessionRequest` içinden `CorporationId` kaldırıldı. Eski istemciler alanı gönderirse sessizce yok sayılıyor.
+- **#8 rota düzeltmesi bu partide yapıldı:** `camp.service.ts` artık `POST /camps/periods/{id}/enrollments` çağırıyor (önceden `/enroll`). Sonraki partide tekrarlanmasına gerek yok.
+- **#77 ikinci kısmı da yapıldı:** `endViewing` artık `startViewing` yanıtındaki `startedAt` değerini `{ startedAt }` gövdesiyle gönderiyor; `StartViewingPayload.authorizationId` zorunlu hale geldi.
+- **#79 ikinci kısmı da yapıldı:** `consultancy.service.ts` içinde `updatePlan` dönüş tipi gövdesiz yanıta (`null`) göre düzeltildi. Store'da `updatePlan` fonksiyonu yok; değişiklik yalnızca servis tipinde.
+- **Testler:** `tests/Aynesil.Tests/TenantScoping/` altında 22 handler testi var. Her handler için CorporationId'nin tenant bağlamından geldiği ve başka kiracıya ait üst kayıtla yapılan çağrının reddedildiği doğrulanıyor. Testler RLS'siz InMemory sağlayıcısıyla koşuyor, dolayısıyla handler'ın kendi filtresini ölçüyorlar.
+- **Doğrulama:** `dotnet build Aynesil.sln` başarılı, `dotnet test` 22/22 geçti, `npm run type-check` temiz.
+
+## Ek C — Sonradan eklenen bulgular
+
+| # | Önem | Modül | Kategori | Ekran / Akış | Frontend (dosya:satır) | Backend veya DB (dosya:satır) | Sorun | Kullanıcıya etkisi | Önerilen düzeltme |
+|---|---|---|---|---|---|---|---|---|---|
+| 86 | Kritik | Genel (çok kiracılık) | güvenlik | İstemcinin alt kayıt id'si gönderdiği tüm oluşturma akışları (kamp kaydı, toplantı katılımcısı/takip görevi, izleme yetkisi vb.) | — | db/layer2_sped/11_camps.sql, 10_ops.sql, 09_media.sql; ilgili handler'lar (Features/Camps, Meetings, Cameras) | PostgreSQL FK kontrolleri RLS'e takılmaz. İstemci başka kiracıya ait bir `student_id`, `user_id`, `guardian_id` vb. gönderirse FK doğrulaması geçer ve satır mevcut kiracı altında yazılır. Handler'lar yalnızca üst kaydı (kamp dönemi, toplantı vb.) kiracıya göre doğruluyor; alt kimlikleri doğrulamıyor. | Kiracılar arası veri bağlantısı kurulabilir (ör. A kurumunun toplantısına B kurumunun kullanıcısını katılımcı eklemek). Bu kayıtlar üzerinden yabancı kiracının kimlikleri ve ilişkili veriler sızabilir. | (1) DB: üst tablolara `UNIQUE (corporation_id, id)`, alt tablolara `FOREIGN KEY (corporation_id, x_id) REFERENCES parent (corporation_id, id)` composite FK eklenmeli (Flyway migration + layer DDL senkronu). (2) Uygulama: handler'larda alt kimlikler `CorporationId == tenant` ile doğrulanmalı ve anlamlı bir 404/422 dönmeli. |
+
+**#86 — etkilenen tablolar ve FK'lar** (bu partide ele alınan komutlarla sınırlı tarama; aynı desen başka modüllerde de muhtemel):
+
+| Tablo | İstemciden gelen FK sütunu → hedef | Not |
+|---|---|---|
+| `camps.camp_enrollment` | `student_id` → `students.student(id)`; `student_package_id` → `finance.student_package(id)` | `camp_period_id` artık handler'da kiracıya göre doğrulanıyor |
+| `ops.meeting_participant` | `user_id` → `iam.user_account(id)`; `guardian_id` → `students.guardian(id)`; `lead_id` → `crm.lead(id)` | `meeting_id` artık handler'da doğrulanıyor |
+| `ops.meeting_follow_up` | `assignee_id` → `iam.user_account(id)` | `meeting_id` artık handler'da doğrulanıyor |
+| `media.viewing_authorization` | `session_id` → `scheduling.session(id)`; `consent_id` → `legal.student_consent(id)` | `guardian_id`/`student_id` dolaylı olarak doğrulanıyor (kiracı filtreli portal erişimi + rıza kontrolü) |
+| `media.viewing_log` | `session_id`, `camera_id`, `guardian_id` (DB'de FK **yok**) | Composite FK yerine uygulama seviyesinde doğrulama gerekli |
+| `core.notification_preference`, `consultancy.observation_record`, `media.viewing_authorization` | `category_id`, `channel_id`, `observation_type_id`, `access_type_id` → `ref.ref_value(id)` | Ref değerleri global olabiliyor (`corporation_id IS NULL`), bu yüzden composite FK uygun değil. Doğrulama "global ya da kendi kiracısı" şeklinde olmalı |
+
+Composite FK, üst tabloda `(corporation_id, id)` üzerinde unique kısıt gerektiriyor. `id` zaten PK olduğu için bu kısıt veri açısından risksiz; yalnızca ek bir index maliyeti var.
+
+## Ek D — Kiracı taraması (2026-11-12)
+
+2. partide kurulan desen tüm backend'e yayıldı:
+- `CorporationId` ve işlemi yapan kişinin id'si `ITenantContext` / `ICurrentUserService` üzerinden alınıyor.
+- Üst kayıtlar kiracıya göre doğrulanıyor.
+- Veli kimliği oturumdaki portal kullanıcısından türetiliyor.
+
+İstemci artık bu alanları gönderemiyor. Alanlar request/command tiplerinden, controller'ların `[FromQuery]`/route parametrelerinden ve frontend payload tiplerinden kaldırıldı.
+
+### D.1 — İstemciden gelen `CorporationId` kaldırıldı (158 istek tipi: 62 komut, 96 sorgu)
+
+Handler'lar değeri `ITenantContext.RequireCorporationId()` ile alıyor. Tenant yoksa 401 dönüyor. Sorgulardaki isteğe bağlı "kurum filtresi" kaldırıldı; sorgular her zaman oturumdaki kurumla filtreleniyor. Global satır içerebilen tablolarda (şablonlar, KPI tanımları, ref değerleri) filtre `kiracı || corporation_id IS NULL` biçiminde.
+
+| Modül | Komutlar | Sorgular |
+|---|---|---|
+| Anketler | `CreateParentFeedback`, `CreateSurveyDefinition`, `SubmitSurveyResponse` | `GetSurveys` |
+| BEP / Planlar | `CreateAcademicPeriod`, `CreateEducationPlan` | `GetAcademicPeriods`, `GetEducationPlans`, `GetGuardianVisiblePlan`¹, `GetStudentGoalSummaryReport`¹, `GetTrendReport`¹ |
+| Bakım ekibi | `AssignCareTeamMember` | — |
+| Bildirimler | `CreateNotificationTemplate`, `UpsertNotificationTriggerConfig` | `GetNotificationTemplates`, `GetTriggerConfigs` |
+| CRM (Aday) | `CreateLead` | `GetConversionReport`¹, `GetFollowUpsDue`¹, `GetLeads`, `GetPipelineSummary`¹ |
+| Değerlendirme | `CreateAssessmentReport`, `CreateAssessmentSession`, `CreateAssessmentTemplate`, `CreateProgramRecommendation` | `GetAssessmentSessions`, `GetAssessmentTemplates` |
+| Eğitmenler | `CreateEducator` | `GetEducatorUtilization`¹, `GetEducators` |
+| Finans | `ApplyDiscount`, `CreateInvoice`, `CreatePackageDefinition`, `CreatePromotion`, `GrantScholarship`, `PurchaseStudentPackage`, `RecordPayment` | `GetCreditLedger`¹, `GetCreditSummary`, `GetCreditUsageReport`¹, `GetInvoices`, `GetPackageDefinitions`, `GetPackageReport`¹, `GetPayments`, `GetPromotions`, `GetRefunds`¹, `GetRevenueReport`¹, `GetScholarships`, `GetStudentPackages`, `ValidatePromotionCode`¹ |
+| Hedefler | `CreateGoalLibrary`, `CreateGoalTemplate`, `CreateStudentGoal` | `GetGoalLibraries`, `GetGoalSuccessRates`¹, `GetGoalTemplates`, `GetStudentGoalSummary`¹, `GetStudentGoals` |
+| Kameralar | `RegisterCamera` | `GetCameras`, `GetViewingAuthorizations`, `GetViewingLogs` |
+| Kamplar | `AssignCampEducator`, `BulkRecordAttendance`, `BulkRegisterParticipation`, `CreateCampActivity`, `CreateCamp`, `CreateCampReport`, `RecordAttendance`, `RegisterParticipation` | `GetCampPerformance`¹, `GetCamps` |
+| Kampüsler | `CreateCampus` | `GetCampuses` |
+| Okul Danışmanlığı | `CreateConsultancyAgreement`, `CreateConsultancyPlan`, `CreateConsultancyReport`, `CreateFollowUpActivity`, `CreateInstitution`, `ScheduleSchoolVisit` | `GetAgreementSummary`¹, `GetConsultancyAgreements`, `GetConsultancyOutcomes`¹, `GetConsultancyPlans`, `GetConsultancyReports`, `GetFollowUpActivities`, `GetInstitutionReport`¹, `GetInstitutions`, `GetOpenFollowUpsReport`¹, `GetSchoolVisits`, `GetVisitHistory`¹ |
+| Performans / KPI | `BulkComputeSnapshots`, `ComputePerformanceSnapshot`, `CreateKpiDefinition`, `SubmitParentFeedback` | `GetCorporationKpiTrend`¹, `GetEducatorDashboard`¹, `GetEducatorKpiTrend`¹, `GetEducatorKpiValues`¹, `GetEducatorRanking`¹, `GetExecutiveDashboard`¹, `GetKpiCategories`¹, `GetKpiDefinitions`, `GetKpiReport`¹, `GetKpiValues`¹, `GetManagerDashboard`¹, `GetParentFeedback`, `GetPerformanceSnapshots`¹ |
+| Programlar | `AssignStudentToProgram`, `CreateEnrollment`, `CreateProgram` | `GetPrograms`, `GetStudentEnrollments`, `GetStudentPrograms` |
+| Seans Planlama | `CreateCalendarEntry`, `CreateRecurringSchedule`, `CreateRoom`, `RequestMakeup`, `ScheduleSession` | `GetAttendanceSummary`¹, `GetCalendarEntries`, `GetCampusCalendar`¹, `GetEducatorCalendar`¹, `GetMakeupRequests`, `GetRecurringSchedules`, `GetRooms`, `GetSchoolCalendar`¹, `GetSessions`, `GetStudentAttendance`¹, `GetStudentCalendar`¹ |
+| Sözleşme / Rıza | `CreateConsentTemplate`, `CreateContractTemplate`, `GenerateStudentContract`, `GrantConsent` | `GetConsentReport`¹, `GetConsentTemplateVersions`, `GetConsentTemplates`, `GetContractReport`¹, `GetContractTemplateVersions`, `GetContractTemplates`, `GetSignatureReport`¹, `GetStudentConsents`, `GetStudentContracts` |
+| Toplantılar | `ScheduleMeeting` | `GetMeetingCalendar`¹, `GetMeetings` |
+| Öğrenciler / Veliler | `CreateGuardian`, `CreateStudent` | `GetGuardians`, `GetStudents` |
+| İzin Yönetimi | `CarryForwardLeaveBalance`, `InitializeLeaveBalance`, `SubmitLeaveRequest` | `GetLeaveBalances`, `GetLeaveCalendar`¹, `GetLeaveRequests`, `GetLeaveTrends`¹, `GetLeaveUsageReport`¹ |
+
+¹ Bu sorgular yalnızca sözleşme testiyle kapsanıyor (bkz. D.6). Bunlar rapor, dashboard ve trend sorguları; seed kurulumu ağır olduğu için açık isolation testi yazılmadı.
+
+2. partide düzeltilen 12 komut (`UpdateNotificationPreferences`, kamera atama/izleme, kamp dönemi/kaydı, toplantı katılımcı/sonuç/takip, gözlem) da aynı sözleşme testine dahil.
+
+**API sözleşmesi değişiklikleri:**
+- **Kaldırılan parametreler:** Yukarıdaki endpoint'lerden `corporationId` sorgu parametresi ve gövde alanı kaldırıldı. Eski istemci bu alanları gönderirse sessizce yok sayılıyor.
+- **Rota değişikliği:** `GET /legal/contract-templates/{corporationId}/{code}/versions` ve `…/consent-templates/…` rotalarının yeni hali `GET /legal/contract-templates/{code}/versions` ve `GET /legal/consent-templates/{code}/versions`. Frontend bu rotaları çağırmıyordu.
+- **Global kayıt oluşturma kapandı:** `CreateAssessmentTemplate`, `CreateGoalLibrary`, `CreateGoalTemplate` ve `CreateKpiDefinition` komutlarında istemci `corporationId: null` göndererek global (platform) kayıt açabiliyordu. Artık kayıtlar her zaman kiracıya ait. Global kayıtlar yalnızca seed/migration ile oluşturulabiliyor.
+
+### D.2 — Üst kayıt doğrulaması
+
+- Komut handler'larında zaten var olan 48 üst kayıt sorgusuna `CorporationId == tenant` filtresi eklendi. Etkilenen kayıtlar: öğrenci, program, kayıt, fatura, öğrenci paketi, paket tanımı, kamp dönemi/etkinliği/kaydı, kurum, danışmanlık planı, okul ziyareti, sözleşme/rıza şablonu, değerlendirme oturumu, anket, izin bakiyesi/talebi, bakım ekibi ataması.
+- Değerlendirme şablonu (`CreateAssessmentSession`) ve hedef şablonu (`CreateStudentGoal`) sorgularına "global ya da kendi kiracısı" filtresi eklendi.
+- `GetCreditSummaryQuery` öğrenciyi yalnızca id ile buluyordu; kiracı filtresi eklendi.
+- **Tarama sırasında bulunan açık:** Kamp `BulkRecordAttendanceCommand` hiçbir üst kayıt kontrolü yapmıyordu. Başka kiracının dönem ve kayıt id'leriyle çağrıldığında, mevcut kiracı altında yoklama satırı yazıyordu. Artık dönemin kiracıya ait olduğu ve tüm kayıtların o döneme ait olduğu doğrulanıyor; aksi halde 404 dönüyor. Açığı test yakaladı.
+- **Kapsam dışı (bkz. #86):** Handler'ların hiç kontrol etmediği alt kimlikler (`studentId`, `educatorId`, `guardianId`, `roomId` vb.) için yeni doğrulama eklenmedi. Bu iş #86'nın composite FK çalışmasıyla birlikte yapılmalı.
+
+### D.3 — Aktör alanları istek bağlamından dolduruluyor
+
+**Komutlardan kaldırılıp `ICurrentUserService.UserId` ile doldurulan 70 alan:**
+- `CreatedBy` (18)
+- `UpdatedBy` (31)
+- `DeletedBy` (8)
+- `AuthoredBy` (5: öğrenci vaka notu ve gelişim raporu, kamp raporu, danışmanlık raporu)
+- `RecordedBy` (5: kamp yoklaması ve katılımı)
+- `AssignedBy` (1: kamp eğitmeni)
+- `CompletedBy` (1: takip faaliyeti)
+- `SubmitSurveyResponse.RespondentUserId`
+
+**Notlar:**
+- Sekiz alan handler tarafından hiç kullanılmıyordu: hukuk şablonları ve KPI tanımları için `CreatedBy`/`UpdatedBy`. Bunlar sadece kaldırıldı; bu tablolarda değeri audit interceptor dolduruyor.
+- `UpdateDevelopmentReport` artık yazarı değiştirmiyor. Önceden istemci değeri `AuthoredBy` alanına yazılıyordu. Yazar oluşturma anında bir kez belirleniyor.
+- Gelişim raporu formundaki `authoredBy` serbest metin durumu kaldırıldı. Backend bu alanı Guid olarak bekliyordu, yani alan zaten hatalıydı.
+
+**"İşlemi yapan kişi" anlamı taşımadığı için dokunulmayan alanlar:**
+- `PreparedBy` (BEP) ve `RecommendedBy` (program önerisi): FK'ları `educators.educator` tablosuna gidiyor, yani bir eğitmeni gösteriyorlar.
+- `CompleteInterview.ConductedBy` ve `LogLeadActivity.PerformedBy`: görüşmeyi ya da aktiviteyi başka bir personel yapmış olabilir. Ürün kararı gerekiyor.
+- Hedef kullanıcıyı gösteren `UserId` alanları: kullanıcı yönetimi, rol atama, aday atama, toplantı katılımcısı.
+
+### D.4 — Veli portalı
+
+`PortalController` zaten oturumdaki kullanıcıyla çalışıyordu. Velilerin de çağırabildiği dört komutta veli kimliği artık oturumdan türetiliyor. Yardımcı sınıf: `Application/Common/Portal/PortalGuardian.cs`.
+
+- **`StartViewingSession`:** `GuardianId` komuttan kaldırıldı. Kullanıcı veliyse yetkinin o veliye ait olması ve velinin öğrenciye aktif, kamera izinli portal erişiminin bulunması zorunlu; aksi halde 403 dönüyor. Kullanıcı personelse `GuardianId = null` ve davranış değişmedi.
+- **`SubmitSurveyResponse`, `SubmitParentFeedback`, `CreateParentFeedback`:** Kullanıcı veliyse kendi veli id'si kullanılıyor; başka bir veli id'si gönderirse 403 dönüyor. `StudentId` verilmişse o veliye bağlı olmalı. Personel veli adına giriş yapabilir, ama verilen `GuardianId` kiracıya ait olmalı.
+- **`StartViewingSession.IpAddress`:** Güvenlik kaydındaki IP artık istemciden alınmıyor; sunucudaki bağlantı adresi (`RemoteIpAddress`) yazılıyor.
+
+### D.5 — Frontend
+
+- Payload/sorgu tiplerinden `corporationId` ve aktör alanlarına ait 103 tanım kaldırıldı. `StartViewingPayload.guardianId` de kaldırıldı.
+- Servislerdeki konumsal `corporationId` parametreleri kaldırıldı ve ilgili store'lar güncellendi. Etkilenen servisler: takvim, yoklama, BEP raporları, hedef özeti, CRM pipeline, promosyon doğrulama, KPI kategorileri, bildirim tetikleyicileri.
+- View'lerdeki `corporationId` kullanımları temizlendi, kullanılmaz kalan auth store değişkenleri ve importları kaldırıldı (79 dosya).
+- Kampüs listesindeki kurum filtresi ve formdaki kurum seçici kaldırıldı. Kampüs artık her zaman oturumdaki kuruma ekleniyor.
+- DTO'lardaki `corporationId` alanlarına dokunulmadı; yanıtlar bu alanı hâlâ döndürüyor.
+
+### D.6 — Testler (`tests/Aynesil.Tests/TenantScoping/`)
+
+**Sözleşme testleri (`TenantContractTests`):**
+- Uygulamadaki hiçbir istek tipi `CorporationId` ya da aktör alanı taşımıyor. Tek istisna, sunucu içinden çağrılan `SendNotificationCommand`.
+- Kiracıya bağlı 170 handler'ın her biri, tenant yokken veriye dokunmadan önce 401'e eşlenen `UnauthorizedAccessException` fırlatıyor.
+
+**Komut testleri:** Kiracıya bağlı tüm komutlar için iki tür test yazıldı:
+1. Kaydedilen `CorporationId` (ilgili yerlerde aktör id'si de) bağlamdan geliyor.
+2. Başka kiracıya ait üst kayıtla yapılan çağrı reddediliyor.
+
+İkinci test, handler'ın bir üst kayıt sorgusu olduğu yerlerde yazıldı. Her ret testi, tek farkı kiracı olan bir başarı testiyle eşleşiyor. Böylece ret, domain doğrulama hatası gibi alakasız bir nedenle geçemiyor.
+
+**Sorgu testleri:** 51 sorguda A ve B kiracısına aynı kayıt seed ediliyor; sorgunun yalnızca A'nın kaydını döndürdüğü doğrulanıyor (`QueryTenantIsolationTests`).
+
+**Portal testleri:** Velinin oturumdan türetildiği ve başka velinin yetkisi, öğrencisi ya da id'siyle yapılan çağrının reddedildiği 10 test (`PortalGuardianTests`).
+
+**Mutasyon kontrolü:** Toplantı ve öğrenci listesi filtreleri geçici olarak kaldırıldığında ilgili testler düştü.
+
+### D.7 — Doğrulama
+
+- `dotnet build Aynesil.sln`: başarılı. Yeni uyarı yok; kalan uyarılar önceden vardı.
+- `dotnet test`: 344/344 geçti.
+- `npm run type-check`: temiz.
+- ESLint çalıştırılamadı, çünkü projede `eslint.config.*` dosyası yok.

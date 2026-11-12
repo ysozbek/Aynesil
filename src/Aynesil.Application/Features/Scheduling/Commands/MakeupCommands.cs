@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 // ── RequestMakeupCommand ──────────────────────────────────────────────────────
 
 public record RequestMakeupCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid? MissedSessionId,
     Guid? MissedReasonId,
@@ -21,7 +20,6 @@ public class RequestMakeupCommandValidator : AbstractValidator<RequestMakeupComm
 {
     public RequestMakeupCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Note).MaximumLength(2000).When(x => x.Note != null);
     }
@@ -30,18 +28,22 @@ public class RequestMakeupCommandValidator : AbstractValidator<RequestMakeupComm
 public sealed class RequestMakeupCommandHandler : IRequestHandler<RequestMakeupCommand, MakeupRequestDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public RequestMakeupCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public RequestMakeupCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<MakeupRequestDto> Handle(RequestMakeupCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var makeup = MakeupRequest.Create(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.MissedSessionId, req.MissedReasonId,
             req.Note, req.ExpiresOn, _currentUser.UserId);
 

@@ -290,10 +290,10 @@ export const useGoalStore = defineStore('goal', () => {
 
   // ── Analytics ───────────────────────────────────────────────────────────────
 
-  async function fetchStudentSummary(corporationId: string, studentId: string) {
+  async function fetchStudentSummary(studentId: string) {
     loading.value = true
     try {
-      const res = await goalService.getStudentSummary(corporationId, studentId)
+      const res = await goalService.getStudentSummary(studentId)
       if (res.success && res.data) summary.value = res.data
     } finally {
       loading.value = false

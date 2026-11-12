@@ -3,7 +3,6 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -17,7 +16,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 const refData = useRefDataStore()
 
@@ -26,7 +24,6 @@ const filters = reactive<PlanListQuery>({
   pageSize: 20,
   search: '',
   status: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<ConsultancyPlanListItemDto>[] = [
@@ -72,7 +69,7 @@ watch(() => filters.page, () => store.fetchPlans(filters))
 
 onMounted(async () => {
   planTypes.value = await refData.getValues('consultancy_type')
-  await store.fetchInstitutions({ corporationId: auth.user?.corporationId, page: 1, pageSize: 200 })
+  await store.fetchInstitutions({ page: 1, pageSize: 200 })
   institutions.value = store.institutions.items
   await store.fetchPlans(filters)
 })
@@ -105,7 +102,6 @@ async function submitCreate() {
   formError.value = ''
   try {
     const created = await store.createPlan({
-      corporationId: auth.user!.corporationId!,
       institutionId: form.institutionId,
       consultancyTypeId: form.consultancyTypeId || undefined,
       name: form.name.trim(),

@@ -208,7 +208,6 @@ async function openAddGoalModal() {
   if (!plan.value) return
   const inPlan = new Set([...plan.value.longTermGoals, ...plan.value.shortTermGoals].map((g) => g.studentGoalId))
   const res = await goalService.listStudentGoals({
-    corporationId: plan.value.corporationId,
     studentId: plan.value.studentId,
     page: 1,
     pageSize: 200,

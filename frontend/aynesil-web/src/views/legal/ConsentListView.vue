@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsentStore } from '@/stores/consent.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -13,13 +12,11 @@ import type { ConsentListQuery, StudentConsentListItemDto } from '@/types/legal.
 const { t } = useI18n()
 const router = useRouter()
 const consentStore = useConsentStore()
-const auth = useAuthStore()
 
 const filters = reactive<ConsentListQuery>({
   page: 1,
   pageSize: 20,
   state: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<StudentConsentListItemDto>[] = [

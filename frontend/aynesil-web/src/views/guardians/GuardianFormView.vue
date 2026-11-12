@@ -2,21 +2,18 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGuardianStore } from '@/stores/guardian.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGuardianStore()
 
 const isEdit = computed(() => !!route.params.id)
 const id = computed(() => route.params.id as string | undefined)
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   firstName: '',
   lastName: '',
   nationalId: '',
@@ -81,7 +78,6 @@ async function submit() {
       router.push({ name: 'guardian-detail', params: { id: id.value } })
     } else {
       const result = await store.create({
-        corporationId: form.corporationId,
         firstName: form.firstName,
         lastName: form.lastName,
         nationalId: form.nationalId || null,

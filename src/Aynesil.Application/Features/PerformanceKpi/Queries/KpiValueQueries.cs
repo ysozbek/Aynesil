@@ -13,7 +13,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Queries;
 /// </summary>
 public class GetEducatorKpiValuesQuery : IRequest<IReadOnlyList<KpiValueDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid EducatorId { get; set; }
     public DateOnly? PeriodStart { get; set; }
     public DateOnly? PeriodEnd { get; set; }
@@ -26,16 +25,23 @@ public sealed class GetEducatorKpiValuesQueryHandler
     : IRequestHandler<GetEducatorKpiValuesQuery, IReadOnlyList<KpiValueDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorKpiValuesQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorKpiValuesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<KpiValueDto>> Handle(
         GetEducatorKpiValuesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q =
             from kv in _db.KpiValues.AsNoTracking()
             join kd in _db.KpiDefinitions.AsNoTracking() on kv.KpiId equals kd.Id
-            where kv.CorporationId == req.CorporationId
+            where kv.CorporationId == corporationId
                && kv.SubjectType == "educator"
                && kv.SubjectId == req.EducatorId
             select new { kv, kd };
@@ -69,7 +75,6 @@ public sealed class GetEducatorKpiValuesQueryHandler
 
 public class GetKpiValuesQuery : PagedQuery, IRequest<PaginatedResult<KpiValueDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? KpiId { get; set; }
     public string? SubjectType { get; set; }
     public Guid? SubjectId { get; set; }
@@ -81,16 +86,23 @@ public sealed class GetKpiValuesQueryHandler
     : IRequestHandler<GetKpiValuesQuery, PaginatedResult<KpiValueDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetKpiValuesQueryHandler(IAppDbContext db) => _db = db;
+    public GetKpiValuesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<KpiValueDto>> Handle(
         GetKpiValuesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q =
             from kv in _db.KpiValues.AsNoTracking()
             join kd in _db.KpiDefinitions.AsNoTracking() on kv.KpiId equals kd.Id
-            where kv.CorporationId == req.CorporationId
+            where kv.CorporationId == corporationId
             select new { kv, kd };
 
         if (req.KpiId.HasValue)

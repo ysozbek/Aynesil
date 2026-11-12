@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetScholarshipsQuery : PagedQuery, IRequest<PaginatedResult<ScholarshipListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public Guid? ScholarshipTypeId { get; set; }
     public bool? ActiveOn { get; set; }
@@ -19,15 +18,22 @@ public sealed class GetScholarshipsQueryHandler
     : IRequestHandler<GetScholarshipsQuery, PaginatedResult<ScholarshipListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetScholarshipsQueryHandler(IAppDbContext db) => _db = db;
+    public GetScholarshipsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ScholarshipListItemDto>> Handle(
         GetScholarshipsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Scholarships.AsNoTracking();
 
-        if (req.CorporationId.HasValue)   q = q.Where(s => s.CorporationId == req.CorporationId.Value);
+        q = q.Where(s => s.CorporationId == corporationId);
         if (req.StudentId.HasValue)        q = q.Where(s => s.StudentId == req.StudentId.Value);
         if (req.ScholarshipTypeId.HasValue) q = q.Where(s => s.ScholarshipTypeId == req.ScholarshipTypeId.Value);
 

@@ -2,28 +2,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.store'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { usePermission } from '@/composables/usePermission'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const pipelineStore = useLeadPipelineStore()
 const activityStore = useLeadActivityStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const statsLoading = ref(false)
 
 onMounted(async () => {
-  if (!corporationId.value) return
   statsLoading.value = true
   try {
     await Promise.all([
-      pipelineStore.fetchSummary(corporationId.value),
-      activityStore.fetchFollowUps({ corporationId: corporationId.value, pageSize: 5 }),
+      pipelineStore.fetchSummary(),
+      activityStore.fetchFollowUps({ pageSize: 5 }),
     ])
   } finally {
     statsLoading.value = false

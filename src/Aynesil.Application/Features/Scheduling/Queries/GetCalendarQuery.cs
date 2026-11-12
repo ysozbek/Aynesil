@@ -14,7 +14,6 @@ public record CalendarViewDto(
 // ── GetSchoolCalendarQuery ────────────────────────────────────────────────────
 
 public record GetSchoolCalendarQuery(
-    Guid CorporationId,
     DateTimeOffset From,
     DateTimeOffset To) : IRequest<CalendarViewDto>;
 
@@ -22,17 +21,24 @@ public sealed class GetSchoolCalendarQueryHandler
     : IRequestHandler<GetSchoolCalendarQuery, CalendarViewDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSchoolCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetSchoolCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CalendarViewDto> Handle(GetSchoolCalendarQuery req, CancellationToken ct)
     {
-        var sessions = await CalendarHelpers.BuildSessionListQuery(_db, req.CorporationId, null, req.From, req.To)
+        var corporationId = _tenant.RequireCorporationId();
+
+        var sessions = await CalendarHelpers.BuildSessionListQuery(_db, corporationId, null, req.From, req.To)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
 
         var rawEntries = await _db.CalendarEntries.AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId
+            .Where(e => e.CorporationId == corporationId
                      && e.StartsAt < req.To
                      && e.EndsAt   > req.From)
             .ToListAsync(ct);
@@ -45,7 +51,6 @@ public sealed class GetSchoolCalendarQueryHandler
 // ── GetCampusCalendarQuery ────────────────────────────────────────────────────
 
 public record GetCampusCalendarQuery(
-    Guid CorporationId,
     Guid CampusId,
     DateTimeOffset From,
     DateTimeOffset To) : IRequest<CalendarViewDto>;
@@ -54,17 +59,24 @@ public sealed class GetCampusCalendarQueryHandler
     : IRequestHandler<GetCampusCalendarQuery, CalendarViewDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCampusCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetCampusCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CalendarViewDto> Handle(GetCampusCalendarQuery req, CancellationToken ct)
     {
-        var sessions = await CalendarHelpers.BuildSessionListQuery(_db, req.CorporationId, req.CampusId, req.From, req.To)
+        var corporationId = _tenant.RequireCorporationId();
+
+        var sessions = await CalendarHelpers.BuildSessionListQuery(_db, corporationId, req.CampusId, req.From, req.To)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
 
         var rawEntries2 = await _db.CalendarEntries.AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId
+            .Where(e => e.CorporationId == corporationId
                      && (e.CampusId == null || e.CampusId == req.CampusId)
                      && e.StartsAt < req.To
                      && e.EndsAt   > req.From)
@@ -107,7 +119,6 @@ public sealed class GetRoomCalendarQueryHandler
 // ── GetEducatorCalendarQuery ──────────────────────────────────────────────────
 
 public record GetEducatorCalendarQuery(
-    Guid CorporationId,
     Guid EducatorId,
     DateTimeOffset From,
     DateTimeOffset To) : IRequest<IReadOnlyList<SessionListItemDto>>;
@@ -116,19 +127,26 @@ public sealed class GetEducatorCalendarQueryHandler
     : IRequestHandler<GetEducatorCalendarQuery, IReadOnlyList<SessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<SessionListItemDto>> Handle(
         GetEducatorCalendarQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var sessionIds = await _db.SessionEducators.AsNoTracking()
             .Where(se => se.EducatorId == req.EducatorId)
             .Select(se => se.SessionId)
             .ToListAsync(ct);
 
         return await _db.Sessions.AsNoTracking()
-            .Where(s => s.CorporationId == req.CorporationId
+            .Where(s => s.CorporationId == corporationId
                      && sessionIds.Contains(s.Id)
                      && s.StartsAt < req.To
                      && s.EndsAt   > req.From)
@@ -144,7 +162,6 @@ public sealed class GetEducatorCalendarQueryHandler
 // ── GetStudentCalendarQuery ───────────────────────────────────────────────────
 
 public record GetStudentCalendarQuery(
-    Guid CorporationId,
     Guid StudentId,
     DateTimeOffset From,
     DateTimeOffset To) : IRequest<IReadOnlyList<SessionListItemDto>>;
@@ -153,19 +170,26 @@ public sealed class GetStudentCalendarQueryHandler
     : IRequestHandler<GetStudentCalendarQuery, IReadOnlyList<SessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<SessionListItemDto>> Handle(
         GetStudentCalendarQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var sessionIds = await _db.SessionParticipants.AsNoTracking()
             .Where(p => p.StudentId == req.StudentId)
             .Select(p => p.SessionId)
             .ToListAsync(ct);
 
         return await _db.Sessions.AsNoTracking()
-            .Where(s => s.CorporationId == req.CorporationId
+            .Where(s => s.CorporationId == corporationId
                      && sessionIds.Contains(s.Id)
                      && s.StartsAt < req.To
                      && s.EndsAt   > req.From)
@@ -181,7 +205,6 @@ public sealed class GetStudentCalendarQueryHandler
 // ── GetCalendarEntriesQuery ───────────────────────────────────────────────────
 
 public record GetCalendarEntriesQuery(
-    Guid CorporationId,
     DateTimeOffset From,
     DateTimeOffset To,
     Guid? CampusId) : IRequest<IReadOnlyList<CalendarEntryDto>>;
@@ -190,14 +213,21 @@ public sealed class GetCalendarEntriesQueryHandler
     : IRequestHandler<GetCalendarEntriesQuery, IReadOnlyList<CalendarEntryDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCalendarEntriesQueryHandler(IAppDbContext db) => _db = db;
+    public GetCalendarEntriesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<CalendarEntryDto>> Handle(
         GetCalendarEntriesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.CalendarEntries.AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId
+            .Where(e => e.CorporationId == corporationId
                      && e.StartsAt < req.To
                      && e.EndsAt   > req.From);
 

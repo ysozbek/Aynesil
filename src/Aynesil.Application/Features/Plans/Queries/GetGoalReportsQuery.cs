@@ -12,19 +12,25 @@ namespace Aynesil.Application.Features.Plans.Queries;
 /// Student Goal Summary report: overall plan history + goal achievement for a student.
 /// </summary>
 public record GetStudentGoalSummaryReportQuery(
-    Guid CorporationId,
     Guid StudentId) : IRequest<StudentGoalSummaryReportDto>;
 
 public sealed class GetStudentGoalSummaryReportQueryHandler
     : IRequestHandler<GetStudentGoalSummaryReportQuery, StudentGoalSummaryReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentGoalSummaryReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentGoalSummaryReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<StudentGoalSummaryReportDto> Handle(
         GetStudentGoalSummaryReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var studentName = await _db.Students.AsNoTracking()
             .Where(s => s.Id == req.StudentId)
             .Select(s => s.FirstName + " " + s.LastName)
@@ -32,7 +38,7 @@ public sealed class GetStudentGoalSummaryReportQueryHandler
 
         var plans = await (
             from p in _db.EducationPlans.AsNoTracking()
-                .Where(p => p.CorporationId == req.CorporationId && p.StudentId == req.StudentId)
+                .Where(p => p.CorporationId == corporationId && p.StudentId == req.StudentId)
             join period in _db.AcademicPeriods.AsNoTracking()
                 on p.AcademicPeriodId equals period.Id into periodGrp
             from period in periodGrp.DefaultIfEmpty()
@@ -45,7 +51,7 @@ public sealed class GetStudentGoalSummaryReportQueryHandler
         ).ToListAsync(ct);
 
         var goals = await _db.StudentGoals.AsNoTracking()
-            .Where(g => g.CorporationId == req.CorporationId && g.StudentId == req.StudentId)
+            .Where(g => g.CorporationId == corporationId && g.StudentId == req.StudentId)
             .ToListAsync(ct);
 
         var total    = goals.Count;
@@ -63,7 +69,6 @@ public sealed class GetStudentGoalSummaryReportQueryHandler
 /// Trend report: goal progress trends for all active goals in a student's current plan.
 /// </summary>
 public record GetTrendReportQuery(
-    Guid CorporationId,
     Guid StudentId,
     DateOnly? From = null,
     DateOnly? To = null) : IRequest<IReadOnlyList<TrendReportRowDto>>;
@@ -72,15 +77,22 @@ public sealed class GetTrendReportQueryHandler
     : IRequestHandler<GetTrendReportQuery, IReadOnlyList<TrendReportRowDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetTrendReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetTrendReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<TrendReportRowDto>> Handle(
         GetTrendReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.StudentGoals.AsNoTracking()
             .Include(g => g.ProgressRecords)
-            .Where(g => g.CorporationId == req.CorporationId
+            .Where(g => g.CorporationId == corporationId
                      && g.StudentId == req.StudentId
                      && g.Status == "active");
 

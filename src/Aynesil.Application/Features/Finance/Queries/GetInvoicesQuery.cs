@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetInvoicesQuery : PagedQuery, IRequest<PaginatedResult<InvoiceListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public string? Status { get; set; }
     public DateOnly? IssuedFrom { get; set; }
@@ -23,15 +22,22 @@ public sealed class GetInvoicesQueryHandler
     : IRequestHandler<GetInvoicesQuery, PaginatedResult<InvoiceListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetInvoicesQueryHandler(IAppDbContext db) => _db = db;
+    public GetInvoicesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<InvoiceListItemDto>> Handle(
         GetInvoicesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Invoices.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(i => i.CorporationId == req.CorporationId.Value);
+        q = q.Where(i => i.CorporationId == corporationId);
         if (req.StudentId.HasValue)     q = q.Where(i => i.StudentId == req.StudentId.Value);
         if (req.Status is not null)     q = q.Where(i => i.Status == req.Status);
         if (req.IssuedFrom.HasValue)    q = q.Where(i => i.IssueDate >= req.IssuedFrom.Value);

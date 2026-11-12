@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 
 public class GetInstitutionsQuery : PagedQuery, IRequest<PaginatedResult<InstitutionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? InstitutionTypeId { get; set; }
     public string? City { get; set; }
 }
@@ -18,17 +17,23 @@ public sealed class GetInstitutionsQueryHandler
     : IRequestHandler<GetInstitutionsQuery, PaginatedResult<InstitutionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetInstitutionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetInstitutionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<InstitutionListItemDto>> Handle(
         GetInstitutionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Institutions.AsNoTracking()
             .Where(i => i.DeletedAt == null);
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(i => i.CorporationId == req.CorporationId.Value);
+        q = q.Where(i => i.CorporationId == corporationId);
         if (req.InstitutionTypeId.HasValue)
             q = q.Where(i => i.InstitutionTypeId == req.InstitutionTypeId.Value);
         if (!string.IsNullOrWhiteSpace(req.City))

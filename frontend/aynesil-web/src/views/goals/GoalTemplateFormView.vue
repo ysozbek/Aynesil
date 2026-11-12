@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -11,7 +10,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGoalStore()
 const refData = useRefDataStore()
 
@@ -22,7 +20,6 @@ const categories = ref<RefValueItem[]>([])
 const developmentAreas = ref<RefValueItem[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   libraryId: '',
   categoryId: '',
   developmentAreaId: '',
@@ -38,7 +35,7 @@ const generalError = ref('')
 
 onMounted(async () => {
   await Promise.all([
-    store.libraryList.items.length === 0 ? store.fetchLibraries({ corporationId: form.corporationId, pageSize: 200 }) : Promise.resolve(),
+    store.libraryList.items.length === 0 ? store.fetchLibraries({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('GOAL_CATEGORY').then(v => { categories.value = v }),
     refData.getValues('DEVELOPMENT_AREA').then(v => { developmentAreas.value = v }),
   ])
@@ -86,7 +83,6 @@ async function submit() {
       router.push({ name: 'goal-template-detail', params: { id: id.value } })
     } else {
       const result = await store.createTemplate({
-        corporationId: form.corporationId || null,
         libraryId: form.libraryId || null,
         categoryId: form.categoryId || null,
         developmentAreaId: form.developmentAreaId || null,

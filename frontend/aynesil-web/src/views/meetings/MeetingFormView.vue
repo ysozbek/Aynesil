@@ -3,14 +3,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMeetingStore } from '@/stores/meeting.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useMeetingStore()
-const auth = useAuthStore()
 
 const isEdit = computed(() => !!route.params.id)
 const submitError = ref<string | null>(null)
@@ -55,7 +53,6 @@ async function submit() {
       })
     } else {
       const created = await store.scheduleMeeting({
-        corporationId: auth.user!.corporationId!,
         title: form.value.title,
         location: form.value.location || undefined,
         scheduledAt: form.value.scheduledAt || undefined,

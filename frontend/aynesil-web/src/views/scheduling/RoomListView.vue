@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useSchedulingStore } from '@/stores/scheduling.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,14 +14,10 @@ import type { RoomListItemDto } from '@/types/scheduling.types'
 import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const store = useSchedulingStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   isActive: '' as '' | 'true' | 'false',
   page: 1,
@@ -55,7 +50,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchRooms({
     ...query,
-    corporationId: corporationId.value,
     campusId: query.campusId || undefined,
     isActive: query.isActive === 'true' ? true : query.isActive === 'false' ? false : undefined,
   })
@@ -100,7 +94,6 @@ async function submitForm() {
       })
     } else {
       await store.createRoom({
-        corporationId: corporationId.value,
         campusId: formData.isVirtual ? undefined : formData.campusId,
         code: formData.code,
         name: formData.name,

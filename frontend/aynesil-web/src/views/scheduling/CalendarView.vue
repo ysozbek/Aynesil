@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.store'
 import { useCalendarStore } from '@/stores/calendar.store'
 import { campusService } from '@/services/campus.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -13,10 +12,7 @@ import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const calendarStore = useCalendarStore()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 type ViewMode = 'school' | 'campus' | 'educator' | 'student'
 const viewMode = ref<ViewMode>('school')
@@ -109,23 +105,21 @@ function goToday() {
 
 async function loadCalendar() {
   const query = { from: from.value, to: to.value }
-  // Backend requires corporationId for every mode except room.
-  if (!corporationId.value) return
   switch (viewMode.value) {
     case 'school':
-      await calendarStore.fetchSchoolCalendar(corporationId.value, query)
+      await calendarStore.fetchSchoolCalendar(query)
       break
     case 'campus':
       if (resourceId.value)
-        await calendarStore.fetchCampusCalendar(resourceId.value, corporationId.value, query)
+        await calendarStore.fetchCampusCalendar(resourceId.value, query)
       break
     case 'educator':
       if (resourceId.value)
-        await calendarStore.fetchEducatorCalendar(resourceId.value, corporationId.value, query)
+        await calendarStore.fetchEducatorCalendar(resourceId.value, query)
       break
     case 'student':
       if (resourceId.value)
-        await calendarStore.fetchStudentCalendar(resourceId.value, corporationId.value, query)
+        await calendarStore.fetchStudentCalendar(resourceId.value, query)
       break
   }
 }

@@ -31,13 +31,11 @@ export interface RoomListItemDto {
 }
 
 export interface RoomListQuery extends PagedQuery {
-  corporationId: string
   campusId?: string
   isActive?: boolean
 }
 
 export interface CreateRoomPayload {
-  corporationId: string
   /** Required for physical rooms; must be omitted for virtual rooms. */
   campusId?: string
   code: string
@@ -68,7 +66,6 @@ export interface CalendarEntryDto {
 }
 
 export interface CreateCalendarEntryPayload {
-  corporationId: string
   campusId: string
   title: string
   entryType: string
@@ -140,14 +137,12 @@ export interface RecurringScheduleListItemDto {
 }
 
 export interface RecurringScheduleListQuery extends PagedQuery {
-  corporationId: string
   campusId?: string
   isActive?: boolean
 }
 
 /** Mirrors CreateRecurringScheduleRequest on the API. Weekdays: 0 = Sunday … 6 = Saturday. */
 export interface CreateRecurringSchedulePayload {
-  corporationId: string
   campusId?: string
   studentProgramId?: string
   programServiceId?: string
@@ -284,7 +279,6 @@ export interface SessionListItemDto {
 }
 
 export interface SessionListQuery extends PagedQuery {
-  corporationId: string
   campusId?: string
   roomId?: string
   educatorId?: string
@@ -298,7 +292,6 @@ export interface SessionListQuery extends PagedQuery {
 
 /** Mirrors ScheduleSessionRequest on the API. */
 export interface CreateSessionPayload {
-  corporationId: string
   sessionTypeId: string
   startsAt: string
   endsAt: string
@@ -421,13 +414,11 @@ export interface MakeupRequestListItemDto {
 }
 
 export interface MakeupRequestListQuery extends PagedQuery {
-  corporationId: string
   studentId?: string
   status?: string
 }
 
 export interface CreateMakeupRequestPayload {
-  corporationId: string
   studentId: string
   missedSessionId?: string
   missedReasonId?: string

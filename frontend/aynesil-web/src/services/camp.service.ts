@@ -62,7 +62,7 @@ export const campService = {
     apiService.get<CampEnrollmentDto>(`/camps/enrollments/${enrollmentId}`),
 
   enroll: (periodId: string, payload: EnrollStudentPayload) =>
-    apiService.post<CampEnrollmentDto>(`/camps/periods/${periodId}/enroll`, payload),
+    apiService.post<CampEnrollmentDto>(`/camps/periods/${periodId}/enrollments`, payload),
 
   promoteFromWaitlist: (enrollmentId: string) =>
     apiService.post(`/camps/enrollments/${enrollmentId}/promote`),

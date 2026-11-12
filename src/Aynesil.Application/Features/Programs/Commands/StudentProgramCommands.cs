@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Programs.Commands;
 // ── AssignStudentToProgramCommand ─────────────────────────────────────────────
 
 public record AssignStudentToProgramCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid ProgramId,
     Guid? EnrollmentId,
@@ -22,7 +21,6 @@ public class AssignStudentToProgramCommandValidator : AbstractValidator<AssignSt
 {
     public AssignStudentToProgramCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.ProgramId).NotEmpty();
         RuleFor(x => x.EndDate)
@@ -36,31 +34,38 @@ public sealed class AssignStudentToProgramCommandHandler
     : IRequestHandler<AssignStudentToProgramCommand, StudentProgramDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AssignStudentToProgramCommandHandler(IAppDbContext db) => _db = db;
+    public AssignStudentToProgramCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<StudentProgramDto> Handle(AssignStudentToProgramCommand req, CancellationToken ct)
     {
-        var studentExists = await _db.Students.AnyAsync(s => s.Id == req.StudentId, ct);
+        var corporationId = _tenant.RequireCorporationId();
+
+        var studentExists = await _db.Students.AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         var programExists = await _db.EducationPrograms.AnyAsync(
-            p => p.Id == req.ProgramId && p.IsActive, ct);
+            p => p.CorporationId == corporationId && p.Id == req.ProgramId && p.IsActive, ct);
         if (!programExists)
             throw new KeyNotFoundException($"Active program {req.ProgramId} not found.");
 
         if (req.EnrollmentId.HasValue)
         {
             var enrollmentExists = await _db.Enrollments.AnyAsync(
-                e => e.Id == req.EnrollmentId.Value && e.StudentId == req.StudentId, ct);
+                e => e.CorporationId == corporationId && e.Id == req.EnrollmentId.Value && e.StudentId == req.StudentId, ct);
             if (!enrollmentExists)
                 throw new KeyNotFoundException(
                     $"Enrollment {req.EnrollmentId} not found for student {req.StudentId}.");
         }
 
         var sp = StudentProgram.Create(
-            req.CorporationId, req.StudentId, req.ProgramId,
+            corporationId, req.StudentId, req.ProgramId,
             req.EnrollmentId, req.CampusId,
             req.StartDate, req.EndDate);
 
@@ -68,7 +73,7 @@ public sealed class AssignStudentToProgramCommandHandler
         await _db.SaveChangesAsync(ct);
 
         var program = await _db.EducationPrograms.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == req.ProgramId, ct);
+            .FirstOrDefaultAsync(p => p.CorporationId == corporationId && p.Id == req.ProgramId, ct);
         var campusName = sp.CampusId.HasValue
             ? await _db.Campuses.AsNoTracking()
                 .Where(c => c.Id == sp.CampusId.Value)

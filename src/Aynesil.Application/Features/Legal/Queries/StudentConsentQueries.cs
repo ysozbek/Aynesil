@@ -8,7 +8,6 @@ namespace Aynesil.Application.Features.Legal.Queries;
 // ── GetStudentConsentsQuery ───────────────────────────────────────────────────
 
 public record GetStudentConsentsQuery(
-    Guid CorporationId,
     Guid? StudentId = null,
     Guid? ConsentTypeId = null,
     string? State = null,
@@ -20,18 +19,25 @@ public sealed class GetStudentConsentsQueryHandler
     : IRequestHandler<GetStudentConsentsQuery, PaginatedResult<StudentConsentListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetStudentConsentsQueryHandler(IAppDbContext db) => _db = db;
+    public GetStudentConsentsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<StudentConsentListItemDto>> Handle(
         GetStudentConsentsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Base query — optionally include expired via IgnoreQueryFilters.
         var baseQuery = req.IncludeExpired
             ? _db.StudentConsents.AsNoTracking().IgnoreQueryFilters()
-              .Where(c => c.CorporationId == req.CorporationId)
+              .Where(c => c.CorporationId == corporationId)
             : _db.StudentConsents.AsNoTracking()
-              .Where(c => c.CorporationId == req.CorporationId);
+              .Where(c => c.CorporationId == corporationId);
 
         if (req.StudentId.HasValue)      baseQuery = baseQuery.Where(c => c.StudentId == req.StudentId);
         if (req.ConsentTypeId.HasValue)  baseQuery = baseQuery.Where(c => c.ConsentTypeId == req.ConsentTypeId);

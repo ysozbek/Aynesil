@@ -203,27 +203,23 @@ export interface SignatureReportItemDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface ContractListQuery extends PagedQuery {
-  corporationId?: string
   studentId?: string
   templateId?: string
   status?: string
 }
 
 export interface ConsentListQuery extends PagedQuery {
-  corporationId?: string
   studentId?: string
   consentTypeId?: string
   state?: string
 }
 
 export interface ContractTemplateListQuery extends PagedQuery {
-  corporationId?: string
   contractTypeId?: string
   isCurrent?: boolean
 }
 
 export interface ConsentTemplateListQuery extends PagedQuery {
-  corporationId?: string
   consentTypeId?: string
   isCurrent?: boolean
 }
@@ -231,7 +227,6 @@ export interface ConsentTemplateListQuery extends PagedQuery {
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateContractPayload {
-  corporationId: string
   studentId: string
   templateId?: string
   guardianId?: string
@@ -246,7 +241,6 @@ export interface SignContractPayload {
 }
 
 export interface CreateConsentPayload {
-  corporationId: string
   studentId: string
   consentTypeId?: string
   templateId?: string

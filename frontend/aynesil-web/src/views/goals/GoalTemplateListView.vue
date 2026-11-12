@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -16,18 +15,14 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGoalStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const categories = ref<RefValueItem[]>([])
 const developmentAreas = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   libraryId: '',
   categoryId: '',
   developmentAreaId: '',
@@ -52,7 +47,7 @@ watch(
 onMounted(async () => {
   await Promise.all([
     loadList(),
-    store.libraryList.items.length === 0 ? store.fetchLibraries({ corporationId: corporationId.value, pageSize: 200 }) : Promise.resolve(),
+    store.libraryList.items.length === 0 ? store.fetchLibraries({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('GOAL_CATEGORY').then(v => { categories.value = v }),
     refData.getValues('DEVELOPMENT_AREA').then(v => { developmentAreas.value = v }),
   ])
@@ -61,7 +56,6 @@ onMounted(async () => {
 function buildQuery() {
   return {
     ...query,
-    corporationId: corporationId.value,
     libraryId: query.libraryId || undefined,
     categoryId: query.categoryId || undefined,
     developmentAreaId: query.developmentAreaId || undefined,

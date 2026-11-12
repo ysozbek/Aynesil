@@ -12,7 +12,6 @@ namespace Aynesil.Application.Features.Assessment.Queries;
 public class GetAssessmentSessionsQuery
     : PagedQuery, IRequest<PaginatedResult<AssessmentSessionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? TemplateId { get; set; }
     public string? Status { get; set; }
@@ -29,10 +28,12 @@ public sealed class GetAssessmentSessionsQueryHandler
     : IRequestHandler<GetAssessmentSessionsQuery, PaginatedResult<AssessmentSessionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public GetAssessmentSessionsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GetAssessmentSessionsQueryHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -40,6 +41,8 @@ public sealed class GetAssessmentSessionsQueryHandler
     public async Task<PaginatedResult<AssessmentSessionListItemDto>> Handle(
         GetAssessmentSessionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Care-team pre-filter: when a specific enrolled student is requested,
         // verify the user can access that student's clinical data.
         // Lead-stage sessions (StudentId = null) are RBAC-only — no care-team check.
@@ -51,8 +54,7 @@ public sealed class GetAssessmentSessionsQueryHandler
         // Filter on the entity first — EF cannot translate Where on projected DTOs after joins.
         var q = _db.AssessmentSessions.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(s => s.CorporationId == req.CorporationId);
+        q = q.Where(s => s.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             q = q.Where(s => s.CampusId == req.CampusId);

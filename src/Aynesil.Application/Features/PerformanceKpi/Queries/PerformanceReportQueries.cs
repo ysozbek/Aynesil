@@ -15,7 +15,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Queries;
 public class GetPerformanceSnapshotsQuery : PagedQuery,
     IRequest<PaginatedResult<EducatorPerformanceSnapshotListItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? EducatorId { get; set; }
     public Guid? CampusId { get; set; }
     public DateOnly? PeriodStart { get; set; }
@@ -27,16 +26,23 @@ public sealed class GetPerformanceSnapshotsQueryHandler
         PaginatedResult<EducatorPerformanceSnapshotListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPerformanceSnapshotsQueryHandler(IAppDbContext db) => _db = db;
+    public GetPerformanceSnapshotsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<EducatorPerformanceSnapshotListItemDto>> Handle(
         GetPerformanceSnapshotsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q =
             from s in _db.EducatorPerformanceSnapshots.AsNoTracking()
             join e in _db.Educators.AsNoTracking() on s.EducatorId equals e.Id
-            where s.CorporationId == req.CorporationId
+            where s.CorporationId == corporationId
                && e.DeletedAt == null
             select new { s, e };
 
@@ -101,7 +107,6 @@ public sealed class GetPerformanceSnapshotsQueryHandler
 /// with ordinal rank by attendance rate. Used for formal performance review exports.
 /// </summary>
 public record GetKpiReportQuery(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd,
     Guid? CampusId = null) : IRequest<IReadOnlyList<KpiReportRowDto>>;
@@ -110,16 +115,23 @@ public sealed class GetKpiReportQueryHandler
     : IRequestHandler<GetKpiReportQuery, IReadOnlyList<KpiReportRowDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetKpiReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetKpiReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<KpiReportRowDto>> Handle(
         GetKpiReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q =
             from s in _db.EducatorPerformanceSnapshots.AsNoTracking()
             join e in _db.Educators.AsNoTracking() on s.EducatorId equals e.Id
-            where s.CorporationId == req.CorporationId
+            where s.CorporationId == corporationId
                && s.PeriodStart == req.PeriodStart
                && s.PeriodEnd == req.PeriodEnd
                && e.DeletedAt == null
@@ -169,7 +181,6 @@ public sealed class GetKpiReportQueryHandler
 /// </summary>
 public class GetParentFeedbackQuery : PagedQuery, IRequest<PaginatedResult<ParentFeedbackDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? EducatorId { get; set; }
     public Guid? GuardianId { get; set; }
     public Guid? SessionId { get; set; }
@@ -183,14 +194,21 @@ public sealed class GetParentFeedbackQueryHandler
     : IRequestHandler<GetParentFeedbackQuery, PaginatedResult<ParentFeedbackDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetParentFeedbackQueryHandler(IAppDbContext db) => _db = db;
+    public GetParentFeedbackQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ParentFeedbackDto>> Handle(
         GetParentFeedbackQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ParentFeedbacks.AsNoTracking()
-            .Where(pf => pf.CorporationId == req.CorporationId);
+            .Where(pf => pf.CorporationId == corporationId);
 
         if (req.EducatorId.HasValue) q = q.Where(pf => pf.EducatorId == req.EducatorId.Value);
         if (req.GuardianId.HasValue) q = q.Where(pf => pf.GuardianId == req.GuardianId.Value);

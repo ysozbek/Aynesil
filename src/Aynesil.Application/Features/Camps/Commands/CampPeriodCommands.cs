@@ -9,9 +9,9 @@ namespace Aynesil.Application.Features.Camps.Commands;
 
 // ── CreateCampPeriodCommand ───────────────────────────────────────────────────
 
+/// <summary>CorporationId is taken from the request context (JWT), never from the client.</summary>
 public record CreateCampPeriodCommand(
     Guid CampId,
-    Guid CorporationId,
     string Name,
     DateOnly StartDate,
     DateOnly EndDate,
@@ -22,7 +22,6 @@ public class CreateCampPeriodCommandValidator : AbstractValidator<CreateCampPeri
     public CreateCampPeriodCommandValidator()
     {
         RuleFor(x => x.CampId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndDate)
             .Must((cmd, end) => end >= cmd.StartDate)
@@ -35,21 +34,28 @@ public sealed class CreateCampPeriodCommandHandler
     : IRequestHandler<CreateCampPeriodCommand, CampPeriodDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateCampPeriodCommandHandler(IAppDbContext db) => _db = db;
+    public CreateCampPeriodCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampPeriodDto> Handle(CreateCampPeriodCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var campExists = await _db.Camps
             .AnyAsync(c => c.Id == req.CampId
-                        && c.CorporationId == req.CorporationId
+                        && c.CorporationId == corporationId
                         && c.DeletedAt == null, ct);
 
         if (!campExists)
             throw new KeyNotFoundException($"Camp {req.CampId} not found.");
 
         var period = CampPeriod.Create(
-            req.CorporationId, req.CampId,
+            corporationId, req.CampId,
             req.Name, req.StartDate, req.EndDate, req.Capacity);
 
         _db.CampPeriods.Add(period);

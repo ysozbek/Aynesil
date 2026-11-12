@@ -2,7 +2,6 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -11,7 +10,6 @@ import type { LeaveUsageReportItemDto, LeaveTrendItemDto } from '@/types/leave.t
 
 const { t } = useI18n()
 const leaveStore = useLeaveStore()
-const auth = useAuthStore()
 const refData = useRefDataStore()
 const tab = ref<'usage' | 'trend'>('usage')
 const leaveTypes = ref<RefValueItem[]>([])
@@ -48,7 +46,6 @@ const trendColumns: Column<LeaveTrendItemDto>[] = [
 
 async function doFetch() {
   const q = {
-    corporationId: auth.user?.corporationId,
     periodYear: filters.periodYear || undefined,
     leaveTypeId: filters.leaveTypeId || undefined,
   }

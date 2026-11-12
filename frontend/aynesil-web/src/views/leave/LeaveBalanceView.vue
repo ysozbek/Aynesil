@@ -2,7 +2,6 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore, type RefValueItem } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -13,7 +12,6 @@ import type { LeaveBalanceDto } from '@/types/leave.types'
 
 const { t } = useI18n()
 const leaveStore = useLeaveStore()
-const auth = useAuthStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
@@ -38,7 +36,6 @@ const columns: Column<LeaveBalanceDto>[] = [
 
 async function doFetch() {
   await leaveStore.fetchBalances({
-    corporationId: auth.user?.corporationId,
     periodYear: filters.periodYear || undefined,
     leaveTypeId: filters.leaveTypeId || undefined,
   })
@@ -59,7 +56,6 @@ async function doSetEntitlement() {
 
 async function doCarryForward() {
   await leaveStore.carryForward({
-    corporationId: auth.user?.corporationId ?? '',
     fromYear: cfFrom.value,
     toYear: cfTo.value,
   })

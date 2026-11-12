@@ -14,7 +14,6 @@ namespace Aynesil.Application.Features.Leaves.Queries;
 /// </summary>
 public class GetLeaveRequestsQuery : PagedQuery, IRequest<PaginatedResult<LeaveRequestListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? EducatorId { get; set; }
     public Guid? LeaveTypeId { get; set; }
     public string? Status { get; set; }
@@ -27,16 +26,22 @@ public sealed class GetLeaveRequestsQueryHandler
     : IRequestHandler<GetLeaveRequestsQuery, PaginatedResult<LeaveRequestListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeaveRequestsQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeaveRequestsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<LeaveRequestListItemDto>> Handle(
         GetLeaveRequestsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.LeaveRequests.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(lr => lr.CorporationId == req.CorporationId.Value);
+        q = q.Where(lr => lr.CorporationId == corporationId);
 
         if (req.EducatorId.HasValue)
             q = q.Where(lr => lr.EducatorId == req.EducatorId.Value);
@@ -167,7 +172,6 @@ public sealed class GetLeaveRequestQueryHandler : IRequestHandler<GetLeaveReques
 /// </summary>
 public class GetLeaveCalendarQuery : IRequest<IReadOnlyList<LeaveCalendarItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? EducatorId { get; set; }
     public DateTimeOffset From { get; set; }
     public DateTimeOffset To { get; set; }
@@ -178,14 +182,21 @@ public sealed class GetLeaveCalendarQueryHandler
     : IRequestHandler<GetLeaveCalendarQuery, IReadOnlyList<LeaveCalendarItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeaveCalendarQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeaveCalendarQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<LeaveCalendarItemDto>> Handle(
         GetLeaveCalendarQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.LeaveRequests.AsNoTracking()
-            .Where(lr => lr.CorporationId == req.CorporationId
+            .Where(lr => lr.CorporationId == corporationId
                       && (lr.Status == "approved" || (req.IncludePending && lr.Status == "pending")));
 
         // Overlap with requested window.
@@ -224,7 +235,6 @@ public sealed class GetLeaveCalendarQueryHandler
 /// <summary>Leave balance records for an educator or across a corporation for a given year.</summary>
 public class GetLeaveBalancesQuery : IRequest<IReadOnlyList<LeaveBalanceDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? EducatorId { get; set; }
     public Guid? LeaveTypeId { get; set; }
     public int? PeriodYear { get; set; }
@@ -234,16 +244,22 @@ public sealed class GetLeaveBalancesQueryHandler
     : IRequestHandler<GetLeaveBalancesQuery, IReadOnlyList<LeaveBalanceDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeaveBalancesQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeaveBalancesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<LeaveBalanceDto>> Handle(
         GetLeaveBalancesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.LeaveBalances.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(b => b.CorporationId == req.CorporationId.Value);
+        q = q.Where(b => b.CorporationId == corporationId);
 
         if (req.EducatorId.HasValue)
             q = q.Where(b => b.EducatorId == req.EducatorId.Value);
@@ -334,7 +350,6 @@ public sealed class GetLeaveSessionImpactQueryHandler
 /// </summary>
 public class GetLeaveUsageReportQuery : IRequest<IReadOnlyList<LeaveUsageReportItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public int PeriodYear { get; set; }
     public Guid? LeaveTypeId { get; set; }
     public Guid? EducatorId { get; set; }
@@ -344,15 +359,22 @@ public sealed class GetLeaveUsageReportQueryHandler
     : IRequestHandler<GetLeaveUsageReportQuery, IReadOnlyList<LeaveUsageReportItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeaveUsageReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeaveUsageReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<LeaveUsageReportItemDto>> Handle(
         GetLeaveUsageReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var balanceQ = _db.LeaveBalances.AsNoTracking()
             .Where(b =>
-                b.CorporationId == req.CorporationId
+                b.CorporationId == corporationId
                 && b.PeriodYear == req.PeriodYear);
 
         if (req.LeaveTypeId.HasValue)
@@ -364,7 +386,7 @@ public sealed class GetLeaveUsageReportQueryHandler
         // Approved request counts per educator+type for the period.
         var requestCountQ =
             from lr in _db.LeaveRequests.AsNoTracking()
-            where lr.CorporationId == req.CorporationId
+            where lr.CorporationId == corporationId
                && lr.Status == "approved"
                && lr.StartsAt.Year == req.PeriodYear
                && (!req.LeaveTypeId.HasValue || lr.LeaveTypeId == req.LeaveTypeId)
@@ -412,7 +434,6 @@ public sealed class GetLeaveUsageReportQueryHandler
 /// </summary>
 public class GetLeaveTrendsQuery : IRequest<IReadOnlyList<LeaveTrendItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public int FromYear { get; set; }
     public int ToYear { get; set; }
     public Guid? LeaveTypeId { get; set; }
@@ -422,15 +443,22 @@ public sealed class GetLeaveTrendsQueryHandler
     : IRequestHandler<GetLeaveTrendsQuery, IReadOnlyList<LeaveTrendItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeaveTrendsQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeaveTrendsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<LeaveTrendItemDto>> Handle(
         GetLeaveTrendsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.LeaveRequests.AsNoTracking()
             .Where(lr =>
-                lr.CorporationId == req.CorporationId
+                lr.CorporationId == corporationId
                 && lr.CreatedAt.Year >= req.FromYear
                 && lr.CreatedAt.Year <= req.ToYear);
 

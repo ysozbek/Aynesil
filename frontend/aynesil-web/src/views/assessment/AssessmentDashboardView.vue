@@ -2,25 +2,20 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useAssessmentStore } from '@/stores/assessment.store'
 import { useAssessmentTemplateStore } from '@/stores/assessmentTemplate.store'
 import { usePermission } from '@/composables/usePermission'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const sessionStore = useAssessmentStore()
 const templateStore = useAssessmentTemplateStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 onMounted(async () => {
-  if (!corporationId.value) return
   await Promise.all([
-    sessionStore.fetchList({ corporationId: corporationId.value, page: 1, pageSize: 5, sortDirection: 'desc' }),
-    templateStore.fetchList({ corporationId: corporationId.value, isActive: true, page: 1, pageSize: 5 }),
+    sessionStore.fetchList({ page: 1, pageSize: 5, sortDirection: 'desc' }),
+    templateStore.fetchList({ isActive: true, page: 1, pageSize: 5 }),
   ])
 })
 

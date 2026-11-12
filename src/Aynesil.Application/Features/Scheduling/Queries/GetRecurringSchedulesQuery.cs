@@ -12,7 +12,6 @@ namespace Aynesil.Application.Features.Scheduling.Queries;
 public class GetRecurringSchedulesQuery
     : PagedQuery, IRequest<PaginatedResult<RecurringScheduleListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public bool? IsActive { get; set; }
 }
@@ -21,15 +20,22 @@ public sealed class GetRecurringSchedulesQueryHandler
     : IRequestHandler<GetRecurringSchedulesQuery, PaginatedResult<RecurringScheduleListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetRecurringSchedulesQueryHandler(IAppDbContext db) => _db = db;
+    public GetRecurringSchedulesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<RecurringScheduleListItemDto>> Handle(
         GetRecurringSchedulesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.RecurringSchedules.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(s => s.CorporationId == req.CorporationId.Value);
+        q = q.Where(s => s.CorporationId == corporationId);
         if (req.CampusId.HasValue)      q = q.Where(s => s.CampusId == req.CampusId.Value);
         if (req.IsActive.HasValue)      q = q.Where(s => s.IsActive == req.IsActive.Value);
 

@@ -5,7 +5,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useAssessmentTemplateStore } from '@/stores/assessmentTemplate.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -14,7 +13,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useAssessmentTemplateStore()
 const refData = useRefDataStore()
 
@@ -25,7 +23,6 @@ const types = ref<RefValueItem[]>([])
 const categories = ref<RefValueItem[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   code: '',
   name: '',
   typeId: '',
@@ -82,7 +79,6 @@ async function submit() {
       router.push({ name: 'assessment-template-detail', params: { id: id.value } })
     } else {
       const result = await store.create({
-        corporationId: form.corporationId || undefined,
         code: form.code,
         name: form.name,
         typeId: form.typeId || undefined,

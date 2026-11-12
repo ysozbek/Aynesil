@@ -7,7 +7,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useLeadStore } from '@/stores/lead.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -18,7 +17,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useLeadStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
@@ -32,7 +30,6 @@ const sources = ref<RefValueItem[]>([])
 const stages = ref<RefValueItem[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   contactName: '',
   campusId: '',
   sourceId: '',
@@ -91,10 +88,6 @@ function validate(): boolean {
     errors.contactName = t('validation.required', { field: t('crm.lead.contactName') })
     valid = false
   }
-  if (!form.corporationId) {
-    errors.corporationId = t('validation.required', { field: t('crm.lead.corporation') })
-    valid = false
-  }
   return valid
 }
 
@@ -121,7 +114,6 @@ async function submit() {
       router.push({ name: 'lead-detail', params: { id: id.value } })
     } else {
       const result = await store.create({
-        corporationId: form.corporationId,
         contactName: form.contactName,
         campusId: form.campusId || undefined,
         sourceId: form.sourceId || undefined,

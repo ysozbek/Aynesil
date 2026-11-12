@@ -12,18 +12,15 @@ namespace Aynesil.Application.Features.Legal.Commands;
 public record TemplateTranslationRequest(string Locale, string Title, string Body);
 
 public record CreateContractTemplateCommand(
-    Guid CorporationId,
     string Code,
     Guid? ContractTypeId,
     DateOnly? EffectiveFrom,
-    IReadOnlyList<TemplateTranslationRequest>? Translations,
-    Guid? CreatedBy = null) : IRequest<ContractTemplateDto>;
+    IReadOnlyList<TemplateTranslationRequest>? Translations) : IRequest<ContractTemplateDto>;
 
 public class CreateContractTemplateCommandValidator : AbstractValidator<CreateContractTemplateCommand>
 {
     public CreateContractTemplateCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100)
             .Matches(@"^[a-z0-9_]+$").WithMessage("Code must be lowercase alphanumeric with underscores.");
         RuleForEach(x => x.Translations).ChildRules(t =>
@@ -39,14 +36,21 @@ public sealed class CreateContractTemplateCommandHandler
     : IRequestHandler<CreateContractTemplateCommand, ContractTemplateDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateContractTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public CreateContractTemplateCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ContractTemplateDto> Handle(
         CreateContractTemplateCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var alreadyExists = await _db.ContractTemplates
-            .AnyAsync(t => t.CorporationId == req.CorporationId
+            .AnyAsync(t => t.CorporationId == corporationId
                         && t.Code == req.Code.Trim().ToLowerInvariant()
                         && t.IsCurrent, ct);
 
@@ -55,7 +59,7 @@ public sealed class CreateContractTemplateCommandHandler
                 $"A current contract template with code '{req.Code}' already exists for this corporation.");
 
         var template = ContractTemplate.Create(
-            req.CorporationId, req.Code, req.ContractTypeId, req.EffectiveFrom);
+            corporationId, req.Code, req.ContractTypeId, req.EffectiveFrom);
 
         if (req.Translations is { Count: > 0 })
             foreach (var tr in req.Translations)
@@ -100,8 +104,7 @@ public record UpdateContractTemplateCommand(
     Guid? ContractTypeId,
     DateOnly? EffectiveFrom,
     IReadOnlyList<TemplateTranslationRequest>? Translations,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateContractTemplateCommandValidator : AbstractValidator<UpdateContractTemplateCommand>
 {
@@ -146,8 +149,7 @@ public sealed class UpdateContractTemplateCommandHandler : IRequestHandler<Updat
 public record NewVersionContractTemplateCommand(
     Guid CurrentTemplateId,
     DateOnly? EffectiveFrom,
-    IReadOnlyList<TemplateTranslationRequest>? Translations,
-    Guid? CreatedBy = null) : IRequest<ContractTemplateDto>;
+    IReadOnlyList<TemplateTranslationRequest>? Translations) : IRequest<ContractTemplateDto>;
 
 public class NewVersionContractTemplateCommandValidator
     : AbstractValidator<NewVersionContractTemplateCommand>
@@ -210,13 +212,18 @@ public sealed class NewVersionContractTemplateCommandHandler
 
 // ── DeleteContractTemplateCommand ─────────────────────────────────────────────
 
-public record DeleteContractTemplateCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteContractTemplateCommand(Guid Id) : IRequest;
 
 public sealed class DeleteContractTemplateCommandHandler : IRequestHandler<DeleteContractTemplateCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteContractTemplateCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteContractTemplateCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteContractTemplateCommand req, CancellationToken ct)
     {
@@ -231,7 +238,7 @@ public sealed class DeleteContractTemplateCommandHandler : IRequestHandler<Delet
             throw new InvalidOperationException(
                 "Cannot delete a contract template that is referenced by student contracts.");
 
-        template.Delete(req.DeletedBy);
+        template.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

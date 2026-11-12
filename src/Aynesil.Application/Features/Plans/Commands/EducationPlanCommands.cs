@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Plans.Commands;
 // ── CreateEducationPlanCommand ────────────────────────────────────────────────
 
 public record CreateEducationPlanCommand(
-    Guid CorporationId,
     Guid StudentId,
     string Title,
     Guid? AcademicPeriodId,
@@ -23,7 +22,6 @@ public class CreateEducationPlanCommandValidator : AbstractValidator<CreateEduca
 {
     public CreateEducationPlanCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
     }
@@ -33,24 +31,28 @@ public sealed class CreateEducationPlanCommandHandler
     : IRequestHandler<CreateEducationPlanCommand, EducationPlanDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateEducationPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateEducationPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<EducationPlanDto> Handle(CreateEducationPlanCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var studentExists = await _db.Students.AnyAsync(
-            s => s.Id == req.StudentId && s.CorporationId == req.CorporationId, ct);
+            s => s.Id == req.StudentId && s.CorporationId == corporationId, ct);
 
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         var plan = EducationPlan.Create(
-            req.CorporationId, req.StudentId, req.Title,
+            corporationId, req.StudentId, req.Title,
             req.AcademicPeriodId, req.CampusId, req.PreparedBy,
             req.EffectiveFrom, req.EffectiveTo, _currentUser.UserId);
 

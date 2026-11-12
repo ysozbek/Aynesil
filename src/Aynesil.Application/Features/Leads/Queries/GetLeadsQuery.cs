@@ -14,7 +14,6 @@ namespace Aynesil.Application.Features.Leads.Queries;
 /// </summary>
 public class GetLeadsQuery : PagedQuery, IRequest<PaginatedResult<LeadListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? StatusId { get; set; }
     public Guid? PipelineStageId { get; set; }
@@ -30,17 +29,23 @@ public class GetLeadsQuery : PagedQuery, IRequest<PaginatedResult<LeadListItemDt
 public sealed class GetLeadsQueryHandler : IRequestHandler<GetLeadsQuery, PaginatedResult<LeadListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetLeadsQueryHandler(IAppDbContext db) => _db = db;
+    public GetLeadsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<LeadListItemDto>> Handle(GetLeadsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Filter on the Lead entity first — EF cannot translate Where/OrderBy on a
         // custom record projected from a multi-join Select.
         var leads = _db.Leads.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            leads = leads.Where(l => l.CorporationId == req.CorporationId.Value);
+        leads = leads.Where(l => l.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             leads = leads.Where(l => l.CampusId == req.CampusId.Value);

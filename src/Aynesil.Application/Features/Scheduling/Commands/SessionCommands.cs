@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 // ── ScheduleSessionCommand ────────────────────────────────────────────────────
 
 public record ScheduleSessionCommand(
-    Guid CorporationId,
     Guid SessionTypeId,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
@@ -30,7 +29,6 @@ public class ScheduleSessionCommandValidator : AbstractValidator<ScheduleSession
 {
     public ScheduleSessionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.SessionTypeId).NotEmpty();
         RuleFor(x => x.StartsAt).NotEmpty();
         RuleFor(x => x.EndsAt).GreaterThan(x => x.StartsAt)
@@ -42,12 +40,15 @@ public class ScheduleSessionCommandValidator : AbstractValidator<ScheduleSession
 public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSessionCommand, SessionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ISessionRepository _sessions;
     private readonly ICurrentUserService _currentUser;
 
     public ScheduleSessionCommandHandler(
-        IAppDbContext db, ISessionRepository sessions, ICurrentUserService currentUser)
+        IAppDbContext db, ISessionRepository sessions, ICurrentUserService currentUser,
+        ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _sessions = sessions;
         _currentUser = currentUser;
@@ -55,6 +56,8 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
 
     public async Task<SessionDto> Handle(ScheduleSessionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Conflict detection
         if (req.RoomId.HasValue)
         {
@@ -75,7 +78,7 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
         }
 
         var session = Session.Schedule(
-            req.CorporationId, req.SessionTypeId,
+            corporationId, req.SessionTypeId,
             req.StartsAt, req.EndsAt,
             req.CampusId, req.RoomId, req.RecurringScheduleId,
             req.ProgramServiceId, req.Title, req.IsMakeup,
@@ -83,11 +86,11 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
 
         foreach (var studentId in req.ParticipantStudentIds)
             session.Participants.Add(
-                SessionParticipant.Create(req.CorporationId, session.Id, studentId));
+                SessionParticipant.Create(corporationId, session.Id, studentId));
 
         foreach (var ea in req.EducatorAssignments)
             session.Educators.Add(
-                SessionEducator.Assign(req.CorporationId, session.Id, ea.EducatorId, ea.Role));
+                SessionEducator.Assign(corporationId, session.Id, ea.EducatorId, ea.Role));
 
         _db.Sessions.Add(session);
         await _db.SaveChangesAsync(ct);

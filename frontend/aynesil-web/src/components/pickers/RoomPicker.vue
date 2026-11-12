@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { schedulingService } from '@/services/scheduling.service'
 import EntityPicker from './EntityPicker.vue'
 import type { PickerOption } from './types'
@@ -22,12 +20,9 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const auth = useAuthStore()
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 async function search(term: string): Promise<PickerOption[]> {
   const res = await schedulingService.listRooms({
-    corporationId: corporationId.value,
     campusId: props.campusId || undefined,
     isActive: true,
     search: term || undefined,

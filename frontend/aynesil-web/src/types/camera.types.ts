@@ -99,14 +99,12 @@ export interface ViewingLogDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface CameraListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   cameraTypeId?: string
   isActive?: boolean
 }
 
 export interface ViewingAuthorizationQuery extends PagedQuery {
-  corporationId?: string
   guardianId?: string
   studentId?: string
   isRevoked?: boolean
@@ -114,7 +112,6 @@ export interface ViewingAuthorizationQuery extends PagedQuery {
 }
 
 export interface ViewingLogQuery extends PagedQuery {
-  corporationId?: string
   cameraId?: string
   guardianId?: string
   from?: string
@@ -124,7 +121,6 @@ export interface ViewingLogQuery extends PagedQuery {
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateCameraPayload {
-  corporationId: string
   campusId?: string
   cameraTypeId?: string
   code: string
@@ -162,7 +158,12 @@ export interface CreateAuthorizationPayload {
 }
 
 export interface StartViewingPayload {
+  authorizationId: string
   cameraId?: string
   sessionId?: string
-  authorizationId?: string
+}
+
+export interface StartViewingResult {
+  logId: number
+  startedAt: string
 }

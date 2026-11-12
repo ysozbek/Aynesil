@@ -208,7 +208,6 @@ export interface CampActivityParticipationDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface CampListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   campTypeId?: string
   isActive?: boolean
@@ -223,7 +222,6 @@ export interface CampEnrollmentQuery extends PagedQuery {
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateCampPayload {
-  corporationId: string
   campusId?: string
   campTypeId?: string
   code: string

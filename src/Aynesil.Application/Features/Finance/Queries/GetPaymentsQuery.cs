@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetPaymentsQuery : PagedQuery, IRequest<PaginatedResult<PaymentListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? InvoiceId { get; set; }
     public Guid? StudentId { get; set; }
     public Guid? PaymentMethodId { get; set; }
@@ -22,15 +21,22 @@ public sealed class GetPaymentsQueryHandler
     : IRequestHandler<GetPaymentsQuery, PaginatedResult<PaymentListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPaymentsQueryHandler(IAppDbContext db) => _db = db;
+    public GetPaymentsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<PaymentListItemDto>> Handle(
         GetPaymentsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Payments.AsNoTracking();
 
-        if (req.CorporationId.HasValue)  q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.InvoiceId.HasValue)      q = q.Where(p => p.InvoiceId == req.InvoiceId.Value);
         if (req.StudentId.HasValue)      q = q.Where(p => p.StudentId == req.StudentId.Value);
         if (req.PaymentMethodId.HasValue) q = q.Where(p => p.PaymentMethodId == req.PaymentMethodId.Value);

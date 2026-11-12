@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Portal;
 using Aynesil.Application.Features.Surveys.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
 using FluentValidation;
@@ -10,13 +11,11 @@ namespace Aynesil.Application.Features.Surveys.Commands;
 // ── CreateSurveyDefinitionCommand ─────────────────────────────────────────────
 
 public record CreateSurveyDefinitionCommand(
-    Guid CorporationId,
     string Title,
     string Target,
     Guid? TypeId,
     string? Description,
-    IReadOnlyList<QuestionInput> Questions,
-    Guid? CreatedBy = null) : IRequest<Guid>;
+    IReadOnlyList<QuestionInput> Questions) : IRequest<Guid>;
 
 public record QuestionInput(
     string QuestionText,
@@ -36,7 +35,6 @@ public class CreateSurveyDefinitionCommandValidator
 
     public CreateSurveyDefinitionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.Target).Must(t => ValidTargets.Contains(t))
             .WithMessage("Target must be 'guardian', 'educator', or 'student'.");
@@ -56,20 +54,29 @@ public sealed class CreateSurveyDefinitionCommandHandler
     : IRequestHandler<CreateSurveyDefinitionCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateSurveyDefinitionCommandHandler(IAppDbContext db) => _db = db;
+    public CreateSurveyDefinitionCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(CreateSurveyDefinitionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var survey = SurveyDefinition.Create(
-            req.CorporationId, req.Title, req.Target,
-            req.TypeId, req.Description, req.CreatedBy);
+            corporationId, req.Title, req.Target,
+            req.TypeId, req.Description, _currentUser.UserId);
         _db.SurveyDefinitions.Add(survey);
 
         foreach (var q in req.Questions.OrderBy(x => x.SortOrder))
         {
             var question = SurveyQuestion.Create(
-                survey.Id, q.QuestionText, q.QuestionType, q.IsRequired, q.SortOrder, req.CreatedBy);
+                survey.Id, q.QuestionText, q.QuestionType, q.IsRequired, q.SortOrder, _currentUser.UserId);
             _db.SurveyQuestions.Add(question);
 
             foreach (var opt in q.AnswerOptions.OrderBy(x => x.SortOrder))
@@ -155,10 +162,13 @@ public sealed class DeleteSurveyDefinitionCommandHandler
 
 // ── SubmitSurveyResponseCommand ───────────────────────────────────────────────
 
+/// <summary>
+/// RespondentUserId is the signed-in user. When the caller is a portal guardian, GuardianId is
+/// derived from the session and StudentId must be one of that guardian's students; staff may
+/// submit on a guardian's behalf with a GuardianId from the current tenant.
+/// </summary>
 public record SubmitSurveyResponseCommand(
-    Guid CorporationId,
     Guid SurveyId,
-    Guid? RespondentUserId,
     Guid? GuardianId,
     Guid? StudentId,
     Guid? SessionId,
@@ -175,7 +185,6 @@ public class SubmitSurveyResponseCommandValidator
 {
     public SubmitSurveyResponseCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.SurveyId).NotEmpty();
         RuleFor(x => x.Answers).NotEmpty()
             .WithMessage("At least one answer must be provided.");
@@ -186,18 +195,35 @@ public sealed class SubmitSurveyResponseCommandHandler
     : IRequestHandler<SubmitSurveyResponseCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public SubmitSurveyResponseCommandHandler(IAppDbContext db) => _db = db;
+    public SubmitSurveyResponseCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task<Guid> Handle(SubmitSurveyResponseCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var survey = await _db.SurveyDefinitions.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == req.SurveyId && s.IsActive && s.DeletedAt == null, ct)
+            .FirstOrDefaultAsync(s => s.CorporationId == corporationId && s.Id == req.SurveyId && s.IsActive && s.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Active SurveyDefinition {req.SurveyId} not found.");
 
+        var userId = _currentUser.UserId;
+        var (guardianId, isGuardian) = await PortalGuardian.ResolveAsync(
+            _db, corporationId, userId, req.GuardianId, ct);
+        if (isGuardian && req.StudentId.HasValue)
+            await PortalGuardian.EnsureCanAccessStudentAsync(
+                _db, corporationId, guardianId!.Value, req.StudentId.Value, ct);
+
         var response = SurveyResponse.Create(
-            req.CorporationId, req.SurveyId, req.RespondentUserId,
-            req.GuardianId, req.StudentId, req.SessionId);
+            corporationId, req.SurveyId, userId,
+            guardianId, req.StudentId, req.SessionId);
         _db.SurveyResponses.Add(response);
 
         foreach (var ans in req.Answers)
@@ -215,7 +241,6 @@ public sealed class SubmitSurveyResponseCommandHandler
 // ── CreateParentFeedbackCommand ───────────────────────────────────────────────
 
 public record CreateParentFeedbackCommand(
-    Guid CorporationId,
     Guid? GuardianId,
     Guid? EducatorId,
     Guid? SessionId,
@@ -227,7 +252,6 @@ public class CreateParentFeedbackCommandValidator
 {
     public CreateParentFeedbackCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Rating)
             .InclusiveBetween((short)1, (short)5)
             .When(x => x.Rating.HasValue)
@@ -241,13 +265,25 @@ public sealed class CreateParentFeedbackCommandHandler
     : IRequestHandler<CreateParentFeedbackCommand, ParentFeedbackDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateParentFeedbackCommandHandler(IAppDbContext db) => _db = db;
+    public CreateParentFeedbackCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task<ParentFeedbackDto> Handle(CreateParentFeedbackCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+        var (guardianId, _) = await PortalGuardian.ResolveAsync(
+            _db, corporationId, _currentUser.UserId, req.GuardianId, ct);
+
         var feedback = ParentFeedback.Create(
-            req.CorporationId, req.GuardianId, req.EducatorId,
+            corporationId, guardianId, req.EducatorId,
             req.SessionId, req.Rating, req.Comment);
         _db.ParentFeedbacks.Add(feedback);
 

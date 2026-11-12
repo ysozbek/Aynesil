@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Scheduling.Queries;
 
 public class GetMakeupRequestsQuery : PagedQuery, IRequest<PaginatedResult<MakeupRequestListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public string? Status { get; set; }
 }
@@ -19,15 +18,22 @@ public sealed class GetMakeupRequestsQueryHandler
     : IRequestHandler<GetMakeupRequestsQuery, PaginatedResult<MakeupRequestListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetMakeupRequestsQueryHandler(IAppDbContext db) => _db = db;
+    public GetMakeupRequestsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<MakeupRequestListItemDto>> Handle(
         GetMakeupRequestsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.MakeupRequests.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(m => m.CorporationId == req.CorporationId.Value);
+        q = q.Where(m => m.CorporationId == corporationId);
         if (req.StudentId.HasValue)     q = q.Where(m => m.StudentId == req.StudentId.Value);
         if (req.Status is not null)     q = q.Where(m => m.Status == req.Status);
 

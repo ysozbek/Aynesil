@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Finance.Commands;
 // ── GrantScholarshipCommand ───────────────────────────────────────────────────
 
 public record GrantScholarshipCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid? ScholarshipTypeId,
     decimal? Percentage,
@@ -23,7 +22,6 @@ public class GrantScholarshipCommandValidator : AbstractValidator<GrantScholarsh
 {
     public GrantScholarshipCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
 
         RuleFor(x => x)
@@ -52,24 +50,28 @@ public sealed class GrantScholarshipCommandHandler
     : IRequestHandler<GrantScholarshipCommand, ScholarshipDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public GrantScholarshipCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GrantScholarshipCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db          = db;
         _currentUser = currentUser;
     }
 
     public async Task<ScholarshipDto> Handle(GrantScholarshipCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var student = await _db.Students.AsNoTracking()
-            .Where(s => s.Id == req.StudentId)
+            .Where(s => s.CorporationId == corporationId && s.Id == req.StudentId)
             .Select(s => new { s.FirstName, s.LastName })
             .FirstOrDefaultAsync(ct)
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         var scholarship = Scholarship.Grant(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.ScholarshipTypeId,
             req.Percentage, req.Amount,
             req.ValidFrom, req.ValidTo,

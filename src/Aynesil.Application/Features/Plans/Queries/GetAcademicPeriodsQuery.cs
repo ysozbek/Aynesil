@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Plans.Queries;
 
 public class GetAcademicPeriodsQuery : PagedQuery, IRequest<PaginatedResult<AcademicPeriodListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public bool? IsCurrent { get; set; }
 }
 
@@ -18,16 +17,22 @@ public sealed class GetAcademicPeriodsQueryHandler
     : IRequestHandler<GetAcademicPeriodsQuery, PaginatedResult<AcademicPeriodListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetAcademicPeriodsQueryHandler(IAppDbContext db) => _db = db;
+    public GetAcademicPeriodsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<AcademicPeriodListItemDto>> Handle(
         GetAcademicPeriodsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.AcademicPeriods.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
 
         if (req.IsCurrent.HasValue)
             q = q.Where(p => p.IsCurrent == req.IsCurrent.Value);

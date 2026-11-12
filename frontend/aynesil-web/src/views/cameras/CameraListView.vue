@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,7 +13,6 @@ import type { CameraListItemDto, CameraListQuery } from '@/types/camera.types'
 const { t } = useI18n()
 const router = useRouter()
 const cameraStore = useCameraStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive<CameraListQuery>({
@@ -22,7 +20,6 @@ const filters = reactive<CameraListQuery>({
   pageSize: 20,
   search: '',
   isActive: undefined,
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<CameraListItemDto>[] = [

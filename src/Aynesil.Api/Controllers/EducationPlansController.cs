@@ -22,7 +22,6 @@ public sealed class EducationPlansController : BaseController
     [HasPermission(Permissions.AcademicPeriods.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<AcademicPeriodListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAcademicPeriods(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] bool? isCurrent = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -33,7 +32,6 @@ public sealed class EducationPlansController : BaseController
     {
         var result = await Sender.Send(new GetAcademicPeriodsQuery
         {
-            CorporationId = corporationId,
             IsCurrent     = isCurrent,
             Page          = page,
             PageSize      = pageSize,
@@ -57,7 +55,7 @@ public sealed class EducationPlansController : BaseController
         [FromBody] CreateAcademicPeriodRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateAcademicPeriodCommand(
-            req.CorporationId, req.Name, req.StartDate, req.EndDate, req.TermId, req.IsCurrent), ct);
+            req.Name, req.StartDate, req.EndDate, req.TermId, req.IsCurrent), ct);
         return CreatedResult(result, $"/api/education-plans/academic-periods/{result.Id}");
     }
 
@@ -90,7 +88,6 @@ public sealed class EducationPlansController : BaseController
     [HasPermission(Permissions.EducationPlans.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<EducationPlanListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? academicPeriodId = null,
@@ -105,7 +102,6 @@ public sealed class EducationPlansController : BaseController
     {
         var result = await Sender.Send(new GetEducationPlansQuery
         {
-            CorporationId    = corporationId,
             StudentId        = studentId,
             CampusId         = campusId,
             AcademicPeriodId = academicPeriodId,
@@ -130,11 +126,10 @@ public sealed class EducationPlansController : BaseController
     [HasPermission(Permissions.EducationPlans.GuardianView)]
     [ProducesResponseType(typeof(ApiResponse<EducationPlanDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGuardianVisible(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid studentId,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetGuardianVisiblePlanQuery(corporationId, studentId), ct));
+            new GetGuardianVisiblePlanQuery(studentId), ct));
 
     // ── Plan CRUD ─────────────────────────────────────────────────────────────
 
@@ -145,7 +140,7 @@ public sealed class EducationPlansController : BaseController
         [FromBody] CreateEducationPlanRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateEducationPlanCommand(
-            req.CorporationId, req.StudentId, req.Title,
+            req.StudentId, req.Title,
             req.AcademicPeriodId, req.CampusId, req.PreparedBy,
             req.EffectiveFrom, req.EffectiveTo), ct);
         return CreatedResult(result, $"/api/education-plans/{result.Id}");
@@ -259,29 +254,26 @@ public sealed class EducationPlansController : BaseController
     [HasPermission(Permissions.GoalReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<StudentGoalSummaryReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> StudentGoalSummaryReport(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid studentId,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetStudentGoalSummaryReportQuery(corporationId, studentId), ct));
+            new GetStudentGoalSummaryReportQuery(studentId), ct));
 
     [HttpGet("reports/trend")]
     [HasPermission(Permissions.GoalReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<TrendReportRowDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> TrendReport(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid studentId,
         [FromQuery] DateOnly? from = null,
         [FromQuery] DateOnly? to = null,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetTrendReportQuery(corporationId, studentId, from, to), ct));
+            new GetTrendReportQuery(studentId, from, to), ct));
 }
 
 // ── Request Records ───────────────────────────────────────────────────────────
 
 public record CreateAcademicPeriodRequest(
-    Guid CorporationId,
     string Name,
     DateOnly StartDate,
     DateOnly EndDate,
@@ -296,7 +288,6 @@ public record UpdateAcademicPeriodRequest(
     int RowVersion);
 
 public record CreateEducationPlanRequest(
-    Guid CorporationId,
     Guid StudentId,
     string Title,
     Guid? AcademicPeriodId,

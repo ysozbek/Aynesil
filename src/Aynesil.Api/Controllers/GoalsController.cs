@@ -21,7 +21,6 @@ public sealed class GoalsController : BaseController
     [HasPermission(Permissions.GoalLibraries.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<GoalLibraryListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLibraries(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
@@ -31,7 +30,6 @@ public sealed class GoalsController : BaseController
     {
         var result = await Sender.Send(new GetGoalLibrariesQuery
         {
-            CorporationId = corporationId,
             Page          = page,
             PageSize      = pageSize,
             Search        = search,
@@ -54,7 +52,7 @@ public sealed class GoalsController : BaseController
         [FromBody] CreateGoalLibraryRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(
-            new CreateGoalLibraryCommand(req.CorporationId, req.Name, req.Description), ct);
+            new CreateGoalLibraryCommand(req.Name, req.Description), ct);
         return CreatedResult(result, $"/api/goals/libraries/{result.Id}");
     }
 
@@ -81,7 +79,6 @@ public sealed class GoalsController : BaseController
     [HasPermission(Permissions.GoalTemplates.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<GoalTemplateListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTemplates(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? libraryId = null,
         [FromQuery] Guid? categoryId = null,
         [FromQuery] Guid? developmentAreaId = null,
@@ -94,7 +91,6 @@ public sealed class GoalsController : BaseController
     {
         var result = await Sender.Send(new GetGoalTemplatesQuery
         {
-            CorporationId   = corporationId,
             LibraryId       = libraryId,
             CategoryId      = categoryId,
             DevelopmentAreaId = developmentAreaId,
@@ -120,7 +116,7 @@ public sealed class GoalsController : BaseController
         [FromBody] CreateGoalTemplateRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateGoalTemplateCommand(
-            req.CorporationId, req.LibraryId, req.CategoryId,
+            req.LibraryId, req.CategoryId,
             req.DevelopmentAreaId, req.Code, req.Statement, req.DefaultCriteria), ct);
         return CreatedResult(result, $"/api/goals/templates/{result.Id}");
     }
@@ -157,7 +153,6 @@ public sealed class GoalsController : BaseController
     [HasPermission(Permissions.StudentGoals.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<StudentGoalListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentGoals(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? studentId = null,
         [FromQuery] string? horizon = null,
         [FromQuery] string? status = null,
@@ -172,7 +167,6 @@ public sealed class GoalsController : BaseController
     {
         var result = await Sender.Send(new GetStudentGoalsQuery
         {
-            CorporationId   = corporationId,
             StudentId       = studentId,
             Horizon         = horizon,
             Status          = status,
@@ -200,7 +194,7 @@ public sealed class GoalsController : BaseController
         [FromBody] CreateStudentGoalRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateStudentGoalCommand(
-            req.CorporationId, req.StudentId, req.Statement, req.Horizon,
+            req.StudentId, req.Statement, req.Horizon,
             req.TemplateId, req.CategoryId, req.DevelopmentAreaId,
             req.ParentGoalId, req.MasteryCriteria, req.Baseline,
             req.TargetValue, req.StartDate, req.TargetDate), ct);
@@ -270,32 +264,29 @@ public sealed class GoalsController : BaseController
     [HasPermission(Permissions.GoalReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<StudentGoalSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentSummary(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid studentId,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetStudentGoalSummaryQuery(corporationId, studentId), ct));
+            new GetStudentGoalSummaryQuery(studentId), ct));
 
     [HttpGet("analytics/success-rates")]
     [HasPermission(Permissions.GoalReports.Read)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<GoalSuccessRateDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSuccessRates(
-        [FromQuery] Guid corporationId,
         [FromQuery] Guid? campusId = null,
         [FromQuery] DateOnly? from = null,
         [FromQuery] DateOnly? to = null,
         CancellationToken ct = default)
         => OkResult(await Sender.Send(
-            new GetGoalSuccessRatesQuery(corporationId, campusId, from, to), ct));
+            new GetGoalSuccessRatesQuery(campusId, from, to), ct));
 }
 
 // ── Request Records ───────────────────────────────────────────────────────────
 
-public record CreateGoalLibraryRequest(Guid? CorporationId, string Name, string? Description);
+public record CreateGoalLibraryRequest(string Name, string? Description);
 public record UpdateGoalLibraryRequest(string Name, string? Description, int RowVersion);
 
 public record CreateGoalTemplateRequest(
-    Guid? CorporationId,
     Guid? LibraryId,
     Guid? CategoryId,
     Guid? DevelopmentAreaId,
@@ -315,7 +306,6 @@ public record UpdateGoalTemplateRequest(
 public record SetGoalTemplateTranslationRequest(string Statement, string? DefaultCriteria);
 
 public record CreateStudentGoalRequest(
-    Guid CorporationId,
     Guid StudentId,
     string Statement,
     string Horizon,

@@ -14,7 +14,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Queries;
 /// Reads from pre-computed snapshots and kpi_value — no live aggregation.
 /// </summary>
 public record GetEducatorDashboardQuery(
-    Guid CorporationId,
     Guid EducatorId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<EducatorDashboardDto>;
@@ -23,16 +22,23 @@ public sealed class GetEducatorDashboardQueryHandler
     : IRequestHandler<GetEducatorDashboardQuery, EducatorDashboardDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetEducatorDashboardQueryHandler(IAppDbContext db) => _db = db;
+    public GetEducatorDashboardQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<EducatorDashboardDto> Handle(
         GetEducatorDashboardQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var educator = await _db.Educators
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == req.EducatorId
-                                   && e.CorporationId == req.CorporationId
+                                   && e.CorporationId == corporationId
                                    && e.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException(
                 $"Educator {req.EducatorId} not found.");
@@ -66,7 +72,7 @@ public sealed class GetEducatorDashboardQueryHandler
         var kpiValues = await (
             from kv in _db.KpiValues.AsNoTracking()
             join kd in _db.KpiDefinitions.AsNoTracking() on kv.KpiId equals kd.Id
-            where kv.CorporationId == req.CorporationId
+            where kv.CorporationId == corporationId
                && kv.SubjectType == "educator"
                && kv.SubjectId == req.EducatorId
                && kv.PeriodStart == req.PeriodStart
@@ -109,7 +115,7 @@ public sealed class GetEducatorDashboardQueryHandler
         var recentFeedback = await _db.ParentFeedbacks
             .AsNoTracking()
             .Where(pf => pf.EducatorId == req.EducatorId
-                      && pf.CorporationId == req.CorporationId
+                      && pf.CorporationId == corporationId
                       && pf.Rating.HasValue)
             .OrderByDescending(pf => pf.CreatedAt)
             .Take(10)
@@ -150,7 +156,6 @@ public sealed class GetEducatorDashboardQueryHandler
 /// top performers (top 5 by attendance rate), and all educator summaries.
 /// </summary>
 public record GetManagerDashboardQuery(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd,
     Guid? CampusId = null) : IRequest<ManagerDashboardDto>;
@@ -159,16 +164,23 @@ public sealed class GetManagerDashboardQueryHandler
     : IRequestHandler<GetManagerDashboardQuery, ManagerDashboardDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetManagerDashboardQueryHandler(IAppDbContext db) => _db = db;
+    public GetManagerDashboardQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ManagerDashboardDto> Handle(
         GetManagerDashboardQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Educators filtered optionally by campus
         var educatorIds = await (
             from e in _db.Educators.AsNoTracking()
-            where e.CorporationId == req.CorporationId
+            where e.CorporationId == corporationId
                && e.IsActive && e.DeletedAt == null
             join ec in _db.EducatorCampuses.AsNoTracking()
                 on e.Id equals ec.EducatorId into ecGrp
@@ -180,7 +192,7 @@ public sealed class GetManagerDashboardQueryHandler
         // Snapshots for the period
         var snapshots = await _db.EducatorPerformanceSnapshots
             .AsNoTracking()
-            .Where(s => s.CorporationId == req.CorporationId
+            .Where(s => s.CorporationId == corporationId
                      && s.PeriodStart == req.PeriodStart
                      && s.PeriodEnd == req.PeriodEnd
                      && educatorIds.Contains(s.EducatorId))
@@ -227,7 +239,7 @@ public sealed class GetManagerDashboardQueryHandler
         var label = FormatPeriodLabel(req.PeriodStart, req.PeriodEnd);
 
         return new ManagerDashboardDto(
-            req.CorporationId, req.CampusId,
+            corporationId, req.CampusId,
             req.PeriodStart, req.PeriodEnd, label,
             educatorIds.Count,
             snapshots.Count > 0 ? Math.Round(avgAtt!.Value, 2) : null,
@@ -255,7 +267,6 @@ public sealed class GetManagerDashboardQueryHandler
 /// (up to 12 most recent snapshots per KPI code), total session count, and top 10 performers.
 /// </summary>
 public record GetExecutiveDashboardQuery(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<ExecutiveDashboardDto>;
 
@@ -263,22 +274,29 @@ public sealed class GetExecutiveDashboardQueryHandler
     : IRequestHandler<GetExecutiveDashboardQuery, ExecutiveDashboardDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetExecutiveDashboardQueryHandler(IAppDbContext db) => _db = db;
+    public GetExecutiveDashboardQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ExecutiveDashboardDto> Handle(
         GetExecutiveDashboardQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Active educators
         var totalActiveEducators = await _db.Educators
             .AsNoTracking()
-            .CountAsync(e => e.CorporationId == req.CorporationId
+            .CountAsync(e => e.CorporationId == corporationId
                           && e.IsActive && e.DeletedAt == null, ct);
 
         // Current period snapshots
         var currentSnapshots = await _db.EducatorPerformanceSnapshots
             .AsNoTracking()
-            .Where(s => s.CorporationId == req.CorporationId
+            .Where(s => s.CorporationId == corporationId
                      && s.PeriodStart == req.PeriodStart
                      && s.PeriodEnd == req.PeriodEnd)
             .ToListAsync(ct);
@@ -301,7 +319,7 @@ public sealed class GetExecutiveDashboardQueryHandler
         var historicKpiValues = await (
             from kv in _db.KpiValues.AsNoTracking()
             join kd in _db.KpiDefinitions.AsNoTracking() on kv.KpiId equals kd.Id
-            where kv.CorporationId == req.CorporationId
+            where kv.CorporationId == corporationId
                && kv.SubjectType == "educator"
                && kv.PeriodEnd <= req.PeriodEnd
                && kd.Code.StartsWith("educator.")
@@ -333,7 +351,7 @@ public sealed class GetExecutiveDashboardQueryHandler
         // Top 10 performers by attendance rate
         var educatorNames = await _db.Educators
             .AsNoTracking()
-            .Where(e => e.CorporationId == req.CorporationId && e.DeletedAt == null)
+            .Where(e => e.CorporationId == corporationId && e.DeletedAt == null)
             .Select(e => new { e.Id, e.FirstName, e.LastName, e.TitleId, e.PrimaryCampusId })
             .ToDictionaryAsync(e => e.Id, ct);
 
@@ -355,7 +373,7 @@ public sealed class GetExecutiveDashboardQueryHandler
             .ToList();
 
         return new ExecutiveDashboardDto(
-            req.CorporationId,
+            corporationId,
             req.PeriodStart, req.PeriodEnd,
             totalActiveEducators, totalSessions,
             avgAtt, avgGoal, avgFeed, avgUtil,

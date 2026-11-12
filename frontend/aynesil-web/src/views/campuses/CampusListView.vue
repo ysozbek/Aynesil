@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useBranchStore } from '@/stores/branch.store'
-import { useCorporationStore } from '@/stores/corporation.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -15,17 +14,14 @@ import type { Column } from '@/components/shared/DataTable.vue'
 import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
-const route = useRoute()
 const router = useRouter()
 const store = useBranchStore()
-const corpStore = useCorporationStore()
 const { can } = usePermission()
 
 const query = reactive({
   page: 1,
   pageSize: 20,
   search: '',
-  corporationId: (route.query.corporationId as string) || '',
   isActive: undefined as boolean | undefined,
   sortBy: 'name',
   sortDirection: 'asc' as 'asc' | 'desc',
@@ -40,8 +36,6 @@ function onSearchInput(val: string) {
 watch(query, () => store.fetchList(query), { immediate: false })
 onMounted(async () => {
   await store.fetchList(query)
-  // Load corporation list for filter dropdown
-  if (!corpStore.list.items.length) await corpStore.fetchList({ pageSize: 200 })
 })
 
 function onSort(key: string, dir: 'asc' | 'desc') {
@@ -65,7 +59,6 @@ const showForm = ref(false)
 const editTarget = ref<CampusListItemDto | null>(null)
 
 const form = reactive({
-  corporationId: '',
   code: '',
   name: '',
   city: '',
@@ -82,7 +75,6 @@ const formErrors = reactive<Record<string, string>>({})
 function openCreate() {
   editTarget.value = null
   Object.assign(form, {
-    corporationId: query.corporationId || '',
     code: '', name: '', city: '', addressLine: '', district: '',
     phone: '', email: '', timezone: 'Europe/Istanbul', rowVersion: 0,
   })
@@ -96,7 +88,6 @@ async function openEdit(row: CampusListItemDto, e: Event) {
   if (!store.current) return
   editTarget.value = row
   Object.assign(form, {
-    corporationId: store.current.corporationId,
     code: store.current.code,
     name: store.current.name,
     city: store.current.city ?? '',
@@ -114,7 +105,6 @@ async function openEdit(row: CampusListItemDto, e: Event) {
 function validateForm(): boolean {
   Object.keys(formErrors).forEach((k) => delete formErrors[k])
   let valid = true
-  if (!form.corporationId) { formErrors.corporationId = t('validation.required', { field: t('corporation.title') }); valid = false }
   if (!form.code.trim()) { formErrors.code = t('validation.required', { field: t('campus.code') }); valid = false }
   if (!form.name.trim()) { formErrors.name = t('validation.required', { field: t('campus.name') }); valid = false }
   return valid
@@ -136,7 +126,6 @@ async function submitForm() {
       })
     } else {
       await store.create({
-        corporationId: form.corporationId,
         code: form.code,
         name: form.name,
         city: form.city || undefined,
@@ -208,12 +197,6 @@ async function doDelete() {
           class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
       </div>
 
-      <select v-model="query.corporationId" @change="query.page = 1"
-        class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
-        <option value="">{{ t('corporation.all') }}</option>
-        <option v-for="c in corpStore.list.items" :key="c.id" :value="c.id">{{ c.displayName }}</option>
-      </select>
-
       <select v-model="query.isActive" @change="query.page = 1"
         class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option :value="undefined">{{ t('common.allStatuses') }}</option>
@@ -267,16 +250,6 @@ async function doDelete() {
       @submit="submitForm" @close="showForm = false">
       <div class="space-y-4">
         <p v-if="formErrors.general" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ formErrors.general }}</p>
-
-        <div v-if="!editTarget">
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('corporation.title') }} *</label>
-          <select v-model="form.corporationId" class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 focus:ring-primary"
-            :class="formErrors.corporationId ? 'border-red-400' : 'border-border'">
-            <option value="">{{ t('common.select') }}</option>
-            <option v-for="c in corpStore.list.items" :key="c.id" :value="c.id">{{ c.displayName }}</option>
-          </select>
-          <p v-if="formErrors.corporationId" class="mt-1 text-xs text-red-600">{{ formErrors.corporationId }}</p>
-        </div>
 
         <div v-if="!editTarget">
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('campus.code') }} *</label>

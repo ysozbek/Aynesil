@@ -21,7 +21,6 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLeadStore } from '@/stores/lead.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import { studentService, guardianService } from '@/services/student.service'
@@ -33,7 +32,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useLeadStore()
-const auth = useAuthStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
@@ -109,11 +107,8 @@ async function convertTo(targetStudentId: string) {
 async function submitNew() {
   const l = lead.value
   if (!l || !validateNew()) return
-  const corporationId = auth.user?.corporationId ?? l.corporationId
-
   // Step 1: student
   const created = await studentService.createStudent({
-    corporationId,
     firstName: student.firstName.trim(),
     lastName: student.lastName.trim(),
     studentNo: null,
@@ -132,7 +127,6 @@ async function submitNew() {
     // Step 2: guardian (optional)
     if (guardian.create) {
       const g = await guardianService.createGuardian({
-        corporationId,
         firstName: guardian.firstName.trim(),
         lastName: guardian.lastName.trim(),
         nationalId: null,

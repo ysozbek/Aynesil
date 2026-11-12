@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Camps.Queries;
 
 public class GetCampsQuery : PagedQuery, IRequest<PaginatedResult<CampListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? CampusId { get; set; }
     public Guid? CampTypeId { get; set; }
     public bool? IsActive { get; set; }
@@ -19,17 +18,23 @@ public sealed class GetCampsQueryHandler
     : IRequestHandler<GetCampsQuery, PaginatedResult<CampListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCampsQueryHandler(IAppDbContext db) => _db = db;
+    public GetCampsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<CampListItemDto>> Handle(
         GetCampsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Camps.AsNoTracking()
             .Where(c => c.DeletedAt == null);
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(c => c.CorporationId == req.CorporationId.Value);
+        q = q.Where(c => c.CorporationId == corporationId);
 
         if (req.CampusId.HasValue)
             q = q.Where(c => c.CampusId == req.CampusId.Value);

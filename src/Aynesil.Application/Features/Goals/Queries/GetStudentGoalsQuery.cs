@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Goals.Queries;
 
 public class GetStudentGoalsQuery : PagedQuery, IRequest<PaginatedResult<StudentGoalListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? StudentId { get; set; }
     public string? Horizon { get; set; }
     public string? Status { get; set; }
@@ -23,10 +22,12 @@ public sealed class GetStudentGoalsQueryHandler
     : IRequestHandler<GetStudentGoalsQuery, PaginatedResult<StudentGoalListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public GetStudentGoalsQueryHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public GetStudentGoalsQueryHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -34,6 +35,8 @@ public sealed class GetStudentGoalsQueryHandler
     public async Task<PaginatedResult<StudentGoalListItemDto>> Handle(
         GetStudentGoalsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // When filtering by a specific student, apply care-team pre-filter.
         if (req.StudentId.HasValue &&
             !CareTeamFilter.HasBypass(_currentUser) &&
@@ -42,8 +45,7 @@ public sealed class GetStudentGoalsQueryHandler
 
         var q = _db.StudentGoals.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(g => g.CorporationId == req.CorporationId.Value);
+        q = q.Where(g => g.CorporationId == corporationId);
         if (req.StudentId.HasValue)
             q = q.Where(g => g.StudentId == req.StudentId.Value);
         if (req.Horizon is not null)

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGuardianStore } from '@/stores/guardian.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,14 +13,10 @@ import type { GuardianListItemDto } from '@/types/student.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGuardianStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   hasPortalAccount: undefined as boolean | undefined,
   page: 1,
   pageSize: 20,
@@ -48,7 +43,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchList({
     ...query,
-    corporationId: corporationId.value,
     hasPortalAccount: query.hasPortalAccount,
   })
 }

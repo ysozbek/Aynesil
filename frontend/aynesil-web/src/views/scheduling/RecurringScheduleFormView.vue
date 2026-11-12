@@ -2,7 +2,6 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useSchedulingStore } from '@/stores/scheduling.store'
 import { useStudentStore } from '@/stores/student.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -25,12 +24,9 @@ import type {
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useSchedulingStore()
 const studentStore = useStudentStore()
 const refData = useRefDataStore()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const sessionTypes = ref<RefValueItem[]>([])
 const campuses = ref<CampusListItemDto[]>([])
@@ -82,10 +78,10 @@ onMounted(async () => {
     campusService.list({ page: 1, pageSize: 200 }).then((res) => {
       if (res.success && res.data) campuses.value = res.data.items
     }),
-    studentStore.fetchList({ page: 1, pageSize: 200, corporationId: corporationId.value }).then(() => {
+    studentStore.fetchList({ page: 1, pageSize: 200 }).then(() => {
       students.value = studentStore.list.items
     }),
-    educatorService.listEducators({ corporationId: corporationId.value, isActive: true, page: 1, pageSize: 200 }).then((res) => {
+    educatorService.listEducators({ isActive: true, page: 1, pageSize: 200 }).then((res) => {
       if (res.success && res.data) educators.value = res.data.items
     }),
     loadRooms(),
@@ -98,7 +94,6 @@ watch(() => form.studentId, async (studentId) => {
   if (!studentId) return
   const res = await studentProgramService.listStudentPrograms({
     studentId,
-    corporationId: corporationId.value,
     status: 'active',
     page: 1,
     pageSize: 50,
@@ -149,7 +144,6 @@ watch(() => form.campusId, async () => {
 
 async function loadRooms() {
   const res = await schedulingService.listRooms({
-    corporationId: corporationId.value,
     campusId: form.campusId || undefined,
     isActive: true,
     page: 1,
@@ -185,7 +179,6 @@ async function submit() {
   if (!validate()) return
   try {
     await store.createRecurringSchedule({
-      corporationId: corporationId.value,
       campusId: form.campusId || undefined,
       studentProgramId: form.studentProgramId || undefined,
       programServiceId: form.programServiceId || undefined,

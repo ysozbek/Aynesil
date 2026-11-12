@@ -224,9 +224,9 @@ export const financeService = {
   getPromotion: (id: string) =>
     apiService.get<PromotionDto>(`/payments/promotions/${id}`),
 
-  validatePromotion: (code: string, corporationId: string) =>
+  validatePromotion: (code: string) =>
     apiService.get<ValidatePromotionResult>(
-      `/payments/promotions/validate${qs({ code, corporationId })}`
+      `/payments/promotions/validate${qs({ code })}`
     ),
 
   createPromotion: (payload: CreatePromotionPayload) =>

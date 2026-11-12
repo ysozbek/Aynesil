@@ -2,7 +2,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useEducatorStore } from '@/stores/educator.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -12,7 +11,6 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useEducatorStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
@@ -24,7 +22,6 @@ const titles = ref<RefValueItem[]>([])
 const employmentTypes = ref<RefValueItem[]>([])
 
 const form = reactive({
-  corporationId: auth.user?.corporationId ?? '',
   firstName: '',
   lastName: '',
   titleId: '',
@@ -98,7 +95,6 @@ async function submit() {
       router.push({ name: 'educator-detail', params: { id: id.value } })
     } else {
       const result = await store.create({
-        corporationId: form.corporationId,
         firstName: form.firstName,
         lastName: form.lastName,
         titleId: form.titleId || null,

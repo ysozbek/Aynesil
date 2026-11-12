@@ -10,13 +10,11 @@ namespace Aynesil.Application.Features.Camps.Commands;
 // ── AssignCampEducatorCommand ─────────────────────────────────────────────────
 
 public record AssignCampEducatorCommand(
-    Guid CorporationId,
     Guid CampId,
     Guid EducatorId,
     string Role = "lead",
     Guid? CampPeriodId = null,
-    Guid? CampActivityId = null,
-    Guid? AssignedBy = null) : IRequest<CampEducatorDto>;
+    Guid? CampActivityId = null) : IRequest<CampEducatorDto>;
 
 public class AssignCampEducatorCommandValidator : AbstractValidator<AssignCampEducatorCommand>
 {
@@ -24,7 +22,6 @@ public class AssignCampEducatorCommandValidator : AbstractValidator<AssignCampEd
 
     public AssignCampEducatorCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampId).NotEmpty();
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.Role)
@@ -37,14 +34,23 @@ public sealed class AssignCampEducatorCommandHandler
     : IRequestHandler<AssignCampEducatorCommand, CampEducatorDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public AssignCampEducatorCommandHandler(IAppDbContext db) => _db = db;
+    public AssignCampEducatorCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampEducatorDto> Handle(AssignCampEducatorCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var campExists = await _db.Camps
             .AnyAsync(c => c.Id == req.CampId
-                        && c.CorporationId == req.CorporationId
+                        && c.CorporationId == corporationId
                         && c.DeletedAt == null, ct);
         if (!campExists)
             throw new KeyNotFoundException($"Camp {req.CampId} not found.");
@@ -52,7 +58,7 @@ public sealed class AssignCampEducatorCommandHandler
         if (req.CampPeriodId.HasValue)
         {
             var periodOk = await _db.CampPeriods
-                .AnyAsync(p => p.Id == req.CampPeriodId.Value && p.CampId == req.CampId, ct);
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.CampPeriodId.Value && p.CampId == req.CampId, ct);
             if (!periodOk)
                 throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found for this camp.");
         }
@@ -60,13 +66,12 @@ public sealed class AssignCampEducatorCommandHandler
         if (req.CampActivityId.HasValue)
         {
             var activityOk = await _db.CampActivities
-                .AnyAsync(a => a.Id == req.CampActivityId.Value && a.DeletedAt == null, ct);
+                .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId.Value && a.DeletedAt == null, ct);
             if (!activityOk)
                 throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
         }
 
-        var duplicate = await _db.CampEducators.AnyAsync(e =>
-            e.CampId == req.CampId
+        var duplicate = await _db.CampEducators.AnyAsync(e => e.CorporationId == corporationId && e.CampId == req.CampId
             && e.EducatorId == req.EducatorId
             && e.CampPeriodId == req.CampPeriodId
             && e.CampActivityId == req.CampActivityId, ct);
@@ -74,8 +79,8 @@ public sealed class AssignCampEducatorCommandHandler
             throw new InvalidOperationException("Educator is already assigned at this scope.");
 
         var assignment = CampEducator.Assign(
-            req.CorporationId, req.CampId, req.EducatorId, req.Role,
-            req.CampPeriodId, req.CampActivityId, req.AssignedBy);
+            corporationId, req.CampId, req.EducatorId, req.Role,
+            req.CampPeriodId, req.CampActivityId, _currentUser.UserId);
 
         _db.CampEducators.Add(assignment);
         await _db.SaveChangesAsync(ct);

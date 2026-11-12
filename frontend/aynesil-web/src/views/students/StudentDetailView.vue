@@ -198,7 +198,6 @@ async function submitNote() {
         noteType: noteForm.noteType.trim() || null,
         body: noteForm.body.trim(),
         isConfidential: noteForm.isConfidential,
-        authoredBy: null,
       })
     }
     showNoteModal.value = false
@@ -303,7 +302,6 @@ const editDevReportTarget = ref<DevelopmentReportDto | null>(null)
 const devReportForm = reactive({
   periodLabel: '',
   reportDate: '',
-  authoredBy: '',
   content: '',
   rowVersion: 0,
 })
@@ -315,7 +313,6 @@ function openAddDevReport() {
   editDevReportTarget.value = null
   devReportForm.periodLabel = ''
   devReportForm.reportDate = ''
-  devReportForm.authoredBy = ''
   devReportForm.content = ''
   devReportForm.rowVersion = 0
   devReportError.value = ''
@@ -326,7 +323,6 @@ function openEditDevReport(r: DevelopmentReportDto) {
   editDevReportTarget.value = r
   devReportForm.periodLabel = r.periodLabel ?? ''
   devReportForm.reportDate = r.reportDate ?? ''
-  devReportForm.authoredBy = r.authoredBy ?? ''
   devReportForm.content = r.content ?? ''
   devReportForm.rowVersion = r.rowVersion
   devReportError.value = ''
@@ -339,7 +335,6 @@ async function submitDevReport() {
       await caseStore.updateDevelopmentReport(id.value, editDevReportTarget.value.id, {
         periodLabel: devReportForm.periodLabel.trim() || null,
         reportDate: devReportForm.reportDate || null,
-        authoredBy: devReportForm.authoredBy.trim() || null,
         content: devReportForm.content.trim() || null,
         fileId: null,
         rowVersion: devReportForm.rowVersion,
@@ -348,7 +343,6 @@ async function submitDevReport() {
       await caseStore.addDevelopmentReport(id.value, {
         periodLabel: devReportForm.periodLabel.trim() || null,
         reportDate: devReportForm.reportDate || null,
-        authoredBy: devReportForm.authoredBy.trim() || null,
         content: devReportForm.content.trim() || null,
         fileId: null,
       })

@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -14,7 +13,6 @@ import type { KpiDefinitionListItemDto, KpiDefinitionListQuery } from '@/types/k
 const { t } = useI18n()
 const router = useRouter()
 const kpiStore = useKpiStore()
-const authStore = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive<KpiDefinitionListQuery>({
@@ -22,7 +20,6 @@ const filters = reactive<KpiDefinitionListQuery>({
   pageSize: 20,
   search: '',
   isActive: undefined,
-  corporationId: authStore.user?.corporationId,
 })
 
 const columns: Column<KpiDefinitionListItemDto>[] = [
@@ -50,7 +47,7 @@ watch(
 )
 
 onMounted(async () => {
-  await kpiStore.fetchCategories(authStore.user?.corporationId)
+  await kpiStore.fetchCategories()
   await kpiStore.fetchDefinitions(filters)
 })
 </script>

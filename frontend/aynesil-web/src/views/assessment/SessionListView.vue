@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useAssessmentStore } from '@/stores/assessment.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -16,15 +15,11 @@ import type { AssessmentSessionListItemDto } from '@/types/assessment.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useAssessmentStore()
 const branchStore = useBranchStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   status: '',
   page: 1,
@@ -48,7 +43,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchList({
     ...query,
-    corporationId: query.corporationId || undefined,
     campusId: query.campusId || undefined,
     status: query.status || undefined,
   })

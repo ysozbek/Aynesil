@@ -5,10 +5,9 @@
  * Stage movement uses ChangeLeadStatusCommand on the backend (POST /api/leads/{id}/status).
  * Drag-and-drop (native HTML5 DnD) with optimistic UI + server sync.
  */
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useLeadStore } from '@/stores/lead.store'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useBranchStore } from '@/stores/branch.store'
@@ -19,14 +18,12 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const leadStore = useLeadStore()
 const pipelineStore = useLeadPipelineStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const stages = ref<RefValueItem[]>([])
 const campusFilter = ref('')
 
@@ -46,9 +43,8 @@ async function loadBoard() {
   loadingStages.value = true
   try {
     await Promise.all([
-      pipelineStore.fetchSummary(corporationId.value, campusFilter.value || undefined),
+      pipelineStore.fetchSummary(campusFilter.value || undefined),
       leadStore.fetchList({
-        corporationId: corporationId.value,
         campusId: campusFilter.value || undefined,
         isConverted: false,
         page: 1,

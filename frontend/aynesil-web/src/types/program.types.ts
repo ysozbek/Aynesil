@@ -119,14 +119,12 @@ export interface StudentProgramListItemDto {
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export interface ProgramListQuery extends PagedQuery {
-  corporationId?: string
   programTypeId?: string
   isActive?: boolean
 }
 
 export interface EnrollmentListQuery extends PagedQuery {
   studentId?: string
-  corporationId?: string
   campusId?: string
   statusId?: string
   isActive?: boolean
@@ -134,7 +132,6 @@ export interface EnrollmentListQuery extends PagedQuery {
 
 export interface StudentProgramListQuery extends PagedQuery {
   studentId?: string
-  corporationId?: string
   programId?: string
   campusId?: string
   status?: string
@@ -144,7 +141,6 @@ export interface StudentProgramListQuery extends PagedQuery {
 // ── Payloads ──────────────────────────────────────────────────────────────────
 
 export interface CreateProgramPayload {
-  corporationId: string
   code: string
   name: string
   programTypeId: string | null
@@ -177,7 +173,6 @@ export interface UpdateProgramServicePayload extends AddProgramServicePayload {
 }
 
 export interface CreateEnrollmentPayload {
-  corporationId: string
   studentId: string
   campusId: string | null
   statusId: string | null
@@ -196,7 +191,6 @@ export interface EndEnrollmentPayload {
 }
 
 export interface AssignStudentToProgramPayload {
-  corporationId: string
   studentId: string
   programId: string
   enrollmentId: string | null

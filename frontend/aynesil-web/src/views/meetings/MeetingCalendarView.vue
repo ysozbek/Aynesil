@@ -3,7 +3,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMeetingCalendarStore } from '@/stores/meetingCalendar.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { MeetingCalendarItemDto } from '@/types/meeting.types'
@@ -11,7 +10,6 @@ import type { MeetingCalendarItemDto } from '@/types/meeting.types'
 const { t } = useI18n()
 const router = useRouter()
 const calendarStore = useMeetingCalendarStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const viewMode = ref<'month' | 'week' | 'day'>('month')
@@ -154,7 +152,6 @@ function meetingStatusLabel(s: string) {
 
 async function loadCalendar() {
   await calendarStore.fetchCalendar({
-    corporationId: auth.user?.corporationId ?? undefined,
     from: rangeFrom.value,
     to: rangeTo.value,
   })

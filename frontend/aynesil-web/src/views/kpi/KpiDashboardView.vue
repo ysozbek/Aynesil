@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
@@ -10,7 +9,6 @@ import type { EducatorSummaryDto, RankingItemDto } from '@/types/kpi.types'
 
 const { t } = useI18n()
 const kpiStore = useKpiStore()
-const authStore = useAuthStore()
 
 const tab = ref<'manager' | 'executive' | 'ranking'>('manager')
 const periodType = ref<'Monthly' | 'Quarterly' | 'Annual'>('Monthly')
@@ -50,11 +48,11 @@ function rankClass(rank: number) {
 }
 
 async function loadDashboard() {
-  const q = { corporationId: authStore.user?.corporationId, periodType: periodType.value }
+  const q = { periodType: periodType.value }
   await Promise.all([
     kpiStore.fetchManagerDashboard(q),
     kpiStore.fetchExecutiveDashboard(q),
-    kpiStore.fetchRanking({ corporationId: authStore.user?.corporationId }),
+    kpiStore.fetchRanking({}),
   ])
 }
 

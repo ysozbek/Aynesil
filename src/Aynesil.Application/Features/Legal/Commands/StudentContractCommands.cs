@@ -10,20 +10,17 @@ namespace Aynesil.Application.Features.Legal.Commands;
 // ── GenerateStudentContractCommand ────────────────────────────────────────────
 
 public record GenerateStudentContractCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid? TemplateId,
     Guid? GuardianId,
     DateOnly? StartsOn,
-    DateOnly? EndsOn,
-    Guid? CreatedBy = null) : IRequest<StudentContractDto>;
+    DateOnly? EndsOn) : IRequest<StudentContractDto>;
 
 public class GenerateStudentContractCommandValidator
     : AbstractValidator<GenerateStudentContractCommand>
 {
     public GenerateStudentContractCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x)
             .Must(x => !(x.StartsOn.HasValue && x.EndsOn.HasValue && x.EndsOn < x.StartsOn))
@@ -35,14 +32,23 @@ public sealed class GenerateStudentContractCommandHandler
     : IRequestHandler<GenerateStudentContractCommand, StudentContractDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public GenerateStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public GenerateStudentContractCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<StudentContractDto> Handle(
         GenerateStudentContractCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var studentExists = await _db.Students
-            .AnyAsync(s => s.Id == req.StudentId && s.DeletedAt == null, ct);
+            .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId && s.DeletedAt == null, ct);
 
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
@@ -52,7 +58,7 @@ public sealed class GenerateStudentContractCommandHandler
         {
             var tpl = await _db.ContractTemplates
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == req.TemplateId.Value, ct)
+                .FirstOrDefaultAsync(t => t.CorporationId == corporationId && t.Id == req.TemplateId.Value, ct)
                 ?? throw new KeyNotFoundException($"Contract template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
@@ -63,9 +69,9 @@ public sealed class GenerateStudentContractCommandHandler
         }
 
         var contract = StudentContract.Generate(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.TemplateId, templateVersion,
-            req.GuardianId, req.StartsOn, req.EndsOn, req.CreatedBy);
+            req.GuardianId, req.StartsOn, req.EndsOn, _currentUser.UserId);
 
         _db.StudentContracts.Add(contract);
         await _db.SaveChangesAsync(ct);
@@ -107,8 +113,7 @@ public record UpdateStudentContractCommand(
     Guid? GuardianId,
     DateOnly? StartsOn,
     DateOnly? EndsOn,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateStudentContractCommandValidator
     : AbstractValidator<UpdateStudentContractCommand>
@@ -126,8 +131,13 @@ public class UpdateStudentContractCommandValidator
 public sealed class UpdateStudentContractCommandHandler : IRequestHandler<UpdateStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateStudentContractCommand req, CancellationToken ct)
     {
@@ -135,20 +145,25 @@ public sealed class UpdateStudentContractCommandHandler : IRequestHandler<Update
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.UpdateDetails(req.GuardianId, req.StartsOn, req.EndsOn, req.UpdatedBy);
+        contract.UpdateDetails(req.GuardianId, req.StartsOn, req.EndsOn, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── SendStudentContractCommand ────────────────────────────────────────────────
 
-public record SendStudentContractCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record SendStudentContractCommand(Guid Id) : IRequest;
 
 public sealed class SendStudentContractCommandHandler : IRequestHandler<SendStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public SendStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public SendStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(SendStudentContractCommand req, CancellationToken ct)
     {
@@ -156,7 +171,7 @@ public sealed class SendStudentContractCommandHandler : IRequestHandler<SendStud
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Send(req.UpdatedBy);
+        contract.Send(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -168,8 +183,7 @@ public record SignStudentContractCommand(
     string SignedByName,
     string SignatureMethod,
     string? SignatureRef,
-    Guid? SignedFileId,
-    Guid? UpdatedBy = null) : IRequest;
+    Guid? SignedFileId) : IRequest;
 
 public class SignStudentContractCommandValidator : AbstractValidator<SignStudentContractCommand>
 {
@@ -189,8 +203,13 @@ public class SignStudentContractCommandValidator : AbstractValidator<SignStudent
 public sealed class SignStudentContractCommandHandler : IRequestHandler<SignStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public SignStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public SignStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(SignStudentContractCommand req, CancellationToken ct)
     {
@@ -198,7 +217,7 @@ public sealed class SignStudentContractCommandHandler : IRequestHandler<SignStud
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Sign(req.SignedByName, req.SignatureMethod, req.SignatureRef, req.SignedFileId, req.UpdatedBy);
+        contract.Sign(req.SignedByName, req.SignatureMethod, req.SignatureRef, req.SignedFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -207,14 +226,18 @@ public sealed class SignStudentContractCommandHandler : IRequestHandler<SignStud
 
 public record ActivateStudentContractCommand(
     Guid Id,
-    Guid? SignedFileId = null,
-    Guid? UpdatedBy = null) : IRequest;
+    Guid? SignedFileId = null) : IRequest;
 
 public sealed class ActivateStudentContractCommandHandler : IRequestHandler<ActivateStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ActivateStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public ActivateStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(ActivateStudentContractCommand req, CancellationToken ct)
     {
@@ -222,20 +245,25 @@ public sealed class ActivateStudentContractCommandHandler : IRequestHandler<Acti
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Activate(req.SignedFileId, req.UpdatedBy);
+        contract.Activate(req.SignedFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── ExpireStudentContractCommand ──────────────────────────────────────────────
 
-public record ExpireStudentContractCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record ExpireStudentContractCommand(Guid Id) : IRequest;
 
 public sealed class ExpireStudentContractCommandHandler : IRequestHandler<ExpireStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ExpireStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public ExpireStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(ExpireStudentContractCommand req, CancellationToken ct)
     {
@@ -243,20 +271,25 @@ public sealed class ExpireStudentContractCommandHandler : IRequestHandler<Expire
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Expire(req.UpdatedBy);
+        contract.Expire(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── TerminateStudentContractCommand ───────────────────────────────────────────
 
-public record TerminateStudentContractCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record TerminateStudentContractCommand(Guid Id) : IRequest;
 
 public sealed class TerminateStudentContractCommandHandler : IRequestHandler<TerminateStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public TerminateStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public TerminateStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(TerminateStudentContractCommand req, CancellationToken ct)
     {
@@ -264,20 +297,25 @@ public sealed class TerminateStudentContractCommandHandler : IRequestHandler<Ter
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Terminate(req.UpdatedBy);
+        contract.Terminate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── DeleteStudentContractCommand ──────────────────────────────────────────────
 
-public record DeleteStudentContractCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteStudentContractCommand(Guid Id) : IRequest;
 
 public sealed class DeleteStudentContractCommandHandler : IRequestHandler<DeleteStudentContractCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteStudentContractCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteStudentContractCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteStudentContractCommand req, CancellationToken ct)
     {
@@ -285,7 +323,7 @@ public sealed class DeleteStudentContractCommandHandler : IRequestHandler<Delete
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
 
-        contract.Delete(req.DeletedBy);
+        contract.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

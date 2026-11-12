@@ -9,8 +9,6 @@ namespace Aynesil.Application.Features.PerformanceKpi.Queries;
 
 public class GetKpiDefinitionsQuery : PagedQuery, IRequest<PaginatedResult<KpiDefinitionListItemDto>>
 {
-    /// <summary>Filter by tenant. NULL returns platform-level KPIs only.</summary>
-    public Guid? CorporationId { get; set; }
 
     /// <summary>When true, includes platform-level KPIs (corporation_id IS NULL) alongside tenant ones.</summary>
     public bool IncludePlatform { get; set; } = true;
@@ -23,20 +21,24 @@ public sealed class GetKpiDefinitionsQueryHandler
     : IRequestHandler<GetKpiDefinitionsQuery, PaginatedResult<KpiDefinitionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetKpiDefinitionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetKpiDefinitionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<KpiDefinitionListItemDto>> Handle(
         GetKpiDefinitionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.KpiDefinitions.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-        {
-            q = req.IncludePlatform
-                ? q.Where(k => k.CorporationId == req.CorporationId || k.CorporationId == null)
-                : q.Where(k => k.CorporationId == req.CorporationId);
-        }
+        q = req.IncludePlatform
+            ? q.Where(k => k.CorporationId == corporationId || k.CorporationId == null)
+            : q.Where(k => k.CorporationId == corporationId);
 
         if (req.CategoryId.HasValue)
             q = q.Where(k => k.CategoryId == req.CategoryId.Value);
@@ -114,18 +116,25 @@ public sealed class GetKpiDefinitionQueryHandler
 
 // ── GetKpiCategoriesQuery ─────────────────────────────────────────────────────
 
-public record GetKpiCategoriesQuery(Guid? CorporationId) : IRequest<IReadOnlyList<KpiCategoryDto>>;
+public record GetKpiCategoriesQuery() : IRequest<IReadOnlyList<KpiCategoryDto>>;
 
 public sealed class GetKpiCategoriesQueryHandler
     : IRequestHandler<GetKpiCategoriesQuery, IReadOnlyList<KpiCategoryDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetKpiCategoriesQueryHandler(IAppDbContext db) => _db = db;
+    public GetKpiCategoriesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<KpiCategoryDto>> Handle(
         GetKpiCategoriesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var categoryTypeId = await _db.RefTypes
             .AsNoTracking()
             .Where(rt => rt.Code == "kpi_category")
@@ -140,7 +149,7 @@ public sealed class GetKpiCategoriesQueryHandler
             .Where(rv => rv.RefTypeId == categoryTypeId
                       && rv.IsActive
                       && rv.DeletedAt == null
-                      && (rv.CorporationId == null || rv.CorporationId == req.CorporationId))
+                      && (rv.CorporationId == null || rv.CorporationId == corporationId))
             .OrderBy(rv => rv.SortOrder)
             .ToListAsync(ct);
 

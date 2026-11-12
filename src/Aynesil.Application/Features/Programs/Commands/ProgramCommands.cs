@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Programs.Commands;
 // ── CreateProgramCommand ──────────────────────────────────────────────────────
 
 public record CreateProgramCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     Guid? ProgramTypeId,
@@ -20,7 +19,6 @@ public class CreateProgramCommandValidator : AbstractValidator<CreateProgramComm
 {
     public CreateProgramCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(300);
     }
@@ -29,13 +27,20 @@ public class CreateProgramCommandValidator : AbstractValidator<CreateProgramComm
 public sealed class CreateProgramCommandHandler : IRequestHandler<CreateProgramCommand, ProgramDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CreateProgramCommandHandler(IAppDbContext db) => _db = db;
+    public CreateProgramCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ProgramDto> Handle(CreateProgramCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var codeTaken = await _db.EducationPrograms.AnyAsync(
-            p => p.CorporationId == req.CorporationId && p.Code == req.Code, ct);
+            p => p.CorporationId == corporationId && p.Code == req.Code, ct);
         if (codeTaken)
             throw new InvalidOperationException(
                 $"Program code '{req.Code}' is already in use within this corporation.");
@@ -49,7 +54,7 @@ public sealed class CreateProgramCommandHandler : IRequestHandler<CreateProgramC
         }
 
         var program = EducationProgram.Create(
-            req.CorporationId, req.Code, req.Name, req.ProgramTypeId, req.Description);
+            corporationId, req.Code, req.Name, req.ProgramTypeId, req.Description);
 
         _db.EducationPrograms.Add(program);
         await _db.SaveChangesAsync(ct);

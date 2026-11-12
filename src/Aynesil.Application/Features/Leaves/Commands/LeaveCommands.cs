@@ -10,15 +10,13 @@ namespace Aynesil.Application.Features.Leaves.Commands;
 // ── SubmitLeaveRequestCommand ─────────────────────────────────────────────────
 
 public record SubmitLeaveRequestCommand(
-    Guid CorporationId,
     Guid EducatorId,
     Guid? LeaveTypeId,
     string Unit,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     decimal? Quantity,
-    string? Reason,
-    Guid? CreatedBy = null) : IRequest<Guid>;
+    string? Reason) : IRequest<Guid>;
 
 public class SubmitLeaveRequestCommandValidator : AbstractValidator<SubmitLeaveRequestCommand>
 {
@@ -26,7 +24,6 @@ public class SubmitLeaveRequestCommandValidator : AbstractValidator<SubmitLeaveR
 
     public SubmitLeaveRequestCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.Unit)
             .Must(u => ValidUnits.Contains(u))
@@ -44,22 +41,30 @@ public class SubmitLeaveRequestCommandValidator : AbstractValidator<SubmitLeaveR
 public sealed class SubmitLeaveRequestCommandHandler : IRequestHandler<SubmitLeaveRequestCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public SubmitLeaveRequestCommandHandler(IAppDbContext db) => _db = db;
+    public SubmitLeaveRequestCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(SubmitLeaveRequestCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var educatorExists = await _db.Educators
-            .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == req.CorporationId, ct);
+            .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == corporationId, ct);
 
         if (!educatorExists)
             throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
 
         // Application-level overlap check (DB constraint will enforce at commit, but we give a friendly message).
         var overlap = await _db.LeaveRequests
-            .AnyAsync(lr =>
-                lr.EducatorId == req.EducatorId
-                && (lr.Status == "pending" || lr.Status == "approved")
+            .AnyAsync(lr => lr.CorporationId == corporationId && (lr.EducatorId == req.EducatorId
+                && (lr.Status == "pending" || lr.Status == "approved"))
                 && lr.StartsAt < req.EndsAt
                 && lr.EndsAt > req.StartsAt, ct);
 
@@ -68,9 +73,9 @@ public sealed class SubmitLeaveRequestCommandHandler : IRequestHandler<SubmitLea
                 "A pending or approved leave request already exists for the same educator during this period.");
 
         var request = LeaveRequest.Submit(
-            req.CorporationId, req.EducatorId, req.LeaveTypeId,
+            corporationId, req.EducatorId, req.LeaveTypeId,
             req.Unit, req.StartsAt, req.EndsAt,
-            req.Quantity, req.Reason, req.CreatedBy);
+            req.Quantity, req.Reason, _currentUser.UserId);
 
         _db.LeaveRequests.Add(request);
         await _db.SaveChangesAsync(ct);
@@ -295,7 +300,6 @@ public sealed class CancelLeaveRequestCommandHandler : IRequestHandler<CancelLea
 // ── InitializeLeaveBalanceCommand ─────────────────────────────────────────────
 
 public record InitializeLeaveBalanceCommand(
-    Guid CorporationId,
     Guid EducatorId,
     Guid? LeaveTypeId,
     int PeriodYear,
@@ -308,7 +312,6 @@ public class InitializeLeaveBalanceCommandValidator : AbstractValidator<Initiali
 
     public InitializeLeaveBalanceCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.PeriodYear).InclusiveBetween(2000, 2100);
         RuleFor(x => x.Entitled).GreaterThanOrEqualTo(0);
@@ -322,14 +325,20 @@ public sealed class InitializeLeaveBalanceCommandHandler
     : IRequestHandler<InitializeLeaveBalanceCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public InitializeLeaveBalanceCommandHandler(IAppDbContext db) => _db = db;
+    public InitializeLeaveBalanceCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(InitializeLeaveBalanceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.LeaveBalances
-            .AnyAsync(b =>
-                b.EducatorId == req.EducatorId
+            .AnyAsync(b => b.CorporationId == corporationId && b.EducatorId == req.EducatorId
                 && b.LeaveTypeId == req.LeaveTypeId
                 && b.PeriodYear == req.PeriodYear, ct);
 
@@ -338,7 +347,7 @@ public sealed class InitializeLeaveBalanceCommandHandler
                 $"A leave balance for educator {req.EducatorId}, leave type {req.LeaveTypeId}, year {req.PeriodYear} already exists.");
 
         var balance = LeaveBalance.Initialize(
-            req.CorporationId, req.EducatorId, req.LeaveTypeId,
+            corporationId, req.EducatorId, req.LeaveTypeId,
             req.PeriodYear, req.Entitled, req.Unit);
 
         _db.LeaveBalances.Add(balance);
@@ -388,7 +397,6 @@ public sealed class AdjustLeaveEntitlementCommandHandler
 /// </summary>
 public record CarryForwardLeaveBalanceCommand(
     Guid EducatorId,
-    Guid CorporationId,
     Guid? LeaveTypeId,
     int FromYear,
     int ToYear,
@@ -399,7 +407,6 @@ public class CarryForwardLeaveBalanceCommandValidator : AbstractValidator<CarryF
     public CarryForwardLeaveBalanceCommandValidator()
     {
         RuleFor(x => x.EducatorId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.FromYear).InclusiveBetween(2000, 2100);
         RuleFor(x => x.ToYear).InclusiveBetween(2000, 2100)
             .GreaterThan(x => x.FromYear).WithMessage("ToYear must be greater than FromYear.");
@@ -413,14 +420,20 @@ public sealed class CarryForwardLeaveBalanceCommandHandler
     : IRequestHandler<CarryForwardLeaveBalanceCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public CarryForwardLeaveBalanceCommandHandler(IAppDbContext db) => _db = db;
+    public CarryForwardLeaveBalanceCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(CarryForwardLeaveBalanceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var source = await _db.LeaveBalances
-            .FirstOrDefaultAsync(b =>
-                b.EducatorId == req.EducatorId
+            .FirstOrDefaultAsync(b => b.CorporationId == corporationId && b.EducatorId == req.EducatorId
                 && b.LeaveTypeId == req.LeaveTypeId
                 && b.PeriodYear == req.FromYear, ct)
             ?? throw new KeyNotFoundException(
@@ -433,15 +446,14 @@ public sealed class CarryForwardLeaveBalanceCommandHandler
         if (carryAmount <= 0) return;
 
         var target = await _db.LeaveBalances
-            .FirstOrDefaultAsync(b =>
-                b.EducatorId == req.EducatorId
+            .FirstOrDefaultAsync(b => b.CorporationId == corporationId && b.EducatorId == req.EducatorId
                 && b.LeaveTypeId == req.LeaveTypeId
                 && b.PeriodYear == req.ToYear, ct);
 
         if (target == null)
         {
             target = LeaveBalance.Initialize(
-                req.CorporationId, req.EducatorId, req.LeaveTypeId,
+                corporationId, req.EducatorId, req.LeaveTypeId,
                 req.ToYear, carryAmount, source.Unit);
 
             _db.LeaveBalances.Add(target);

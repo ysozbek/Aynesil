@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.CareTeam.Commands;
 
 /// <summary>Creates a new care-team assignment for a student. Requires care_team:assign permission.</summary>
 public record AssignCareTeamMemberCommand(
-    Guid   CorporationId,
     Guid   StudentId,
     Guid   EducatorId,
     /// <summary>Must reference a ref.ref_value with ref_type = 'care_team_role'.</summary>
@@ -30,7 +29,6 @@ public sealed class AssignCareTeamMemberValidator : AbstractValidator<AssignCare
 {
     public AssignCareTeamMemberValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.RoleId).NotEmpty();
@@ -46,10 +44,12 @@ public sealed class AssignCareTeamMemberCommandHandler
     : IRequestHandler<AssignCareTeamMemberCommand, CareTeamAssignmentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public AssignCareTeamMemberCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public AssignCareTeamMemberCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
@@ -57,15 +57,17 @@ public sealed class AssignCareTeamMemberCommandHandler
     public async Task<CareTeamAssignmentDto> Handle(
         AssignCareTeamMemberCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Validate student exists within tenant
         var studentExists = await _db.Students
-            .AnyAsync(s => s.Id == req.StudentId && s.CorporationId == req.CorporationId, ct);
+            .AnyAsync(s => s.Id == req.StudentId && s.CorporationId == corporationId, ct);
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         // Validate educator exists within tenant
         var educatorExists = await _db.Educators
-            .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == req.CorporationId, ct);
+            .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == corporationId, ct);
         if (!educatorExists)
             throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
 
@@ -98,7 +100,7 @@ public sealed class AssignCareTeamMemberCommandHandler
         if (req.SourceAssignmentId.HasValue)
         {
             var sourceExists = await _db.StudentCareAssignments
-                .AnyAsync(a => a.Id == req.SourceAssignmentId.Value, ct);
+                .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.SourceAssignmentId.Value, ct);
             if (!sourceExists)
                 throw new KeyNotFoundException($"SourceAssignmentId {req.SourceAssignmentId} not found.");
         }
@@ -108,12 +110,11 @@ public sealed class AssignCareTeamMemberCommandHandler
         {
             var now = DateOnly.FromDateTime(DateTime.UtcNow);
             var existingPrimary = await _db.StudentCareAssignments
-                .AnyAsync(a =>
-                    a.StudentId == req.StudentId &&
+                .AnyAsync(a => a.CorporationId == corporationId && (a.StudentId == req.StudentId &&
                     a.IsPrimary &&
                     a.Status == "active" &&
                     a.ActiveFrom <= now &&
-                    (a.ActiveTo == null || a.ActiveTo > now), ct);
+                    (a.ActiveTo == null || a.ActiveTo > now)), ct);
 
             if (existingPrimary)
                 throw new InvalidOperationException(
@@ -123,7 +124,7 @@ public sealed class AssignCareTeamMemberCommandHandler
 
         var assignment = new StudentCareAssignment
         {
-            CorporationId      = req.CorporationId,
+            CorporationId      = corporationId,
             StudentId          = req.StudentId,
             EducatorId         = req.EducatorId,
             CampusId           = req.CampusId,

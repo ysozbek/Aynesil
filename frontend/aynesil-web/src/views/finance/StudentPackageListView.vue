@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePackageStore } from '@/stores/package.store'
 import { useStudentStore } from '@/stores/student.store'
 import { usePermission } from '@/composables/usePermission'
@@ -16,17 +15,13 @@ import type { StudentListItemDto } from '@/types/student.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = usePackageStore()
 const studentStore = useStudentStore()
 const { can } = usePermission()
 
 const students = ref<StudentListItemDto[]>([])
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   status: '',
   page: 1,
@@ -37,7 +32,7 @@ watch(() => [query.status, query.studentId, query.page], () => loadList())
 onMounted(async () => {
   await Promise.all([
     loadList(),
-    studentStore.fetchList({ page: 1, pageSize: 200, corporationId: corporationId.value }).then(() => {
+    studentStore.fetchList({ page: 1, pageSize: 200 }).then(() => {
       students.value = studentStore.list.items
     }),
   ])
@@ -46,7 +41,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchStudentPackages({
     ...query,
-    corporationId: corporationId.value,
     studentId: query.studentId || undefined,
     status: query.status || undefined,
   })

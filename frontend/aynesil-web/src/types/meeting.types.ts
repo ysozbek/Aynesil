@@ -94,7 +94,6 @@ export interface MeetingCalendarItemDto {
 // ── Query Types ────────────────────────────────────────────────────────────────
 
 export interface MeetingListQuery extends PagedQuery {
-  corporationId?: string
   campusId?: string
   meetingTypeId?: string
   status?: string
@@ -106,7 +105,6 @@ export interface MeetingListQuery extends PagedQuery {
 }
 
 export interface MeetingCalendarQuery {
-  corporationId?: string
   campusId?: string
   from?: string
   to?: string
@@ -123,7 +121,6 @@ export interface ParticipantInput {
 }
 
 export interface ScheduleMeetingPayload {
-  corporationId: string
   campusId?: string
   meetingTypeId?: string
   title: string

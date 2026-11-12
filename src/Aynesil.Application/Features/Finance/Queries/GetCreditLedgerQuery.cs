@@ -11,7 +11,6 @@ public class GetCreditLedgerQuery : PagedQuery, IRequest<PaginatedResult<CreditL
 {
     public Guid? StudentPackageId { get; set; }
     public Guid? StudentId { get; set; }
-    public Guid? CorporationId { get; set; }
     public string? EntryType { get; set; }
     public DateTimeOffset? From { get; set; }
     public DateTimeOffset? To { get; set; }
@@ -21,16 +20,23 @@ public sealed class GetCreditLedgerQueryHandler
     : IRequestHandler<GetCreditLedgerQuery, PaginatedResult<CreditLedgerEntryDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCreditLedgerQueryHandler(IAppDbContext db) => _db = db;
+    public GetCreditLedgerQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<CreditLedgerEntryDto>> Handle(
         GetCreditLedgerQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.CreditLedgerEntries.AsNoTracking();
 
         if (req.StudentPackageId.HasValue) q = q.Where(e => e.StudentPackageId == req.StudentPackageId.Value);
-        if (req.CorporationId.HasValue)    q = q.Where(e => e.CorporationId == req.CorporationId.Value);
+        q = q.Where(e => e.CorporationId == corporationId);
         if (req.EntryType is not null)     q = q.Where(e => e.EntryType == req.EntryType);
         if (req.From.HasValue)             q = q.Where(e => e.OccurredAt >= req.From.Value);
         if (req.To.HasValue)               q = q.Where(e => e.OccurredAt <= req.To.Value);
@@ -71,20 +77,27 @@ public sealed class GetCreditLedgerQueryHandler
 
 // ── GetCreditSummaryQuery ─────────────────────────────────────────────────────
 
-public record GetCreditSummaryQuery(Guid StudentId, Guid? CorporationId = null)
+public record GetCreditSummaryQuery(Guid StudentId)
     : IRequest<CreditSummaryDto>;
 
 public sealed class GetCreditSummaryQueryHandler
     : IRequestHandler<GetCreditSummaryQuery, CreditSummaryDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCreditSummaryQueryHandler(IAppDbContext db) => _db = db;
+    public GetCreditSummaryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CreditSummaryDto> Handle(GetCreditSummaryQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var student = await _db.Students.AsNoTracking()
-            .Where(s => s.Id == req.StudentId)
+            .Where(s => s.Id == req.StudentId && s.CorporationId == corporationId)
             .Select(s => new { s.FirstName, s.LastName })
             .FirstOrDefaultAsync(ct)
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");

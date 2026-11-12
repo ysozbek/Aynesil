@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useCreditLedgerStore } from '@/stores/creditLedger.store'
 import { usePermission } from '@/composables/usePermission'
 import { financeService } from '@/services/finance.service'
@@ -15,18 +14,14 @@ import type { CreditLedgerEntryDto, StudentPackageListItemDto } from '@/types/fi
 
 const { t } = useI18n()
 const route = useRoute()
-const auth = useAuthStore()
 const store = useCreditLedgerStore()
 const { can } = usePermission()
-
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
 const studentPackages = ref<StudentPackageListItemDto[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   studentId: '',
   entryType: '',
   from: '',
@@ -45,7 +40,7 @@ async function loadData() {
   if (!loadedStudentId.value) return
   await Promise.all([
     store.fetchCreditSummary(loadedStudentId.value),
-    store.fetchCredits({ ...query, corporationId: corporationId.value, studentId: loadedStudentId.value }),
+    store.fetchCredits({ ...query, studentId: loadedStudentId.value }),
   ])
 }
 
@@ -53,7 +48,6 @@ async function loadStudentPackages() {
   studentPackages.value = []
   if (!loadedStudentId.value) return
   const res = await financeService.listStudentPackages({
-    corporationId: corporationId.value,
     studentId: loadedStudentId.value,
     status: 'active',
     page: 1,

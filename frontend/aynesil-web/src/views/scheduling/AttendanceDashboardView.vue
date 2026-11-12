@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAttendanceStore } from '@/stores/attendance.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
@@ -12,24 +11,21 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const store = useAttendanceStore()
-const auth = useAuthStore()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const studentIdInput = ref(typeof route.query.studentId === 'string' ? route.query.studentId : '')
 const loadedStudentId = ref('')
 
 watch(studentIdInput, () => loadStudentData(), { immediate: true })
 
 async function loadStudentData() {
-  if (!studentIdInput.value || !corporationId.value) {
+  if (!studentIdInput.value) {
     loadedStudentId.value = ''
     return
   }
   loadedStudentId.value = studentIdInput.value
-  // Both backend endpoints require corporationId (see SchedulingController.cs).
   await Promise.all([
-    store.fetchAttendanceSummary(loadedStudentId.value, corporationId.value),
-    store.fetchStudentAttendance(loadedStudentId.value, corporationId.value, { page: 1, pageSize: 20 }),
+    store.fetchAttendanceSummary(loadedStudentId.value),
+    store.fetchStudentAttendance(loadedStudentId.value, { page: 1, pageSize: 20 }),
   ])
 }
 
@@ -134,8 +130,8 @@ function statusColor(status: string): string {
             :total-pages="store.studentAttendance.totalPages"
             :has-previous-page="store.studentAttendance.hasPreviousPage"
             :has-next-page="store.studentAttendance.hasNextPage"
-            @update:page="(p) => store.fetchStudentAttendance(loadedStudentId, corporationId, { page: p, pageSize: 20 })"
-            @update:page-size="(s) => store.fetchStudentAttendance(loadedStudentId, corporationId, { page: 1, pageSize: s })"
+            @update:page="(p) => store.fetchStudentAttendance(loadedStudentId, { page: p, pageSize: 20 })"
+            @update:page-size="(s) => store.fetchStudentAttendance(loadedStudentId, { page: 1, pageSize: s })"
           />
         </div>
       </div>

@@ -8,7 +8,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 // ── GetRevenueReportQuery ─────────────────────────────────────────────────────
 
 public record GetRevenueReportQuery(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<RevenueReportDto>;
 
@@ -16,17 +15,24 @@ public sealed class GetRevenueReportQueryHandler
     : IRequestHandler<GetRevenueReportQuery, RevenueReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetRevenueReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetRevenueReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<RevenueReportDto> Handle(GetRevenueReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var fromUtc = req.PeriodStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var toUtc   = req.PeriodEnd.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
         var payments = await _db.Payments.AsNoTracking()
             .Where(p =>
-                p.CorporationId == req.CorporationId &&
+                p.CorporationId == corporationId &&
                 p.Status == "captured" &&
                 p.PaidAt >= fromUtc && p.PaidAt <= toUtc)
             .Select(p => new { p.Amount, p.PaymentMethodId })
@@ -34,7 +40,7 @@ public sealed class GetRevenueReportQueryHandler
 
         var refunds = await _db.Refunds.AsNoTracking()
             .Where(r =>
-                r.CorporationId == req.CorporationId &&
+                r.CorporationId == corporationId &&
                 r.Status == "processed" &&
                 r.ProcessedAt >= fromUtc && r.ProcessedAt <= toUtc)
             .Select(r => r.Amount)
@@ -63,19 +69,26 @@ public sealed class GetRevenueReportQueryHandler
 
 // ── GetPackageReportQuery ─────────────────────────────────────────────────────
 
-public record GetPackageReportQuery(Guid CorporationId) : IRequest<PackageReportDto>;
+public record GetPackageReportQuery() : IRequest<PackageReportDto>;
 
 public sealed class GetPackageReportQueryHandler
     : IRequestHandler<GetPackageReportQuery, PackageReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPackageReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetPackageReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PackageReportDto> Handle(GetPackageReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var packages = await _db.StudentPackages.AsNoTracking()
-            .Where(p => p.CorporationId == req.CorporationId)
+            .Where(p => p.CorporationId == corporationId)
             .Select(p => new
             {
                 p.Id,
@@ -113,7 +126,7 @@ public sealed class GetPackageReportQueryHandler
             .ToList();
 
         return new PackageReportDto(
-            CorporationId:       req.CorporationId,
+            CorporationId:       corporationId,
             TotalActive:         packages.Count(p => p.Status == "active"),
             TotalExhausted:      packages.Count(p => p.Status == "exhausted"),
             TotalExpired:        packages.Count(p => p.Status == "expired"),
@@ -129,7 +142,6 @@ public sealed class GetPackageReportQueryHandler
 // ── GetCreditUsageReportQuery ─────────────────────────────────────────────────
 
 public record GetCreditUsageReportQuery(
-    Guid CorporationId,
     DateOnly PeriodStart,
     DateOnly PeriodEnd) : IRequest<CreditUsageReportDto>;
 
@@ -137,18 +149,25 @@ public sealed class GetCreditUsageReportQueryHandler
     : IRequestHandler<GetCreditUsageReportQuery, CreditUsageReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCreditUsageReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetCreditUsageReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CreditUsageReportDto> Handle(
         GetCreditUsageReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var fromUtc = req.PeriodStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var toUtc   = req.PeriodEnd.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
         var entries = await _db.CreditLedgerEntries.AsNoTracking()
             .Where(e =>
-                e.CorporationId == req.CorporationId &&
+                e.CorporationId == corporationId &&
                 e.OccurredAt >= fromUtc && e.OccurredAt <= toUtc)
             .ToListAsync(ct);
 

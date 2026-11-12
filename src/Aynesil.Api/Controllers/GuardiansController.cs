@@ -21,7 +21,6 @@ public sealed class GuardiansController : BaseController
     [HasPermission(Permissions.Guardians.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<GuardianListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] bool? hasPortalAccount = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -32,7 +31,6 @@ public sealed class GuardiansController : BaseController
     {
         var result = await Sender.Send(new GetGuardiansQuery
         {
-            CorporationId    = corporationId,
             HasPortalAccount = hasPortalAccount,
             Page             = page,
             PageSize         = pageSize,
@@ -62,7 +60,7 @@ public sealed class GuardiansController : BaseController
     public async Task<IActionResult> Create([FromBody] CreateGuardianRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateGuardianCommand(
-            req.CorporationId, req.FirstName, req.LastName,
+            req.FirstName, req.LastName,
             req.NationalId, req.Email, req.Phone, req.Occupation, req.AddressLine), ct);
         return CreatedResult(result, $"/api/guardians/{result.Id}");
     }
@@ -141,7 +139,6 @@ public sealed class GuardiansController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateGuardianRequest(
-    Guid CorporationId,
     string FirstName,
     string LastName,
     string? NationalId,

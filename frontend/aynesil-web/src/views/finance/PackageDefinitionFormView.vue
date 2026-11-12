@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePackageStore } from '@/stores/package.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -11,13 +10,11 @@ import type { RefValueItem } from '@/stores/refdata.store'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const store = usePackageStore()
 const refData = useRefDataStore()
 
 const packageId = route.params.id as string | undefined
 const isEdit = !!packageId
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 
 const packageTypes = ref<RefValueItem[]>([])
 
@@ -81,7 +78,6 @@ async function submit() {
       router.push({ name: 'package-detail', params: { id: packageId } })
     } else {
       const created = await store.createDefinition({
-        corporationId: corporationId.value,
         code: form.code,
         name: form.name,
         packageTypeId: form.packageTypeId,

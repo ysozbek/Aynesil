@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Consultancy.Queries;
 public class GetConsultancyReportsQuery
     : PagedQuery, IRequest<PaginatedResult<ConsultancyReportListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? ConsultancyPlanId { get; set; }
     public Guid? SchoolVisitId { get; set; }
 }
@@ -19,16 +18,22 @@ public sealed class GetConsultancyReportsQueryHandler
     : IRequestHandler<GetConsultancyReportsQuery, PaginatedResult<ConsultancyReportListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsultancyReportsQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsultancyReportsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<ConsultancyReportListItemDto>> Handle(
         GetConsultancyReportsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ConsultancyReports.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            q = q.Where(r => r.CorporationId == req.CorporationId.Value);
+        q = q.Where(r => r.CorporationId == corporationId);
         if (req.ConsultancyPlanId.HasValue)
             q = q.Where(r => r.ConsultancyPlanId == req.ConsultancyPlanId.Value);
         if (req.SchoolVisitId.HasValue)
@@ -113,7 +118,6 @@ public sealed class GetConsultancyReportQueryHandler
 /// </summary>
 public class GetInstitutionReportQuery : IRequest<IReadOnlyList<InstitutionReportDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? InstitutionTypeId { get; set; }
 }
 
@@ -121,14 +125,21 @@ public sealed class GetInstitutionReportQueryHandler
     : IRequestHandler<GetInstitutionReportQuery, IReadOnlyList<InstitutionReportDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetInstitutionReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetInstitutionReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<InstitutionReportDto>> Handle(
         GetInstitutionReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Institutions.AsNoTracking()
-            .Where(i => i.CorporationId == req.CorporationId && i.DeletedAt == null);
+            .Where(i => i.CorporationId == corporationId && i.DeletedAt == null);
 
         if (req.InstitutionTypeId.HasValue)
             q = q.Where(i => i.InstitutionTypeId == req.InstitutionTypeId.Value);
@@ -161,7 +172,6 @@ public sealed class GetInstitutionReportQueryHandler
 /// </summary>
 public class GetConsultancyOutcomesQuery : IRequest<IReadOnlyList<ConsultancyOutcomesDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? Status { get; set; }
 }
@@ -170,14 +180,21 @@ public sealed class GetConsultancyOutcomesQueryHandler
     : IRequestHandler<GetConsultancyOutcomesQuery, IReadOnlyList<ConsultancyOutcomesDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsultancyOutcomesQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsultancyOutcomesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<ConsultancyOutcomesDto>> Handle(
         GetConsultancyOutcomesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.ConsultancyPlans.AsNoTracking()
-            .Where(p => p.CorporationId == req.CorporationId);
+            .Where(p => p.CorporationId == corporationId);
 
         if (req.InstitutionId.HasValue)
             q = q.Where(p => p.InstitutionId == req.InstitutionId.Value);
@@ -214,7 +231,6 @@ public sealed class GetConsultancyOutcomesQueryHandler
 /// </summary>
 public class GetVisitHistoryQuery : IRequest<IReadOnlyList<VisitHistoryItemDto>>
 {
-    public Guid CorporationId { get; set; }
     public Guid? InstitutionId { get; set; }
     public DateOnly? DateFrom { get; set; }
     public DateOnly? DateTo { get; set; }
@@ -224,14 +240,21 @@ public sealed class GetVisitHistoryQueryHandler
     : IRequestHandler<GetVisitHistoryQuery, IReadOnlyList<VisitHistoryItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetVisitHistoryQueryHandler(IAppDbContext db) => _db = db;
+    public GetVisitHistoryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<VisitHistoryItemDto>> Handle(
         GetVisitHistoryQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.SchoolVisits.AsNoTracking()
-            .Where(v => v.CorporationId == req.CorporationId);
+            .Where(v => v.CorporationId == corporationId);
 
         if (req.InstitutionId.HasValue)
             q = q.Where(v => v.InstitutionId == req.InstitutionId.Value);

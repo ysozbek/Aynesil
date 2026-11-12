@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Educators.Commands;
 // ── CreateEducatorCommand ─────────────────────────────────────────────────────
 
 public record CreateEducatorCommand(
-    Guid CorporationId,
     string FirstName,
     string LastName,
     Guid? TitleId,
@@ -24,7 +23,6 @@ public class CreateEducatorCommandValidator : AbstractValidator<CreateEducatorCo
 {
     public CreateEducatorCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Email).EmailAddress().When(x => x.Email is not null);
@@ -37,16 +35,20 @@ public class CreateEducatorCommandValidator : AbstractValidator<CreateEducatorCo
 public sealed class CreateEducatorCommandHandler : IRequestHandler<CreateEducatorCommand, EducatorDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateEducatorCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateEducatorCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<EducatorDto> Handle(CreateEducatorCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         if (req.TitleId.HasValue)
         {
             var valid = await _db.RefValues.AnyAsync(
@@ -56,7 +58,7 @@ public sealed class CreateEducatorCommandHandler : IRequestHandler<CreateEducato
         }
 
         var educator = Educator.Create(
-            req.CorporationId, req.FirstName, req.LastName,
+            corporationId, req.FirstName, req.LastName,
             req.TitleId, req.Email, req.Phone,
             req.EmploymentType, req.HireDate, req.PrimaryCampusId,
             _currentUser.UserId);

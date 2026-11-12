@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Leads.Queries;
 /// broken down by lead source. Used by the CRM analytics screen.
 /// </summary>
 public record GetConversionReportQuery(
-    Guid CorporationId,
     DateTimeOffset From,
     DateTimeOffset To,
     Guid? CampusId) : IRequest<ConversionReportDto>;
@@ -21,13 +20,20 @@ public sealed class GetConversionReportQueryHandler
     : IRequestHandler<GetConversionReportQuery, ConversionReportDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConversionReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetConversionReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConversionReportDto> Handle(GetConversionReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var leadsQuery = _db.Leads
-            .Where(l => l.CorporationId == req.CorporationId
+            .Where(l => l.CorporationId == corporationId
                      && l.CreatedAt >= req.From
                      && l.CreatedAt <= req.To);
 

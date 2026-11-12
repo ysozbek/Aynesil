@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Meetings.Commands;
 // ── ScheduleMeetingCommand ────────────────────────────────────────────────────
 
 public record ScheduleMeetingCommand(
-    Guid CorporationId,
     string Title,
     Guid? MeetingTypeId,
     DateTimeOffset? ScheduledAt,
@@ -19,8 +18,7 @@ public record ScheduleMeetingCommand(
     Guid? RoomId,
     Guid? CampusId,
     Guid? OrganizerId,
-    IReadOnlyList<ParticipantInput>? Participants,
-    Guid? CreatedBy = null) : IRequest<Guid>;
+    IReadOnlyList<ParticipantInput>? Participants) : IRequest<Guid>;
 
 public record ParticipantInput(
     string ParticipantType,
@@ -39,7 +37,6 @@ public class ScheduleMeetingCommandValidator : AbstractValidator<ScheduleMeeting
 
     public ScheduleMeetingCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.EndsAt)
             .Must((cmd, endsAt) => endsAt == null || cmd.ScheduledAt == null || endsAt > cmd.ScheduledAt)
@@ -59,15 +56,24 @@ public class ScheduleMeetingCommandValidator : AbstractValidator<ScheduleMeeting
 public sealed class ScheduleMeetingCommandHandler : IRequestHandler<ScheduleMeetingCommand, Guid>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public ScheduleMeetingCommandHandler(IAppDbContext db) => _db = db;
+    public ScheduleMeetingCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<Guid> Handle(ScheduleMeetingCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var meeting = Meeting.Create(
-            req.CorporationId, req.Title, req.MeetingTypeId,
+            corporationId, req.Title, req.MeetingTypeId,
             req.ScheduledAt, req.EndsAt, req.Location,
-            req.RoomId, req.CampusId, req.OrganizerId, req.CreatedBy);
+            req.RoomId, req.CampusId, req.OrganizerId, _currentUser.UserId);
 
         _db.Meetings.Add(meeting);
 
@@ -76,7 +82,7 @@ public sealed class ScheduleMeetingCommandHandler : IRequestHandler<ScheduleMeet
             foreach (var p in req.Participants)
             {
                 _db.MeetingParticipants.Add(MeetingParticipant.Create(
-                    req.CorporationId, meeting.Id,
+                    corporationId, meeting.Id,
                     p.ParticipantType, p.UserId, p.GuardianId,
                     p.LeadId, p.ExternalName, p.Attendance));
             }
@@ -197,9 +203,9 @@ public sealed class DeleteMeetingCommandHandler : IRequestHandler<DeleteMeetingC
 
 // ── AddMeetingParticipantCommand ──────────────────────────────────────────────
 
+/// <summary>CorporationId is taken from the request context (JWT), never from the client.</summary>
 public record AddMeetingParticipantCommand(
     Guid MeetingId,
-    Guid CorporationId,
     string ParticipantType,
     Guid? UserId,
     Guid? GuardianId,
@@ -218,7 +224,6 @@ public class AddMeetingParticipantCommandValidator
     public AddMeetingParticipantCommandValidator()
     {
         RuleFor(x => x.MeetingId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.ParticipantType)
             .Must(t => ValidTypes.Contains(t))
             .WithMessage("Invalid participant_type. Must be: user, guardian, lead, external.");
@@ -236,20 +241,27 @@ public sealed class AddMeetingParticipantCommandHandler
     : IRequestHandler<AddMeetingParticipantCommand, MeetingParticipantDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AddMeetingParticipantCommandHandler(IAppDbContext db) => _db = db;
+    public AddMeetingParticipantCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<MeetingParticipantDto> Handle(
         AddMeetingParticipantCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var meetingExists = await _db.Meetings
-            .AnyAsync(m => m.Id == req.MeetingId, ct);
+            .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
             throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
 
         var participant = MeetingParticipant.Create(
-            req.CorporationId, req.MeetingId, req.ParticipantType,
+            corporationId, req.MeetingId, req.ParticipantType,
             req.UserId, req.GuardianId, req.LeadId,
             req.ExternalName, req.Attendance);
 
@@ -322,12 +334,13 @@ public sealed class RemoveMeetingParticipantCommandHandler
 
 // ── RecordMeetingOutcomeCommand ───────────────────────────────────────────────
 
+/// <summary>
+/// CorporationId and CreatedBy are taken from the request context (JWT), never from the client.
+/// </summary>
 public record RecordMeetingOutcomeCommand(
     Guid MeetingId,
-    Guid CorporationId,
     string? Summary,
-    string? Decisions,
-    Guid? CreatedBy = null) : IRequest<MeetingOutcomeDto>;
+    string? Decisions) : IRequest<MeetingOutcomeDto>;
 
 public class RecordMeetingOutcomeCommandValidator
     : AbstractValidator<RecordMeetingOutcomeCommand>
@@ -335,7 +348,6 @@ public class RecordMeetingOutcomeCommandValidator
     public RecordMeetingOutcomeCommandValidator()
     {
         RuleFor(x => x.MeetingId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Summary) || !string.IsNullOrWhiteSpace(x.Decisions))
             .WithMessage("At least a summary or decisions must be provided.");
@@ -346,21 +358,31 @@ public sealed class RecordMeetingOutcomeCommandHandler
     : IRequestHandler<RecordMeetingOutcomeCommand, MeetingOutcomeDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly ICurrentUserService _currentUser;
 
-    public RecordMeetingOutcomeCommandHandler(IAppDbContext db) => _db = db;
+    public RecordMeetingOutcomeCommandHandler(
+        IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _tenant = tenant;
+        _currentUser = currentUser;
+    }
 
     public async Task<MeetingOutcomeDto> Handle(
         RecordMeetingOutcomeCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var meetingExists = await _db.Meetings
-            .AnyAsync(m => m.Id == req.MeetingId, ct);
+            .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
             throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
 
         var outcome = MeetingOutcome.Create(
-            req.CorporationId, req.MeetingId,
-            req.Summary, req.Decisions, req.CreatedBy);
+            corporationId, req.MeetingId,
+            req.Summary, req.Decisions, _currentUser.UserId);
 
         _db.MeetingOutcomes.Add(outcome);
         await _db.SaveChangesAsync(ct);
@@ -411,9 +433,12 @@ public sealed class UpdateMeetingOutcomeCommandHandler
 
 // ── AddMeetingFollowUpCommand ─────────────────────────────────────────────────
 
+/// <summary>
+/// CorporationId is taken from the request context (JWT). AssigneeId is the responsible
+/// person chosen by the client (not the actor) and stays in the payload.
+/// </summary>
 public record AddMeetingFollowUpCommand(
     Guid MeetingId,
-    Guid CorporationId,
     string Action,
     Guid? AssigneeId,
     DateOnly? DueDate) : IRequest<MeetingFollowUpDto>;
@@ -424,7 +449,6 @@ public class AddMeetingFollowUpCommandValidator
     public AddMeetingFollowUpCommandValidator()
     {
         RuleFor(x => x.MeetingId).NotEmpty();
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Action).NotEmpty().MaximumLength(1000);
     }
 }
@@ -433,20 +457,27 @@ public sealed class AddMeetingFollowUpCommandHandler
     : IRequestHandler<AddMeetingFollowUpCommand, MeetingFollowUpDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AddMeetingFollowUpCommandHandler(IAppDbContext db) => _db = db;
+    public AddMeetingFollowUpCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<MeetingFollowUpDto> Handle(
         AddMeetingFollowUpCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var meetingExists = await _db.Meetings
-            .AnyAsync(m => m.Id == req.MeetingId, ct);
+            .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
             throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
 
         var followUp = MeetingFollowUp.Create(
-            req.CorporationId, req.MeetingId,
+            corporationId, req.MeetingId,
             req.Action, req.AssigneeId, req.DueDate);
 
         _db.MeetingFollowUps.Add(followUp);

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
 import { useConsentStore } from '@/stores/consent.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
@@ -12,7 +11,6 @@ const { t } = useI18n()
 const router = useRouter()
 const contractStore = useContractStore()
 const consentStore = useConsentStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const pendingSignatures = computed(() =>
@@ -62,10 +60,9 @@ function consentStateLabel(s: string) {
 }
 
 onMounted(async () => {
-  const corp = auth.user?.corporationId
   await Promise.all([
-    contractStore.fetchContracts({ corporationId: corp, pageSize: 20 }),
-    consentStore.fetchConsents({ corporationId: corp, pageSize: 20 }),
+    contractStore.fetchContracts({ pageSize: 20 }),
+    consentStore.fetchConsents({ pageSize: 20 }),
   ])
 })
 </script>

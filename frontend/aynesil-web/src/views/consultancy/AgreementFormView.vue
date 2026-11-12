@@ -3,7 +3,6 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 
@@ -11,7 +10,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const authStore = useAuthStore()
 const refDataStore = useRefDataStore()
 
 const isEdit = computed(() => !!route.params.id)
@@ -64,7 +62,6 @@ async function handleSubmit() {
       router.push(`/consultancy/agreements/${id}`)
     } else {
       const result = await store.createAgreement({
-        corporationId: authStore.user?.corporationId ?? '',
         consultancyPlanId: form.consultancyPlanId,
         institutionId: form.institutionId,
         agreementTypeId: form.agreementTypeId || undefined,

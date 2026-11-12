@@ -65,7 +65,6 @@ public sealed class CareTeamController : BaseController
         CancellationToken ct = default)
     {
         var command = new AssignCareTeamMemberCommand(
-            CorporationId:      body.CorporationId,
             StudentId:          studentId,
             EducatorId:         body.EducatorId,
             RoleId:             body.RoleId,
@@ -142,7 +141,6 @@ public sealed class CareTeamController : BaseController
     // ── Request body records ─────────────────────────────────────────────────
 
     public record AssignRequest(
-        Guid     CorporationId,
         Guid     EducatorId,
         Guid     RoleId,
         bool     IsPrimary,

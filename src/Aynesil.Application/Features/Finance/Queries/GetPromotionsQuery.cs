@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetPromotionsQuery : PagedQuery, IRequest<PaginatedResult<PromotionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public bool? IsActive { get; set; }
     public bool? ValidToday { get; set; }
 }
@@ -18,15 +17,22 @@ public sealed class GetPromotionsQueryHandler
     : IRequestHandler<GetPromotionsQuery, PaginatedResult<PromotionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPromotionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetPromotionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<PromotionListItemDto>> Handle(
         GetPromotionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.Promotions.AsNoTracking();
 
-        if (req.CorporationId.HasValue) q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.IsActive.HasValue)      q = q.Where(p => p.IsActive == req.IsActive.Value);
 
         if (req.ValidToday == true)
@@ -88,23 +94,30 @@ public sealed class GetPromotionQueryHandler : IRequestHandler<GetPromotionQuery
 
 // ── ValidatePromotionCodeQuery ────────────────────────────────────────────────
 
-public record ValidatePromotionCodeQuery(Guid CorporationId, string Code)
+public record ValidatePromotionCodeQuery( string Code)
     : IRequest<PromotionDto?>;
 
 public sealed class ValidatePromotionCodeQueryHandler
     : IRequestHandler<ValidatePromotionCodeQuery, PromotionDto?>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public ValidatePromotionCodeQueryHandler(IAppDbContext db) => _db = db;
+    public ValidatePromotionCodeQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PromotionDto?> Handle(ValidatePromotionCodeQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var p = await _db.Promotions.AsNoTracking()
             .FirstOrDefaultAsync(x =>
-                x.CorporationId == req.CorporationId &&
+                x.CorporationId == corporationId &&
                 x.Code == req.Code &&
                 x.IsActive &&
                 (x.ValidFrom == null || x.ValidFrom <= today) &&

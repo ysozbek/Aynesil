@@ -11,7 +11,6 @@ namespace Aynesil.Application.Features.Notifications.Queries;
 public class GetNotificationTemplatesQuery
     : PagedQuery, IRequest<PaginatedResult<NotificationTemplateListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public bool? IsActive { get; set; }
     public Guid? CategoryId { get; set; }
     public Guid? TypeId { get; set; }
@@ -21,17 +20,23 @@ public sealed class GetNotificationTemplatesQueryHandler
     : IRequestHandler<GetNotificationTemplatesQuery, PaginatedResult<NotificationTemplateListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetNotificationTemplatesQueryHandler(IAppDbContext db) => _db = db;
+    public GetNotificationTemplatesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<NotificationTemplateListItemDto>> Handle(
         GetNotificationTemplatesQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         // Filter/sort on entity first — EF cannot translate Where/OrderBy on DTO projection.
         var templates = _db.NotificationTemplates.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            templates = templates.Where(t => t.CorporationId == req.CorporationId.Value || t.CorporationId == null);
+        templates = templates.Where(t => t.CorporationId == corporationId || t.CorporationId == null);
 
         if (req.IsActive.HasValue)
             templates = templates.Where(t => t.IsActive == req.IsActive.Value);
@@ -121,7 +126,6 @@ public sealed class GetNotificationTemplateQueryHandler
 public class GetTriggerConfigsQuery
     : PagedQuery, IRequest<PaginatedResult<NotificationTriggerConfigListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public bool? IsActive { get; set; }
 }
 
@@ -129,12 +133,19 @@ public sealed class GetTriggerConfigsQueryHandler
     : IRequestHandler<GetTriggerConfigsQuery, PaginatedResult<NotificationTriggerConfigListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetTriggerConfigsQueryHandler(IAppDbContext db) => _db = db;
+    public GetTriggerConfigsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<NotificationTriggerConfigListItemDto>> Handle(
         GetTriggerConfigsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query =
             from cfg in _db.NotificationTriggerConfigs.AsNoTracking()
             join tmpl in _db.NotificationTemplates.AsNoTracking()
@@ -146,8 +157,7 @@ public sealed class GetTriggerConfigsQueryHandler
                 cfg.OffsetMinutes, cfg.IsActive,
                 cfg.Channels.Count);
 
-        if (req.CorporationId.HasValue)
-            query = query.Where(x => x.CorporationId == req.CorporationId.Value || x.CorporationId == null);
+        query = query.Where(x => x.CorporationId == corporationId || x.CorporationId == null);
 
         if (req.IsActive.HasValue)
             query = query.Where(x => x.IsActive == req.IsActive.Value);

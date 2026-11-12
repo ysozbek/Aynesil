@@ -9,8 +9,8 @@ namespace Aynesil.Application.Features.Camps.Commands;
 
 // ── EnrollStudentCommand ──────────────────────────────────────────────────────
 
+/// <summary>CorporationId is taken from the request context (JWT), never from the client.</summary>
 public record EnrollStudentCommand(
-    Guid CorporationId,
     Guid CampPeriodId,
     Guid StudentId,
     string Status = "enrolled",
@@ -22,7 +22,6 @@ public class EnrollStudentCommandValidator : AbstractValidator<EnrollStudentComm
 
     public EnrollStudentCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampPeriodId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Status)
@@ -35,14 +34,21 @@ public sealed class EnrollStudentCommandHandler
     : IRequestHandler<EnrollStudentCommand, CampEnrollmentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public EnrollStudentCommandHandler(IAppDbContext db) => _db = db;
+    public EnrollStudentCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampEnrollmentDto> Handle(EnrollStudentCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var periodExists = await _db.CampPeriods
             .AnyAsync(p => p.Id == req.CampPeriodId
-                        && p.CorporationId == req.CorporationId, ct);
+                        && p.CorporationId == corporationId, ct);
         if (!periodExists)
             throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found.");
 
@@ -73,7 +79,7 @@ public sealed class EnrollStudentCommandHandler
         }
 
         var enrollment = CampEnrollment.Create(
-            req.CorporationId, req.CampPeriodId, req.StudentId,
+            corporationId, req.CampPeriodId, req.StudentId,
             req.Status, req.StudentPackageId);
 
         _db.CampEnrollments.Add(enrollment);

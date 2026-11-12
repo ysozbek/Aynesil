@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Finance.Queries;
 
 public class GetPackageDefinitionsQuery : PagedQuery, IRequest<PaginatedResult<PackageDefinitionListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public Guid? PackageTypeId { get; set; }
     public Guid? ProgramId { get; set; }
     public bool? IsActive { get; set; }
@@ -19,15 +18,22 @@ public sealed class GetPackageDefinitionsQueryHandler
     : IRequestHandler<GetPackageDefinitionsQuery, PaginatedResult<PackageDefinitionListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPackageDefinitionsQueryHandler(IAppDbContext db) => _db = db;
+    public GetPackageDefinitionsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<PackageDefinitionListItemDto>> Handle(
         GetPackageDefinitionsQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var q = _db.PackageDefinitions.AsNoTracking();
 
-        if (req.CorporationId.HasValue)  q = q.Where(p => p.CorporationId == req.CorporationId.Value);
+        q = q.Where(p => p.CorporationId == corporationId);
         if (req.PackageTypeId.HasValue)  q = q.Where(p => p.PackageTypeId == req.PackageTypeId.Value);
         if (req.ProgramId.HasValue)      q = q.Where(p => p.ProgramId == req.ProgramId.Value);
         if (req.IsActive.HasValue)       q = q.Where(p => p.IsActive == req.IsActive.Value);

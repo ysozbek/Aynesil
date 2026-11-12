@@ -10,12 +10,10 @@ namespace Aynesil.Application.Features.Camps.Commands;
 // ── RecordAttendanceCommand ───────────────────────────────────────────────────
 
 public record RecordAttendanceCommand(
-    Guid CorporationId,
     Guid CampEnrollmentId,
     DateOnly AttendanceDate,
     string Status,
-    Guid? ReasonId = null,
-    Guid? RecordedBy = null) : IRequest<CampAttendanceDto>;
+    Guid? ReasonId = null) : IRequest<CampAttendanceDto>;
 
 public class RecordAttendanceCommandValidator : AbstractValidator<RecordAttendanceCommand>
 {
@@ -23,7 +21,6 @@ public class RecordAttendanceCommandValidator : AbstractValidator<RecordAttendan
 
     public RecordAttendanceCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampEnrollmentId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
@@ -35,20 +32,29 @@ public sealed class RecordAttendanceCommandHandler
     : IRequestHandler<RecordAttendanceCommand, CampAttendanceDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public RecordAttendanceCommandHandler(IAppDbContext db) => _db = db;
+    public RecordAttendanceCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampAttendanceDto> Handle(RecordAttendanceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var enrollmentExists = await _db.CampEnrollments
-            .AnyAsync(e => e.Id == req.CampEnrollmentId
+            .AnyAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                         && e.Status == "enrolled", ct);
         if (!enrollmentExists)
             throw new InvalidOperationException(
                 $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
 
         var existing = await _db.CampAttendances
-            .FirstOrDefaultAsync(a => a.CampEnrollmentId == req.CampEnrollmentId
+            .FirstOrDefaultAsync(a => a.CorporationId == corporationId && a.CampEnrollmentId == req.CampEnrollmentId
                                    && a.AttendanceDate == req.AttendanceDate, ct);
 
         if (existing != null)
@@ -56,9 +62,9 @@ public sealed class RecordAttendanceCommandHandler
                 $"Attendance for {req.AttendanceDate:yyyy-MM-dd} is already recorded. Use the update endpoint.");
 
         var attendance = CampAttendance.Record(
-            req.CorporationId, req.CampEnrollmentId,
+            corporationId, req.CampEnrollmentId,
             req.AttendanceDate, req.Status,
-            req.ReasonId, req.RecordedBy);
+            req.ReasonId, _currentUser.UserId);
 
         _db.CampAttendances.Add(attendance);
         await _db.SaveChangesAsync(ct);
@@ -75,8 +81,7 @@ public sealed class RecordAttendanceCommandHandler
 public record UpdateAttendanceCommand(
     Guid AttendanceId,
     string Status,
-    Guid? ReasonId,
-    Guid? UpdatedBy = null) : IRequest;
+    Guid? ReasonId) : IRequest;
 
 public class UpdateAttendanceCommandValidator : AbstractValidator<UpdateAttendanceCommand>
 {
@@ -94,8 +99,13 @@ public class UpdateAttendanceCommandValidator : AbstractValidator<UpdateAttendan
 public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAttendanceCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateAttendanceCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateAttendanceCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateAttendanceCommand req, CancellationToken ct)
     {
@@ -103,7 +113,7 @@ public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAtten
             .FirstOrDefaultAsync(a => a.Id == req.AttendanceId, ct)
             ?? throw new KeyNotFoundException($"Attendance record {req.AttendanceId} not found.");
 
-        attendance.Update(req.Status, req.ReasonId, req.UpdatedBy);
+        attendance.Update(req.Status, req.ReasonId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
@@ -117,11 +127,9 @@ public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAtten
 public record BulkAttendanceInput(Guid EnrollmentId, string Status, Guid? ReasonId);
 
 public record BulkRecordAttendanceCommand(
-    Guid CorporationId,
     Guid CampPeriodId,
     DateOnly AttendanceDate,
-    IReadOnlyList<BulkAttendanceInput> Records,
-    Guid? RecordedBy = null) : IRequest<int>;
+    IReadOnlyList<BulkAttendanceInput> Records) : IRequest<int>;
 
 public class BulkRecordAttendanceCommandValidator
     : AbstractValidator<BulkRecordAttendanceCommand>
@@ -130,7 +138,6 @@ public class BulkRecordAttendanceCommandValidator
 
     public BulkRecordAttendanceCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.CampPeriodId).NotEmpty();
         RuleFor(x => x.Records).NotEmpty().WithMessage("At least one attendance record is required.");
         RuleForEach(x => x.Records).ChildRules(r =>
@@ -147,12 +154,34 @@ public sealed class BulkRecordAttendanceCommandHandler
     : IRequestHandler<BulkRecordAttendanceCommand, int>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public BulkRecordAttendanceCommandHandler(IAppDbContext db) => _db = db;
+    public BulkRecordAttendanceCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<int> Handle(BulkRecordAttendanceCommand req, CancellationToken ct)
     {
-        var enrollmentIds = req.Records.Select(r => r.EnrollmentId).ToList();
+        var corporationId = _tenant.RequireCorporationId();
+
+        var periodExists = await _db.CampPeriods
+            .AnyAsync(p => p.Id == req.CampPeriodId && p.CorporationId == corporationId, ct);
+        if (!periodExists)
+            throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found.");
+
+        var enrollmentIds = req.Records.Select(r => r.EnrollmentId).Distinct().ToList();
+
+        // Every enrollment must belong to this period (and therefore to this tenant).
+        var validCount = await _db.CampEnrollments
+            .CountAsync(e => enrollmentIds.Contains(e.Id)
+                          && e.CampPeriodId == req.CampPeriodId
+                          && e.CorporationId == corporationId, ct);
+        if (validCount != enrollmentIds.Count)
+            throw new KeyNotFoundException("One or more enrollments do not belong to this camp period.");
 
         var existingDates = await _db.CampAttendances
             .Where(a => enrollmentIds.Contains(a.CampEnrollmentId)
@@ -167,9 +196,9 @@ public sealed class BulkRecordAttendanceCommandHandler
                 continue;
 
             _db.CampAttendances.Add(CampAttendance.Record(
-                req.CorporationId, record.EnrollmentId,
+                corporationId, record.EnrollmentId,
                 req.AttendanceDate, record.Status,
-                record.ReasonId, req.RecordedBy));
+                record.ReasonId, _currentUser.UserId));
             added++;
         }
 

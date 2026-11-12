@@ -34,9 +34,9 @@ export const useKpiStore = defineStore('kpi', () => {
   const saving = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchCategories(corporationId?: string) {
+  async function fetchCategories() {
     try {
-      const res = await kpiService.listCategories(corporationId)
+      const res = await kpiService.listCategories()
       if (res.success && res.data) categories.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
   }
@@ -88,16 +88,12 @@ export const useKpiStore = defineStore('kpi', () => {
 
   async function computeEducator(
     educatorId: string,
-    corporationId: string,
     periodStart: string,
     periodEnd: string,
   ) {
     saving.value = true
     try {
-      // Backend requires `corporationId` on the body (see
-      // `ComputePerformanceSnapshotCommandValidator`).
       await kpiService.computeEducator(educatorId, {
-        corporationId,
         periodStart,
         periodEnd,
       })

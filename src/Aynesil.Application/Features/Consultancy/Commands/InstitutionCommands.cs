@@ -10,21 +10,18 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── CreateInstitutionCommand ──────────────────────────────────────────────────
 
 public record CreateInstitutionCommand(
-    Guid CorporationId,
     string Name,
     Guid? InstitutionTypeId,
     string? City,
     string? District,
     string? ContactName,
     string? ContactPhone,
-    string? ContactEmail,
-    Guid? CreatedBy = null) : IRequest<InstitutionDto>;
+    string? ContactEmail) : IRequest<InstitutionDto>;
 
 public class CreateInstitutionCommandValidator : AbstractValidator<CreateInstitutionCommand>
 {
     public CreateInstitutionCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.ContactEmail)
             .EmailAddress()
@@ -38,17 +35,26 @@ public sealed class CreateInstitutionCommandHandler
     : IRequestHandler<CreateInstitutionCommand, InstitutionDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateInstitutionCommandHandler(IAppDbContext db) => _db = db;
+    public CreateInstitutionCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<InstitutionDto> Handle(
         CreateInstitutionCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var institution = Institution.Create(
-            req.CorporationId, req.Name, req.InstitutionTypeId,
+            corporationId, req.Name, req.InstitutionTypeId,
             req.City, req.District,
             req.ContactName, req.ContactPhone, req.ContactEmail,
-            req.CreatedBy);
+            _currentUser.UserId);
 
         _db.Institutions.Add(institution);
         await _db.SaveChangesAsync(ct);
@@ -80,8 +86,7 @@ public record UpdateInstitutionCommand(
     string? ContactName,
     string? ContactPhone,
     string? ContactEmail,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateInstitutionCommandValidator : AbstractValidator<UpdateInstitutionCommand>
 {
@@ -99,8 +104,13 @@ public class UpdateInstitutionCommandValidator : AbstractValidator<UpdateInstitu
 public sealed class UpdateInstitutionCommandHandler : IRequestHandler<UpdateInstitutionCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateInstitutionCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateInstitutionCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateInstitutionCommand req, CancellationToken ct)
     {
@@ -112,7 +122,7 @@ public sealed class UpdateInstitutionCommandHandler : IRequestHandler<UpdateInst
             req.Name, req.InstitutionTypeId,
             req.City, req.District,
             req.ContactName, req.ContactPhone, req.ContactEmail,
-            req.UpdatedBy);
+            _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -120,13 +130,18 @@ public sealed class UpdateInstitutionCommandHandler : IRequestHandler<UpdateInst
 
 // ── DeleteInstitutionCommand ──────────────────────────────────────────────────
 
-public record DeleteInstitutionCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteInstitutionCommand(Guid Id) : IRequest;
 
 public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInstitutionCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteInstitutionCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteInstitutionCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteInstitutionCommand req, CancellationToken ct)
     {
@@ -142,7 +157,7 @@ public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInst
             throw new InvalidOperationException(
                 "Cannot delete an institution with active consultancy plans.");
 
-        institution.SoftDelete(req.DeletedBy);
+        institution.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

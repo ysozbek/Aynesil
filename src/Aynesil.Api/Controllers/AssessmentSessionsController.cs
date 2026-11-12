@@ -38,7 +38,6 @@ public sealed class AssessmentSessionsController : BaseController
     [HasPermission(Permissions.AssessmentSessions.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<AssessmentSessionListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] Guid? corporationId = null,
         [FromQuery] Guid? campusId = null,
         [FromQuery] Guid? templateId = null,
         [FromQuery] string? status = null,
@@ -55,7 +54,6 @@ public sealed class AssessmentSessionsController : BaseController
     {
         var result = await Sender.Send(new GetAssessmentSessionsQuery
         {
-            CorporationId = corporationId,
             CampusId      = campusId,
             TemplateId    = templateId,
             Status        = status,
@@ -111,7 +109,7 @@ public sealed class AssessmentSessionsController : BaseController
         [FromBody] CreateAssessmentSessionRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateAssessmentSessionCommand(
-            req.CorporationId, req.TemplateId,
+            req.TemplateId,
             req.LeadId, req.StudentId,
             req.CampusId, req.AssessorId, req.ScheduledAt), ct);
 
@@ -234,7 +232,7 @@ public sealed class AssessmentSessionsController : BaseController
         Guid id, [FromBody] CreateReportRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateAssessmentReportCommand(
-            req.CorporationId, id,
+            id,
             req.Summary, req.Findings, req.FileId), ct);
 
         return CreatedResult(result, $"/api/assessment-sessions/{id}/report");
@@ -300,7 +298,7 @@ public sealed class AssessmentSessionsController : BaseController
         Guid id, [FromBody] CreateRecommendationRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(new CreateProgramRecommendationCommand(
-            req.CorporationId, id,
+            id,
             req.LeadId, req.StudentId,
             req.RecommendedProgramId,
             req.RecommendedIntensity,
@@ -334,7 +332,6 @@ public sealed class AssessmentSessionsController : BaseController
 // ── Request body records ──────────────────────────────────────────────────────
 
 public record CreateAssessmentSessionRequest(
-    Guid CorporationId,
     Guid TemplateId,
     Guid? LeadId,
     Guid? StudentId,
@@ -360,7 +357,6 @@ public record ResponseItemRequest(
     string? Note);
 
 public record CreateReportRequest(
-    Guid CorporationId,
     string? Summary,
     string? Findings,
     Guid? FileId);
@@ -375,7 +371,6 @@ public record UpdateReportRequest(
 public record FinalizeReportRequest(Guid ReportId, int RowVersion);
 
 public record CreateRecommendationRequest(
-    Guid CorporationId,
     Guid? LeadId,
     Guid? StudentId,
     Guid? RecommendedProgramId,

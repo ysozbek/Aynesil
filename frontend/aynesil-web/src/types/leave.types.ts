@@ -121,7 +121,6 @@ export interface LeaveTrendItemDto {
 // ── Query Types ───────────────────────────────────────────────────────────────
 
 export interface LeaveRequestListQuery extends PagedQuery {
-  corporationId?: string
   educatorId?: string
   leaveTypeId?: string
   status?: string
@@ -131,21 +130,18 @@ export interface LeaveRequestListQuery extends PagedQuery {
 }
 
 export interface LeaveBalanceQuery {
-  corporationId?: string
   educatorId?: string
   leaveTypeId?: string
   periodYear?: number
 }
 
 export interface LeaveCalendarQuery {
-  corporationId?: string
   from?: string
   to?: string
   educatorId?: string
 }
 
 export interface LeaveReportQuery {
-  corporationId?: string
   periodYear?: number
   leaveTypeId?: string
   educatorId?: string
@@ -154,7 +150,6 @@ export interface LeaveReportQuery {
 // ── Payload Types ─────────────────────────────────────────────────────────────
 
 export interface CreateLeaveRequestPayload {
-  corporationId: string
   educatorId: string
   leaveTypeId?: string
   unit: string
@@ -193,7 +188,6 @@ export interface SetLeaveEntitlementPayload {
 }
 
 export interface CarryForwardPayload {
-  corporationId: string
   fromYear: number
   toYear: number
   leaveTypeId?: string

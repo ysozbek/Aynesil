@@ -13,7 +13,6 @@ namespace Aynesil.Application.Features.Legal.Queries;
 /// Useful for compliance tracking (which students are missing an active contract).
 /// </summary>
 public record GetContractReportQuery(
-    Guid CorporationId,
     Guid? StudentId = null,
     string? Status = null) : IRequest<IReadOnlyList<ContractReportItemDto>>;
 
@@ -21,14 +20,21 @@ public sealed class GetContractReportQueryHandler
     : IRequestHandler<GetContractReportQuery, IReadOnlyList<ContractReportItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetContractReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetContractReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<ContractReportItemDto>> Handle(
         GetContractReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.StudentContracts.AsNoTracking()
-            .Where(c => c.CorporationId == req.CorporationId);
+            .Where(c => c.CorporationId == corporationId);
 
         if (req.StudentId.HasValue) query = query.Where(c => c.StudentId == req.StudentId);
 
@@ -70,7 +76,6 @@ public sealed class GetContractReportQueryHandler
 /// Mandatory consent types are flagged, enabling compliance gap detection.
 /// </summary>
 public record GetConsentReportQuery(
-    Guid CorporationId,
     Guid? StudentId = null,
     Guid? ConsentTypeId = null,
     bool IncludeExpired = false) : IRequest<IReadOnlyList<ConsentReportItemDto>>;
@@ -79,17 +84,24 @@ public sealed class GetConsentReportQueryHandler
     : IRequestHandler<GetConsentReportQuery, IReadOnlyList<ConsentReportItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetConsentReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetConsentReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<ConsentReportItemDto>> Handle(
         GetConsentReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var baseQuery = req.IncludeExpired
             ? _db.StudentConsents.AsNoTracking().IgnoreQueryFilters()
-              .Where(c => c.CorporationId == req.CorporationId)
+              .Where(c => c.CorporationId == corporationId)
             : _db.StudentConsents.AsNoTracking()
-              .Where(c => c.CorporationId == req.CorporationId);
+              .Where(c => c.CorporationId == corporationId);
 
         if (req.StudentId.HasValue)     baseQuery = baseQuery.Where(c => c.StudentId == req.StudentId);
         if (req.ConsentTypeId.HasValue) baseQuery = baseQuery.Where(c => c.ConsentTypeId == req.ConsentTypeId);
@@ -129,7 +141,7 @@ public sealed class GetConsentReportQueryHandler
         // Resolve mandatory flag from current consent templates.
         var mandatoryTypeIds = new HashSet<Guid>(
             await _db.ConsentTemplates.AsNoTracking()
-                .Where(t => t.IsMandatory && t.IsCurrent && t.CorporationId == req.CorporationId)
+                .Where(t => t.IsMandatory && t.IsCurrent && t.CorporationId == corporationId)
                 .Select(t => t.ConsentTypeId!.Value)
                 .ToListAsync(ct));
 
@@ -152,7 +164,6 @@ public sealed class GetConsentReportQueryHandler
 /// Supports audit and compliance (e.g. identifying contracts with no signed PDF).
 /// </summary>
 public record GetSignatureReportQuery(
-    Guid CorporationId,
     Guid? StudentId = null,
     string? Status = null,
     string? SignatureMethod = null) : IRequest<IReadOnlyList<SignatureReportItemDto>>;
@@ -161,14 +172,21 @@ public sealed class GetSignatureReportQueryHandler
     : IRequestHandler<GetSignatureReportQuery, IReadOnlyList<SignatureReportItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetSignatureReportQueryHandler(IAppDbContext db) => _db = db;
+    public GetSignatureReportQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<SignatureReportItemDto>> Handle(
         GetSignatureReportQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var query = _db.StudentContracts.AsNoTracking()
-            .Where(c => c.CorporationId == req.CorporationId);
+            .Where(c => c.CorporationId == corporationId);
 
         if (req.StudentId.HasValue) query = query.Where(c => c.StudentId == req.StudentId);
         if (!string.IsNullOrEmpty(req.Status)) query = query.Where(c => c.Status == req.Status);

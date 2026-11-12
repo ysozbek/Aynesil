@@ -9,7 +9,6 @@ namespace Aynesil.Application.Features.Students.Queries;
 
 public class GetGuardiansQuery : PagedQuery, IRequest<PaginatedResult<GuardianListItemDto>>
 {
-    public Guid? CorporationId { get; set; }
     public bool? HasPortalAccount { get; set; }
 }
 
@@ -17,16 +16,22 @@ public sealed class GetGuardiansQueryHandler
     : IRequestHandler<GetGuardiansQuery, PaginatedResult<GuardianListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetGuardiansQueryHandler(IAppDbContext db) => _db = db;
+    public GetGuardiansQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<GuardianListItemDto>> Handle(
         GetGuardiansQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var baseQuery = _db.Guardians.AsNoTracking();
 
-        if (req.CorporationId.HasValue)
-            baseQuery = baseQuery.Where(g => g.CorporationId == req.CorporationId.Value);
+        baseQuery = baseQuery.Where(g => g.CorporationId == corporationId);
 
         if (req.HasPortalAccount.HasValue)
             baseQuery = req.HasPortalAccount.Value

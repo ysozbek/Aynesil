@@ -3,7 +3,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -17,14 +16,12 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const auth = useAuthStore()
 const { can } = usePermission()
 
 const filters = reactive({
   page: 1,
   pageSize: 20,
   search: '',
-  corporationId: auth.user?.corporationId as string | undefined,
   consultancyPlanId: (route.query.planId as string) || '',
 })
 
@@ -71,7 +68,7 @@ function openCreate() {
   formError.value = ''
   showCreate.value = true
   if (!store.plans.items.length) {
-    store.fetchPlans({ corporationId: auth.user?.corporationId, page: 1, pageSize: 200 })
+    store.fetchPlans({ page: 1, pageSize: 200 })
   }
 }
 
@@ -91,7 +88,6 @@ async function submitCreate() {
   saving.value = true
   try {
     await store.createReport({
-      corporationId: auth.user!.corporationId!,
       consultancyPlanId: form.consultancyPlanId,
       title: form.title.trim(),
       summary: form.summary.trim(),

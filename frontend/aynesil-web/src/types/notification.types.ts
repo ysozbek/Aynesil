@@ -117,13 +117,11 @@ export interface NotificationListQuery extends PagedQuery {
 }
 
 export interface NotificationTemplateListQuery extends PagedQuery {
-  corporationId?: string
   isActive?: boolean
   categoryCode?: string
 }
 
 export interface CreateNotificationTemplatePayload {
-  corporationId?: string
   code: string
   categoryId?: string
   typeId?: string
@@ -141,7 +139,6 @@ export interface UpdateNotificationTemplatePayload {
 }
 
 export interface UpsertTriggerConfigPayload {
-  corporationId?: string
   triggerCode: string
   templateId?: string
   offsetMinutes: number

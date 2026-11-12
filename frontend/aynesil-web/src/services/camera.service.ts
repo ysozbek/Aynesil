@@ -18,6 +18,7 @@ import type {
   AssignSessionPayload,
   CreateAuthorizationPayload,
   StartViewingPayload,
+  StartViewingResult,
 } from '@/types/camera.types'
 
 function qs(params: object): string {
@@ -87,10 +88,11 @@ export const cameraService = {
   // ── Viewing Logs ───────────────────────────────────────────────────────────
 
   startViewing: (payload: StartViewingPayload) =>
-    apiService.post<{ logId: number }>('/cameras/viewing/start', payload),
+    apiService.post<StartViewingResult>('/cameras/viewing/start', payload),
 
-  endViewing: (logId: number) =>
-    apiService.post(`/cameras/viewing/${logId}/end`),
+  // Backend identifies the log by the composite key (logId, startedAt) returned from startViewing.
+  endViewing: (logId: number, startedAt: string) =>
+    apiService.post(`/cameras/viewing/${logId}/end`, { startedAt }),
 
   listViewingLogs: (query: ViewingLogQuery) =>
     apiService.get<PaginatedResult<ViewingLogDto>>(

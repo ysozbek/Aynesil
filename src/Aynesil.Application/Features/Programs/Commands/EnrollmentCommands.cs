@@ -10,7 +10,6 @@ namespace Aynesil.Application.Features.Programs.Commands;
 // ── CreateEnrollmentCommand ───────────────────────────────────────────────────
 
 public record CreateEnrollmentCommand(
-    Guid CorporationId,
     Guid StudentId,
     Guid? CampusId,
     Guid? StatusId,
@@ -20,7 +19,6 @@ public class CreateEnrollmentCommandValidator : AbstractValidator<CreateEnrollme
 {
     public CreateEnrollmentCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.StudentId).NotEmpty();
     }
 }
@@ -29,17 +27,21 @@ public sealed class CreateEnrollmentCommandHandler
     : IRequestHandler<CreateEnrollmentCommand, EnrollmentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
     private readonly ICurrentUserService _currentUser;
 
-    public CreateEnrollmentCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CreateEnrollmentCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
+        _tenant = tenant;
         _db = db;
         _currentUser = currentUser;
     }
 
     public async Task<EnrollmentDto> Handle(CreateEnrollmentCommand req, CancellationToken ct)
     {
-        var studentExists = await _db.Students.AnyAsync(s => s.Id == req.StudentId, ct);
+        var corporationId = _tenant.RequireCorporationId();
+
+        var studentExists = await _db.Students.AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
         if (!studentExists)
             throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
@@ -52,7 +54,7 @@ public sealed class CreateEnrollmentCommandHandler
         }
 
         var enrollment = Enrollment.Create(
-            req.CorporationId, req.StudentId,
+            corporationId, req.StudentId,
             req.CampusId, req.StatusId, req.EnrolledOn,
             _currentUser.UserId);
 

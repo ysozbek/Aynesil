@@ -115,10 +115,10 @@ export const useSchedulingStore = defineStore('scheduling', () => {
 
   // ── Calendar Entries ───────────────────────────────────────────────────────
 
-  async function fetchCalendarEntries(corporationId: string, campusId?: string, from?: string, to?: string) {
+  async function fetchCalendarEntries(campusId?: string, from?: string, to?: string) {
     loading.value = true
     try {
-      const res = await schedulingService.listCalendarEntries(corporationId, campusId, from, to)
+      const res = await schedulingService.listCalendarEntries(campusId, from, to)
       if (res.success && res.data) calendarEntries.value = res.data
     } finally {
       loading.value = false

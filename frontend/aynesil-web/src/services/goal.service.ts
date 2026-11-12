@@ -120,9 +120,9 @@ export const goalService = {
 
   // ── Analytics ───────────────────────────────────────────────────────────────
 
-  getStudentSummary: (corporationId: string, studentId: string) =>
+  getStudentSummary: (studentId: string) =>
     apiService.get<StudentGoalSummaryDto>(
-      `/goals/analytics/student-summary?corporationId=${corporationId}&studentId=${studentId}`
+      `/goals/analytics/student-summary?studentId=${studentId}`
     ),
 
   getSuccessRates: (query: SuccessRatesQuery) =>

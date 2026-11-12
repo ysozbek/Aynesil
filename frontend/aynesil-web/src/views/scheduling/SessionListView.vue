@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useSessionStore } from '@/stores/session.store'
 import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
@@ -16,16 +15,13 @@ import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useSessionStore()
 const refData = useRefDataStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
 const sessionTypes = ref<RefValueItem[]>([])
 
 const query = reactive({
-  corporationId: corporationId.value,
   campusId: '',
   status: '',
   sessionTypeId: '',
@@ -59,7 +55,6 @@ onMounted(async () => {
 async function loadList() {
   await store.fetchSessions({
     ...query,
-    corporationId: corporationId.value,
     status: query.status || undefined,
     sessionTypeId: query.sessionTypeId || undefined,
     campusId: query.campusId || undefined,

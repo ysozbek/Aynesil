@@ -302,20 +302,20 @@ export const useBepStore = defineStore('bep', () => {
     }
   }
 
-  async function fetchSummaryReport(corporationId: string, studentId: string) {
+  async function fetchSummaryReport(studentId: string) {
     loading.value = true
     try {
-      const res = await bepService.getStudentGoalSummaryReport(corporationId, studentId)
+      const res = await bepService.getStudentGoalSummaryReport(studentId)
       if (res.success && res.data) summaryReport.value = res.data
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchTrendReport(corporationId: string, studentId: string, from?: string, to?: string) {
+  async function fetchTrendReport(studentId: string, from?: string, to?: string) {
     loading.value = true
     try {
-      const res = await bepService.getTrendReport(corporationId, studentId, from, to)
+      const res = await bepService.getTrendReport(studentId, from, to)
       if (res.success && res.data) trendReport.value = res.data
     } finally {
       loading.value = false

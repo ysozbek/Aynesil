@@ -10,22 +10,19 @@ namespace Aynesil.Application.Features.Consultancy.Commands;
 // ── CreateConsultancyPlanCommand ──────────────────────────────────────────────
 
 public record CreateConsultancyPlanCommand(
-    Guid CorporationId,
     Guid InstitutionId,
     string Name,
     Guid? ConsultancyTypeId,
     DateOnly? PeriodStart,
     DateOnly? PeriodEnd,
     string? Scope,
-    Guid? LeadEducatorId,
-    Guid? CreatedBy = null) : IRequest<ConsultancyPlanDto>;
+    Guid? LeadEducatorId) : IRequest<ConsultancyPlanDto>;
 
 public class CreateConsultancyPlanCommandValidator
     : AbstractValidator<CreateConsultancyPlanCommand>
 {
     public CreateConsultancyPlanCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.InstitutionId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x)
@@ -39,28 +36,37 @@ public sealed class CreateConsultancyPlanCommandHandler
     : IRequestHandler<CreateConsultancyPlanCommand, ConsultancyPlanDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateConsultancyPlanCommandHandler(IAppDbContext db) => _db = db;
+    public CreateConsultancyPlanCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<ConsultancyPlanDto> Handle(
         CreateConsultancyPlanCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var institutionExists = await _db.Institutions
-            .AnyAsync(i => i.Id == req.InstitutionId && i.DeletedAt == null, ct);
+            .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InstitutionId && i.DeletedAt == null, ct);
 
         if (!institutionExists)
             throw new KeyNotFoundException($"Institution {req.InstitutionId} not found.");
 
         var plan = ConsultancyPlan.Create(
-            req.CorporationId, req.InstitutionId, req.Name,
+            corporationId, req.InstitutionId, req.Name,
             req.ConsultancyTypeId, req.PeriodStart, req.PeriodEnd,
-            req.Scope, req.LeadEducatorId, req.CreatedBy);
+            req.Scope, req.LeadEducatorId, _currentUser.UserId);
 
         _db.ConsultancyPlans.Add(plan);
         await _db.SaveChangesAsync(ct);
 
         var institutionName = await _db.Institutions.AsNoTracking()
-            .Where(i => i.Id == req.InstitutionId)
+            .Where(i => i.CorporationId == corporationId && i.Id == req.InstitutionId)
             .Select(i => i.Name)
             .FirstOrDefaultAsync(ct) ?? string.Empty;
 
@@ -90,8 +96,7 @@ public record UpdateConsultancyPlanCommand(
     DateOnly? PeriodEnd,
     string? Scope,
     Guid? LeadEducatorId,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateConsultancyPlanCommandValidator
     : AbstractValidator<UpdateConsultancyPlanCommand>
@@ -112,8 +117,13 @@ public sealed class UpdateConsultancyPlanCommandHandler
     : IRequestHandler<UpdateConsultancyPlanCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateConsultancyPlanCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateConsultancyPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateConsultancyPlanCommand req, CancellationToken ct)
     {
@@ -123,7 +133,7 @@ public sealed class UpdateConsultancyPlanCommandHandler
 
         plan.Update(req.Name, req.ConsultancyTypeId,
             req.PeriodStart, req.PeriodEnd,
-            req.Scope, req.LeadEducatorId, req.UpdatedBy);
+            req.Scope, req.LeadEducatorId, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -131,14 +141,19 @@ public sealed class UpdateConsultancyPlanCommandHandler
 
 // ── ActivateConsultancyPlanCommand ────────────────────────────────────────────
 
-public record ActivateConsultancyPlanCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record ActivateConsultancyPlanCommand(Guid Id) : IRequest;
 
 public sealed class ActivateConsultancyPlanCommandHandler
     : IRequestHandler<ActivateConsultancyPlanCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ActivateConsultancyPlanCommandHandler(IAppDbContext db) => _db = db;
+    public ActivateConsultancyPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(ActivateConsultancyPlanCommand req, CancellationToken ct)
     {
@@ -146,21 +161,26 @@ public sealed class ActivateConsultancyPlanCommandHandler
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
 
-        plan.Activate(req.UpdatedBy);
+        plan.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── CompleteConsultancyPlanCommand ────────────────────────────────────────────
 
-public record CompleteConsultancyPlanCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record CompleteConsultancyPlanCommand(Guid Id) : IRequest;
 
 public sealed class CompleteConsultancyPlanCommandHandler
     : IRequestHandler<CompleteConsultancyPlanCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public CompleteConsultancyPlanCommandHandler(IAppDbContext db) => _db = db;
+    public CompleteConsultancyPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(CompleteConsultancyPlanCommand req, CancellationToken ct)
     {
@@ -168,21 +188,26 @@ public sealed class CompleteConsultancyPlanCommandHandler
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
 
-        plan.Complete(req.UpdatedBy);
+        plan.Complete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── CancelConsultancyPlanCommand ──────────────────────────────────────────────
 
-public record CancelConsultancyPlanCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record CancelConsultancyPlanCommand(Guid Id) : IRequest;
 
 public sealed class CancelConsultancyPlanCommandHandler
     : IRequestHandler<CancelConsultancyPlanCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public CancelConsultancyPlanCommandHandler(IAppDbContext db) => _db = db;
+    public CancelConsultancyPlanCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(CancelConsultancyPlanCommand req, CancellationToken ct)
     {
@@ -190,7 +215,7 @@ public sealed class CancelConsultancyPlanCommandHandler
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
 
-        plan.Cancel(req.UpdatedBy);
+        plan.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

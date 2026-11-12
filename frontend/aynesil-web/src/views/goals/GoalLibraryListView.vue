@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,14 +14,10 @@ import type { GoalLibraryListItemDto } from '@/types/goal.types'
 
 const { t } = useI18n()
 const router = useRouter()
-const auth = useAuthStore()
 const store = useGoalStore()
 const { can } = usePermission()
 
-const corporationId = computed(() => auth.user?.corporationId ?? '')
-
 const query = reactive({
-  corporationId: corporationId.value,
   page: 1,
   pageSize: 20,
   search: '',
@@ -46,7 +41,6 @@ onMounted(() => loadList())
 function buildQuery() {
   return {
     ...query,
-    corporationId: corporationId.value,
     search: query.search || undefined,
   }
 }
@@ -135,7 +129,6 @@ async function submitForm() {
       })
     } else {
       await store.createLibrary({
-        corporationId: corporationId.value,
         name: formData.name,
         description: formData.description || null,
       })

@@ -10,21 +10,18 @@ namespace Aynesil.Application.Features.Camps.Commands;
 // ── CreateCampCommand ─────────────────────────────────────────────────────────
 
 public record CreateCampCommand(
-    Guid CorporationId,
     string Code,
     string Name,
     Guid? CampTypeId,
     Guid? CampusId,
     string? Description,
     string? Location,
-    int? Capacity,
-    Guid? CreatedBy = null) : IRequest<CampDto>;
+    int? Capacity) : IRequest<CampDto>;
 
 public class CreateCampCommandValidator : AbstractValidator<CreateCampCommand>
 {
     public CreateCampCommandValidator()
     {
-        RuleFor(x => x.CorporationId).NotEmpty();
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Capacity).GreaterThan(0).When(x => x.Capacity.HasValue);
@@ -34,13 +31,22 @@ public class CreateCampCommandValidator : AbstractValidator<CreateCampCommand>
 public sealed class CreateCampCommandHandler : IRequestHandler<CreateCampCommand, CampDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CreateCampCommandHandler(IAppDbContext db) => _db = db;
+    public CreateCampCommandHandler(IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser)
+    {
+        _currentUser = currentUser;
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<CampDto> Handle(CreateCampCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var duplicate = await _db.Camps.AnyAsync(
-            c => c.CorporationId == req.CorporationId
+            c => c.CorporationId == corporationId
               && c.Code == req.Code.Trim().ToLowerInvariant()
               && c.DeletedAt == null, ct);
 
@@ -48,9 +54,9 @@ public sealed class CreateCampCommandHandler : IRequestHandler<CreateCampCommand
             throw new InvalidOperationException($"A camp with code '{req.Code}' already exists.");
 
         var camp = Camp.Create(
-            req.CorporationId, req.Code, req.Name,
+            corporationId, req.Code, req.Name,
             req.CampTypeId, req.CampusId,
-            req.Description, req.Location, req.Capacity, req.CreatedBy);
+            req.Description, req.Location, req.Capacity, _currentUser.UserId);
 
         _db.Camps.Add(camp);
         await _db.SaveChangesAsync(ct);
@@ -81,8 +87,7 @@ public record UpdateCampCommand(
     string? Description,
     string? Location,
     int? Capacity,
-    int RowVersion,
-    Guid? UpdatedBy = null) : IRequest;
+    int RowVersion) : IRequest;
 
 public class UpdateCampCommandValidator : AbstractValidator<UpdateCampCommand>
 {
@@ -98,8 +103,13 @@ public class UpdateCampCommandValidator : AbstractValidator<UpdateCampCommand>
 public sealed class UpdateCampCommandHandler : IRequestHandler<UpdateCampCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateCampCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateCampCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(UpdateCampCommand req, CancellationToken ct)
     {
@@ -108,7 +118,7 @@ public sealed class UpdateCampCommandHandler : IRequestHandler<UpdateCampCommand
             ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
 
         camp.Update(req.Name, req.CampTypeId, req.CampusId,
-            req.Description, req.Location, req.Capacity, req.UpdatedBy);
+            req.Description, req.Location, req.Capacity, _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -116,13 +126,18 @@ public sealed class UpdateCampCommandHandler : IRequestHandler<UpdateCampCommand
 
 // ── ActivateCampCommand ───────────────────────────────────────────────────────
 
-public record ActivateCampCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record ActivateCampCommand(Guid Id) : IRequest;
 
 public sealed class ActivateCampCommandHandler : IRequestHandler<ActivateCampCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ActivateCampCommandHandler(IAppDbContext db) => _db = db;
+    public ActivateCampCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(ActivateCampCommand req, CancellationToken ct)
     {
@@ -130,20 +145,25 @@ public sealed class ActivateCampCommandHandler : IRequestHandler<ActivateCampCom
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
 
-        camp.Activate(req.UpdatedBy);
+        camp.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── DeactivateCampCommand ─────────────────────────────────────────────────────
 
-public record DeactivateCampCommand(Guid Id, Guid? UpdatedBy = null) : IRequest;
+public record DeactivateCampCommand(Guid Id) : IRequest;
 
 public sealed class DeactivateCampCommandHandler : IRequestHandler<DeactivateCampCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeactivateCampCommandHandler(IAppDbContext db) => _db = db;
+    public DeactivateCampCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeactivateCampCommand req, CancellationToken ct)
     {
@@ -151,20 +171,25 @@ public sealed class DeactivateCampCommandHandler : IRequestHandler<DeactivateCam
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
             ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
 
-        camp.Deactivate(req.UpdatedBy);
+        camp.Deactivate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }
 
 // ── DeleteCampCommand ─────────────────────────────────────────────────────────
 
-public record DeleteCampCommand(Guid Id, Guid? DeletedBy = null) : IRequest;
+public record DeleteCampCommand(Guid Id) : IRequest;
 
 public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteCampCommandHandler(IAppDbContext db) => _db = db;
+    public DeleteCampCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task Handle(DeleteCampCommand req, CancellationToken ct)
     {
@@ -183,7 +208,7 @@ public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand
             throw new InvalidOperationException(
                 "Cannot delete a camp with active enrollments.");
 
-        camp.SoftDelete(req.DeletedBy);
+        camp.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
 }

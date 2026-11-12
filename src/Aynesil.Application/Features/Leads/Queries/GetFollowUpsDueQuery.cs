@@ -13,7 +13,6 @@ namespace Aynesil.Application.Features.Leads.Queries;
 /// </summary>
 public class GetFollowUpsDueQuery : PagedQuery, IRequest<PaginatedResult<LeadActivityDto>>
 {
-    public required Guid CorporationId { get; set; }
     public Guid? CampusId { get; set; }
 
     /// <summary>Upper bound for follow-up date. Defaults to the current moment (i.e. overdue + due today).</summary>
@@ -25,12 +24,19 @@ public sealed class GetFollowUpsDueQueryHandler
     : IRequestHandler<GetFollowUpsDueQuery, PaginatedResult<LeadActivityDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetFollowUpsDueQueryHandler(IAppDbContext db) => _db = db;
+    public GetFollowUpsDueQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<LeadActivityDto>> Handle(
         GetFollowUpsDueQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var dueBy = req.DueBy ?? DateTimeOffset.UtcNow;
 
         // Sort on entity before DTO projection — EF cannot translate OrderBy on DTO ctor.
@@ -39,7 +45,7 @@ public sealed class GetFollowUpsDueQueryHandler
             join l    in _db.Leads        on a.LeadId         equals l.Id   // join for campus filter
             join act  in _db.RefValues    on a.ActivityTypeId equals act.Id into actG from act in actG.DefaultIfEmpty()
             join usr  in _db.UserAccounts on a.PerformedBy    equals usr.Id into usrG from usr in usrG.DefaultIfEmpty()
-            where a.CorporationId == req.CorporationId
+            where a.CorporationId == corporationId
                && a.FollowUpAt != null
                && a.FollowUpAt <= dueBy
                && (!req.CampusId.HasValue || l.CampusId == req.CampusId)

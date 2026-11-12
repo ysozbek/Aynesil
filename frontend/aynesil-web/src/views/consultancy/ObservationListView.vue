@@ -7,7 +7,6 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { useAuthStore } from '@/stores/auth.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -17,14 +16,12 @@ import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const auth = useAuthStore()
 
 const filters = reactive<VisitListQuery>({
   page: 1,
   pageSize: 20,
   search: '',
   status: '',
-  corporationId: auth.user?.corporationId,
 })
 
 const columns: Column<SchoolVisitListItemDto>[] = [
