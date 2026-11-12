@@ -24,7 +24,83 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Outcome.met" xml:space="preserve"><value>Hedefe ulaşıldı</value></data>
-  <data name="Outcome.needs_revision" xml:space="preserve"><value>Revizyon gerekiyor</value></data>
-  <data name="Outcome.on_track" xml:space="preserve"><value>Planlandığı gibi ilerliyor</value></data>
+  <data name="ActionItemStatus.cancelled" xml:space="preserve"><value>iptal edildi</value></data>
+  <data name="ActionItemStatus.done" xml:space="preserve"><value>tamamlandı</value></data>
+  <data name="ActionItemStatus.in_progress" xml:space="preserve"><value>devam ediyor</value></data>
+  <data name="ActionItemStatus.open" xml:space="preserve"><value>açık</value></data>
+  <data name="AttendanceStatus.absent" xml:space="preserve"><value>gelmedi</value></data>
+  <data name="AttendanceStatus.excused" xml:space="preserve"><value>mazeretli</value></data>
+  <data name="AttendanceStatus.late" xml:space="preserve"><value>geç kaldı</value></data>
+  <data name="AttendanceStatus.left_early" xml:space="preserve"><value>erken ayrıldı</value></data>
+  <data name="AttendanceStatus.present" xml:space="preserve"><value>katıldı</value></data>
+  <data name="CampAttendanceStatus.absent" xml:space="preserve"><value>gelmedi</value></data>
+  <data name="CampAttendanceStatus.excused" xml:space="preserve"><value>mazeretli</value></data>
+  <data name="CampAttendanceStatus.late" xml:space="preserve"><value>geç kaldı</value></data>
+  <data name="CampAttendanceStatus.present" xml:space="preserve"><value>katıldı</value></data>
+  <data name="CampEnrollmentStatus.enrolled" xml:space="preserve"><value>kayıtlı</value></data>
+  <data name="CampEnrollmentStatus.waitlist" xml:space="preserve"><value>bekleme listesi</value></data>
+  <data name="CampParticipationStatus.absent" xml:space="preserve"><value>gelmedi</value></data>
+  <data name="CampParticipationStatus.attended" xml:space="preserve"><value>katıldı</value></data>
+  <data name="CampParticipationStatus.excused" xml:space="preserve"><value>mazeretli</value></data>
+  <data name="CampParticipationStatus.registered" xml:space="preserve"><value>kayıtlı</value></data>
+  <data name="Direction.inbound" xml:space="preserve"><value>gelen</value></data>
+  <data name="Direction.outbound" xml:space="preserve"><value>giden</value></data>
+  <data name="EducatorRole.assistant" xml:space="preserve"><value>yardımcı</value></data>
+  <data name="EducatorRole.lead" xml:space="preserve"><value>sorumlu</value></data>
+  <data name="EducatorRole.observer" xml:space="preserve"><value>gözlemci</value></data>
+  <data name="EducatorRole.supervisor" xml:space="preserve"><value>süpervizör</value></data>
+  <data name="EmploymentType.contractor" xml:space="preserve"><value>sözleşmeli</value></data>
+  <data name="EmploymentType.full_time" xml:space="preserve"><value>tam zamanlı</value></data>
+  <data name="EmploymentType.part_time" xml:space="preserve"><value>yarı zamanlı</value></data>
+  <data name="EntryType.closure" xml:space="preserve"><value>kapanış</value></data>
+  <data name="EntryType.event" xml:space="preserve"><value>etkinlik</value></data>
+  <data name="EntryType.holiday" xml:space="preserve"><value>tatil</value></data>
+  <data name="EntryType.term_break" xml:space="preserve"><value>dönem arası</value></data>
+  <data name="Frequency.biweekly" xml:space="preserve"><value>iki haftalık</value></data>
+  <data name="Frequency.monthly" xml:space="preserve"><value>aylık</value></data>
+  <data name="Frequency.weekly" xml:space="preserve"><value>haftalık</value></data>
+  <data name="GoalStatus.achieved" xml:space="preserve"><value>ulaşıldı</value></data>
+  <data name="GoalStatus.active" xml:space="preserve"><value>aktif</value></data>
+  <data name="GoalStatus.discontinued" xml:space="preserve"><value>bırakıldı</value></data>
+  <data name="GoalStatus.on_hold" xml:space="preserve"><value>beklemede</value></data>
+  <data name="Horizon.long_term" xml:space="preserve"><value>uzun vadeli</value></data>
+  <data name="Horizon.short_term" xml:space="preserve"><value>kısa vadeli</value></data>
+  <data name="LeaveUnit.day" xml:space="preserve"><value>gün</value></data>
+  <data name="LeaveUnit.hour" xml:space="preserve"><value>saat</value></data>
+  <data name="MeetingAttendance.absent" xml:space="preserve"><value>katılmadı</value></data>
+  <data name="MeetingAttendance.attended" xml:space="preserve"><value>katıldı</value></data>
+  <data name="MeetingAttendance.invited" xml:space="preserve"><value>davetli</value></data>
+  <data name="MeetingAttendance.tentative" xml:space="preserve"><value>belirsiz</value></data>
+  <data name="Outcome.met" xml:space="preserve"><value>hedefe ulaşıldı</value></data>
+  <data name="Outcome.needs_revision" xml:space="preserve"><value>revizyon gerekiyor</value></data>
+  <data name="Outcome.on_track" xml:space="preserve"><value>planlandığı gibi ilerliyor</value></data>
+  <data name="ParticipantType.external" xml:space="preserve"><value>harici</value></data>
+  <data name="ParticipantType.guardian" xml:space="preserve"><value>veli</value></data>
+  <data name="ParticipantType.lead" xml:space="preserve"><value>aday</value></data>
+  <data name="ParticipantType.user" xml:space="preserve"><value>kullanıcı</value></data>
+  <data name="ProgramStatus.active" xml:space="preserve"><value>aktif</value></data>
+  <data name="ProgramStatus.cancelled" xml:space="preserve"><value>iptal edildi</value></data>
+  <data name="ProgramStatus.completed" xml:space="preserve"><value>tamamlandı</value></data>
+  <data name="ProgramStatus.paused" xml:space="preserve"><value>duraklatıldı</value></data>
+  <data name="RecurrenceAction.cancel" xml:space="preserve"><value>iptal et</value></data>
+  <data name="RecurrenceAction.reschedule" xml:space="preserve"><value>yeniden planla</value></data>
+  <data name="RecurrenceAction.skip" xml:space="preserve"><value>atla</value></data>
+  <data name="ResponseType.boolean" xml:space="preserve"><value>evet/hayır</value></data>
+  <data name="ResponseType.choice" xml:space="preserve"><value>seçim</value></data>
+  <data name="ResponseType.numeric" xml:space="preserve"><value>sayısal</value></data>
+  <data name="ResponseType.scale" xml:space="preserve"><value>ölçek</value></data>
+  <data name="ResponseType.text" xml:space="preserve"><value>metin</value></data>
+  <data name="ScoringModel.average" xml:space="preserve"><value>ortalama</value></data>
+  <data name="ScoringModel.none" xml:space="preserve"><value>yok</value></data>
+  <data name="ScoringModel.rubric" xml:space="preserve"><value>rubrik</value></data>
+  <data name="ScoringModel.sum" xml:space="preserve"><value>toplam</value></data>
+  <data name="SignatureMethod.click_wrap" xml:space="preserve"><value>tıkla-kabul et</value></data>
+  <data name="SignatureMethod.e_sign" xml:space="preserve"><value>e-imza</value></data>
+  <data name="SignatureMethod.wet" xml:space="preserve"><value>ıslak imza</value></data>
+  <data name="SurveyTarget.educator" xml:space="preserve"><value>eğitimci</value></data>
+  <data name="SurveyTarget.guardian" xml:space="preserve"><value>veli</value></data>
+  <data name="SurveyTarget.student" xml:space="preserve"><value>öğrenci</value></data>
+  <data name="Trend.declining" xml:space="preserve"><value>geriliyor</value></data>
+  <data name="Trend.improving" xml:space="preserve"><value>gelişiyor</value></data>
+  <data name="Trend.stable" xml:space="preserve"><value>sabit</value></data>
 </root>

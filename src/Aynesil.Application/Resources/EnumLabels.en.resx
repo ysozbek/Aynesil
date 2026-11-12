@@ -24,7 +24,83 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ActionItemStatus.cancelled" xml:space="preserve"><value>cancelled</value></data>
+  <data name="ActionItemStatus.done" xml:space="preserve"><value>done</value></data>
+  <data name="ActionItemStatus.in_progress" xml:space="preserve"><value>in progress</value></data>
+  <data name="ActionItemStatus.open" xml:space="preserve"><value>open</value></data>
+  <data name="AttendanceStatus.absent" xml:space="preserve"><value>absent</value></data>
+  <data name="AttendanceStatus.excused" xml:space="preserve"><value>excused</value></data>
+  <data name="AttendanceStatus.late" xml:space="preserve"><value>late</value></data>
+  <data name="AttendanceStatus.left_early" xml:space="preserve"><value>left early</value></data>
+  <data name="AttendanceStatus.present" xml:space="preserve"><value>present</value></data>
+  <data name="CampAttendanceStatus.absent" xml:space="preserve"><value>absent</value></data>
+  <data name="CampAttendanceStatus.excused" xml:space="preserve"><value>excused</value></data>
+  <data name="CampAttendanceStatus.late" xml:space="preserve"><value>late</value></data>
+  <data name="CampAttendanceStatus.present" xml:space="preserve"><value>present</value></data>
+  <data name="CampEnrollmentStatus.enrolled" xml:space="preserve"><value>enrolled</value></data>
+  <data name="CampEnrollmentStatus.waitlist" xml:space="preserve"><value>waitlist</value></data>
+  <data name="CampParticipationStatus.absent" xml:space="preserve"><value>absent</value></data>
+  <data name="CampParticipationStatus.attended" xml:space="preserve"><value>attended</value></data>
+  <data name="CampParticipationStatus.excused" xml:space="preserve"><value>excused</value></data>
+  <data name="CampParticipationStatus.registered" xml:space="preserve"><value>registered</value></data>
+  <data name="Direction.inbound" xml:space="preserve"><value>inbound</value></data>
+  <data name="Direction.outbound" xml:space="preserve"><value>outbound</value></data>
+  <data name="EducatorRole.assistant" xml:space="preserve"><value>assistant</value></data>
+  <data name="EducatorRole.lead" xml:space="preserve"><value>lead</value></data>
+  <data name="EducatorRole.observer" xml:space="preserve"><value>observer</value></data>
+  <data name="EducatorRole.supervisor" xml:space="preserve"><value>supervisor</value></data>
+  <data name="EmploymentType.contractor" xml:space="preserve"><value>contractor</value></data>
+  <data name="EmploymentType.full_time" xml:space="preserve"><value>full-time</value></data>
+  <data name="EmploymentType.part_time" xml:space="preserve"><value>part-time</value></data>
+  <data name="EntryType.closure" xml:space="preserve"><value>closure</value></data>
+  <data name="EntryType.event" xml:space="preserve"><value>event</value></data>
+  <data name="EntryType.holiday" xml:space="preserve"><value>holiday</value></data>
+  <data name="EntryType.term_break" xml:space="preserve"><value>term break</value></data>
+  <data name="Frequency.biweekly" xml:space="preserve"><value>biweekly</value></data>
+  <data name="Frequency.monthly" xml:space="preserve"><value>monthly</value></data>
+  <data name="Frequency.weekly" xml:space="preserve"><value>weekly</value></data>
+  <data name="GoalStatus.achieved" xml:space="preserve"><value>achieved</value></data>
+  <data name="GoalStatus.active" xml:space="preserve"><value>active</value></data>
+  <data name="GoalStatus.discontinued" xml:space="preserve"><value>discontinued</value></data>
+  <data name="GoalStatus.on_hold" xml:space="preserve"><value>on hold</value></data>
+  <data name="Horizon.long_term" xml:space="preserve"><value>long-term</value></data>
+  <data name="Horizon.short_term" xml:space="preserve"><value>short-term</value></data>
+  <data name="LeaveUnit.day" xml:space="preserve"><value>day</value></data>
+  <data name="LeaveUnit.hour" xml:space="preserve"><value>hour</value></data>
+  <data name="MeetingAttendance.absent" xml:space="preserve"><value>absent</value></data>
+  <data name="MeetingAttendance.attended" xml:space="preserve"><value>attended</value></data>
+  <data name="MeetingAttendance.invited" xml:space="preserve"><value>invited</value></data>
+  <data name="MeetingAttendance.tentative" xml:space="preserve"><value>tentative</value></data>
   <data name="Outcome.met" xml:space="preserve"><value>met</value></data>
   <data name="Outcome.needs_revision" xml:space="preserve"><value>needs revision</value></data>
   <data name="Outcome.on_track" xml:space="preserve"><value>on track</value></data>
+  <data name="ParticipantType.external" xml:space="preserve"><value>external</value></data>
+  <data name="ParticipantType.guardian" xml:space="preserve"><value>guardian</value></data>
+  <data name="ParticipantType.lead" xml:space="preserve"><value>lead</value></data>
+  <data name="ParticipantType.user" xml:space="preserve"><value>user</value></data>
+  <data name="ProgramStatus.active" xml:space="preserve"><value>active</value></data>
+  <data name="ProgramStatus.cancelled" xml:space="preserve"><value>cancelled</value></data>
+  <data name="ProgramStatus.completed" xml:space="preserve"><value>completed</value></data>
+  <data name="ProgramStatus.paused" xml:space="preserve"><value>paused</value></data>
+  <data name="RecurrenceAction.cancel" xml:space="preserve"><value>cancel</value></data>
+  <data name="RecurrenceAction.reschedule" xml:space="preserve"><value>reschedule</value></data>
+  <data name="RecurrenceAction.skip" xml:space="preserve"><value>skip</value></data>
+  <data name="ResponseType.boolean" xml:space="preserve"><value>yes/no</value></data>
+  <data name="ResponseType.choice" xml:space="preserve"><value>choice</value></data>
+  <data name="ResponseType.numeric" xml:space="preserve"><value>numeric</value></data>
+  <data name="ResponseType.scale" xml:space="preserve"><value>scale</value></data>
+  <data name="ResponseType.text" xml:space="preserve"><value>text</value></data>
+  <data name="ScoringModel.average" xml:space="preserve"><value>average</value></data>
+  <data name="ScoringModel.none" xml:space="preserve"><value>none</value></data>
+  <data name="ScoringModel.rubric" xml:space="preserve"><value>rubric</value></data>
+  <data name="ScoringModel.sum" xml:space="preserve"><value>sum</value></data>
+  <data name="SignatureMethod.click_wrap" xml:space="preserve"><value>click-wrap</value></data>
+  <data name="SignatureMethod.e_sign" xml:space="preserve"><value>e-signature</value></data>
+  <data name="SignatureMethod.wet" xml:space="preserve"><value>wet signature</value></data>
+  <data name="SurveyTarget.educator" xml:space="preserve"><value>educator</value></data>
+  <data name="SurveyTarget.guardian" xml:space="preserve"><value>guardian</value></data>
+  <data name="SurveyTarget.student" xml:space="preserve"><value>student</value></data>
+  <data name="Trend.declining" xml:space="preserve"><value>declining</value></data>
+  <data name="Trend.improving" xml:space="preserve"><value>improving</value></data>
+  <data name="Trend.stable" xml:space="preserve"><value>stable</value></data>
 </root>

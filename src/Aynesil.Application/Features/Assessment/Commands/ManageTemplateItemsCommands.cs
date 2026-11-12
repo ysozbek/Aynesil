@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -31,7 +33,7 @@ public class AddAssessmentItemCommandValidator : AbstractValidator<AddAssessment
         RuleFor(x => x.ResponseType)
             .NotEmpty()
             .Must(t => ValidTypes.Contains(t))
-            .WithMessage("response_type must be one of: numeric, scale, boolean, text, choice.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ResponseType"), EnumSets.ResponseType);
         RuleFor(x => x.Weight).GreaterThan(0);
         RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
     }
@@ -88,7 +90,7 @@ public class UpdateAssessmentItemCommandValidator : AbstractValidator<UpdateAsse
         RuleFor(x => x.ResponseType)
             .NotEmpty()
             .Must(t => ValidTypes.Contains(t))
-            .WithMessage("response_type must be one of: numeric, scale, boolean, text, choice.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ResponseType"), EnumSets.ResponseType);
         RuleFor(x => x.Weight).GreaterThan(0);
         RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
     }

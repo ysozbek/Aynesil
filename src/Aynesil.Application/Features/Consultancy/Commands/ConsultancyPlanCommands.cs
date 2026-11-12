@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -28,7 +30,7 @@ public class CreateConsultancyPlanCommandValidator
         RuleFor(x => x)
             .Must(x => !(x.PeriodStart.HasValue && x.PeriodEnd.HasValue
                       && x.PeriodEnd < x.PeriodStart))
-            .WithMessage("Period end cannot be before period start.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("PeriodEnd"), Msg.FieldArg("PeriodStart"));
     }
 }
 
@@ -109,7 +111,7 @@ public class UpdateConsultancyPlanCommandValidator
         RuleFor(x => x)
             .Must(x => !(x.PeriodStart.HasValue && x.PeriodEnd.HasValue
                       && x.PeriodEnd < x.PeriodStart))
-            .WithMessage("Period end cannot be before period start.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("PeriodEnd"), Msg.FieldArg("PeriodStart"));
     }
 }
 

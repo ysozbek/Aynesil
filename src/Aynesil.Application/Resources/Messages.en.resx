@@ -39,4 +39,36 @@
   <data name="Error.Unauthorized" xml:space="preserve"><value>You need to sign in.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>An unexpected error occurred. Please try again.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Validation failed.</value></data>
+  <data name="Validation.AtLeastOneItem" xml:space="preserve"><value>At least one {0} is required.</value></data>
+  <data name="Validation.AtLeastOneOf" xml:space="preserve"><value>At least one of {0} must be provided.</value></data>
+  <data name="Validation.CodeFormatLowerDotUnderscore" xml:space="preserve"><value>Code must be lowercase alphanumeric with dots or underscores.</value></data>
+  <data name="Validation.CodeFormatLowerUnderscore" xml:space="preserve"><value>Code must be lowercase alphanumeric with underscores.</value></data>
+  <data name="Validation.CodeFormatSlug" xml:space="preserve"><value>Code must start with a letter or digit and contain only lowercase letters, digits, hyphens, or underscores.</value></data>
+  <data name="Validation.CodeFormatSlugDot" xml:space="preserve"><value>Code must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, or underscores.</value></data>
+  <data name="Validation.CodeFormatSnakeCase" xml:space="preserve"><value>Code must be lowercase snake_case (letters, digits, underscores).</value></data>
+  <data name="Validation.CodeFormatUpper" xml:space="preserve"><value>Code must be uppercase alphanumeric (hyphens/underscores allowed).</value></data>
+  <data name="Validation.DiscountTarget" xml:space="preserve"><value>A discount must target either an invoice or a student package.</value></data>
+  <data name="Validation.DuplicateLocales" xml:space="preserve"><value>Duplicate locale codes are not allowed.</value></data>
+  <data name="Validation.EducatorCannotSuperviseSelf" xml:space="preserve"><value>An educator cannot supervise themselves.</value></data>
+  <data name="Validation.ExactlyOneOf" xml:space="preserve"><value>Exactly one of {0} must be provided.</value></data>
+  <data name="Validation.InvalidQuestionType" xml:space="preserve"><value>Invalid question type.</value></data>
+  <data name="Validation.IpAddressInvalid" xml:space="preserve"><value>Enter a valid IP address.</value></data>
+  <data name="Validation.JsonObjectInvalid" xml:space="preserve"><value>Settings must be a valid JSON object.</value></data>
+  <data name="Validation.MustBeAfter" xml:space="preserve"><value>{0} must be after {1}.</value></data>
+  <data name="Validation.MustBeBetween" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
+  <data name="Validation.MustBeInFuture" xml:space="preserve"><value>{0} must be in the future.</value></data>
+  <data name="Validation.MustBeOneOf" xml:space="preserve"><value>{0} must be one of: {1}.</value></data>
+  <data name="Validation.MustBePositive" xml:space="preserve"><value>{0} must be positive.</value></data>
+  <data name="Validation.MustNotBeBefore" xml:space="preserve"><value>{0} cannot be before {1}.</value></data>
+  <data name="Validation.MustNotBeInFuture" xml:space="preserve"><value>{0} cannot be in the future.</value></data>
+  <data name="Validation.MustNotBeNegative" xml:space="preserve"><value>{0} cannot be negative.</value></data>
+  <data name="Validation.MustNotBeZero" xml:space="preserve"><value>{0} cannot be zero.</value></data>
+  <data name="Validation.PasswordMustDiffer" xml:space="preserve"><value>The new password must differ from the current password.</value></data>
+  <data name="Validation.PercentageMax100" xml:space="preserve"><value>{0} cannot exceed 100%.</value></data>
+  <data name="Validation.Required" xml:space="preserve"><value>{0} is required.</value></data>
+  <data name="Validation.RequiredWhenEquals" xml:space="preserve"><value>{0} is required when {1} is '{2}'.</value></data>
+  <data name="Validation.SameEducatorTwice" xml:space="preserve"><value>The same educator cannot be assigned twice.</value></data>
+  <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Specify either a percentage or a fixed amount, not both and not neither.</value></data>
+  <data name="Validation.UsernameFormat" xml:space="preserve"><value>Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, underscores, @ or +. An e-mail address is recommended.</value></data>
+  <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Virtual rooms cannot be assigned to a campus.</value></data>
 </root>

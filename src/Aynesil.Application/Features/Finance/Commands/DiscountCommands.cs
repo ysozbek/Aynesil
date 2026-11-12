@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -25,11 +27,11 @@ public class ApplyDiscountCommandValidator : AbstractValidator<ApplyDiscountComm
         RuleFor(x => x.Value)
             .LessThanOrEqualTo(100)
             .When(x => x.IsPercentage)
-            .WithMessage("Percentage discount cannot exceed 100%.");
+            .WithKey(MsgKeys.Validation.PercentageMax100, Msg.FieldArg("DiscountPercentage"));
 
         RuleFor(x => x)
             .Must(x => x.InvoiceId.HasValue || x.StudentPackageId.HasValue)
-            .WithMessage("Discount must target either an invoice or a student package.");
+            .WithKey(MsgKeys.Validation.DiscountTarget);
 
         RuleFor(x => x.Reason).MaximumLength(500).When(x => x.Reason is not null);
     }

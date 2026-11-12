@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Ref.Entities;
@@ -27,7 +29,7 @@ public partial class CreateRefValueCommandValidator : AbstractValidator<CreateRe
             .NotEmpty()
             .MaximumLength(100)
             .Must(c => CodePattern().IsMatch(c.Trim().ToLowerInvariant()))
-            .WithMessage("Code must be lowercase snake_case (letters, digits, underscores).");
+            .WithKey(MsgKeys.Validation.CodeFormatSnakeCase);
         RuleFor(x => x.Label).NotEmpty().MaximumLength(200);
         RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
     }

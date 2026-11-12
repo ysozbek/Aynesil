@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -23,7 +25,7 @@ public class CreateAcademicPeriodCommandValidator : AbstractValidator<CreateAcad
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StartDate).NotEmpty();
         RuleFor(x => x.EndDate).NotEmpty().GreaterThan(x => x.StartDate)
-            .WithMessage("EndDate must be after StartDate.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 
@@ -96,7 +98,7 @@ public class UpdateAcademicPeriodCommandValidator : AbstractValidator<UpdateAcad
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndDate).GreaterThan(x => x.StartDate)
-            .WithMessage("EndDate must be after StartDate.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 

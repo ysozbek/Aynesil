@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using FluentValidation;
@@ -28,7 +30,7 @@ public class ChangePasswordCommandValidator : AbstractValidator<ChangePasswordCo
             .MinimumLength(8)
             .MaximumLength(200)
             .NotEqual(x => x.CurrentPassword)
-            .WithMessage("New password must differ from the current password.");
+            .WithKey(MsgKeys.Validation.PasswordMustDiffer);
     }
 }
 

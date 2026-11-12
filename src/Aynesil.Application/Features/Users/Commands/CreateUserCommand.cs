@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Users.Dtos;
 using Aynesil.Domain.Modules.Iam.Entities;
@@ -34,7 +36,7 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
         RuleFor(x => x.Username)
             .NotEmpty().MaximumLength(100)
             .Matches(@"^[a-z0-9][a-z0-9._@+-]*$")
-            .WithMessage("Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, underscores, @ or +. An e-mail address is recommended.");
+            .WithKey(MsgKeys.Validation.UsernameFormat);
 
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(300);
         RuleFor(x => x.Email).EmailAddress().MaximumLength(200).When(x => x.Email is not null);

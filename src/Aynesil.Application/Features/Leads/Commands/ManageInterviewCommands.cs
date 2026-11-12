@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.Validation;
@@ -115,7 +116,7 @@ public class RescheduleInterviewCommandValidator : AbstractValidator<RescheduleI
         RuleFor(x => x.InterviewId).NotEmpty();
         RuleFor(x => x.NewScheduledAt)
             .GreaterThan(DateTimeOffset.UtcNow)
-            .WithMessage("New scheduled date must be in the future.");
+            .WithKey(MsgKeys.Validation.MustBeInFuture, Msg.FieldArg("NewScheduledDate"));
         RuleFor(x => x.RowVersion).GreaterThan(0);
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using FluentValidation;
@@ -26,7 +28,7 @@ public class UpdateAssessmentTemplateCommandValidator : AbstractValidator<Update
         RuleFor(x => x.Name).NotEmpty().MaximumLength(300);
         RuleFor(x => x.ScoringModel)
             .Must(m => m is null || ValidScoringModels.Contains(m))
-            .WithMessage("scoring_model must be one of: sum, average, rubric, none.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ScoringModel"), EnumSets.ScoringModel);
         RuleFor(x => x.RowVersion).GreaterThan(0);
     }
 }

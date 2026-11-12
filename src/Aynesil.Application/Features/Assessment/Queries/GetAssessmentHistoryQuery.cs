@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using FluentValidation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
@@ -21,8 +23,8 @@ public sealed class GetAssessmentHistoryQueryValidator : AbstractValidator<GetAs
     {
         RuleFor(x => x)
             .Must(x => x.LeadId.HasValue ^ x.StudentId.HasValue)
-            .WithName("LeadId")
-            .WithMessage("leadId veya studentId parametrelerinden tam olarak biri verilmelidir.");
+            .WithName(_ => Msg.Field("LeadId"))
+            .WithKey(MsgKeys.Validation.ExactlyOneOf, Msg.FieldList("LeadId", "StudentId"));
         RuleFor(x => x.LeadId).NotEqual(Guid.Empty).When(x => x.LeadId.HasValue);
         RuleFor(x => x.StudentId).NotEqual(Guid.Empty).When(x => x.StudentId.HasValue);
     }

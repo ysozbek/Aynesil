@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -27,7 +29,7 @@ public class CreateAssessmentSessionCommandValidator
         RuleFor(x => x.TemplateId).NotEmpty();
         RuleFor(x => x)
             .Must(x => x.LeadId.HasValue || x.StudentId.HasValue)
-            .WithMessage("Either LeadId or StudentId must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("LeadId", "StudentId"));
     }
 }
 

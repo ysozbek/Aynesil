@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Interfaces.Repositories;
@@ -32,7 +34,7 @@ public class ScheduleSessionCommandValidator : AbstractValidator<ScheduleSession
         RuleFor(x => x.SessionTypeId).NotEmpty();
         RuleFor(x => x.StartsAt).NotEmpty();
         RuleFor(x => x.EndsAt).GreaterThan(x => x.StartsAt)
-            .WithMessage("Session end time must be after start time.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndTime"), Msg.FieldArg("StartTime"));
         RuleFor(x => x.Title).MaximumLength(500).When(x => x.Title != null);
     }
 }
@@ -114,7 +116,7 @@ public class RescheduleSessionCommandValidator : AbstractValidator<RescheduleSes
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.NewEndsAt).GreaterThan(x => x.NewStartsAt)
-            .WithMessage("Session end time must be after start time.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndTime"), Msg.FieldArg("StartTime"));
     }
 }
 

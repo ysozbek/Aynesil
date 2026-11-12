@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -27,7 +29,7 @@ public class RegisterParticipationCommandValidator
         RuleFor(x => x.CampEnrollmentId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be: registered, attended, absent, or excused.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampParticipationStatus);
     }
 }
 
@@ -114,7 +116,7 @@ public class UpdateParticipationCommandValidator : AbstractValidator<UpdateParti
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be: registered, attended, absent, or excused.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampParticipationStatus);
     }
 }
 
@@ -163,7 +165,7 @@ public class BulkRegisterParticipationCommandValidator
             r.RuleFor(x => x.EnrollmentId).NotEmpty();
             r.RuleFor(x => x.Status)
                 .Must(s => ValidStatuses.Contains(s))
-                .WithMessage("Status must be: registered, attended, absent, or excused.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampParticipationStatus);
         });
     }
 }

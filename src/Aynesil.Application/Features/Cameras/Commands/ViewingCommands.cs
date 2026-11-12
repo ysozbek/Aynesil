@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using System.Net;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
@@ -39,7 +41,7 @@ public class GrantViewingAuthorizationCommandValidator
         RuleFor(x => x.ValidFrom).NotEmpty();
         RuleFor(x => x.ValidTo)
             .GreaterThan(x => x.ValidFrom)
-            .WithMessage("ValidTo must be after ValidFrom.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ValidTo"), Msg.FieldArg("ValidFrom"));
     }
 }
 
@@ -194,7 +196,7 @@ public class StartViewingSessionCommandValidator : AbstractValidator<StartViewin
         RuleFor(x => x.AuthorizationId).NotEmpty();
         RuleFor(x => x.IpAddress)
             .Must(ip => ip == null || IPAddress.TryParse(ip, out _))
-            .WithMessage("IpAddress must be a valid IP address.");
+            .WithKey(MsgKeys.Validation.IpAddressInvalid);
     }
 }
 

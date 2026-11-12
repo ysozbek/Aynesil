@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
@@ -31,7 +33,7 @@ public class CreateCampusCommandValidator : AbstractValidator<CreateCampusComman
             .NotEmpty()
             .MaximumLength(50)
             .Matches(@"^[A-Z0-9][A-Z0-9_-]*$")
-            .WithMessage("Code must be uppercase alphanumeric (hyphens/underscores allowed).")
+            .WithKey(MsgKeys.Validation.CodeFormatUpper)
             .OverridePropertyName("code");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.City).MaximumLength(100).When(x => x.City is not null);

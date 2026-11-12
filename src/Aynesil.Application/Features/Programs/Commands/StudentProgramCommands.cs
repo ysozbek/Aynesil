@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -26,7 +28,7 @@ public class AssignStudentToProgramCommandValidator : AbstractValidator<AssignSt
         RuleFor(x => x.EndDate)
             .GreaterThan(x => x.StartDate)
             .When(x => x.StartDate.HasValue && x.EndDate.HasValue)
-            .WithMessage("EndDate must be after StartDate.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 
@@ -100,7 +102,7 @@ public class UpdateStudentProgramCommandValidator : AbstractValidator<UpdateStud
         RuleFor(x => x.StudentProgramId).NotEmpty();
         RuleFor(x => x.Status).NotEmpty()
             .Must(s => new[] { "active", "paused", "completed", "cancelled" }.Contains(s))
-            .WithMessage("Status must be one of: active, paused, completed, cancelled.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.ProgramStatus);
     }
 }
 

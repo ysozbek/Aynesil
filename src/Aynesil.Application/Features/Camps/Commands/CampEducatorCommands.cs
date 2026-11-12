@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -26,7 +28,7 @@ public class AssignCampEducatorCommandValidator : AbstractValidator<AssignCampEd
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.Role)
             .Must(r => ValidRoles.Contains(r))
-            .WithMessage("Role must be: lead, assistant, observer, or supervisor.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Role"), EnumSets.EducatorRole);
     }
 }
 
@@ -106,7 +108,7 @@ public class UpdateCampEducatorRoleCommandValidator : AbstractValidator<UpdateCa
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Role)
             .Must(r => ValidRoles.Contains(r))
-            .WithMessage("Role must be: lead, assistant, observer, or supervisor.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Role"), EnumSets.EducatorRole);
     }
 }
 

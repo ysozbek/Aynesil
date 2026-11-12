@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
@@ -38,7 +40,7 @@ public class UpdateCorporationSettingsCommandValidator : AbstractValidator<Updat
         RuleFor(x => x.RowVersion).GreaterThan(0);
         RuleFor(x => x.Settings)
             .NotNull()
-            .Must(BeValidJson).WithMessage("Settings must be a valid JSON object.");
+            .Must(BeValidJson).WithKey(MsgKeys.Validation.JsonObjectInvalid);
     }
 
     private static bool BeValidJson(string json)

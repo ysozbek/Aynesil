@@ -24,40 +24,111 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Action" xml:space="preserve"><value>Action</value></data>
+  <data name="ActiveFrom" xml:space="preserve"><value>Active from</value></data>
+  <data name="ActiveTo" xml:space="preserve"><value>Active to</value></data>
   <data name="Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Answer" xml:space="preserve"><value>Answer</value></data>
+  <data name="AttachedFile" xml:space="preserve"><value>Attached file</value></data>
+  <data name="Attendance" xml:space="preserve"><value>Attendance</value></data>
+  <data name="AttendanceRecord" xml:space="preserve"><value>Attendance record</value></data>
   <data name="BirthDate" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="BodyOverride" xml:space="preserve"><value>Body override</value></data>
   <data name="CampPeriodId" xml:space="preserve"><value>Camp period</value></data>
   <data name="CampusId" xml:space="preserve"><value>Campus</value></data>
   <data name="Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Comment" xml:space="preserve"><value>Comment</value></data>
+  <data name="ConsentTypeId" xml:space="preserve"><value>Consent type</value></data>
+  <data name="ConsultancyPlanId" xml:space="preserve"><value>Consultancy plan</value></data>
   <data name="CorporationId" xml:space="preserve"><value>Organization</value></data>
+  <data name="Decisions" xml:space="preserve"><value>Decisions</value></data>
+  <data name="Delta" xml:space="preserve"><value>Adjustment delta</value></data>
   <data name="Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Direction" xml:space="preserve"><value>Direction</value></data>
+  <data name="DiscountPercentage" xml:space="preserve"><value>Discount percentage</value></data>
+  <data name="DueDate" xml:space="preserve"><value>Due date</value></data>
   <data name="EducatorId" xml:space="preserve"><value>Educator</value></data>
   <data name="Email" xml:space="preserve"><value>Email</value></data>
+  <data name="EmploymentType" xml:space="preserve"><value>Employment type</value></data>
   <data name="EndDate" xml:space="preserve"><value>End date</value></data>
   <data name="EndTime" xml:space="preserve"><value>End time</value></data>
+  <data name="EndsAt" xml:space="preserve"><value>Ends at</value></data>
+  <data name="EntryType" xml:space="preserve"><value>Entry type</value></data>
+  <data name="ExpiresOn" xml:space="preserve"><value>Expiry date</value></data>
+  <data name="ExternalName" xml:space="preserve"><value>External name</value></data>
+  <data name="Feedback" xml:space="preserve"><value>Feedback</value></data>
   <data name="FirstName" xml:space="preserve"><value>First name</value></data>
+  <data name="FollowUpDate" xml:space="preserve"><value>Follow-up date</value></data>
+  <data name="Frequency" xml:space="preserve"><value>Frequency</value></data>
+  <data name="From" xml:space="preserve"><value>Start</value></data>
+  <data name="FromYear" xml:space="preserve"><value>Start year</value></data>
   <data name="FullName" xml:space="preserve"><value>Full name</value></data>
   <data name="GuardianId" xml:space="preserve"><value>Guardian</value></data>
+  <data name="Horizon" xml:space="preserve"><value>Horizon</value></data>
   <data name="InvoiceId" xml:space="preserve"><value>Invoice</value></data>
+  <data name="IpAddress" xml:space="preserve"><value>IP address</value></data>
+  <data name="IssueDate" xml:space="preserve"><value>Issue date</value></data>
+  <data name="IssuedOn" xml:space="preserve"><value>Issue date</value></data>
+  <data name="KpiCode" xml:space="preserve"><value>KPI code</value></data>
   <data name="LastName" xml:space="preserve"><value>Last name</value></data>
+  <data name="LeadId" xml:space="preserve"><value>Lead</value></data>
+  <data name="MaxCarryForward" xml:space="preserve"><value>Max carry-forward</value></data>
+  <data name="MaxPeriods" xml:space="preserve"><value>Max periods</value></data>
   <data name="Name" xml:space="preserve"><value>Name</value></data>
+  <data name="NewScheduledDate" xml:space="preserve"><value>New scheduled date</value></data>
+  <data name="NewStartAt" xml:space="preserve"><value>New start time</value></data>
   <data name="Note" xml:space="preserve"><value>Note</value></data>
   <data name="Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Outcome" xml:space="preserve"><value>Outcome</value></data>
   <data name="PackageDefinitionId" xml:space="preserve"><value>Package definition</value></data>
   <data name="Page" xml:space="preserve"><value>Page</value></data>
   <data name="PageSize" xml:space="preserve"><value>Page size</value></data>
+  <data name="ParticipantType" xml:space="preserve"><value>Participant type</value></data>
   <data name="Password" xml:space="preserve"><value>Password</value></data>
+  <data name="PaymentDate" xml:space="preserve"><value>Payment date</value></data>
   <data name="PaymentMethodId" xml:space="preserve"><value>Payment method</value></data>
+  <data name="PercentComplete" xml:space="preserve"><value>Percent complete</value></data>
+  <data name="Percentage" xml:space="preserve"><value>Percentage</value></data>
+  <data name="PeriodEnd" xml:space="preserve"><value>Period end</value></data>
+  <data name="PeriodStart" xml:space="preserve"><value>Period start</value></data>
   <data name="Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="PromotionPercentage" xml:space="preserve"><value>Promotion percentage</value></data>
   <data name="Quantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="Question" xml:space="preserve"><value>Question</value></data>
+  <data name="RangeEnd" xml:space="preserve"><value>Range end</value></data>
+  <data name="RangeStart" xml:space="preserve"><value>Range start</value></data>
+  <data name="Rating" xml:space="preserve"><value>Rating</value></data>
+  <data name="ResponseType" xml:space="preserve"><value>Response type</value></data>
+  <data name="Role" xml:space="preserve"><value>Role</value></data>
   <data name="RoomId" xml:space="preserve"><value>Room</value></data>
+  <data name="ScheduledAt" xml:space="preserve"><value>Scheduled time</value></data>
+  <data name="ScheduledDate" xml:space="preserve"><value>Scheduled date</value></data>
+  <data name="SchoolVisitId" xml:space="preserve"><value>School visit</value></data>
+  <data name="ScoringModel" xml:space="preserve"><value>Scoring model</value></data>
   <data name="SessionId" xml:space="preserve"><value>Session</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="SignatureMethod" xml:space="preserve"><value>Signature method</value></data>
   <data name="StartDate" xml:space="preserve"><value>Start date</value></data>
   <data name="StartTime" xml:space="preserve"><value>Start time</value></data>
+  <data name="StartsAt" xml:space="preserve"><value>Starts at</value></data>
   <data name="Status" xml:space="preserve"><value>Status</value></data>
   <data name="StudentId" xml:space="preserve"><value>Student</value></data>
+  <data name="Summary" xml:space="preserve"><value>Summary</value></data>
+  <data name="Target" xml:space="preserve"><value>Target</value></data>
+  <data name="TemplateId" xml:space="preserve"><value>Template</value></data>
   <data name="Title" xml:space="preserve"><value>Title</value></data>
+  <data name="To" xml:space="preserve"><value>End</value></data>
+  <data name="ToYear" xml:space="preserve"><value>End year</value></data>
+  <data name="Translation" xml:space="preserve"><value>Translation</value></data>
+  <data name="Trend" xml:space="preserve"><value>Trend</value></data>
+  <data name="TriggerCode" xml:space="preserve"><value>Trigger code</value></data>
+  <data name="Unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="UserId" xml:space="preserve"><value>User</value></data>
   <data name="Username" xml:space="preserve"><value>Username</value></data>
+  <data name="ValidFrom" xml:space="preserve"><value>Valid from</value></data>
+  <data name="ValidTo" xml:space="preserve"><value>Valid to</value></data>
+  <data name="WindowEnd" xml:space="preserve"><value>Window end</value></data>
+  <data name="WindowStart" xml:space="preserve"><value>Window start</value></data>
   <data name="Word.Address" xml:space="preserve"><value>Address</value></data>
   <data name="Word.Count" xml:space="preserve"><value>Count</value></data>
   <data name="Word.Date" xml:space="preserve"><value>date</value></data>

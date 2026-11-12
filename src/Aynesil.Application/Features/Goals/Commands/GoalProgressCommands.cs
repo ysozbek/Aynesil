@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -27,10 +29,10 @@ public class RecordGoalProgressCommandValidator : AbstractValidator<RecordGoalPr
         RuleFor(x => x.PercentComplete)
             .InclusiveBetween(0, 100)
             .When(x => x.PercentComplete.HasValue)
-            .WithMessage("PercentComplete must be between 0 and 100.");
+            .WithKey(MsgKeys.Validation.MustBeBetween, Msg.FieldArg("PercentComplete"), 0, 100);
         RuleFor(x => x.Trend)
             .Must(t => t is null || new[] { "improving", "stable", "declining" }.Contains(t))
-            .WithMessage("Trend must be improving, stable, or declining.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Trend"), EnumSets.Trend);
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -24,7 +26,7 @@ public class AddPlanReviewCommandValidator : AbstractValidator<AddPlanReviewComm
         RuleFor(x => x.ReviewedOn).NotEmpty();
         RuleFor(x => x.Outcome)
             .Must(o => o is null || new[] { "on_track", "needs_revision", "met" }.Contains(o))
-            .WithMessage("Outcome must be on_track, needs_revision, or met.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Outcome"), EnumSets.Outcome);
     }
 }
 

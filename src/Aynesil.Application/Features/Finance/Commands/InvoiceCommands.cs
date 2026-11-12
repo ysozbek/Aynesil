@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -24,7 +26,7 @@ public class CreateInvoiceCommandValidator : AbstractValidator<CreateInvoiceComm
         RuleFor(x => x.DueDate)
             .GreaterThanOrEqualTo(x => x.IssueDate)
             .When(x => x.DueDate.HasValue)
-            .WithMessage("Due date must be on or after issue date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("DueDate"), Msg.FieldArg("IssueDate"));
     }
 }
 

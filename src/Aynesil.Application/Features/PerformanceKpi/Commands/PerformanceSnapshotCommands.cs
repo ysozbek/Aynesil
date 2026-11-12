@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using System.Text.Json;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
@@ -40,7 +42,7 @@ public class ComputePerformanceSnapshotCommandValidator
         RuleFor(x => x.PeriodStart).NotEmpty();
         RuleFor(x => x.PeriodEnd).NotEmpty()
             .GreaterThan(x => x.PeriodStart)
-            .WithMessage("PeriodEnd must be after PeriodStart.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("PeriodEnd"), Msg.FieldArg("PeriodStart"));
     }
 }
 
@@ -292,7 +294,7 @@ public class BulkComputeSnapshotsCommandValidator
         RuleFor(x => x.PeriodStart).NotEmpty();
         RuleFor(x => x.PeriodEnd).NotEmpty()
             .GreaterThan(x => x.PeriodStart)
-            .WithMessage("PeriodEnd must be after PeriodStart.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("PeriodEnd"), Msg.FieldArg("PeriodStart"));
     }
 }
 

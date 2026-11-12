@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -30,7 +32,7 @@ public class CreateAssessmentTemplateCommandValidator : AbstractValidator<Create
         RuleFor(x => x.Name).NotEmpty().MaximumLength(300);
         RuleFor(x => x.ScoringModel)
             .Must(m => m is null || ValidScoringModels.Contains(m))
-            .WithMessage("scoring_model must be one of: sum, average, rubric, none.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ScoringModel"), EnumSets.ScoringModel);
         RuleForEach(x => x.Translations).ChildRules(t =>
         {
             t.RuleFor(x => x.Locale).NotEmpty().MaximumLength(20);

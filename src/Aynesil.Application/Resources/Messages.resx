@@ -39,4 +39,36 @@
   <data name="Error.Unauthorized" xml:space="preserve"><value>Oturum açmanız gerekiyor.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Doğrulama hatası.</value></data>
+  <data name="Validation.AtLeastOneItem" xml:space="preserve"><value>En az bir {0} gereklidir.</value></data>
+  <data name="Validation.AtLeastOneOf" xml:space="preserve"><value>{0} alanlarından en az biri verilmelidir.</value></data>
+  <data name="Validation.CodeFormatLowerDotUnderscore" xml:space="preserve"><value>Kod küçük harf ve rakamlardan oluşmalı; nokta veya alt çizgi içerebilir.</value></data>
+  <data name="Validation.CodeFormatLowerUnderscore" xml:space="preserve"><value>Kod küçük harf, rakam ve alt çizgiden oluşmalıdır.</value></data>
+  <data name="Validation.CodeFormatSlug" xml:space="preserve"><value>Kod harf veya rakamla başlamalı; yalnızca küçük harf, rakam, tire veya alt çizgi içermelidir.</value></data>
+  <data name="Validation.CodeFormatSlugDot" xml:space="preserve"><value>Kod harf veya rakamla başlamalı; yalnızca küçük harf, rakam, nokta, tire veya alt çizgi içermelidir.</value></data>
+  <data name="Validation.CodeFormatSnakeCase" xml:space="preserve"><value>Kod küçük harfli snake_case olmalıdır (harf, rakam, alt çizgi).</value></data>
+  <data name="Validation.CodeFormatUpper" xml:space="preserve"><value>Kod büyük harf ve rakamlardan oluşmalıdır (tire ve alt çizgi kullanılabilir).</value></data>
+  <data name="Validation.DiscountTarget" xml:space="preserve"><value>İndirim bir faturayı veya bir öğrenci paketini hedeflemelidir.</value></data>
+  <data name="Validation.DuplicateLocales" xml:space="preserve"><value>Yinelenen dil kodlarına izin verilmez.</value></data>
+  <data name="Validation.EducatorCannotSuperviseSelf" xml:space="preserve"><value>Bir eğitimci kendi süpervizörü olamaz.</value></data>
+  <data name="Validation.ExactlyOneOf" xml:space="preserve"><value>{0} alanlarından tam olarak biri verilmelidir.</value></data>
+  <data name="Validation.InvalidQuestionType" xml:space="preserve"><value>Geçersiz soru türü.</value></data>
+  <data name="Validation.IpAddressInvalid" xml:space="preserve"><value>Geçerli bir IP adresi girilmelidir.</value></data>
+  <data name="Validation.JsonObjectInvalid" xml:space="preserve"><value>Ayarlar geçerli bir JSON nesnesi olmalıdır.</value></data>
+  <data name="Validation.MustBeAfter" xml:space="preserve"><value>{0}, {1} alanından sonra olmalıdır.</value></data>
+  <data name="Validation.MustBeBetween" xml:space="preserve"><value>{0}, {1} ile {2} arasında olmalıdır.</value></data>
+  <data name="Validation.MustBeInFuture" xml:space="preserve"><value>{0} gelecekte olmalıdır.</value></data>
+  <data name="Validation.MustBeOneOf" xml:space="preserve"><value>{0} şu değerlerden biri olmalıdır: {1}.</value></data>
+  <data name="Validation.MustBePositive" xml:space="preserve"><value>{0} pozitif olmalıdır.</value></data>
+  <data name="Validation.MustNotBeBefore" xml:space="preserve"><value>{0}, {1} alanından önce olamaz.</value></data>
+  <data name="Validation.MustNotBeInFuture" xml:space="preserve"><value>{0} gelecekte olamaz.</value></data>
+  <data name="Validation.MustNotBeNegative" xml:space="preserve"><value>{0} negatif olamaz.</value></data>
+  <data name="Validation.MustNotBeZero" xml:space="preserve"><value>{0} sıfır olamaz.</value></data>
+  <data name="Validation.PasswordMustDiffer" xml:space="preserve"><value>Yeni parola mevcut paroladan farklı olmalıdır.</value></data>
+  <data name="Validation.PercentageMax100" xml:space="preserve"><value>{0} %100'ü aşamaz.</value></data>
+  <data name="Validation.Required" xml:space="preserve"><value>{0} zorunludur.</value></data>
+  <data name="Validation.RequiredWhenEquals" xml:space="preserve"><value>{1} '{2}' olduğunda {0} zorunludur.</value></data>
+  <data name="Validation.SameEducatorTwice" xml:space="preserve"><value>Aynı eğitimci iki kez atanamaz.</value></data>
+  <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Yüzde veya sabit tutardan yalnızca biri belirtilmelidir.</value></data>
+  <data name="Validation.UsernameFormat" xml:space="preserve"><value>Kullanıcı adı harf veya rakamla başlamalı; yalnızca küçük harf, rakam, nokta, tire, alt çizgi, @ veya + içermelidir. E-posta adresi önerilir.</value></data>
+  <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Sanal odalar bir kampüse atanamaz.</value></data>
 </root>

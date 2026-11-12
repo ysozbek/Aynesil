@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Leaves.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
@@ -27,14 +29,14 @@ public class SubmitLeaveRequestCommandValidator : AbstractValidator<SubmitLeaveR
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.Unit)
             .Must(u => ValidUnits.Contains(u))
-            .WithMessage("Invalid unit. Must be: day, hour.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Unit"), EnumSets.LeaveUnit);
         RuleFor(x => x.StartsAt).NotEmpty();
         RuleFor(x => x.EndsAt)
             .GreaterThan(x => x.StartsAt)
-            .WithMessage("EndsAt must be after StartsAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("StartsAt"));
         RuleFor(x => x.Quantity)
             .GreaterThan(0).When(x => x.Quantity.HasValue)
-            .WithMessage("Quantity must be positive.");
+            .WithKey(MsgKeys.Validation.MustBePositive, Msg.FieldArg("Quantity"));
     }
 }
 
@@ -104,14 +106,14 @@ public class UpdateLeaveRequestCommandValidator : AbstractValidator<UpdateLeaveR
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Unit)
             .Must(u => ValidUnits.Contains(u))
-            .WithMessage("Invalid unit. Must be: day, hour.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Unit"), EnumSets.LeaveUnit);
         RuleFor(x => x.StartsAt).NotEmpty();
         RuleFor(x => x.EndsAt)
             .GreaterThan(x => x.StartsAt)
-            .WithMessage("EndsAt must be after StartsAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("StartsAt"));
         RuleFor(x => x.Quantity)
             .GreaterThan(0).When(x => x.Quantity.HasValue)
-            .WithMessage("Quantity must be positive.");
+            .WithKey(MsgKeys.Validation.MustBePositive, Msg.FieldArg("Quantity"));
     }
 }
 
@@ -317,7 +319,7 @@ public class InitializeLeaveBalanceCommandValidator : AbstractValidator<Initiali
         RuleFor(x => x.Entitled).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Unit)
             .Must(u => ValidUnits.Contains(u))
-            .WithMessage("Invalid unit. Must be: day, hour.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Unit"), EnumSets.LeaveUnit);
     }
 }
 
@@ -409,10 +411,10 @@ public class CarryForwardLeaveBalanceCommandValidator : AbstractValidator<CarryF
         RuleFor(x => x.EducatorId).NotEmpty();
         RuleFor(x => x.FromYear).InclusiveBetween(2000, 2100);
         RuleFor(x => x.ToYear).InclusiveBetween(2000, 2100)
-            .GreaterThan(x => x.FromYear).WithMessage("ToYear must be greater than FromYear.");
+            .GreaterThan(x => x.FromYear).WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ToYear"), Msg.FieldArg("FromYear"));
         RuleFor(x => x.MaxCarryForward)
             .GreaterThanOrEqualTo(0).When(x => x.MaxCarryForward.HasValue)
-            .WithMessage("MaxCarryForward must be non-negative.");
+            .WithKey(MsgKeys.Validation.MustNotBeNegative, Msg.FieldArg("MaxCarryForward"));
     }
 }
 

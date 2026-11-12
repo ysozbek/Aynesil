@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -27,7 +29,7 @@ public class AddCertificationCommandValidator : AbstractValidator<AddCertificati
         RuleFor(x => x.ExpiresOn)
             .GreaterThan(x => x.IssuedOn)
             .When(x => x.IssuedOn.HasValue && x.ExpiresOn.HasValue)
-            .WithMessage("ExpiresOn must be after IssuedOn.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ExpiresOn"), Msg.FieldArg("IssuedOn"));
     }
 }
 
@@ -84,7 +86,7 @@ public class UpdateCertificationCommandValidator : AbstractValidator<UpdateCerti
         RuleFor(x => x.ExpiresOn)
             .GreaterThan(x => x.IssuedOn)
             .When(x => x.IssuedOn.HasValue && x.ExpiresOn.HasValue)
-            .WithMessage("ExpiresOn must be after IssuedOn.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ExpiresOn"), Msg.FieldArg("IssuedOn"));
     }
 }
 

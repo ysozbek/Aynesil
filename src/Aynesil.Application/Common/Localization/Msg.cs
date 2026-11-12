@@ -83,11 +83,21 @@ public static partial class Msg
     public static ILocalizedArg FieldArg(string name) => new Deferred(c => Field(name, c));
 
     /// <summary>Mesaj parametresi: kod listesi, seçili dilde etiketlerle ("devam, geç").</summary>
-    public static ILocalizedArg EnumList(string group, params string[] codes) =>
-        new Deferred(c => string.Join(", ", codes.Select(code => Enum(group, code, c))));
+    public static EnumSet EnumList(string group, params string[] codes) => new(group, codes);
+
+    /// <summary>Mesaj parametresi: alan adı listesi, seçili dilde etiketlerle ("Puan, Yorum").</summary>
+    public static ILocalizedArg FieldList(params string[] names) =>
+        new Deferred(c => string.Join(", ", names.Select(n => Field(n, c))));
 
     /// <summary>Mesaj parametresi: tek kod değerinin etiketi.</summary>
     public static ILocalizedArg EnumArg(string group, string code) => new Deferred(c => Enum(group, code, c));
+
+    /// <summary>Bir enum grubunun izin verilen kodları; etiketler biçimlendirme anında seçili dilde çözülür.</summary>
+    public sealed record EnumSet(string Group, string[] Codes) : ILocalizedArg
+    {
+        public string Resolve(CultureInfo culture) =>
+            string.Join(", ", Codes.Select(code => Enum(Group, code, culture)));
+    }
 
     private sealed record Deferred(Func<CultureInfo, string> Factory) : ILocalizedArg
     {

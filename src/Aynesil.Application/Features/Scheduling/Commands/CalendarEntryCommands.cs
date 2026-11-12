@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -24,9 +26,9 @@ public class CreateCalendarEntryCommandValidator : AbstractValidator<CreateCalen
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.EntryType)
             .Must(t => new[] { "holiday", "closure", "event", "term_break" }.Contains(t))
-            .WithMessage("EntryType must be holiday, closure, event, or term_break.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("EntryType"), EnumSets.EntryType);
         RuleFor(x => x.EndsAt).GreaterThan(x => x.StartsAt)
-            .WithMessage("EndsAt must be after StartsAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("StartsAt"));
     }
 }
 

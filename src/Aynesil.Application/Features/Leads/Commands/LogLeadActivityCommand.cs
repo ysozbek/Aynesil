@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.Validation;
@@ -31,11 +32,11 @@ public class LogLeadActivityCommandValidator : AbstractValidator<LogLeadActivity
         RuleFor(x => x.Subject).MaximumLength(500).When(x => x.Subject is not null);
         RuleFor(x => x.Direction)
             .Must(d => d is null || ValidDirections.Contains(d))
-            .WithMessage("Direction must be 'inbound' or 'outbound'.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Direction"), EnumSets.Direction);
         RuleFor(x => x.FollowUpAt)
             .GreaterThan(DateTimeOffset.UtcNow)
             .When(x => x.FollowUpAt.HasValue)
-            .WithMessage("Follow-up date must be in the future.");
+            .WithKey(MsgKeys.Validation.MustBeInFuture, Msg.FieldArg("FollowUpDate"));
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Meetings.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
@@ -40,15 +42,15 @@ public class ScheduleMeetingCommandValidator : AbstractValidator<ScheduleMeeting
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.EndsAt)
             .Must((cmd, endsAt) => endsAt == null || cmd.ScheduledAt == null || endsAt > cmd.ScheduledAt)
-            .WithMessage("EndsAt must be after ScheduledAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("ScheduledAt"));
         RuleForEach(x => x.Participants).ChildRules(p =>
         {
             p.RuleFor(x => x.ParticipantType)
                 .Must(t => ValidTypes.Contains(t))
-                .WithMessage("Invalid participant_type. Must be: user, guardian, lead, external.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ParticipantType"), EnumSets.ParticipantType);
             p.RuleFor(x => x.Attendance)
                 .Must(a => ValidAttendances.Contains(a))
-                .WithMessage("Invalid attendance. Must be: invited, attended, absent, tentative.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Attendance"), EnumSets.MeetingAttendance);
         });
     }
 }
@@ -115,7 +117,7 @@ public class UpdateMeetingCommandValidator : AbstractValidator<UpdateMeetingComm
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.EndsAt)
             .Must((cmd, endsAt) => endsAt == null || cmd.ScheduledAt == null || endsAt > cmd.ScheduledAt)
-            .WithMessage("EndsAt must be after ScheduledAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("ScheduledAt"));
     }
 }
 
@@ -226,14 +228,14 @@ public class AddMeetingParticipantCommandValidator
         RuleFor(x => x.MeetingId).NotEmpty();
         RuleFor(x => x.ParticipantType)
             .Must(t => ValidTypes.Contains(t))
-            .WithMessage("Invalid participant_type. Must be: user, guardian, lead, external.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("ParticipantType"), EnumSets.ParticipantType);
         RuleFor(x => x.Attendance)
             .Must(a => ValidAttendances.Contains(a))
-            .WithMessage("Invalid attendance. Must be: invited, attended, absent, tentative.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Attendance"), EnumSets.MeetingAttendance);
         RuleFor(x => x)
             .Must(x => x.UserId.HasValue || x.GuardianId.HasValue
                        || x.LeadId.HasValue || !string.IsNullOrWhiteSpace(x.ExternalName))
-            .WithMessage("Provide UserId, GuardianId, LeadId, or ExternalName.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("UserId", "GuardianId", "LeadId", "ExternalName"));
     }
 }
 
@@ -289,7 +291,7 @@ public class UpdateAttendanceCommandValidator : AbstractValidator<UpdateAttendan
         RuleFor(x => x.ParticipantId).NotEmpty();
         RuleFor(x => x.Attendance)
             .Must(a => ValidAttendances.Contains(a))
-            .WithMessage("Invalid attendance. Must be: invited, attended, absent, tentative.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Attendance"), EnumSets.MeetingAttendance);
     }
 }
 
@@ -350,7 +352,7 @@ public class RecordMeetingOutcomeCommandValidator
         RuleFor(x => x.MeetingId).NotEmpty();
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Summary) || !string.IsNullOrWhiteSpace(x.Decisions))
-            .WithMessage("At least a summary or decisions must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Summary", "Decisions"));
     }
 }
 
@@ -409,7 +411,7 @@ public class UpdateMeetingOutcomeCommandValidator
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Summary) || !string.IsNullOrWhiteSpace(x.Decisions))
-            .WithMessage("At least a summary or decisions must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Summary", "Decisions"));
     }
 }
 
@@ -540,7 +542,7 @@ public class UpdateFollowUpStatusCommandValidator
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Invalid status. Must be: open, in_progress, done, cancelled.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.ActionItemStatus);
     }
 }
 

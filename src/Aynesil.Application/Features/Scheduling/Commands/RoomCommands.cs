@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -28,7 +30,7 @@ public class CreateRoomCommandValidator : AbstractValidator<CreateRoomCommand>
         RuleFor(x => x.MeetingUrl).MaximumLength(2000).When(x => x.MeetingUrl != null);
         RuleFor(x => x.CampusId).Null()
             .When(x => x.IsVirtual)
-            .WithMessage("Virtual rooms must not be assigned to a campus.");
+            .WithKey(MsgKeys.Validation.VirtualRoomNoCampus);
     }
 }
 

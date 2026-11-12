@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
@@ -29,7 +31,7 @@ public class CreateCorporationCommandValidator : AbstractValidator<CreateCorpora
             .NotEmpty()
             .MaximumLength(50)
             .Matches(@"^[a-z0-9][a-z0-9_-]*$")
-            .WithMessage("Code must start with a letter or digit and contain only lowercase letters, digits, hyphens, or underscores.");
+            .WithKey(MsgKeys.Validation.CodeFormatSlug);
 
         RuleFor(x => x.LegalName).NotEmpty().MaximumLength(300);
         RuleFor(x => x.DisplayName).NotEmpty().MaximumLength(150);

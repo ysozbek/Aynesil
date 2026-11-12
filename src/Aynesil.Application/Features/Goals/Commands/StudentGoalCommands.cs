@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -31,7 +33,7 @@ public class CreateStudentGoalCommandValidator : AbstractValidator<CreateStudent
         RuleFor(x => x.Statement).NotEmpty().MaximumLength(2000);
         RuleFor(x => x.Horizon)
             .Must(h => new[] { "long_term", "short_term" }.Contains(h))
-            .WithMessage("Horizon must be long_term or short_term.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Horizon"), EnumSets.Horizon);
         RuleFor(x => x.TargetValue).GreaterThanOrEqualTo(0).When(x => x.TargetValue.HasValue);
     }
 }
@@ -159,7 +161,7 @@ public class ChangeStudentGoalStatusCommandValidator
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.NewStatus)
             .Must(s => new[] { "active", "achieved", "discontinued", "on_hold" }.Contains(s))
-            .WithMessage("Status must be active, achieved, discontinued, or on_hold.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.GoalStatus);
     }
 }
 

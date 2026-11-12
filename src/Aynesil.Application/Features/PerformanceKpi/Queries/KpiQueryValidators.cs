@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using FluentValidation;
 
 namespace Aynesil.Application.Features.PerformanceKpi.Queries;
@@ -12,14 +14,14 @@ internal static class KpiPeriodRules
         System.Linq.Expressions.Expression<Func<T, DateOnly>> start,
         System.Linq.Expressions.Expression<Func<T, DateOnly>> end)
     {
-        v.RuleFor(start).NotEqual(default(DateOnly)).WithMessage("Dönem başlangıcı (periodStart) zorunludur.");
-        v.RuleFor(end).NotEqual(default(DateOnly)).WithMessage("Dönem bitişi (periodEnd) zorunludur.");
+        v.RuleFor(start).NotEqual(default(DateOnly)).WithKey(MsgKeys.Validation.Required, Msg.FieldArg("PeriodStart"));
+        v.RuleFor(end).NotEqual(default(DateOnly)).WithKey(MsgKeys.Validation.Required, Msg.FieldArg("PeriodEnd"));
         var s = start.Compile();
         var e = end.Compile();
         v.RuleFor(x => x)
             .Must(x => s(x) == default || e(x) == default || s(x) <= e(x))
-            .WithName("PeriodEnd")
-            .WithMessage("Dönem bitişi, başlangıçtan önce olamaz.");
+            .WithName(_ => Msg.Field("PeriodEnd"))
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("PeriodEnd"), Msg.FieldArg("PeriodStart"));
     }
 }
 
@@ -27,7 +29,7 @@ public sealed class GetEducatorDashboardQueryValidator : AbstractValidator<GetEd
 {
     public GetEducatorDashboardQueryValidator()
     {
-        RuleFor(x => x.EducatorId).NotEmpty().WithMessage("Eğitmen kimliği zorunludur.");
+        RuleFor(x => x.EducatorId).NotEmpty().WithKey(MsgKeys.Validation.Required, Msg.FieldArg("EducatorId"));
         KpiPeriodRules.Apply(this, x => x.PeriodStart, x => x.PeriodEnd);
     }
 }
@@ -54,7 +56,7 @@ public sealed class GetEducatorRankingQueryValidator : AbstractValidator<GetEduc
 {
     public GetEducatorRankingQueryValidator()
     {
-        RuleFor(x => x.KpiCode).NotEmpty().WithMessage("KPI kodu (kpiCode) zorunludur.");
+        RuleFor(x => x.KpiCode).NotEmpty().WithKey(MsgKeys.Validation.Required, Msg.FieldArg("KpiCode"));
         KpiPeriodRules.Apply(this, x => x.PeriodStart, x => x.PeriodEnd);
     }
 }
@@ -63,8 +65,8 @@ public sealed class GetEducatorKpiTrendQueryValidator : AbstractValidator<GetEdu
 {
     public GetEducatorKpiTrendQueryValidator()
     {
-        RuleFor(x => x.EducatorId).NotEmpty().WithMessage("Eğitmen kimliği zorunludur.");
-        RuleFor(x => x.KpiCode).NotEmpty().WithMessage("KPI kodu (kpiCode) zorunludur.");
-        RuleFor(x => x.MaxPeriods).InclusiveBetween(1, 12).WithMessage("maxPeriods 1–12 arasında olmalıdır.");
+        RuleFor(x => x.EducatorId).NotEmpty().WithKey(MsgKeys.Validation.Required, Msg.FieldArg("EducatorId"));
+        RuleFor(x => x.KpiCode).NotEmpty().WithKey(MsgKeys.Validation.Required, Msg.FieldArg("KpiCode"));
+        RuleFor(x => x.MaxPeriods).InclusiveBetween(1, 12).WithKey(MsgKeys.Validation.MustBeBetween, Msg.FieldArg("MaxPeriods"), 1, 12);
     }
 }

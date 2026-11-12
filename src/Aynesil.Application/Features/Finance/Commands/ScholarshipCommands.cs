@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -26,12 +28,12 @@ public class GrantScholarshipCommandValidator : AbstractValidator<GrantScholarsh
 
         RuleFor(x => x)
             .Must(x => (x.Percentage.HasValue) ^ (x.Amount.HasValue))
-            .WithMessage("Specify either a percentage OR a fixed amount, not both and not neither.");
+            .WithKey(MsgKeys.Validation.ScholarshipPercentOrAmount);
 
         RuleFor(x => x.Percentage)
             .InclusiveBetween(0.01m, 100m)
             .When(x => x.Percentage.HasValue)
-            .WithMessage("Percentage must be between 0.01 and 100.");
+            .WithKey(MsgKeys.Validation.MustBeBetween, Msg.FieldArg("Percentage"), 0.01m, 100);
 
         RuleFor(x => x.Amount)
             .GreaterThan(0)
@@ -40,7 +42,7 @@ public class GrantScholarshipCommandValidator : AbstractValidator<GrantScholarsh
         RuleFor(x => x.ValidTo)
             .GreaterThanOrEqualTo(x => x.ValidFrom!.Value)
             .When(x => x.ValidFrom.HasValue && x.ValidTo.HasValue)
-            .WithMessage("ValidTo must be on or after ValidFrom.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("ValidTo"), Msg.FieldArg("ValidFrom"));
 
         RuleFor(x => x.Note).MaximumLength(1000).When(x => x.Note is not null);
     }
@@ -113,12 +115,12 @@ public class UpdateScholarshipCommandValidator : AbstractValidator<UpdateScholar
 
         RuleFor(x => x)
             .Must(x => (x.Percentage.HasValue) ^ (x.Amount.HasValue))
-            .WithMessage("Specify either a percentage OR a fixed amount, not both and not neither.");
+            .WithKey(MsgKeys.Validation.ScholarshipPercentOrAmount);
 
         RuleFor(x => x.Percentage)
             .InclusiveBetween(0.01m, 100m)
             .When(x => x.Percentage.HasValue)
-            .WithMessage("Percentage must be between 0.01 and 100.");
+            .WithKey(MsgKeys.Validation.MustBeBetween, Msg.FieldArg("Percentage"), 0.01m, 100);
 
         RuleFor(x => x.Amount)
             .GreaterThan(0)

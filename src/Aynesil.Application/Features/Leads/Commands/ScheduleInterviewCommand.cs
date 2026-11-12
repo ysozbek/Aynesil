@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Leads.Dtos;
@@ -23,7 +25,7 @@ public class ScheduleInterviewCommandValidator : AbstractValidator<ScheduleInter
         RuleFor(x => x.ScheduledAt)
             .GreaterThan(DateTimeOffset.UtcNow)
             .When(x => x.ScheduledAt.HasValue)
-            .WithMessage("Scheduled date must be in the future.");
+            .WithKey(MsgKeys.Validation.MustBeInFuture, Msg.FieldArg("ScheduledDate"));
     }
 }
 

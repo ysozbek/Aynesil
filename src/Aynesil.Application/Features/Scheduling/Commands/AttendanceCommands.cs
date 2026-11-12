@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Scheduling.Dtos;
@@ -29,7 +31,7 @@ public class RecordAttendanceCommandValidator : AbstractValidator<RecordAttendan
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be present, absent, late, excused, or left_early.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.AttendanceStatus);
         RuleFor(x => x.MinutesAttended).GreaterThanOrEqualTo(0).When(x => x.MinutesAttended.HasValue);
     }
 }
@@ -124,7 +126,7 @@ public class BulkRecordAttendanceCommandValidator : AbstractValidator<BulkRecord
             entry.RuleFor(e => e.StudentId).NotEmpty();
             entry.RuleFor(e => e.Status)
                 .Must(s => ValidStatuses.Contains(s))
-                .WithMessage("Status must be present, absent, late, excused, or left_early.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.AttendanceStatus);
         });
     }
 }

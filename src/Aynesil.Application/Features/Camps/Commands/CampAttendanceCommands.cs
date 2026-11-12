@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -24,7 +26,7 @@ public class RecordAttendanceCommandValidator : AbstractValidator<RecordAttendan
         RuleFor(x => x.CampEnrollmentId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be: present, absent, late, or excused.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampAttendanceStatus);
     }
 }
 
@@ -92,7 +94,7 @@ public class UpdateAttendanceCommandValidator : AbstractValidator<UpdateAttendan
         RuleFor(x => x.AttendanceId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be: present, absent, late, or excused.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampAttendanceStatus);
     }
 }
 
@@ -139,13 +141,13 @@ public class BulkRecordAttendanceCommandValidator
     public BulkRecordAttendanceCommandValidator()
     {
         RuleFor(x => x.CampPeriodId).NotEmpty();
-        RuleFor(x => x.Records).NotEmpty().WithMessage("At least one attendance record is required.");
+        RuleFor(x => x.Records).NotEmpty().WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("AttendanceRecord"));
         RuleForEach(x => x.Records).ChildRules(r =>
         {
             r.RuleFor(x => x.EnrollmentId).NotEmpty();
             r.RuleFor(x => x.Status)
                 .Must(s => ValidStatuses.Contains(s))
-                .WithMessage("Status must be: present, absent, late, or excused.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampAttendanceStatus);
         });
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Menus.Dtos;
@@ -34,7 +36,7 @@ public class CreateMenuItemCommandValidator : AbstractValidator<CreateMenuItemCo
             .NotEmpty()
             .MaximumLength(100)
             .Matches(@"^[a-z0-9][a-z0-9._\-]*$")
-            .WithMessage("Code must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, or underscores.");
+            .WithKey(MsgKeys.Validation.CodeFormatSlugDot);
 
         RuleFor(x => x.Route).MaximumLength(300).When(x => x.Route is not null);
         RuleFor(x => x.Icon).MaximumLength(100).When(x => x.Icon is not null);

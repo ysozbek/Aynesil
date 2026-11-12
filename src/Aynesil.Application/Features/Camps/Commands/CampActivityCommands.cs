@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -28,7 +30,7 @@ public class CreateCampActivityCommandValidator : AbstractValidator<CreateCampAc
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndsAt)
             .Must((cmd, ends) => ends == null || cmd.StartsAt == null || ends > cmd.StartsAt)
-            .WithMessage("EndsAt must be after StartsAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("StartsAt"));
         RuleFor(x => x.Capacity).GreaterThan(0).When(x => x.Capacity.HasValue);
     }
 }
@@ -106,7 +108,7 @@ public class UpdateCampActivityCommandValidator : AbstractValidator<UpdateCampAc
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndsAt)
             .Must((cmd, ends) => ends == null || cmd.StartsAt == null || ends > cmd.StartsAt)
-            .WithMessage("EndsAt must be after StartsAt.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("EndsAt"), Msg.FieldArg("StartsAt"));
         RuleFor(x => x.Capacity).GreaterThan(0).When(x => x.Capacity.HasValue);
         RuleFor(x => x.RowVersion).GreaterThan(0);
     }

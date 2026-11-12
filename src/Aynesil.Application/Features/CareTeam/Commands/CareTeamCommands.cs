@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.CareTeam.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -36,7 +38,7 @@ public sealed class AssignCareTeamMemberValidator : AbstractValidator<AssignCare
         RuleFor(x => x.ActiveTo)
             .GreaterThan(x => x.ActiveFrom)
             .When(x => x.ActiveTo.HasValue)
-            .WithMessage("ActiveTo must be after ActiveFrom.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ActiveTo"), Msg.FieldArg("ActiveFrom"));
     }
 }
 
@@ -194,7 +196,7 @@ public sealed class UpdateCareTeamAssignmentValidator : AbstractValidator<Update
         RuleFor(x => x.ActiveTo)
             .GreaterThan(x => x.ActiveFrom!.Value)
             .When(x => x.ActiveTo.HasValue && x.ActiveFrom.HasValue)
-            .WithMessage("ActiveTo must be after ActiveFrom.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ActiveTo"), Msg.FieldArg("ActiveFrom"));
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -23,7 +25,7 @@ public class AddGoalToPlanCommandValidator : AbstractValidator<AddGoalToPlanComm
         RuleFor(x => x.StudentGoalId).NotEmpty();
         RuleFor(x => x.Horizon)
             .Must(h => new[] { "long_term", "short_term" }.Contains(h))
-            .WithMessage("Horizon must be long_term or short_term.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Horizon"), EnumSets.Horizon);
     }
 }
 

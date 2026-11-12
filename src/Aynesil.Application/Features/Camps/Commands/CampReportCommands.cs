@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -21,7 +23,7 @@ public class CreateCampReportCommandValidator : AbstractValidator<CreateCampRepo
         RuleFor(x => x.CampEnrollmentId).NotEmpty();
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Summary) || x.FileId.HasValue)
-            .WithMessage("A camp report must include at least a summary or an attached file.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Summary", "AttachedFile"));
     }
 }
 

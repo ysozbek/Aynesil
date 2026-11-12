@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Interfaces.Repositories;
@@ -36,25 +38,25 @@ public class CreateRecurringScheduleCommandValidator
     {
         RuleFor(x => x.Frequency)
             .Must(f => new[] { "weekly", "biweekly", "monthly" }.Contains(f))
-            .WithMessage("Frequency must be weekly, biweekly, or monthly.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Frequency"), EnumSets.Frequency);
         RuleFor(x => x.DurationMinutes).GreaterThan(0);
         RuleFor(x => x.RangeStart).NotEmpty();
         RuleFor(x => x.RangeEnd).GreaterThan(x => x.RangeStart)
             .When(x => x.RangeEnd.HasValue)
-            .WithMessage("Range end must be after range start.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("RangeEnd"), Msg.FieldArg("RangeStart"));
         RuleFor(x => x.IntervalCount).GreaterThanOrEqualTo(1);
         RuleFor(x => x.MaxOccurrences).GreaterThan(0).When(x => x.MaxOccurrences.HasValue);
 
         RuleFor(x => x.Educators)
             .Must(e => e!.Select(a => a.EducatorId).Distinct().Count() == e!.Count)
             .When(x => x.Educators is { Count: > 0 })
-            .WithMessage("The same educator cannot be assigned twice.");
+            .WithKey(MsgKeys.Validation.SameEducatorTwice);
         RuleForEach(x => x.Educators).ChildRules(a =>
         {
             a.RuleFor(e => e.EducatorId).NotEmpty();
             a.RuleFor(e => e.Role)
                 .Must(r => EducatorRoles.Contains(r))
-                .WithMessage("Educator role must be lead, assistant, observer, or supervisor.");
+                .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Role"), EnumSets.EducatorRole);
         });
     }
 }
@@ -182,10 +184,10 @@ public class AddRecurrenceExceptionCommandValidator
         RuleFor(x => x.RecurringScheduleId).NotEmpty();
         RuleFor(x => x.Action)
             .Must(a => new[] { "skip", "reschedule", "cancel" }.Contains(a))
-            .WithMessage("Action must be skip, reschedule, or cancel.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Action"), EnumSets.RecurrenceAction);
         RuleFor(x => x.NewStartAt).NotNull()
             .When(x => x.Action == "reschedule")
-            .WithMessage("new_start_at is required when action is 'reschedule'.");
+            .WithKey(MsgKeys.Validation.RequiredWhenEquals, Msg.FieldArg("NewStartAt"), Msg.FieldArg("Action"), Msg.EnumArg("RecurrenceAction", "reschedule"));
     }
 }
 
@@ -237,7 +239,7 @@ public class BulkGenerateSessionsCommandValidator : AbstractValidator<BulkGenera
     {
         RuleFor(x => x.RecurringScheduleId).NotEmpty();
         RuleFor(x => x.WindowEnd).GreaterThan(x => x.WindowStart)
-            .WithMessage("Window end must be after window start.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("WindowEnd"), Msg.FieldArg("WindowStart"));
     }
 }
 

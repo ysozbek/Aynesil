@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -25,7 +27,7 @@ public class LinkHierarchyCommandValidator : AbstractValidator<LinkHierarchyComm
         RuleFor(x => x.SupervisorId).NotEmpty();
         RuleFor(x => x)
             .Must(x => x.EducatorId != x.SupervisorId)
-            .WithMessage("An educator cannot supervise themselves.");
+            .WithKey(MsgKeys.Validation.EducatorCannotSuperviseSelf);
     }
 }
 

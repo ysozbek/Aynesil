@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using Aynesil.Domain.Modules.Legal.Entities;
@@ -24,7 +26,7 @@ public class GenerateStudentContractCommandValidator
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x)
             .Must(x => !(x.StartsOn.HasValue && x.EndsOn.HasValue && x.EndsOn < x.StartsOn))
-            .WithMessage("End date cannot be before start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 
@@ -124,7 +126,7 @@ public class UpdateStudentContractCommandValidator
         RuleFor(x => x.RowVersion).GreaterThan(0);
         RuleFor(x => x)
             .Must(x => !(x.StartsOn.HasValue && x.EndsOn.HasValue && x.EndsOn < x.StartsOn))
-            .WithMessage("End date cannot be before start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 
@@ -196,7 +198,7 @@ public class SignStudentContractCommandValidator : AbstractValidator<SignStudent
         RuleFor(x => x.SignatureMethod)
             .NotEmpty()
             .Must(m => ValidMethods.Contains(m))
-            .WithMessage("signatureMethod must be one of: wet, e_sign, click_wrap.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("SignatureMethod"), EnumSets.SignatureMethod);
     }
 }
 

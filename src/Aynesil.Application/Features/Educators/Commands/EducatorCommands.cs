@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -28,7 +30,7 @@ public class CreateEducatorCommandValidator : AbstractValidator<CreateEducatorCo
         RuleFor(x => x.Email).EmailAddress().When(x => x.Email is not null);
         RuleFor(x => x.EmploymentType)
             .Must(v => v is null || new[] { "full_time", "part_time", "contractor" }.Contains(v))
-            .WithMessage("EmploymentType must be full_time, part_time, or contractor.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("EmploymentType"), EnumSets.EmploymentType);
     }
 }
 
@@ -94,7 +96,7 @@ public class UpdateEducatorCommandValidator : AbstractValidator<UpdateEducatorCo
         RuleFor(x => x.Email).EmailAddress().When(x => x.Email is not null);
         RuleFor(x => x.EmploymentType)
             .Must(v => v is null || new[] { "full_time", "part_time", "contractor" }.Contains(v))
-            .WithMessage("EmploymentType must be full_time, part_time, or contractor.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("EmploymentType"), EnumSets.EmploymentType);
     }
 }
 

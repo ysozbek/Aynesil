@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -24,10 +26,10 @@ public class CreateConsultancyReportCommandValidator
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
             .Must(x => x.ConsultancyPlanId.HasValue || x.SchoolVisitId.HasValue)
-            .WithMessage("A report must be linked to a consultancy plan, a school visit, or both.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("ConsultancyPlanId", "SchoolVisitId"));
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Summary) || x.FileId.HasValue)
-            .WithMessage("A report must include at least a summary or an attached file.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Summary", "AttachedFile"));
     }
 }
 

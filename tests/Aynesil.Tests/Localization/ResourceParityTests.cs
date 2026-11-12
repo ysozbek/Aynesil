@@ -86,7 +86,8 @@ public class ResourceParityTests
         Msg.Get(MsgKeys.Error.Forbidden, tr).Should().Be("Bu işlem için yetkiniz yok.");
         Msg.Get(MsgKeys.Error.Forbidden, en).Should().Contain("permission");
         Msg.Get(MsgKeys.Error.NotFound, en, "Student").Should().Be("Student was not found.");
-        Msg.Field("new_start_at", en).Should().Be("New Start At");
+        Msg.Field("new_start_at", en).Should().Be("New start time");            // snake_case → kayıtlı etiket
+        Msg.Field("some_unknown_field", en).Should().Be("Some Unknown Field"); // kayıtsız → okunur hale getirilir
         Msg.Field("Email", tr).Should().Be("E-posta");
         Msg.Enum("Outcome", "on_track", en).Should().Be("on track");
         Msg.Enum("Outcome", "unknown_code", en).Should().Be("unknown_code");

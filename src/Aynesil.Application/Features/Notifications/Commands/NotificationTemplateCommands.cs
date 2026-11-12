@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Application.Features.Notifications.Queries;
@@ -26,7 +28,7 @@ public class CreateNotificationTemplateCommandValidator
     {
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Translations).NotEmpty()
-            .WithMessage("At least one translation is required.");
+            .WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("Translation"));
         RuleForEach(x => x.Translations).ChildRules(t =>
         {
             t.RuleFor(x => x.Locale).NotEmpty().MaximumLength(10);
@@ -103,7 +105,7 @@ public class UpdateNotificationTemplateCommandValidator
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Translations).NotEmpty()
-            .WithMessage("At least one translation is required.");
+            .WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("Translation"));
         RuleForEach(x => x.Translations).ChildRules(t =>
         {
             t.RuleFor(x => x.Locale).NotEmpty().MaximumLength(10);

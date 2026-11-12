@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -190,7 +192,7 @@ public class AdjustCreditsCommandValidator : AbstractValidator<AdjustCreditsComm
     public AdjustCreditsCommandValidator()
     {
         RuleFor(x => x.StudentPackageId).NotEmpty();
-        RuleFor(x => x.Delta).NotEqual(0).WithMessage("Adjustment delta cannot be zero.");
+        RuleFor(x => x.Delta).NotEqual(0).WithKey(MsgKeys.Validation.MustNotBeZero, Msg.FieldArg("Delta"));
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }

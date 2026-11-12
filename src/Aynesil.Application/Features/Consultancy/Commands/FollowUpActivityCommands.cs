@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -26,7 +28,7 @@ public class CreateFollowUpActivityCommandValidator
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
             .Must(x => x.ConsultancyPlanId.HasValue || x.SchoolVisitId.HasValue)
-            .WithMessage("A follow-up activity must be linked to a consultancy plan or a school visit.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("ConsultancyPlanId", "SchoolVisitId"));
     }
 }
 

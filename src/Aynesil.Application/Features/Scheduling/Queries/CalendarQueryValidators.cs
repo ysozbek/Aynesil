@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using FluentValidation;
 
 namespace Aynesil.Application.Features.Scheduling.Queries;
@@ -11,14 +13,14 @@ internal static class CalendarRangeRules
         System.Linq.Expressions.Expression<Func<T, DateTimeOffset>> from,
         System.Linq.Expressions.Expression<Func<T, DateTimeOffset>> to)
     {
-        v.RuleFor(from).NotEqual(default(DateTimeOffset)).WithMessage("Başlangıç (from) zorunludur.");
-        v.RuleFor(to).NotEqual(default(DateTimeOffset)).WithMessage("Bitiş (to) zorunludur.");
+        v.RuleFor(from).NotEqual(default(DateTimeOffset)).WithKey(MsgKeys.Validation.Required, Msg.FieldArg("From"));
+        v.RuleFor(to).NotEqual(default(DateTimeOffset)).WithKey(MsgKeys.Validation.Required, Msg.FieldArg("To"));
         var f = from.Compile();
         var t = to.Compile();
         v.RuleFor(x => x)
             .Must(x => f(x) == default || t(x) == default || f(x) < t(x))
-            .WithName("To")
-            .WithMessage("Bitiş, başlangıçtan sonra olmalıdır.");
+            .WithName(_ => Msg.Field("To"))
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("To"), Msg.FieldArg("From"));
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using Aynesil.Domain.Modules.Legal.Entities;
@@ -24,7 +26,7 @@ public class GrantConsentCommandValidator : AbstractValidator<GrantConsentComman
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x)
             .Must(x => x.TemplateId.HasValue || x.ConsentTypeId.HasValue)
-            .WithMessage("Either TemplateId or ConsentTypeId must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("TemplateId", "ConsentTypeId"));
     }
 }
 

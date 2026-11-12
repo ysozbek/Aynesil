@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Menus.Dtos;
@@ -28,7 +30,7 @@ public class SetMenuItemTranslationsCommandValidator : AbstractValidator<SetMenu
     public SetMenuItemTranslationsCommandValidator()
     {
         RuleFor(x => x.MenuItemId).NotEmpty();
-        RuleFor(x => x.Translations).NotEmpty().WithMessage("At least one translation is required.");
+        RuleFor(x => x.Translations).NotEmpty().WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("Translation"));
 
         RuleForEach(x => x.Translations).ChildRules(t =>
         {
@@ -38,7 +40,7 @@ public class SetMenuItemTranslationsCommandValidator : AbstractValidator<SetMenu
 
         RuleFor(x => x.Translations)
             .Must(list => list.Select(t => t.Locale).Distinct().Count() == list.Count)
-            .WithMessage("Duplicate locale codes are not allowed.");
+            .WithKey(MsgKeys.Validation.DuplicateLocales);
     }
 }
 

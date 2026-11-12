@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.Portal;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
@@ -32,8 +34,8 @@ public class SubmitParentFeedbackCommandValidator
         RuleFor(x => x.Rating).InclusiveBetween((short)1, (short)5)
             .When(x => x.Rating.HasValue);
         RuleFor(x => x).Must(x => x.Rating.HasValue || !string.IsNullOrWhiteSpace(x.Comment))
-            .WithName("Feedback")
-            .WithMessage("At least a rating or a comment must be provided.");
+            .WithName(_ => Msg.Field("Feedback"))
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Rating", "Comment"));
         RuleFor(x => x.Comment).MaximumLength(2000).When(x => x.Comment != null);
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using Aynesil.Domain.Modules.Legal.Entities;
@@ -22,7 +24,7 @@ public class CreateContractTemplateCommandValidator : AbstractValidator<CreateCo
     public CreateContractTemplateCommandValidator()
     {
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100)
-            .Matches(@"^[a-z0-9_]+$").WithMessage("Code must be lowercase alphanumeric with underscores.");
+            .Matches(@"^[a-z0-9_]+$").WithKey(MsgKeys.Validation.CodeFormatLowerUnderscore);
         RuleForEach(x => x.Translations).ChildRules(t =>
         {
             t.RuleFor(x => x.Locale).NotEmpty().MaximumLength(20);

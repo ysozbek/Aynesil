@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -25,7 +27,7 @@ public class CreateCampPeriodCommandValidator : AbstractValidator<CreateCampPeri
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndDate)
             .Must((cmd, end) => end >= cmd.StartDate)
-            .WithMessage("End date must be on or after start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
         RuleFor(x => x.Capacity).GreaterThan(0).When(x => x.Capacity.HasValue);
     }
 }
@@ -85,7 +87,7 @@ public class UpdateCampPeriodCommandValidator : AbstractValidator<UpdateCampPeri
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.EndDate)
             .Must((cmd, end) => end >= cmd.StartDate)
-            .WithMessage("End date must be on or after start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
         RuleFor(x => x.Capacity).GreaterThan(0).When(x => x.Capacity.HasValue);
     }
 }

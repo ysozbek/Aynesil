@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.Portal;
 using Aynesil.Application.Features.Surveys.Dtos;
@@ -37,15 +39,15 @@ public class CreateSurveyDefinitionCommandValidator
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
         RuleFor(x => x.Target).Must(t => ValidTargets.Contains(t))
-            .WithMessage("Target must be 'guardian', 'educator', or 'student'.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Target"), EnumSets.SurveyTarget);
         RuleFor(x => x.Questions).NotEmpty()
-            .WithMessage("A survey must have at least one question.");
+            .WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("Question"));
         RuleForEach(x => x.Questions).ChildRules(q =>
         {
             q.RuleFor(x => x.QuestionText).NotEmpty();
             q.RuleFor(x => x.QuestionType)
                 .Must(t => ValidQuestionTypes.Contains(t))
-                .WithMessage("Invalid question type.");
+                .WithKey(MsgKeys.Validation.InvalidQuestionType);
         });
     }
 }
@@ -187,7 +189,7 @@ public class SubmitSurveyResponseCommandValidator
     {
         RuleFor(x => x.SurveyId).NotEmpty();
         RuleFor(x => x.Answers).NotEmpty()
-            .WithMessage("At least one answer must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneItem, Msg.FieldArg("Answer"));
     }
 }
 
@@ -255,9 +257,9 @@ public class CreateParentFeedbackCommandValidator
         RuleFor(x => x.Rating)
             .InclusiveBetween((short)1, (short)5)
             .When(x => x.Rating.HasValue)
-            .WithMessage("Rating must be between 1 and 5.");
+            .WithKey(MsgKeys.Validation.MustBeBetween, Msg.FieldArg("Rating"), 1, 5);
         RuleFor(x => x).Must(x => x.Rating.HasValue || !string.IsNullOrWhiteSpace(x.Comment))
-            .WithMessage("At least a rating or a comment must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("Rating", "Comment"));
     }
 }
 

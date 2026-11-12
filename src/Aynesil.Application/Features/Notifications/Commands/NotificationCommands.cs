@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Core.Entities;
 using FluentValidation;
@@ -91,7 +93,7 @@ public class SendNotificationCommandValidator : AbstractValidator<SendNotificati
         RuleFor(x => x).Must(x =>
             !string.IsNullOrWhiteSpace(x.TriggerCode) ||
             !string.IsNullOrWhiteSpace(x.BodyOverride))
-            .WithMessage("Either TriggerCode or BodyOverride must be provided.");
+            .WithKey(MsgKeys.Validation.AtLeastOneOf, Msg.FieldList("TriggerCode", "BodyOverride"));
     }
 }
 

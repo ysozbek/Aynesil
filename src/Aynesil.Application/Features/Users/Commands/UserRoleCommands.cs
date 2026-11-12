@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Users.Dtos;
@@ -27,7 +29,7 @@ public class AssignUserRoleCommandValidator : AbstractValidator<AssignUserRoleCo
         RuleFor(x => x.ValidTo)
             .GreaterThan(x => x.ValidFrom)
             .When(x => x.ValidFrom.HasValue && x.ValidTo.HasValue)
-            .WithMessage("ValidTo must be after ValidFrom.");
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("ValidTo"), Msg.FieldArg("ValidFrom"));
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Roles.Dtos;
 using Aynesil.Domain.Modules.Iam.Entities;
@@ -24,7 +26,7 @@ public class CreateRoleCommandValidator : AbstractValidator<CreateRoleCommand>
         RuleFor(x => x.Code)
             .NotEmpty().MaximumLength(50)
             .Matches(@"^[a-z0-9][a-z0-9_-]*$")
-            .WithMessage("Code must start with a letter or digit and contain only lowercase letters, digits, hyphens, or underscores.");
+            .WithKey(MsgKeys.Validation.CodeFormatSlug);
 
         RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Description).MaximumLength(500).When(x => x.Description is not null);

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
 using Aynesil.Domain.Modules.Core.Entities;
@@ -22,7 +24,7 @@ public class CreateKpiDefinitionCommandValidator : AbstractValidator<CreateKpiDe
     {
         RuleFor(x => x.Code).NotEmpty().MaximumLength(100)
             .Matches(@"^[a-z][a-z0-9_.]*$")
-            .WithMessage("Code must be lowercase alphanumeric with dots or underscores.");
+            .WithKey(MsgKeys.Validation.CodeFormatLowerDotUnderscore);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Unit).MaximumLength(20).When(x => x.Unit != null);
     }

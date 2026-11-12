@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -26,7 +28,7 @@ public class EnrollStudentCommandValidator : AbstractValidator<EnrollStudentComm
         RuleFor(x => x.StudentId).NotEmpty();
         RuleFor(x => x.Status)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage("Status must be 'enrolled' or 'waitlist'.");
+            .WithKey(MsgKeys.Validation.MustBeOneOf, Msg.FieldArg("Status"), EnumSets.CampEnrollmentStatus);
     }
 }
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -26,7 +28,7 @@ public class CreateConsultancyAgreementCommandValidator
         RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
         RuleFor(x => x)
             .Must(x => !(x.StartDate.HasValue && x.EndDate.HasValue && x.EndDate < x.StartDate))
-            .WithMessage("End date cannot be before start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 
@@ -116,7 +118,7 @@ public class UpdateConsultancyAgreementCommandValidator
         RuleFor(x => x.RowVersion).GreaterThan(0);
         RuleFor(x => x)
             .Must(x => !(x.StartDate.HasValue && x.EndDate.HasValue && x.EndDate < x.StartDate))
-            .WithMessage("End date cannot be before start date.");
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("EndDate"), Msg.FieldArg("StartDate"));
     }
 }
 

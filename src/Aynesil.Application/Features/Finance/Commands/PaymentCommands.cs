@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -30,7 +32,7 @@ public class RecordPaymentCommandValidator : AbstractValidator<RecordPaymentComm
         RuleFor(x => x.PaidAt)
             .Must(d => d!.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
             .When(x => x.PaidAt.HasValue)
-            .WithMessage("Ödeme tarihi gelecekte olamaz.");
+            .WithKey(MsgKeys.Validation.MustNotBeInFuture, Msg.FieldArg("PaymentDate"));
     }
 }
 
