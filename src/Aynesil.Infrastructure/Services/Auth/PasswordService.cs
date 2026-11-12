@@ -18,11 +18,31 @@ public sealed class PasswordService : IPasswordService
 
     public PasswordService(IDistributedCache cache) => _cache = cache;
 
+    /// <summary>
+    /// Var olmayan kullanıcılar için karşılaştırma hedefi. Gerçek hash'lerle aynı maliyet faktörüyle, süreç başına bir kez
+    /// üretilir (<see cref="EnsureDummyHash"/> uygulama açılışında çağrılır); rastgele parolanın hash'i olduğundan hiçbir girdiyle eşleşmez.
+    /// </summary>
+    private static readonly string DummyHash =
+        BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"), WorkFactor);
+
+    /// <summary>Sahte hash'in ilk istekte değil uygulama açılışında üretilmesini sağlar.</summary>
+    public static void EnsureDummyHash() => _ = DummyHash.Length;
+
     public string Hash(string plaintext) =>
         BCrypt.Net.BCrypt.HashPassword(plaintext, WorkFactor);
 
     public bool Verify(string plaintext, string hash) =>
         BCrypt.Net.BCrypt.Verify(plaintext, hash);
+
+    public bool VerifyOrDummy(string plaintext, string? hash)
+    {
+        if (string.IsNullOrEmpty(hash))
+        {
+            BCrypt.Net.BCrypt.Verify(plaintext, DummyHash);
+            return false;
+        }
+        return BCrypt.Net.BCrypt.Verify(plaintext, hash);
+    }
 
     public async Task<bool> RecordFailedAttemptAsync(Guid userId, CancellationToken ct = default)
     {

@@ -11,6 +11,12 @@ public interface IPasswordService
 
     bool Verify(string plaintext, string hash);
 
+    /// <summary>
+    /// Hesap yoksa ya da parolası yoksa bile gerçek bir BCrypt doğrulaması (sabit sahte hash'e karşı) çalıştırır ve false döner;
+    /// böylece "kullanıcı yok" ile "parola yanlış" yanıt süresi aynı kalır (kullanıcı numaralandırmayı zorlaştırır).
+    /// </summary>
+    bool VerifyOrDummy(string plaintext, string? hash);
+
     /// <summary>Records a failed login attempt. Returns true when account is now locked.</summary>
     Task<bool> RecordFailedAttemptAsync(Guid userId, CancellationToken ct = default);
 

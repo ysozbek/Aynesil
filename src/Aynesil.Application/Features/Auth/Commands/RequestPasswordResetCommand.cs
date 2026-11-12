@@ -59,7 +59,17 @@ public sealed class RequestPasswordResetCommandHandler : IRequestHandler<Request
 
         // OWASP: do not reveal whether email exists — return silently if not found
         if (user is null || user.Status is "disabled" or "suspended")
+        {
+            // Süre eşitleme: bulunan hesapta yapılan önbellek yazımının eşdeğeri burada da yapılır (kısa ömürlü, kullanılamaz kayıt).
+            // Bildirim gönderimi gerçek sağlayıcıda yalnızca kuyruğa atma olmalıdır (senkron SMTP, süre farkı yaratır).
+            var (_, decoyHash) = GenerateToken();
+            await _cache.SetAsync(
+                CacheKeys.PasswordResetToken(decoyHash),
+                new TokenCacheData(Guid.Empty, Guid.Empty),
+                expiry: TimeSpan.FromMinutes(1),
+                cancellationToken: ct);
             return;
+        }
 
         var (rawToken, tokenHash) = GenerateToken();
 

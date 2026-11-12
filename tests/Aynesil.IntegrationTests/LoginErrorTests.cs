@@ -48,8 +48,8 @@ public sealed class LoginErrorTests : IAsyncLifetime, IDisposable
         var hash = BCrypt.Net.BCrypt.HashPassword(Password, 4);
         foreach (var (name, status) in new[] { (Active, "active"), (Disabled, "disabled"), (Locked, "active") })
             await Exec(conn,
-                "insert into iam.user_account(corporation_id, username, full_name, password_hash, status) values (@c, @u, @u, @h, @s)",
-                ("c", corp), ("u", name), ("h", hash), ("s", status));
+                "insert into iam.user_account(corporation_id, username, email, full_name, password_hash, status) values (@c, @u, @e, @u, @h, @s)",
+                ("c", corp), ("u", name), ("e", $"{name}@example.test"), ("h", hash), ("s", status));
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -143,5 +143,39 @@ public sealed class LoginErrorTests : IAsyncLifetime, IDisposable
         status.Should().Be(HttpStatusCode.Unauthorized);
         Code(correctWhileLocked).Should().Be("Auth.AccountLocked");
         Message(correctWhileLocked).Should().Contain("locked");
+    }
+
+    [Fact]
+    public async Task Unknown_user_still_pays_for_a_bcrypt_verification()
+    {
+        await LoginAsync($"warmup-{_suffix}", "x");   // ilk istek (JIT/ısınma) ölçüme girmesin
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var (status, _) = await LoginAsync($"nobody2-{_suffix}", "whatever");
+        sw.Stop();
+
+        status.Should().Be(HttpStatusCode.Unauthorized);
+        // Maliyet faktörü 12'de tek BCrypt doğrulaması yüzlerce ms sürer; sahte doğrulama yoksa yanıt birkaç ms'dir.
+        sw.ElapsedMilliseconds.Should().BeGreaterThan(40, "bilinmeyen kullanıcıda da BCrypt çalışmalı");
+    }
+
+    private async Task<(HttpStatusCode Status, string Body)> ResetAsync(string email)
+    {
+        var client = _factory.CreateClient();
+        using var response = await client.PostAsJsonAsync("/api/auth/request-password-reset", new { email });
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        // traceId isteğe özgüdür; geri kalan yanıt birebir aynı olmalı
+        return (response.StatusCode, $"{json.GetProperty("success")}|{json.GetProperty("message")}|{json.GetProperty("code")}");
+    }
+
+    [Fact]
+    public async Task Password_reset_response_is_identical_for_registered_disabled_and_unknown_emails()
+    {
+        var registered = await ResetAsync($"{Active}@example.test");
+        var disabled = await ResetAsync($"{Disabled}@example.test");
+        var unknown = await ResetAsync($"nobody-{_suffix}@example.test");
+
+        registered.Status.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
+        disabled.Should().Be(registered);
+        unknown.Should().Be(registered);
     }
 }

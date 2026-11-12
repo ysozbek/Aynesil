@@ -79,14 +79,14 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
                   FROM iam.authenticate_user({0}::citext)",
                 req.Username)
             .FirstOrDefaultAsync(ct)
-            ?? throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
+            ?? await FailUnknownUserAsync(req.Password);
 
         // ── Step 2: Password verification FIRST ────────────────────────────────
         // Hesap durumu (kilitli/devre dışı) yalnızca parola doğruysa bildirilir; aksi halde her başarısızlık
         // aynı "geçersiz kimlik bilgisi" yanıtını verir ve kullanıcının var olup olmadığı sızmaz.
         var inactive = user.Status is "suspended" or "disabled";
         var lockedOut = await _passwords.IsLockedOutAsync(user.Id, ct);
-        var passwordOk = !string.IsNullOrEmpty(user.PasswordHash) && _passwords.Verify(req.Password, user.PasswordHash);
+        var passwordOk = _passwords.VerifyOrDummy(req.Password, user.PasswordHash);
 
         if (!passwordOk)
         {
@@ -126,6 +126,15 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             user.PreferredLocale,
             user.Id,
             user.CorporationId);
+    }
+
+    /// <summary>
+    /// Bilinmeyen kullanıcıda da gerçek bir BCrypt doğrulaması çalışır; yanıt süresi "parola yanlış" ile aynı olur.
+    /// </summary>
+    private Task<AuthUserRow> FailUnknownUserAsync(string password)
+    {
+        _passwords.VerifyOrDummy(password, null);
+        throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
     }
 
     private record PermissionRow(string PermissionCode);
