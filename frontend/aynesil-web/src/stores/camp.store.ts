@@ -136,8 +136,12 @@ export const useCampStore = defineStore('camp', () => {
   async function fetchEnrollmentSummary(periodId: string) {
     loading.value = true
     try {
-      const res = await campService.getEnrollmentSummary(periodId)
-      if (res.success && res.data) enrollmentSummary.value = res.data
+      // Summary endpoint is camp-based; resolve the camp from the period, then pick the period's row.
+      const period = await campService.getPeriod(periodId)
+      if (!period.success || !period.data) return
+      const res = await campService.getEnrollmentSummary(period.data.campId)
+      if (res.success && res.data)
+        enrollmentSummary.value = res.data.find(s => s.campPeriodId === periodId) ?? null
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
   }

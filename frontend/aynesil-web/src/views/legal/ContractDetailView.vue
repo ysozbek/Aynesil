@@ -3,6 +3,7 @@ import { ContractStatus } from '@/constants/statuses'
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import type { SignContractPayload } from '@/types/legal.types'
 import { useContractStore } from '@/stores/contract.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -19,7 +20,7 @@ const id = route.params.id as string
 const contract = computed(() => contractStore.currentContract)
 const showSignModal = ref(false)
 const showTerminateConfirm = ref(false)
-const signForm = reactive({ method: 'Manual' })
+const signForm = reactive<{ method: SignContractPayload['signatureMethod']; signedByName: string }>({ method: 'wet', signedByName: '' })
 
 function formatDate(dt: string) {
   return new Date(dt).toLocaleDateString('tr-TR')
@@ -50,8 +51,9 @@ async function doSend() {
 }
 
 async function doSign() {
-  if (!contract.value) return
+  if (!contract.value || !signForm.signedByName.trim()) return
   await contractStore.signContract(id, {
+    signedByName: signForm.signedByName.trim(),
     signatureMethod: signForm.method,
     rowVersion: contract.value.rowVersion,
   })
@@ -190,9 +192,14 @@ onMounted(() => {
       <div>
         <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.signatureMethod') }}</label>
         <select v-model="signForm.method" class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent">
-          <option value="Manual">{{ t('legal.signature.manual') }}</option>
-          <option value="Electronic">{{ t('legal.signature.electronic') }}</option>
+          <option value="wet">{{ t('legal.signature.manual') }}</option>
+          <option value="e_sign">{{ t('legal.signature.electronic') }}</option>
+          <option value="click_wrap">{{ t('legal.signature.clickWrap') }}</option>
         </select>
+      </div>
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.signedByName') }} <span class="text-red-500">*</span></label>
+        <input v-model="signForm.signedByName" type="text" maxlength="200" required class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent" />
       </div>
       <template #footer>
         <button

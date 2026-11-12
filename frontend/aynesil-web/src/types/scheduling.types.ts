@@ -11,6 +11,8 @@ export interface RoomDto {
   corporationId: string
   campusId: string
   campusName: string
+  roomTypeId?: string
+  meetingUrl?: string
   code: string
   name: string
   capacity: number
@@ -45,9 +47,11 @@ export interface CreateRoomPayload {
 }
 
 export interface UpdateRoomPayload {
+  code: string
   name: string
   capacity: number
-  isVirtual: boolean
+  roomTypeId?: string
+  meetingUrl?: string
   rowVersion: number
 }
 

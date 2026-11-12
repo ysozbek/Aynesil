@@ -87,9 +87,11 @@ async function submitForm() {
   try {
     if (editTarget.value) {
       await store.updateRoom(editTarget.value.id, {
+        code: formData.code,
         name: formData.name,
         capacity: formData.capacity,
-        isVirtual: formData.isVirtual,
+        roomTypeId: store.currentRoom?.roomTypeId,
+        meetingUrl: store.currentRoom?.meetingUrl,
         rowVersion: store.currentRoom?.rowVersion ?? 0,
       })
     } else {

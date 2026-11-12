@@ -96,7 +96,7 @@ function formatDate(val: unknown): string {
   <div>
     <PageHeader :title="t('finance.scholarship.title')" :description="t('finance.scholarship.description')">
       <button
-        v-if="can('scholarship:create')"
+        v-if="can('scholarship:grant')"
         @click="showForm = true"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >

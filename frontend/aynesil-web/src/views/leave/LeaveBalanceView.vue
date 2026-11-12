@@ -8,6 +8,7 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { LeaveBalanceDto } from '@/types/leave.types'
 
@@ -22,6 +23,7 @@ const showEntitlementModal = ref(false)
 const showCarryForwardModal = ref(false)
 const selectedBalance = ref<LeaveBalanceDto | null>(null)
 const newEntitled = ref(0)
+const cfEducatorId = ref('')
 const cfFrom = ref(new Date().getFullYear() - 1)
 const cfTo = ref(new Date().getFullYear())
 
@@ -56,7 +58,9 @@ async function doSetEntitlement() {
 }
 
 async function doCarryForward() {
+  if (!cfEducatorId.value) return
   await leaveStore.carryForward({
+    educatorId: cfEducatorId.value,
     fromYear: cfFrom.value,
     toYear: cfTo.value,
   })
@@ -160,6 +164,10 @@ onMounted(async () => {
       @submit="doCarryForward"
       @close="showCarryForwardModal = false"
     >
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.educator') }} *</label>
+        <EducatorPicker v-model="cfEducatorId" />
+      </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.balance.fromYear') }} *</label>

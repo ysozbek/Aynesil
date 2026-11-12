@@ -188,6 +188,7 @@ export interface SetLeaveEntitlementPayload {
 }
 
 export interface CarryForwardPayload {
+  educatorId: string
   fromYear: number
   toYear: number
   leaveTypeId?: string

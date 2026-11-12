@@ -27,9 +27,9 @@
       <div v-if="store.myStudents.length > 1" class="flex gap-3 flex-wrap">
         <button
           v-for="s in store.myStudents"
-          :key="s.id"
-          :class="['btn btn-sm', selectedStudentId === s.id ? 'btn-primary' : 'btn-ghost border']"
-          @click="selectStudent(s.id)"
+          :key="s.studentId"
+          :class="['btn btn-sm', selectedStudentId === s.studentId ? 'btn-primary' : 'btn-ghost border']"
+          @click="selectStudent(s.studentId)"
         >
           {{ s.fullName }}
         </button>
@@ -126,7 +126,7 @@ async function selectStudent(id: string) {
 onMounted(async () => {
   await store.fetchMyStudents()
   if (store.myStudents.length > 0) {
-    await selectStudent(store.myStudents[0].id)
+    await selectStudent(store.myStudents[0].studentId)
   }
 })
 </script>

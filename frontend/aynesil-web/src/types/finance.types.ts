@@ -20,7 +20,6 @@ export interface PackageDefinitionDto {
   listPrice: number
   currency: string
   isActive: boolean
-  description?: string
   rowVersion: string
 }
 
@@ -52,10 +51,10 @@ export interface CreatePackageDefinitionPayload {
   validityDays: number
   listPrice: number
   currency: string
-  description?: string
 }
 
 export interface UpdatePackageDefinitionPayload {
+  code: string
   name: string
   packageTypeId: string
   programId?: string
@@ -63,7 +62,6 @@ export interface UpdatePackageDefinitionPayload {
   validityDays: number
   listPrice: number
   currency: string
-  description?: string
   rowVersion: string
 }
 
@@ -458,13 +456,13 @@ export interface CreatePromotionPayload {
 }
 
 export interface UpdatePromotionPayload {
+  code: string
   name: string
   value: number
   isPercentage: boolean
   maxRedemptions?: number
   validFrom?: string
   validTo?: string
-  rowVersion: string
 }
 
 export interface ValidatePromotionResult {

@@ -27,7 +27,6 @@ const form = reactive({
   validityDays: 365,
   listPrice: 0,
   currency: 'TRY',
-  description: '',
 })
 
 const errors = reactive<Record<string, string>>({})
@@ -46,7 +45,6 @@ onMounted(async () => {
       form.validityDays = d.validityDays
       form.listPrice = d.listPrice
       form.currency = d.currency
-      form.description = d.description ?? ''
     }
   }
 })
@@ -65,6 +63,7 @@ async function submit() {
   try {
     if (isEdit && packageId) {
       await store.updateDefinition(packageId, {
+        code: form.code,
         name: form.name,
         packageTypeId: form.packageTypeId,
         programId: form.programId || undefined,
@@ -72,7 +71,6 @@ async function submit() {
         validityDays: form.validityDays,
         listPrice: form.listPrice,
         currency: form.currency,
-        description: form.description || undefined,
         rowVersion: store.currentDefinition!.rowVersion,
       })
       router.push({ name: 'package-detail', params: { id: packageId } })
@@ -86,7 +84,6 @@ async function submit() {
         validityDays: form.validityDays,
         listPrice: form.listPrice,
         currency: form.currency,
-        description: form.description || undefined,
       })
       router.push({ name: 'package-detail', params: { id: created.id } })
     }
@@ -154,11 +151,6 @@ async function submit() {
               <option value="EUR">EUR</option>
             </select>
           </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('finance.package.descriptionField') }}</label>
-          <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
         </div>
 
         <div class="flex justify-end gap-3 pt-2">

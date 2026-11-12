@@ -55,7 +55,7 @@ export const campService = {
   // ── Enrollments ────────────────────────────────────────────────────────────
   listEnrollments: (periodId: string, query?: CampEnrollmentQuery) =>
     apiService.get<PaginatedResult<CampEnrollmentListItemDto>>(
-      `/camps/periods/${periodId}/enrollments${qs((query ?? {}) as Record<string, unknown>)}`
+      `/camps/enrollments${qs({ ...(query ?? {}), campPeriodId: periodId } as Record<string, unknown>)}`
     ),
 
   getEnrollment: (enrollmentId: string) =>
@@ -81,8 +81,9 @@ export const campService = {
     apiService.get<CampAttendanceSummaryDto>(`/camps/enrollments/${enrollmentId}/attendance-summary`),
 
   // ── Reports & Analytics ────────────────────────────────────────────────────
-  getEnrollmentSummary: (periodId: string) =>
-    apiService.get<CampEnrollmentSummaryDto>(`/camps/periods/${periodId}/enrollment-summary`),
+  /** Backend returns one summary row per period of the camp. */
+  getEnrollmentSummary: (campId: string) =>
+    apiService.get<CampEnrollmentSummaryDto[]>(`/camps/${campId}/enrollment-summary`),
 
   getPerformance: (campId: string) =>
     apiService.get<CampPerformanceDto>(`/camps/${campId}/performance`),
@@ -99,7 +100,7 @@ export const campService = {
 
   // ── Educators ─────────────────────────────────────────────────────────────
   listEducators: (campId: string) =>
-    apiService.get<CampEducatorDto[]>(`/camps/${campId}/educators`),
+    apiService.get<CampEducatorDto[]>(`/camps/educators${qs({ campId })}`),
 
   assignEducator: (campId: string, payload: Partial<CampEducatorDto>) =>
     apiService.post<CampEducatorDto>(`/camps/${campId}/educators`, payload),

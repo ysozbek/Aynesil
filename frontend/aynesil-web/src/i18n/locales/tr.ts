@@ -2482,6 +2482,7 @@ const tr = {
         signedAt: 'İmza Tarihi',
         signedBy: 'İmzalayan',
         signatureMethod: 'İmza Yöntemi',
+        signedByName: 'İmzalayan Adı Soyadı',
         signedFile: 'İmzalı Belge',
         fileAttached: 'Eklendi',
       },
@@ -2543,6 +2544,7 @@ const tr = {
     signature: {
       manual: 'Islak İmza',
       electronic: 'Elektronik İmza',
+      clickWrap: 'Tıkla ve Kabul Et',
       hasFile: 'Dosya Durumu',
     },
     reports: {

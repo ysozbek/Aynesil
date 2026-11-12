@@ -77,7 +77,7 @@ async function doRefund() {
           class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
         >{{ t('finance.payment.capture') }}</button>
         <button
-          v-if="can('refund:create') && payment.status === 'captured'"
+          v-if="can('refund:request') && payment.status === 'captured'"
           @click="refundAmount = payment.amount; refundModal = true"
           class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm hover:bg-red-100"
         >{{ t('finance.payment.refund') }}</button>

@@ -235,7 +235,8 @@ export interface CreateContractPayload {
 }
 
 export interface SignContractPayload {
-  signatureMethod?: string
+  signedByName: string
+  signatureMethod: 'wet' | 'e_sign' | 'click_wrap'
   signatureRef?: string
   rowVersion: number
 }

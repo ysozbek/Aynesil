@@ -7,19 +7,19 @@
 // ── Student Overview ───────────────────────────────────────────────────────────
 
 export interface PortalStudentDto {
-  id: string
+  studentId: string
+  firstName: string
+  lastName: string
   fullName: string
-  dateOfBirth?: string
-  photoUrl?: string
-  corporationId: string
-  branchId?: string
-  enrollmentStatus?: string
-  primaryDiagnosis?: string
-  canViewReports: boolean
-  canViewFinance: boolean
+  birthDate?: string
+  photoFileId?: string
+  primaryCampusName?: string
   canViewSessions: boolean
-  canViewGoals: boolean
-  canViewDocuments: boolean
+  canViewAttendance: boolean
+  canViewReports: boolean
+  canViewPlan: boolean
+  canViewFinance: boolean
+  canViewCamera: boolean
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────

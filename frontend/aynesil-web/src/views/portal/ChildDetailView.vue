@@ -32,12 +32,12 @@
             </div>
             <div>
               <h1 class="text-2xl font-bold">{{ store.currentStudent.fullName }}</h1>
-              <p v-if="store.currentStudent.dateOfBirth" class="text-gray-500">
-                {{ $t('student.dateOfBirth') }}: {{ formatDate(store.currentStudent.dateOfBirth) }}
+              <p v-if="store.currentStudent.birthDate" class="text-gray-500">
+                {{ $t('student.dateOfBirth') }}: {{ formatDate(store.currentStudent.birthDate) }}
               </p>
-              <span class="badge badge-success mt-1">
-                {{ store.currentStudent.enrollmentStatus ?? 'Aktif' }}
-              </span>
+              <p v-if="store.currentStudent.primaryCampusName" class="text-gray-500">
+                {{ store.currentStudent.primaryCampusName }}
+              </p>
             </div>
 
             <!-- Dashboard summary -->
@@ -123,9 +123,9 @@ const availableTabs = computed(() => {
   if (!student) return []
   const tabs = []
   if (student.canViewSessions) tabs.push({ key: 'sessions', label: t('portal.nav.sessions'), icon: '📅' })
-  if (student.canViewGoals) tabs.push({ key: 'goals', label: t('portal.nav.goals'), icon: '🎯' })
+  if (student.canViewPlan) tabs.push({ key: 'goals', label: t('portal.nav.goals'), icon: '🎯' })
   if (student.canViewFinance) tabs.push({ key: 'packages', label: t('portal.nav.packages'), icon: '📦' })
-  if (student.canViewDocuments) tabs.push({ key: 'documents', label: t('portal.nav.documents'), icon: '📄' })
+  if (student.canViewReports) tabs.push({ key: 'documents', label: t('portal.nav.documents'), icon: '📄' })
   tabs.push({ key: 'meetings', label: t('portal.nav.meetings'), icon: '🤝' })
   return tabs
 })

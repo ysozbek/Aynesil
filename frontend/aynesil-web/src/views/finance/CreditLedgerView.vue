@@ -135,14 +135,14 @@ function openAdjust() {
     <PageHeader :title="t('finance.credit.title')" :description="t('finance.credit.description')">
       <div class="flex gap-2">
         <button
-          v-if="can('credit:grant')"
+          v-if="can('credit_ledger:grant')"
           @click="openGrant"
           :disabled="!loadedStudentId"
           :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"
           class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
         >{{ t('finance.credit.grant') }}</button>
         <button
-          v-if="can('credit:adjust')"
+          v-if="can('credit_ledger:adjust')"
           @click="openAdjust"
           :disabled="!loadedStudentId"
           :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"

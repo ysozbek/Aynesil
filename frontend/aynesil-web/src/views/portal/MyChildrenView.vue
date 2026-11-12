@@ -20,9 +20,9 @@
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="student in store.myStudents"
-        :key="student.id"
+        :key="student.studentId"
         class="card bg-base-100 shadow hover:shadow-lg transition-shadow cursor-pointer"
-        @click="$router.push({ name: 'portal-child-detail', params: { studentId: student.id } })"
+        @click="$router.push({ name: 'portal-child-detail', params: { studentId: student.studentId } })"
       >
         <div class="card-body">
           <div class="flex items-center gap-4">
@@ -33,30 +33,27 @@
             </div>
             <div class="flex-1">
               <h2 class="card-title text-base">{{ student.fullName }}</h2>
-              <p v-if="student.dateOfBirth" class="text-sm text-gray-500">
-                {{ formatDate(student.dateOfBirth) }}
+              <p v-if="student.birthDate" class="text-sm text-gray-500">
+                {{ formatDate(student.birthDate) }}
               </p>
-              <span
-                class="badge badge-sm mt-1"
-                :class="statusBadgeClass(student.enrollmentStatus)"
-              >
-                {{ student.enrollmentStatus ?? '-' }}
-              </span>
+              <p v-if="student.primaryCampusName" class="text-sm text-gray-500">
+                {{ student.primaryCampusName }}
+              </p>
             </div>
           </div>
 
           <!-- Permission indicators -->
           <div class="flex flex-wrap gap-1 mt-3">
             <span v-if="student.canViewSessions" class="badge badge-ghost badge-xs">📅 {{ $t('portal.nav.sessions') }}</span>
-            <span v-if="student.canViewGoals" class="badge badge-ghost badge-xs">🎯 {{ $t('portal.nav.goals') }}</span>
+            <span v-if="student.canViewPlan" class="badge badge-ghost badge-xs">🎯 {{ $t('portal.nav.goals') }}</span>
             <span v-if="student.canViewFinance" class="badge badge-ghost badge-xs">💳 {{ $t('portal.nav.packages') }}</span>
-            <span v-if="student.canViewDocuments" class="badge badge-ghost badge-xs">📄 {{ $t('portal.nav.documents') }}</span>
+            <span v-if="student.canViewReports" class="badge badge-ghost badge-xs">📄 {{ $t('portal.nav.documents') }}</span>
             <span v-if="student.canViewReports" class="badge badge-ghost badge-xs">📊 {{ $t('portal.nav.reports') }}</span>
           </div>
 
           <div class="card-actions justify-end mt-2">
             <router-link
-              :to="{ name: 'portal-child-detail', params: { studentId: student.id } }"
+              :to="{ name: 'portal-child-detail', params: { studentId: student.studentId } }"
               class="btn btn-sm btn-primary"
             >
               {{ $t('common.view') }}
@@ -80,17 +77,6 @@ function initials(name: string): string {
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('tr-TR')
-}
-
-function statusBadgeClass(status?: string): string {
-  if (!status) return 'badge-ghost'
-  const map: Record<string, string> = {
-    active: 'badge-success',
-    enrolled: 'badge-success',
-    inactive: 'badge-ghost',
-    graduated: 'badge-info',
-  }
-  return map[status.toLowerCase()] ?? 'badge-ghost'
 }
 
 onMounted(() => store.fetchMyStudents())

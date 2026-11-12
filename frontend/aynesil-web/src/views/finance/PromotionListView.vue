@@ -49,10 +49,9 @@ async function submitForm() {
       const detail = await financeService.getPromotion(editTarget.value.id)
       if (detail.success && detail.data) {
         await financeService.updatePromotion(editTarget.value.id, {
-          name: formData.name, value: formData.value, isPercentage: formData.isPercentage,
+          code: detail.data.code, name: formData.name, value: formData.value, isPercentage: formData.isPercentage,
           maxRedemptions: formData.maxRedemptions ? Number(formData.maxRedemptions) : undefined,
           validFrom: formData.validFrom || undefined, validTo: formData.validTo || undefined,
-          rowVersion: detail.data.rowVersion,
         })
       }
     } else {
