@@ -49,8 +49,10 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
 
     public async Task<AttendanceDto> Handle(RecordAttendanceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var session = await _db.Sessions.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
+            .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct)
             ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
         var existing = await _db.Attendances
@@ -144,8 +146,10 @@ public sealed class BulkRecordAttendanceCommandHandler
     public async Task<IReadOnlyList<AttendanceDto>> Handle(
         BulkRecordAttendanceCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var session = await _db.Sessions.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
+            .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct)
             ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
         var studentIds = req.Entries.Select(e => e.StudentId).ToList();

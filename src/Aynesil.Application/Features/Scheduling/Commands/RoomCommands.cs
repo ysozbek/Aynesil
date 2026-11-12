@@ -32,6 +32,18 @@ public class CreateRoomCommandValidator : AbstractValidator<CreateRoomCommand>
     }
 }
 
+internal static class RoomCampusName
+{
+    /// <summary>Komut yanıtlarında da sorgu yanıtı gibi campusName dolu dönsün diye.</summary>
+    public static Task<string?> LoadAsync(IAppDbContext db, Guid? campusId, CancellationToken ct) =>
+        campusId.HasValue
+            ? db.Campuses.AsNoTracking()
+                .Where(c => c.Id == campusId.Value)
+                .Select(c => c.Name)
+                .FirstOrDefaultAsync(ct)
+            : Task.FromResult<string?>(null);
+}
+
 public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, RoomDto>
 {
     private readonly IAppDbContext _db;
@@ -53,7 +65,7 @@ public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand
               && r.Code == req.Code, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Room with code '{req.Code}' already exists in this campus.");
 
         var room = Room.Create(
@@ -63,7 +75,7 @@ public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand
         _db.Rooms.Add(room);
         await _db.SaveChangesAsync(ct);
 
-        return SchedulingProjection.ToRoomDto(room);
+        return SchedulingProjection.ToRoomDto(room, await RoomCampusName.LoadAsync(_db, room.CampusId, ct));
     }
 }
 
@@ -102,12 +114,12 @@ public sealed class UpdateRoomCommandHandler : IRequestHandler<UpdateRoomCommand
             ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
 
         if (room.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Room was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Room was modified by another user. Please refresh and retry.");
 
         room.UpdateDetails(req.Code, req.Name, req.Capacity, req.RoomTypeId, req.MeetingUrl);
 
         await _db.SaveChangesAsync(ct);
-        return SchedulingProjection.ToRoomDto(room);
+        return SchedulingProjection.ToRoomDto(room, await RoomCampusName.LoadAsync(_db, room.CampusId, ct));
     }
 }
 
@@ -157,7 +169,7 @@ public sealed class DeleteRoomCommandHandler : IRequestHandler<DeleteRoomCommand
               && s.StartsAt > DateTimeOffset.UtcNow, ct);
 
         if (hasFutureSessions)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a room that has upcoming scheduled sessions. Deactivate it instead.");
 
         room.SoftDelete(_currentUser.UserId);

@@ -113,7 +113,7 @@ public sealed class UpdateAcademicPeriodCommandHandler
             ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
 
         if (period.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The academic period was modified by another user. Please refresh and retry.");
 
         period.Update(req.Name, req.StartDate, req.EndDate, req.TermId);
@@ -189,7 +189,7 @@ public sealed class DeleteAcademicPeriodCommandHandler : IRequestHandler<DeleteA
             p => p.AcademicPeriodId == req.Id, ct);
 
         if (hasPlan)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete an academic period that has education plans assigned to it.");
 
         _db.AcademicPeriods.Remove(period);

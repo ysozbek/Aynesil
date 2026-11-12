@@ -92,7 +92,7 @@ public sealed class AddInvoiceLineCommandHandler
             ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
 
         if (invoice.Status != "draft")
-            throw new InvalidOperationException("Lines can only be added to draft invoices.");
+            throw new BusinessRuleViolationException("Lines can only be added to draft invoices.");
 
         var line = InvoiceLine.Create(
             invoice.CorporationId, req.InvoiceId,
@@ -130,7 +130,7 @@ public sealed class RemoveInvoiceLineCommandHandler
             ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
 
         if (invoice.Status != "draft")
-            throw new InvalidOperationException("Lines can only be removed from draft invoices.");
+            throw new BusinessRuleViolationException("Lines can only be removed from draft invoices.");
 
         var line = invoice.Lines.FirstOrDefault(l => l.Id == req.LineId)
             ?? throw new KeyNotFoundException($"Invoice line {req.LineId} not found.");
@@ -166,11 +166,11 @@ public sealed class IssueInvoiceCommandHandler
             ?? throw new KeyNotFoundException($"Invoice {req.Id} not found.");
 
         if (invoice.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Invoice was modified by another user. Please refresh and retry.");
 
         if (!invoice.Lines.Any())
-            throw new InvalidOperationException("Cannot issue an invoice with no lines.");
+            throw new BusinessRuleViolationException("Cannot issue an invoice with no lines.");
 
         if (req.InvoiceNo is not null)
             invoice.AssignNumber(req.InvoiceNo);
@@ -205,7 +205,7 @@ public sealed class VoidInvoiceCommandHandler
             ?? throw new KeyNotFoundException($"Invoice {req.Id} not found.");
 
         if (invoice.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Invoice was modified by another user. Please refresh and retry.");
 
         invoice.Void();

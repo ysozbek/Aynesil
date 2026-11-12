@@ -85,17 +85,17 @@ public sealed class GetStudentAttendanceQueryHandler
         if (req.To.HasValue)     q = q.Where(a => a.RecordedAt <= req.To.Value);
         if (req.Status is not null) q = q.Where(a => a.Status == req.Status);
 
+        q = req.SortBy?.ToLower() switch
+        {
+            "status"     => req.IsDescending ? q.OrderByDescending(a => a.Status)     : q.OrderBy(a => a.Status),
+            "recordedat" => req.IsDescending ? q.OrderByDescending(a => a.RecordedAt) : q.OrderBy(a => a.RecordedAt),
+            _            => q.OrderByDescending(a => a.RecordedAt)
+        };
+
         var query = q.Select(a => new AttendanceDto(
             a.Id, a.SessionId, a.StudentId, studentName,
             a.Status, a.ReasonId, a.MinutesAttended,
             a.Note, a.RecordedBy, a.RecordedAt, null, null));
-
-        query = req.SortBy?.ToLower() switch
-        {
-            "status"     => req.IsDescending ? query.OrderByDescending(a => a.Status)     : query.OrderBy(a => a.Status),
-            "recordedat" => req.IsDescending ? query.OrderByDescending(a => a.RecordedAt) : query.OrderBy(a => a.RecordedAt),
-            _            => query.OrderByDescending(a => a.RecordedAt)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

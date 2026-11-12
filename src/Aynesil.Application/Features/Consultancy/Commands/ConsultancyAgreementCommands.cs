@@ -56,7 +56,7 @@ public sealed class CreateConsultancyAgreementCommandHandler
             ?? throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
 
         if (plan.Status is "cancelled")
-            throw new InvalidOperationException("Cannot create an agreement for a cancelled plan.");
+            throw new BusinessRuleViolationException("Cannot create an agreement for a cancelled plan.");
 
         var agreement = ConsultancyAgreement.Create(
             corporationId, req.ConsultancyPlanId, plan.InstitutionId,
@@ -292,7 +292,7 @@ public sealed class DeleteConsultancyAgreementCommandHandler
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
         if (agreement.IsSigned)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "A signed or expired agreement cannot be deleted.");
 
         agreement.SoftDelete(_currentUser.UserId);

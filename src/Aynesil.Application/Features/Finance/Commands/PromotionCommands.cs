@@ -57,7 +57,7 @@ public sealed class CreatePromotionCommandHandler
             p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Promotion with code '{req.Code}' already exists for this corporation.");
 
         var promotion = Promotion.Create(

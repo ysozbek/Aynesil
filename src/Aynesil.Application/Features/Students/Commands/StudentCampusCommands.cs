@@ -128,10 +128,10 @@ public sealed class TransferStudentCommandHandler
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         if (student.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The student record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The student record was modified by another user. Please refresh and retry.");
 
         if (student.PrimaryCampusId == req.NewCampusId)
-            throw new InvalidOperationException("Student is already at this campus.");
+            throw new BusinessRuleViolationException("Student is already at this campus.");
 
         var transferDate = req.TransferDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -189,7 +189,7 @@ public sealed class EndCampusEnrollmentCommandHandler
             ?? throw new KeyNotFoundException($"Campus enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.ActiveTo.HasValue)
-            throw new InvalidOperationException("This enrollment has already been closed.");
+            throw new BusinessRuleViolationException("This enrollment has already been closed.");
 
         enrollment.ActiveTo = req.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 

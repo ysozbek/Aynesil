@@ -52,17 +52,19 @@ public sealed class GetConsultancyReportsQueryHandler
             join v in _db.SchoolVisits.AsNoTracking()
                 on r.SchoolVisitId equals v.Id into visitGrp
             from v in visitGrp.DefaultIfEmpty()
-            select new ConsultancyReportListItemDto(
+            select new
+            {
                 r.Id,
                 r.CorporationId,
                 r.ConsultancyPlanId,
-                p != null ? p.Name : null,
+                PlanName = p != null ? p.Name : null,
                 r.SchoolVisitId,
-                v != null ? v.VisitDate : (DateOnly?)null,
+                VisitDate = v != null ? v.VisitDate : (DateOnly?)null,
                 r.Title,
-                r.FileId != null,
+                HasFile = r.FileId != null,
                 r.AuthoredBy,
-                r.CreatedAt);
+                r.CreatedAt
+            };
 
         query = req.SortBy?.ToLowerInvariant() switch
         {
@@ -71,8 +73,21 @@ public sealed class GetConsultancyReportsQueryHandler
             _           => query.OrderByDescending(x => x.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new ConsultancyReportListItemDto(
+                    r.Id,
+                    r.CorporationId,
+                    r.ConsultancyPlanId,
+                    r.PlanName,
+                    r.SchoolVisitId,
+                    r.VisitDate,
+                    r.Title,
+                    r.HasFile,
+                    r.AuthoredBy,
+                    r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<ConsultancyReportListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }
@@ -149,6 +164,7 @@ public sealed class GetInstitutionReportQueryHandler
             join typ in _db.RefValues.AsNoTracking()
                 on i.InstitutionTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
+            orderby i.Name
             select new InstitutionReportDto(
                 i.Id,
                 i.Name,
@@ -161,7 +177,7 @@ public sealed class GetInstitutionReportQueryHandler
                 i.Visits.Count(v => v.Status == "completed"),
                 i.Visits.Sum(v => v.Observations.Count),
                 i.Plans.Sum(p => p.Reports.Count) + i.Visits.Sum(v => v.Reports.Count(r => r.ConsultancyPlanId == null)))
-        ).OrderBy(x => x.InstitutionName).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }
 
@@ -208,6 +224,7 @@ public sealed class GetConsultancyOutcomesQueryHandler
             join typ in _db.RefValues.AsNoTracking()
                 on p.ConsultancyTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
+            orderby p.PeriodStart descending
             select new ConsultancyOutcomesDto(
                 p.Id,
                 p.Name,
@@ -220,7 +237,7 @@ public sealed class GetConsultancyOutcomesQueryHandler
                 p.Visits.Count(v => v.Status == "completed"),
                 p.Visits.Sum(v => v.Observations.Count),
                 p.Reports.Count)
-        ).OrderByDescending(x => x.PeriodStart).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }
 
@@ -270,6 +287,7 @@ public sealed class GetVisitHistoryQueryHandler
             join p in _db.ConsultancyPlans.AsNoTracking()
                 on v.ConsultancyPlanId equals p.Id into planGrp
             from p in planGrp.DefaultIfEmpty()
+            orderby v.VisitDate descending
             select new VisitHistoryItemDto(
                 v.Id,
                 v.InstitutionId,
@@ -281,6 +299,6 @@ public sealed class GetVisitHistoryQueryHandler
                 v.Observations.Count,
                 v.Reports.Count,
                 v.CreatedAt)
-        ).OrderByDescending(x => x.VisitDate).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }

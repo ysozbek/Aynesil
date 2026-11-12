@@ -75,7 +75,7 @@ public sealed class AssignCareTeamMemberCommandHandler
         var roleValid = await _db.RefValues
             .AnyAsync(rv => rv.Id == req.RoleId && rv.RefType!.Code == "care_team_role", ct);
         if (!roleValid)
-            throw new InvalidOperationException($"RoleId {req.RoleId} is not a valid care_team_role.");
+            throw new BusinessRuleViolationException($"RoleId {req.RoleId} is not a valid care_team_role.");
 
         // Validate GrantTypeId if provided
         if (req.GrantTypeId.HasValue)
@@ -83,7 +83,7 @@ public sealed class AssignCareTeamMemberCommandHandler
             var grantTypeValid = await _db.RefValues
                 .AnyAsync(rv => rv.Id == req.GrantTypeId.Value && rv.RefType!.Code == "care_team_grant_type", ct);
             if (!grantTypeValid)
-                throw new InvalidOperationException($"GrantTypeId {req.GrantTypeId} is not a valid care_team_grant_type.");
+                throw new BusinessRuleViolationException($"GrantTypeId {req.GrantTypeId} is not a valid care_team_grant_type.");
 
             // Reason is required for emergency and delegated grant types
             var grantTypeCode = await _db.RefValues
@@ -92,7 +92,7 @@ public sealed class AssignCareTeamMemberCommandHandler
                 .FirstOrDefaultAsync(ct);
 
             if (grantTypeCode is "emergency" or "delegated" && string.IsNullOrWhiteSpace(req.Reason))
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Reason is required for grant_type '{grantTypeCode}'.");
         }
 
@@ -117,7 +117,7 @@ public sealed class AssignCareTeamMemberCommandHandler
                     (a.ActiveTo == null || a.ActiveTo > now)), ct);
 
             if (existingPrimary)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "A primary care-team assignment already exists for this student. " +
                     "Remove the existing primary assignment before assigning a new one.");
         }
@@ -144,7 +144,7 @@ public sealed class AssignCareTeamMemberCommandHandler
         await _db.SaveChangesAsync(ct);
 
         return await LoadAssignmentDtoAsync(_db, assignment.Id, ct)
-            ?? throw new InvalidOperationException("Assignment not found after save.");
+            ?? throw new BusinessRuleViolationException("Assignment not found after save.");
     }
 
     internal static async Task<CareTeamAssignmentDto?> LoadAssignmentDtoAsync(
@@ -218,7 +218,7 @@ public sealed class UpdateCareTeamAssignmentCommandHandler
             ?? throw new KeyNotFoundException($"CareTeamAssignment {req.Id} not found.");
 
         if (assignment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Concurrency conflict: the assignment was modified by another request. Reload and retry.");
 
         if (req.RoleId.HasValue)
@@ -226,7 +226,7 @@ public sealed class UpdateCareTeamAssignmentCommandHandler
             var roleValid = await _db.RefValues
                 .AnyAsync(rv => rv.Id == req.RoleId.Value && rv.RefType!.Code == "care_team_role", ct);
             if (!roleValid)
-                throw new InvalidOperationException($"RoleId {req.RoleId} is not a valid care_team_role.");
+                throw new BusinessRuleViolationException($"RoleId {req.RoleId} is not a valid care_team_role.");
             assignment.RoleId = req.RoleId.Value;
         }
 
@@ -251,7 +251,7 @@ public sealed class UpdateCareTeamAssignmentCommandHandler
 
         return await AssignCareTeamMemberCommandHandler
                 .LoadAssignmentDtoAsync(_db, assignment.Id, ct)
-            ?? throw new InvalidOperationException("Assignment not found after save.");
+            ?? throw new BusinessRuleViolationException("Assignment not found after save.");
     }
 }
 
@@ -286,11 +286,11 @@ public sealed class RemoveCareTeamAssignmentCommandHandler
             ?? throw new KeyNotFoundException($"CareTeamAssignment {req.Id} not found.");
 
         if (assignment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Concurrency conflict: the assignment was modified by another request. Reload and retry.");
 
         if (assignment.Status == "ended")
-            throw new InvalidOperationException("Assignment is already ended.");
+            throw new BusinessRuleViolationException("Assignment is already ended.");
 
         // Soft removal: set end date to today, mark as ended. Never hard-delete.
         assignment.ActiveTo  = DateOnly.FromDateTime(DateTime.UtcNow);

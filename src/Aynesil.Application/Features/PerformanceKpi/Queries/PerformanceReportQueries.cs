@@ -218,17 +218,18 @@ public sealed class GetParentFeedbackQueryHandler
         if (req.FromDate.HasValue)   q = q.Where(pf => pf.CreatedAt >= req.FromDate.Value);
         if (req.ToDate.HasValue)     q = q.Where(pf => pf.CreatedAt <= req.ToDate.Value);
 
+        // Sıralama projeksiyondan önce entity alanı üzerinden yapılır.
+        q = req.SortBy?.ToLowerInvariant() switch
+        {
+            "rating" => req.IsDescending ? q.OrderByDescending(x => x.Rating) : q.OrderBy(x => x.Rating),
+            "date"   => req.IsDescending ? q.OrderByDescending(x => x.CreatedAt) : q.OrderBy(x => x.CreatedAt),
+            _        => q.OrderByDescending(x => x.CreatedAt)
+        };
+
         var projection = q.Select(pf => new ParentFeedbackDto(
             pf.Id, pf.CorporationId,
             pf.GuardianId, pf.EducatorId, pf.SessionId,
             pf.Rating, pf.Comment, pf.CreatedAt));
-
-        projection = req.SortBy?.ToLowerInvariant() switch
-        {
-            "rating" => req.IsDescending ? projection.OrderByDescending(x => x.Rating) : projection.OrderBy(x => x.Rating),
-            "date"   => req.IsDescending ? projection.OrderByDescending(x => x.CreatedAt) : projection.OrderBy(x => x.CreatedAt),
-            _        => projection.OrderByDescending(x => x.CreatedAt)
-        };
 
         var total = await projection.CountAsync(ct);
         var items = await projection.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

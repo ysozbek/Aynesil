@@ -56,7 +56,7 @@ public class SurveyResponse : TenantEntity
     public void Submit()
     {
         if (SubmittedAt.HasValue)
-            throw new InvalidOperationException("Survey response has already been submitted.");
+            throw new BusinessRuleViolationException("Survey response has already been submitted.");
 
         SubmittedAt = DateTimeOffset.UtcNow;
     }

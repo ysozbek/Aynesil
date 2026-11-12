@@ -47,7 +47,6 @@ import type {
   PromotionListQuery,
   CreatePromotionPayload,
   UpdatePromotionPayload,
-  ValidatePromotionResult,
   RevenueReportDto,
   PackageReportDto,
   CreditUsageReportDto,
@@ -224,8 +223,9 @@ export const financeService = {
   getPromotion: (id: string) =>
     apiService.get<PromotionDto>(`/payments/promotions/${id}`),
 
+  // Backend geçersiz/bulunamayan kod için data = null döner.
   validatePromotion: (code: string) =>
-    apiService.get<ValidatePromotionResult>(
+    apiService.get<PromotionDto | null>(
       `/payments/promotions/validate${qs({ code })}`
     ),
 

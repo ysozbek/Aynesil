@@ -46,7 +46,7 @@ public sealed class ChangeStudentStatusCommandHandler
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         if (student.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The student record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The student record was modified by another user. Please refresh and retry.");
 
         var validStatus = await _db.RefValues.AnyAsync(
             r => r.Id == req.NewStatusId && r.RefType!.Code == "student_status", ct);

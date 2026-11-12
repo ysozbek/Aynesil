@@ -55,7 +55,7 @@ public class ViewingLog
     public void End(DateTimeOffset endedAt)
     {
         if (EndedAt.HasValue)
-            throw new InvalidOperationException("Viewing session has already been ended.");
+            throw new BusinessRuleViolationException("Viewing session has already been ended.");
 
         if (endedAt <= StartedAt)
             throw new ArgumentException("EndedAt must be after StartedAt.");

@@ -64,7 +64,7 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
             var roomConflict = await _sessions.HasRoomConflictAsync(
                 req.RoomId.Value, req.StartsAt, req.EndsAt, null, ct);
             if (roomConflict)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Room {req.RoomId} is already booked for the requested time slot.");
         }
 
@@ -73,7 +73,7 @@ public sealed class ScheduleSessionCommandHandler : IRequestHandler<ScheduleSess
             var educatorConflict = await _sessions.HasEducatorConflictAsync(
                 ea.EducatorId, req.StartsAt, req.EndsAt, null, ct);
             if (educatorConflict)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Educator {ea.EducatorId} is already booked for the requested time slot.");
         }
 
@@ -140,14 +140,14 @@ public sealed class RescheduleSessionCommandHandler : IRequestHandler<Reschedule
             ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
 
         if (session.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Session was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Session was modified by another user. Please refresh and retry.");
 
         if (req.RoomId.HasValue)
         {
             var conflict = await _sessions.HasRoomConflictAsync(
                 req.RoomId.Value, req.NewStartsAt, req.NewEndsAt, req.Id, ct);
             if (conflict)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Room {req.RoomId} is already booked for the new time slot.");
         }
 
@@ -181,7 +181,7 @@ public sealed class CompleteSessionCommandHandler : IRequestHandler<CompleteSess
             ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
 
         if (session.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Session was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Session was modified by another user. Please refresh and retry.");
 
         session.Complete(_currentUser.UserId);
         // Same SaveChanges: completion and credit consumption commit together.
@@ -214,7 +214,7 @@ public sealed class CancelSessionCommandHandler : IRequestHandler<CancelSessionC
             ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
 
         if (session.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Session was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Session was modified by another user. Please refresh and retry.");
 
         session.Cancel(req.Reason, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -245,7 +245,7 @@ public sealed class MarkSessionNoShowCommandHandler : IRequestHandler<MarkSessio
             ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
 
         if (session.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Session was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Session was modified by another user. Please refresh and retry.");
 
         session.MarkNoShow(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -276,7 +276,7 @@ public sealed class AddSessionParticipantCommandHandler
             ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
         if (session.Participants.Any(p => p.StudentId == req.StudentId))
-            throw new InvalidOperationException("Student is already a participant in this session.");
+            throw new BusinessRuleViolationException("Student is already a participant in this session.");
 
         var participant = SessionParticipant.Create(
             session.CorporationId, req.SessionId, req.StudentId, req.StudentProgramId, req.Role);
@@ -346,12 +346,12 @@ public sealed class AssignSessionEducatorCommandHandler
             ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
         if (session.Educators.Any(e => e.EducatorId == req.EducatorId))
-            throw new InvalidOperationException("Educator is already assigned to this session.");
+            throw new BusinessRuleViolationException("Educator is already assigned to this session.");
 
         var conflict = await _sessions.HasEducatorConflictAsync(
             req.EducatorId, session.StartsAt, session.EndsAt, session.Id, ct);
         if (conflict)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Educator {req.EducatorId} is already booked in an overlapping session.");
 
         var assignment = SessionEducator.Assign(

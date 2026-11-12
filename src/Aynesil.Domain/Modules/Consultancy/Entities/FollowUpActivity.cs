@@ -100,7 +100,7 @@ public class FollowUpActivity : TenantEntity
     public void StartProgress(Guid? updatedBy = null)
     {
         if (Status != "pending")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only pending activities can be started. Current status: '{Status}'.");
 
         Status    = "in_progress";
@@ -140,7 +140,7 @@ public class FollowUpActivity : TenantEntity
     private void EnsureActive(string action)
     {
         if (Status is "completed" or "cancelled")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot {action} a '{Status}' activity.");
     }
 }

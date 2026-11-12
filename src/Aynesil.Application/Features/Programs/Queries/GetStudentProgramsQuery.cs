@@ -57,13 +57,20 @@ public sealed class GetStudentProgramsQueryHandler
             join campus in _db.Campuses.AsNoTracking()
                 on sp.CampusId equals campus.Id into campusGrp
             from campus in campusGrp.DefaultIfEmpty()
-            select new StudentProgramListItemDto(
-                sp.Id, sp.StudentId,
-                sp.ProgramId, prog.Name, prog.Code,
-                pt != null ? pt.Code : null,
-                sp.CampusId, campus != null ? campus.Name : null,
-                sp.StartDate, sp.Status,
-                sp.CreatedAt);
+            select new
+            {
+                sp.Id,
+                sp.StudentId,
+                sp.ProgramId,
+                ProgramName = prog.Name,
+                ProgramCode = prog.Code,
+                ProgramTypeLabel = pt != null ? pt.Code : null,
+                sp.CampusId,
+                CampusName = campus != null ? campus.Name : null,
+                sp.StartDate,
+                sp.Status,
+                sp.CreatedAt
+            };
 
         query = req.SortBy?.ToLower() switch
         {
@@ -73,8 +80,22 @@ public sealed class GetStudentProgramsQueryHandler
             _             => req.IsDescending ? query.OrderByDescending(sp => sp.CreatedAt)   : query.OrderBy(sp => sp.ProgramName)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new StudentProgramListItemDto(
+                    r.Id,
+                    r.StudentId,
+                    r.ProgramId,
+                    r.ProgramName,
+                    r.ProgramCode,
+                    r.ProgramTypeLabel,
+                    r.CampusId,
+                    r.CampusName,
+                    r.StartDate,
+                    r.Status,
+                    r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
 
         return PaginatedResult<StudentProgramListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

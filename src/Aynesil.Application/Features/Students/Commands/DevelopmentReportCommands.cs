@@ -105,7 +105,7 @@ public sealed class UpdateDevelopmentReportCommandHandler
             ?? throw new KeyNotFoundException($"Development report {req.Id} not found.");
 
         if (report.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The report record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The report record was modified by another user. Please refresh and retry.");
 
         report.PeriodLabel = req.PeriodLabel;
         report.ReportDate  = req.ReportDate;

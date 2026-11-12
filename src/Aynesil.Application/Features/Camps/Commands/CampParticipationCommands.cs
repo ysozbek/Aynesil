@@ -59,18 +59,18 @@ public sealed class RegisterParticipationCommandHandler
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                                    && e.Status == "enrolled", ct)
-            ?? throw new InvalidOperationException(
+            ?? throw new BusinessRuleViolationException(
                 $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
 
         if (enrollment.CampPeriodId != activity.CampPeriodId)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Enrollment and activity must belong to the same camp period.");
 
         var duplicate = await _db.CampActivityParticipations
             .AnyAsync(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
                         && p.CampEnrollmentId == req.CampEnrollmentId, ct);
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Participation already recorded for this enrollment and activity.");
 
         if (activity.Capacity.HasValue && req.Status is "registered" or "attended")
@@ -79,7 +79,7 @@ public sealed class RegisterParticipationCommandHandler
                 .CountAsync(p => p.CorporationId == corporationId && (p.CampActivityId == req.CampActivityId
                               && (p.Status == "registered" || p.Status == "attended")), ct);
             if (count >= activity.Capacity.Value)
-                throw new InvalidOperationException("Activity is at full capacity.");
+                throw new BusinessRuleViolationException("Activity is at full capacity.");
         }
 
         var participation = CampActivityParticipation.Register(

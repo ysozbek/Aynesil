@@ -154,7 +154,7 @@ public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInst
                         && p.Status == "active", ct);
 
         if (hasActivePlans)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete an institution with active consultancy plans.");
 
         institution.SoftDelete(_currentUser.UserId);

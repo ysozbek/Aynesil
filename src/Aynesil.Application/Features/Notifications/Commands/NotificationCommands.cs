@@ -146,7 +146,7 @@ public sealed class SendNotificationCommandHandler
 
         // Body is required — use override if template resolution produced nothing
         if (string.IsNullOrWhiteSpace(body))
-            body = req.BodyOverride ?? throw new InvalidOperationException(
+            body = req.BodyOverride ?? throw new BusinessRuleViolationException(
                 "Could not resolve notification body from template or BodyOverride.");
 
         // 2. Persist notification

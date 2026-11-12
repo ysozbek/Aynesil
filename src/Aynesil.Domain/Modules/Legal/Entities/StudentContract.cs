@@ -105,7 +105,7 @@ public class StudentContract : TenantEntity
     public void Send(Guid? updatedBy = null)
     {
         if (Status != "draft")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only draft contracts can be sent. Current status: '{Status}'.");
 
         Transition("sent");
@@ -123,7 +123,7 @@ public class StudentContract : TenantEntity
         Guid? updatedBy = null)
     {
         if (Status != "sent")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only sent contracts can be signed. Current status: '{Status}'.");
         if (string.IsNullOrWhiteSpace(signedByName))
             throw new ArgumentException("Signed-by name is required.", nameof(signedByName));
@@ -149,7 +149,7 @@ public class StudentContract : TenantEntity
     public void Activate(Guid? signedFileId = null, Guid? updatedBy = null)
     {
         if (Status != "signed")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only signed contracts can be activated. Current status: '{Status}'.");
 
         if (signedFileId.HasValue)
@@ -162,7 +162,7 @@ public class StudentContract : TenantEntity
     public void Expire(Guid? updatedBy = null)
     {
         if (Status != "active")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only active contracts can be expired. Current status: '{Status}'.");
         Transition("expired");
     }
@@ -171,7 +171,7 @@ public class StudentContract : TenantEntity
     public void Terminate(Guid? updatedBy = null)
     {
         if (Status is "expired" or "terminated")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A '{Status}' contract cannot be terminated.");
         Transition("terminated");
     }
@@ -181,7 +181,7 @@ public class StudentContract : TenantEntity
     public void Delete(Guid? deletedBy = null)
     {
         if (Status != "draft")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only draft contracts can be deleted. Use Terminate() for active contracts.");
         SoftDelete(deletedBy);
     }
@@ -199,7 +199,7 @@ public class StudentContract : TenantEntity
     private void EnsureEditable()
     {
         if (Status is "signed" or "active" or "expired" or "terminated")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A '{Status}' contract cannot be modified.");
     }
 }

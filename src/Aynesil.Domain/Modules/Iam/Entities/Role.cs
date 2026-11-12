@@ -74,7 +74,7 @@ public class Role : BaseEntity
     public void SoftDelete()
     {
         if (IsSystem)
-            throw new InvalidOperationException("System roles cannot be deleted.");
+            throw new BusinessRuleViolationException("System roles cannot be deleted.");
 
         DeletedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;

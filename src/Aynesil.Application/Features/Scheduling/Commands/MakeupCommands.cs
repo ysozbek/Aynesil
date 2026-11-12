@@ -86,7 +86,7 @@ public sealed class ApproveMakeupCommandHandler : IRequestHandler<ApproveMakeupC
             ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
 
         if (makeup.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Makeup request was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Makeup request was modified by another user. Please refresh and retry.");
 
         makeup.Approve();
         await _db.SaveChangesAsync(ct);
@@ -110,7 +110,7 @@ public sealed class RejectMakeupCommandHandler : IRequestHandler<RejectMakeupCom
             ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
 
         if (makeup.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Makeup request was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Makeup request was modified by another user. Please refresh and retry.");
 
         makeup.Reject(req.Note);
         await _db.SaveChangesAsync(ct);
@@ -138,7 +138,7 @@ public sealed class AssignMakeupSessionCommandHandler
             ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
 
         if (makeup.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Makeup request was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Makeup request was modified by another user. Please refresh and retry.");
 
         var sessionExists = await _db.Sessions.AnyAsync(s => s.Id == req.MakeupSessionId, ct);
         if (!sessionExists)
@@ -166,7 +166,7 @@ public sealed class CompleteMakeupCommandHandler : IRequestHandler<CompleteMakeu
             ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
 
         if (makeup.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Makeup request was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Makeup request was modified by another user. Please refresh and retry.");
 
         makeup.MarkCompleted();
         await _db.SaveChangesAsync(ct);

@@ -39,7 +39,7 @@ public sealed class RequestRefundCommandHandler
             ?? throw new KeyNotFoundException($"Payment {req.PaymentId} not found.");
 
         if (payment.Status != "captured")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Refunds can only be requested against captured payments.");
 
         var alreadyRefunded = payment.Refunds
@@ -47,7 +47,7 @@ public sealed class RequestRefundCommandHandler
             .Sum(r => r.Amount);
 
         if (alreadyRefunded + req.Amount > payment.Amount)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Refund amount ({req.Amount:F2}) would exceed the remaining refundable amount " +
                 $"({payment.Amount - alreadyRefunded:F2}).");
 

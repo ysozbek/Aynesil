@@ -96,7 +96,7 @@ public class Camp : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (IsActive)
-            throw new InvalidOperationException("Camp is already active.");
+            throw new BusinessRuleViolationException("Camp is already active.");
 
         IsActive  = true;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -106,7 +106,7 @@ public class Camp : TenantEntity
     public void Deactivate(Guid? updatedBy = null)
     {
         if (!IsActive)
-            throw new InvalidOperationException("Camp is already inactive.");
+            throw new BusinessRuleViolationException("Camp is already inactive.");
 
         IsActive  = false;
         UpdatedAt = DateTimeOffset.UtcNow;

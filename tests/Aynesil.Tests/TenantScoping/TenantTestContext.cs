@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Domain.Common;
 using Aynesil.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -73,7 +74,7 @@ public sealed class TenantTestContext : IDisposable
         var ex = await Record.ExceptionAsync(act);
         ex.Should().NotBeNull("a parent record of another tenant must be rejected");
         ex.Should().Match<Exception>(e =>
-            e is KeyNotFoundException || e is NotFoundException || e is InvalidOperationException
+            e is KeyNotFoundException || e is NotFoundException || e is BusinessRuleViolationException
             || e is ForbiddenAccessException,
             $"expected a not-found/invalid/forbidden rejection but got {ex!.GetType().Name}: {ex.Message}");
     }

@@ -62,7 +62,7 @@ public sealed class GenerateStudentContractCommandHandler
                 ?? throw new KeyNotFoundException($"Contract template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "Contracts may only be generated from the current version of a template.");
 
             templateVersion = tpl.Version;

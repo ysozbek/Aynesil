@@ -51,7 +51,7 @@ public sealed class CreateCampCommandHandler : IRequestHandler<CreateCampCommand
               && c.DeletedAt == null, ct);
 
         if (duplicate)
-            throw new InvalidOperationException($"A camp with code '{req.Code}' already exists.");
+            throw new BusinessRuleViolationException($"A camp with code '{req.Code}' already exists.");
 
         var camp = Camp.Create(
             corporationId, req.Code, req.Name,
@@ -205,7 +205,7 @@ public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand
         ).AnyAsync(ct);
 
         if (hasActiveEnrollments)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a camp with active enrollments.");
 
         camp.SoftDelete(_currentUser.UserId);

@@ -100,7 +100,7 @@ public class SchoolVisit : BaseEntity
     private void EnsurePlanned(string action)
     {
         if (Status != "planned")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot {action} a '{Status}' visit. Only 'planned' visits can be modified.");
     }
 }

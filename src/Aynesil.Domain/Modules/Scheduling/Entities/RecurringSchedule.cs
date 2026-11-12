@@ -114,7 +114,7 @@ public class RecurringSchedule : TenantEntity
     public void AssignEducator(Guid educatorId, string role = "lead")
     {
         if (Educators.Any(e => e.EducatorId == educatorId))
-            throw new InvalidOperationException("Educator is already assigned to this recurring schedule.");
+            throw new BusinessRuleViolationException("Educator is already assigned to this recurring schedule.");
 
         Educators.Add(RecurringScheduleEducator.Assign(CorporationId, Id, educatorId, role));
     }

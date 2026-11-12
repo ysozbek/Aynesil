@@ -145,7 +145,7 @@ public sealed class UpdateScholarshipCommandHandler
             ?? throw new KeyNotFoundException($"Scholarship {req.Id} not found.");
 
         if (scholarship.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Scholarship was modified by another user. Please refresh and retry.");
 
         scholarship.Update(

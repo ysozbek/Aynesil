@@ -90,7 +90,7 @@ public class StudentPackage : TenantEntity
     public void Cancel(Guid? cancelledBy = null)
     {
         if (Status is "exhausted" or "expired")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot cancel a package in '{Status}' status.");
 
         Status    = "cancelled";
@@ -135,7 +135,7 @@ public class StudentPackage : TenantEntity
     private void EnsureActive()
     {
         if (Status != "active")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Package is in '{Status}' status. Only active packages accept credit operations.");
     }
 }

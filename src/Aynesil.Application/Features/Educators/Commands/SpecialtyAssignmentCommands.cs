@@ -45,7 +45,7 @@ public sealed class AssignSpecialtyCommandHandler : IRequestHandler<AssignSpecia
         var alreadyAssigned = await _db.EducatorSpecialties.AnyAsync(
             s => s.EducatorId == req.EducatorId && s.SpecialtyId == req.SpecialtyId, ct);
         if (alreadyAssigned)
-            throw new InvalidOperationException("This specialty is already assigned to the educator.");
+            throw new BusinessRuleViolationException("This specialty is already assigned to the educator.");
 
         var specialty = new EducatorSpecialty
         {

@@ -82,7 +82,7 @@ public class LeaveRequest : TenantEntity
         string? reason)
     {
         if (Status != "pending")
-            throw new InvalidOperationException("Only pending leave requests can be updated.");
+            throw new BusinessRuleViolationException("Only pending leave requests can be updated.");
 
         if (!ValidUnits.Contains(unit))
             throw new ArgumentException($"Invalid unit '{unit}'. Must be: day, hour.");
@@ -105,7 +105,7 @@ public class LeaveRequest : TenantEntity
     public void Approve()
     {
         if (Status != "pending")
-            throw new InvalidOperationException($"Cannot approve a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException($"Cannot approve a leave request with status '{Status}'.");
 
         Status    = "approved";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -114,7 +114,7 @@ public class LeaveRequest : TenantEntity
     public void Reject()
     {
         if (Status != "pending")
-            throw new InvalidOperationException($"Cannot reject a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException($"Cannot reject a leave request with status '{Status}'.");
 
         Status    = "rejected";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -123,7 +123,7 @@ public class LeaveRequest : TenantEntity
     public void Cancel()
     {
         if (Status != "pending" && Status != "approved")
-            throw new InvalidOperationException($"Cannot cancel a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException($"Cannot cancel a leave request with status '{Status}'.");
 
         Status    = "cancelled";
         UpdatedAt = DateTimeOffset.UtcNow;

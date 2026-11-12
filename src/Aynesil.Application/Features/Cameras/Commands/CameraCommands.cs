@@ -47,7 +47,7 @@ public sealed class RegisterCameraCommandHandler : IRequestHandler<RegisterCamer
             .AnyAsync(c => c.CorporationId == corporationId && c.Code == req.Code, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A camera with code '{req.Code}' already exists in this corporation.");
 
         var camera = Camera.Register(

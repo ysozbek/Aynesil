@@ -51,7 +51,7 @@ public sealed class AssignEducatorToCampusCommandHandler
               && c.CampusId == req.CampusId
               && c.ActiveTo == null, ct);
         if (existing)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Educator is already actively assigned to this campus.");
 
         var assignment = new EducatorCampus

@@ -1,3 +1,4 @@
+using FluentValidation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using MediatR;
@@ -14,6 +15,19 @@ public record GetAssessmentHistoryQuery(
     Guid? LeadId,
     Guid? StudentId) : IRequest<IReadOnlyList<AssessmentSessionListItemDto>>;
 
+public sealed class GetAssessmentHistoryQueryValidator : AbstractValidator<GetAssessmentHistoryQuery>
+{
+    public GetAssessmentHistoryQueryValidator()
+    {
+        RuleFor(x => x)
+            .Must(x => x.LeadId.HasValue ^ x.StudentId.HasValue)
+            .WithName("LeadId")
+            .WithMessage("leadId veya studentId parametrelerinden tam olarak biri verilmelidir.");
+        RuleFor(x => x.LeadId).NotEqual(Guid.Empty).When(x => x.LeadId.HasValue);
+        RuleFor(x => x.StudentId).NotEqual(Guid.Empty).When(x => x.StudentId.HasValue);
+    }
+}
+
 public sealed class GetAssessmentHistoryQueryHandler
     : IRequestHandler<GetAssessmentHistoryQuery, IReadOnlyList<AssessmentSessionListItemDto>>
 {
@@ -24,9 +38,6 @@ public sealed class GetAssessmentHistoryQueryHandler
     public async Task<IReadOnlyList<AssessmentSessionListItemDto>> Handle(
         GetAssessmentHistoryQuery req, CancellationToken ct)
     {
-        if (!req.LeadId.HasValue && !req.StudentId.HasValue)
-            throw new ArgumentException("Either LeadId or StudentId must be provided.");
-
         var q = _db.AssessmentSessions.AsNoTracking();
 
         if (req.LeadId.HasValue)
@@ -35,8 +46,8 @@ public sealed class GetAssessmentHistoryQueryHandler
         if (req.StudentId.HasValue)
             q = q.Where(s => s.StudentId == req.StudentId);
 
-        return await AssessmentProjection.ProjectSessionList(_db, q)
-            .OrderByDescending(s => s.CreatedAt)
+        // Sıralama projeksiyondan ÖNCE entity üzerinden yapılır (ProjectSessionList notuna bkz.).
+        return await AssessmentProjection.ProjectSessionList(_db, q.OrderByDescending(s => s.CreatedAt))
             .ToListAsync(ct);
     }
 }

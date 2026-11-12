@@ -85,7 +85,7 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
             ?? throw new KeyNotFoundException($"SessionNote {req.Id} not found.");
 
         if (note.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("Note was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("Note was modified by another user. Please refresh and retry.");
 
         note.Edit(req.Body, req.ParentVisible);
         await _db.SaveChangesAsync(ct);

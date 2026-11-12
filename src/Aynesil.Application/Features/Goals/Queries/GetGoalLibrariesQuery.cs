@@ -42,9 +42,15 @@ public sealed class GetGoalLibrariesQueryHandler
         var query =
             from l in q
             let templateCount = _db.GoalTemplates.Count(t => t.LibraryId == l.Id)
-            select new GoalLibraryListItemDto(
-                l.Id, l.CorporationId, l.Name, l.Description,
-                templateCount, l.CreatedAt);
+            select new
+            {
+                l.Id,
+                l.CorporationId,
+                l.Name,
+                l.Description,
+                TemplateCount = templateCount,
+                l.CreatedAt
+            };
 
         query = req.SortBy?.ToLower() switch
         {
@@ -53,8 +59,17 @@ public sealed class GetGoalLibrariesQueryHandler
             _           => query.OrderBy(l => l.Name)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new GoalLibraryListItemDto(
+                    r.Id,
+                    r.CorporationId,
+                    r.Name,
+                    r.Description,
+                    r.TemplateCount,
+                    r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<GoalLibraryListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

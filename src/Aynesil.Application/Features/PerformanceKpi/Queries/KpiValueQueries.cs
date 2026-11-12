@@ -120,12 +120,21 @@ public sealed class GetKpiValuesQueryHandler
         if (req.PeriodEnd.HasValue)
             q = q.Where(x => x.kv.PeriodEnd <= req.PeriodEnd.Value);
 
-        var projection = q.Select(x => new KpiValueDto(
-            x.kv.Id, x.kv.CorporationId, x.kv.KpiId,
-            x.kd.Code, x.kd.Name, x.kd.Unit,
-            x.kv.SubjectType, x.kv.SubjectId,
-            x.kv.PeriodStart, x.kv.PeriodEnd,
-            x.kv.NumericValue, x.kv.ComputedAt));
+        var projection = q.Select(x => new
+        {
+            Id = x.kv.Id,
+            CorporationId = x.kv.CorporationId,
+            KpiId = x.kv.KpiId,
+            KpiCode = x.kd.Code,
+            KpiName = x.kd.Name,
+            KpiUnit = x.kd.Unit,
+            SubjectType = x.kv.SubjectType,
+            SubjectId = x.kv.SubjectId,
+            PeriodStart = x.kv.PeriodStart,
+            PeriodEnd = x.kv.PeriodEnd,
+            NumericValue = x.kv.NumericValue,
+            ComputedAt = x.kv.ComputedAt
+        });
 
         projection = req.SortBy?.ToLowerInvariant() switch
         {
@@ -136,8 +145,23 @@ public sealed class GetKpiValuesQueryHandler
             _             => projection.OrderByDescending(x => x.PeriodStart).ThenBy(x => x.KpiCode)
         };
 
-        var total = await projection.CountAsync(ct);
-        var items = await projection.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = projection.Select(r =>
+            new KpiValueDto(
+                r.Id,
+                r.CorporationId,
+                r.KpiId,
+                r.KpiCode,
+                r.KpiName,
+                r.KpiUnit,
+                r.SubjectType,
+                r.SubjectId,
+                r.PeriodStart,
+                r.PeriodEnd,
+                r.NumericValue,
+                r.ComputedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<KpiValueDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

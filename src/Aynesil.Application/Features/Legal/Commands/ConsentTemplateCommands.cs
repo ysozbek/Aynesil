@@ -56,7 +56,7 @@ public sealed class CreateConsentTemplateCommandHandler
                         && t.IsCurrent, ct);
 
         if (alreadyExists)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A current consent template with code '{req.Code}' already exists for this corporation.");
 
         var template = ConsentTemplate.Create(
@@ -234,7 +234,7 @@ public sealed class DeleteConsentTemplateCommandHandler : IRequestHandler<Delete
             .AnyAsync(c => c.TemplateId == req.Id, ct);
 
         if (hasConsents)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a consent template that is referenced by student consent records.");
 
         template.Delete(_currentUser.UserId);

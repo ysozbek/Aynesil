@@ -193,7 +193,7 @@ public sealed class DeleteAssessmentSessionCommandHandler
             ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
 
         if (session.Status != Domain.Modules.Assessment.Entities.AssessmentSession.SessionStatuses.Planned)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only sessions in 'planned' status can be deleted.");
 
         session.SoftDelete(_currentUser.UserId);

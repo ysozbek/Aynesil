@@ -149,7 +149,7 @@ public sealed class UpdateGoalTemplateCommandHandler
             ?? throw new KeyNotFoundException($"GoalTemplate {req.Id} not found.");
 
         if (template.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The template was modified by another user. Please refresh and retry.");
 
         template.Update(req.LibraryId, req.CategoryId, req.DevelopmentAreaId,

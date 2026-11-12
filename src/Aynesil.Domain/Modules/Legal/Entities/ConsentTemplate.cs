@@ -128,10 +128,10 @@ public class ConsentTemplate : TenantEntity
     private void EnsureCurrentAndEditable()
     {
         if (!IsCurrent)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Consent template '{Code}' v{Version} is archived and cannot be modified.");
         if (IsDeleted)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Consent template '{Code}' v{Version} has been deleted.");
     }
 }

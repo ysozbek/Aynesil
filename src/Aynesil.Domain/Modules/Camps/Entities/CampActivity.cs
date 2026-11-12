@@ -106,7 +106,7 @@ public class CampActivity : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (IsActive)
-            throw new InvalidOperationException("Activity is already active.");
+            throw new BusinessRuleViolationException("Activity is already active.");
         IsActive  = true;
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy;
@@ -115,7 +115,7 @@ public class CampActivity : TenantEntity
     public void Deactivate(Guid? updatedBy = null)
     {
         if (!IsActive)
-            throw new InvalidOperationException("Activity is already inactive.");
+            throw new BusinessRuleViolationException("Activity is already inactive.");
         IsActive  = false;
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy;

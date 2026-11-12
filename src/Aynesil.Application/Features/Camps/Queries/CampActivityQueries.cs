@@ -47,18 +47,20 @@ public sealed class GetCampActivitiesQueryHandler
             join typ in _db.RefValues.AsNoTracking()
                 on a.ActivityTypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new CampActivityListItemDto(
+            select new
+            {
                 a.Id,
                 a.CampPeriodId,
                 a.ActivityTypeId,
-                typ != null ? typ.Code : null,
+                ActivityTypeCode = typ != null ? typ.Code : null,
                 a.Name,
                 a.StartsAt,
                 a.EndsAt,
                 a.Location,
                 a.Capacity,
                 a.IsActive,
-                a.Participations.Count);
+                ParticipationCount = a.Participations.Count
+            };
 
         query = req.SortBy?.ToLowerInvariant() switch
         {
@@ -67,8 +69,22 @@ public sealed class GetCampActivitiesQueryHandler
             _          => query.OrderBy(x => x.StartsAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new CampActivityListItemDto(
+                    r.Id,
+                    r.CampPeriodId,
+                    r.ActivityTypeId,
+                    r.ActivityTypeCode,
+                    r.Name,
+                    r.StartsAt,
+                    r.EndsAt,
+                    r.Location,
+                    r.Capacity,
+                    r.IsActive,
+                    r.ParticipationCount));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<CampActivityListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

@@ -138,6 +138,7 @@ public sealed class GetAgreementSummaryQueryHandler
         return await (
             from p in plansQ
             join i in _db.Institutions.AsNoTracking() on p.InstitutionId equals i.Id
+            orderby i.Name, p.Name
             select new AgreementSummaryDto(
                 p.Id,
                 p.Name,
@@ -148,6 +149,6 @@ public sealed class GetAgreementSummaryQueryHandler
                 p.Agreements.Count(a => a.Status == "signed"    && a.DeletedAt == null),
                 p.Agreements.Count(a => a.Status == "expired"   && a.DeletedAt == null),
                 p.Agreements.Count(a => a.Status == "cancelled" && a.DeletedAt == null))
-        ).OrderBy(x => x.InstitutionName).ThenBy(x => x.PlanName).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }

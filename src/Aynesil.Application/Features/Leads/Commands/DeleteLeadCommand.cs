@@ -27,7 +27,7 @@ public sealed class DeleteLeadCommandHandler : IRequestHandler<DeleteLeadCommand
             ?? throw new NotFoundException("Lead", req.Id);
 
         if (lead.ConvertedStudentId.HasValue)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a lead that has been converted to a student.");
 
         lead.SoftDelete(_currentUser.UserId);

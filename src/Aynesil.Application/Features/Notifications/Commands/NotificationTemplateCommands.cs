@@ -57,7 +57,7 @@ public sealed class CreateNotificationTemplateCommandHandler
         var existing = await _db.NotificationTemplates.AnyAsync(
             t => t.Code == req.Code && t.CorporationId == corporationId, ct);
         if (existing)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Notification template with code '{req.Code}' already exists for this corporation.");
 
         var template = new NotificationTemplate

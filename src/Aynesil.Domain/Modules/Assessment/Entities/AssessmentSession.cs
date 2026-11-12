@@ -104,7 +104,7 @@ public class AssessmentSession : TenantEntity
     public void Start(Guid? updatedBy = null)
     {
         if (Status != SessionStatuses.Planned)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot start a session in '{Status}' status. Only 'planned' sessions can be started.");
 
         Status    = SessionStatuses.InProgress;
@@ -117,7 +117,7 @@ public class AssessmentSession : TenantEntity
     public void Complete(decimal? totalScore, Guid? updatedBy = null)
     {
         if (Status != SessionStatuses.InProgress)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot complete a session in '{Status}' status. Only 'in_progress' sessions can be completed.");
 
         Status      = SessionStatuses.Completed;
@@ -133,7 +133,7 @@ public class AssessmentSession : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is SessionStatuses.Completed or SessionStatuses.Cancelled)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot cancel a session in '{Status}' status.");
 
         Status    = SessionStatuses.Cancelled;
@@ -150,7 +150,7 @@ public class AssessmentSession : TenantEntity
         Guid? updatedBy = null)
     {
         if (Status is SessionStatuses.Completed or SessionStatuses.Cancelled)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot reschedule a completed or cancelled session.");
 
         ScheduledAt = scheduledAt;

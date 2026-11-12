@@ -101,7 +101,7 @@ public sealed class UpdateGuardianCommandHandler
             ?? throw new KeyNotFoundException($"Guardian {req.Id} not found.");
 
         if (guardian.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The guardian record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The guardian record was modified by another user. Please refresh and retry.");
 
         guardian.UpdateContactInfo(
             req.FirstName, req.LastName, req.NationalId,

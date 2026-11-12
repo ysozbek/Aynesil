@@ -48,10 +48,16 @@ public sealed class GetAcademicPeriodsQueryHandler
             join term in _db.RefValues.AsNoTracking()
                 on p.TermId equals term.Id into termGrp
             from term in termGrp.DefaultIfEmpty()
-            select new AcademicPeriodListItemDto(
-                p.Id, p.Name, p.TermId,
-                term != null ? term.Code : null,
-                p.StartDate, p.EndDate, p.IsCurrent);
+            select new
+            {
+                p.Id,
+                p.Name,
+                p.TermId,
+                TermLabel = term != null ? term.Code : null,
+                p.StartDate,
+                p.EndDate,
+                p.IsCurrent
+            };
 
         query = req.SortBy?.ToLower() switch
         {
@@ -60,8 +66,18 @@ public sealed class GetAcademicPeriodsQueryHandler
             _           => query.OrderByDescending(p => p.StartDate)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new AcademicPeriodListItemDto(
+                    r.Id,
+                    r.Name,
+                    r.TermId,
+                    r.TermLabel,
+                    r.StartDate,
+                    r.EndDate,
+                    r.IsCurrent));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<AcademicPeriodListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

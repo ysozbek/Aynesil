@@ -57,7 +57,7 @@ public sealed class ScheduleSchoolVisitCommandHandler
                             && p.InstitutionId == req.InstitutionId
                             && p.Status == "active", ct);
             if (!planExists)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Consultancy plan {req.ConsultancyPlanId} not found or is not active for this institution.");
         }
 
@@ -186,14 +186,14 @@ public sealed class DeleteSchoolVisitCommandHandler : IRequestHandler<DeleteScho
             ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
 
         if (visit.Status != "planned")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only planned visits can be deleted. Use Cancel to archive the visit.");
 
         var hasObservations = await _db.ObservationRecords
             .AnyAsync(o => o.SchoolVisitId == req.Id, ct);
 
         if (hasObservations)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a visit that has recorded observations.");
 
         _db.SchoolVisits.Remove(visit);

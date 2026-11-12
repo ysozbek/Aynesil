@@ -168,7 +168,7 @@ public class Student : TenantEntity
     public void SetLeadOrigin(Guid leadId)
     {
         if (LeadId.HasValue)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Student {Id} already has an origin lead (LeadId={LeadId}). Cannot re-link.");
 
         LeadId    = leadId;

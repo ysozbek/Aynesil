@@ -69,7 +69,7 @@ public sealed class SubmitLeaveRequestCommandHandler : IRequestHandler<SubmitLea
                 && lr.EndsAt > req.StartsAt, ct);
 
         if (overlap)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "A pending or approved leave request already exists for the same educator during this period.");
 
         var request = LeaveRequest.Submit(
@@ -137,7 +137,7 @@ public sealed class UpdateLeaveRequestCommandHandler : IRequestHandler<UpdateLea
                 && lr.EndsAt > req.StartsAt, ct);
 
         if (overlap)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "A pending or approved leave request already exists for the same educator during this period.");
 
         leave.Update(req.LeaveTypeId, req.Unit, req.StartsAt, req.EndsAt, req.Quantity, req.Reason);
@@ -186,7 +186,7 @@ public sealed class ApproveLeaveRequestCommandHandler
                     && b.PeriodYear == periodYear, ct);
 
             if (balance != null && balance.Remaining < leave.Quantity.Value)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Insufficient leave balance. Available: {balance.Remaining} {balance.Unit}, Requested: {leave.Quantity.Value} {leave.Unit}.");
 
             // Deduct from balance.
@@ -343,7 +343,7 @@ public sealed class InitializeLeaveBalanceCommandHandler
                 && b.PeriodYear == req.PeriodYear, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A leave balance for educator {req.EducatorId}, leave type {req.LeaveTypeId}, year {req.PeriodYear} already exists.");
 
         var balance = LeaveBalance.Initialize(

@@ -69,7 +69,7 @@ public sealed class CreateRefValueCommandHandler : IRequestHandler<CreateRefValu
             ?? throw new NotFoundException("RefType", typeCode);
 
         if (!refType.AllowsTenantValues)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Reference type '{typeCode}' does not allow tenant-specific values.");
 
         var codeExists = await _db.RefValues.AnyAsync(
@@ -77,7 +77,7 @@ public sealed class CreateRefValueCommandHandler : IRequestHandler<CreateRefValu
                  && v.CorporationId == corporationId
                  && v.Code == code, ct);
         if (codeExists)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A value with code '{code}' already exists for this corporation in '{typeCode}'.");
 
         if (req.IsDefault)
@@ -200,7 +200,7 @@ public sealed class UpdateRefValueCommandHandler : IRequestHandler<UpdateRefValu
 
         // Platform-owned system vocabulary is immutable; use activate/deactivate override instead.
         if (value.IsSystem)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "System reference values cannot be edited. Use activate/deactivate to override.");
 
         if (req.IsDefault && !value.IsDefault)

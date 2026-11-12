@@ -61,7 +61,7 @@ public class AssessmentReport : AuditableEntity
         Guid? updatedBy = null)
     {
         if (IsFinalized)
-            throw new InvalidOperationException("Finalized reports are immutable and cannot be edited.");
+            throw new BusinessRuleViolationException("Finalized reports are immutable and cannot be edited.");
 
         Summary   = summary;
         Findings  = findings;
@@ -78,7 +78,7 @@ public class AssessmentReport : AuditableEntity
     public void Finalize(Guid finalizedBy)
     {
         if (IsFinalized)
-            throw new InvalidOperationException("Report is already finalized.");
+            throw new BusinessRuleViolationException("Report is already finalized.");
 
         FinalizedAt = DateTimeOffset.UtcNow;
         FinalizedBy = finalizedBy;

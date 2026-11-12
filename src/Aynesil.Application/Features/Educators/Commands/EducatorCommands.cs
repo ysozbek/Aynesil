@@ -115,7 +115,7 @@ public sealed class UpdateEducatorCommandHandler : IRequestHandler<UpdateEducato
             ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
 
         if (educator.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The educator record was modified by another user. Please refresh and retry.");
 
         if (req.TitleId.HasValue)

@@ -42,7 +42,7 @@ public sealed class AddPlanReviewCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is "draft" or "closed")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot add a review to a plan with status '{plan.Status}'.");
 
         var review = EducationPlanReview.Create(

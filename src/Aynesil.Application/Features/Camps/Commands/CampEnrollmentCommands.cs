@@ -57,7 +57,7 @@ public sealed class EnrollStudentCommandHandler
                         && e.StudentId == req.StudentId
                         && e.Status != "withdrawn", ct);
         if (alreadyEnrolled)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Student is already enrolled or waitlisted in this camp period.");
 
         if (req.Status == "enrolled")
@@ -73,7 +73,7 @@ public sealed class EnrollStudentCommandHandler
                     .CountAsync(e => e.CampPeriodId == req.CampPeriodId
                                   && e.Status == "enrolled", ct);
                 if (activeCount >= capacity.Value)
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleViolationException(
                         "Camp period is at full capacity. Use 'waitlist' status.");
             }
         }
@@ -137,7 +137,7 @@ public sealed class PromoteFromWaitlistCommandHandler : IRequestHandler<PromoteF
                 .CountAsync(e => e.CampPeriodId == enrollment.CampPeriodId
                               && e.Status == "enrolled", ct);
             if (activeCount >= enrollment.Period.Capacity.Value)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "Camp period is still at full capacity.");
         }
 

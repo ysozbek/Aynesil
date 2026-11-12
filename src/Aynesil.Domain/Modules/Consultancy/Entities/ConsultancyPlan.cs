@@ -106,7 +106,7 @@ public class ConsultancyPlan : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (Status != "draft")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only a draft plan can be activated. Current status: '{Status}'.");
 
         var prev = Status;
@@ -121,7 +121,7 @@ public class ConsultancyPlan : TenantEntity
     public void Complete(Guid? updatedBy = null)
     {
         if (Status != "active")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only an active plan can be completed. Current status: '{Status}'.");
 
         var prev = Status;
@@ -136,7 +136,7 @@ public class ConsultancyPlan : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is "completed" or "cancelled")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A '{Status}' plan cannot be cancelled.");
 
         var prev = Status;
@@ -153,7 +153,7 @@ public class ConsultancyPlan : TenantEntity
     private void EnsureEditable()
     {
         if (Status is "completed" or "cancelled")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A '{Status}' consultancy plan cannot be modified.");
     }
 }

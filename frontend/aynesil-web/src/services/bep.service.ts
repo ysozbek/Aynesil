@@ -67,8 +67,9 @@ export const bepService = {
   getPlan: (id: string) =>
     apiService.get<EducationPlanDto>(`/education-plans/${id}`),
 
+  // Görünür plan yoksa (veya bakım ekibi erişimi yoksa) backend data = null döner.
   getGuardianVisiblePlan: (studentId: string) =>
-    apiService.get<EducationPlanDto>(
+    apiService.get<EducationPlanDto | null>(
       `/education-plans/guardian-visible?studentId=${studentId}`
     ),
 

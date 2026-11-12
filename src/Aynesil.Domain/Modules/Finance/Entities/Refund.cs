@@ -52,7 +52,7 @@ public class Refund : BaseEntity
     public void Process()
     {
         if (Status != "pending")
-            throw new InvalidOperationException("Only pending refunds can be processed.");
+            throw new BusinessRuleViolationException("Only pending refunds can be processed.");
 
         Status      = "processed";
         ProcessedAt = DateTimeOffset.UtcNow;
@@ -63,7 +63,7 @@ public class Refund : BaseEntity
     public void Fail()
     {
         if (Status != "pending")
-            throw new InvalidOperationException("Only pending refunds can be marked as failed.");
+            throw new BusinessRuleViolationException("Only pending refunds can be marked as failed.");
 
         Status = "failed";
     }

@@ -120,7 +120,7 @@ public class ConsultancyAgreement : TenantEntity
     public void Sign(DateOnly signedDate, string? signedByName, Guid? fileId, Guid? updatedBy = null)
     {
         if (Status != "sent")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only a sent agreement can be signed. Current status: '{Status}'.");
 
         var prev      = Status;
@@ -140,7 +140,7 @@ public class ConsultancyAgreement : TenantEntity
     public void MarkExpired(Guid? updatedBy = null)
     {
         if (Status != "signed")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only a signed agreement can be expired. Current status: '{Status}'.");
 
         var prev  = Status;
@@ -154,7 +154,7 @@ public class ConsultancyAgreement : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is "signed" or "expired" or "cancelled")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A '{Status}' agreement cannot be cancelled.");
 
         var prev  = Status;
@@ -171,7 +171,7 @@ public class ConsultancyAgreement : TenantEntity
     private void EnsureDraft(string action)
     {
         if (Status != "draft")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot {action} a '{Status}' agreement. Only draft agreements can be modified.");
     }
 }

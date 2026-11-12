@@ -161,7 +161,7 @@ public class Session : TenantEntity
     private void EnsureNotTerminal()
     {
         if (TerminalStatuses.Contains(Status))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Session is in terminal status '{Status}' and cannot be modified.");
     }
 
@@ -169,12 +169,12 @@ public class Session : TenantEntity
     {
         // cancelled and no_show sessions cannot transition further
         if (Status == "cancelled")
-            throw new InvalidOperationException("Cannot transition a cancelled session.");
+            throw new BusinessRuleViolationException("Cannot transition a cancelled session.");
 
         if (Status == "no_show")
-            throw new InvalidOperationException("Cannot transition a no-show session.");
+            throw new BusinessRuleViolationException("Cannot transition a no-show session.");
 
         if (Status == "completed" && target != "completed")
-            throw new InvalidOperationException("Completed sessions cannot change status.");
+            throw new BusinessRuleViolationException("Completed sessions cannot change status.");
     }
 }

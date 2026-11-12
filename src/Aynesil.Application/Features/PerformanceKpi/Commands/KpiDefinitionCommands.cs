@@ -52,7 +52,7 @@ public sealed class CreateKpiDefinitionCommandHandler
               && k.Code == code, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A KPI definition with code '{code}' already exists.");
 
         var kpi = new KpiDefinition
@@ -155,7 +155,7 @@ public sealed class ActivateKpiDefinitionCommandHandler
             ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
 
         if (kpi.IsActive)
-            throw new InvalidOperationException("KPI definition is already active.");
+            throw new BusinessRuleViolationException("KPI definition is already active.");
 
         kpi.IsActive  = true;
         kpi.UpdatedAt = DateTimeOffset.UtcNow;
@@ -181,7 +181,7 @@ public sealed class DeactivateKpiDefinitionCommandHandler
             ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
 
         if (!kpi.IsActive)
-            throw new InvalidOperationException("KPI definition is already inactive.");
+            throw new BusinessRuleViolationException("KPI definition is already inactive.");
 
         kpi.IsActive  = false;
         kpi.UpdatedAt = DateTimeOffset.UtcNow;

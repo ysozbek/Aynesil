@@ -35,6 +35,14 @@ public sealed class GetCampEnrollmentsQueryHandler
         if (!string.IsNullOrWhiteSpace(req.Status))
             q = q.Where(e => e.Status == req.Status);
 
+        // Sıralama projeksiyondan ÖNCE entity alanı üzerinden yapılır (EF, ctor projeksiyonu üzerinde OrderBy çeviremez).
+        q = req.SortBy?.ToLowerInvariant() switch
+        {
+            "status"     => req.IsDescending ? q.OrderByDescending(x => x.Status)     : q.OrderBy(x => x.Status),
+            "enrolledat" => req.IsDescending ? q.OrderByDescending(x => x.EnrolledAt) : q.OrderBy(x => x.EnrolledAt),
+            _            => q.OrderByDescending(x => x.EnrolledAt)
+        };
+
         var query = q.Select(e => new CampEnrollmentListItemDto(
             e.Id,
             e.CampPeriodId,
@@ -42,13 +50,6 @@ public sealed class GetCampEnrollmentsQueryHandler
             e.StudentPackageId,
             e.Status,
             e.EnrolledAt));
-
-        query = req.SortBy?.ToLowerInvariant() switch
-        {
-            "status"     => req.IsDescending ? query.OrderByDescending(x => x.Status)     : query.OrderBy(x => x.Status),
-            "enrolledat" => req.IsDescending ? query.OrderByDescending(x => x.EnrolledAt) : query.OrderBy(x => x.EnrolledAt),
-            _            => query.OrderByDescending(x => x.EnrolledAt)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

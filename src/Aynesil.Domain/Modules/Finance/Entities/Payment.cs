@@ -84,7 +84,7 @@ public class Payment : TenantEntity
     public void Authorize(string? gatewayReference = null)
     {
         if (Status != "pending")
-            throw new InvalidOperationException("Only pending payments can be authorized.");
+            throw new BusinessRuleViolationException("Only pending payments can be authorized.");
 
         Status           = "authorized";
         GatewayReference = gatewayReference ?? GatewayReference;
@@ -94,7 +94,7 @@ public class Payment : TenantEntity
     public void Capture(string? gatewayReference = null, DateTimeOffset? paidAt = null)
     {
         if (Status is not ("pending" or "authorized"))
-            throw new InvalidOperationException("Only pending or authorized payments can be captured.");
+            throw new BusinessRuleViolationException("Only pending or authorized payments can be captured.");
 
         Status           = "captured";
         GatewayReference = gatewayReference ?? GatewayReference;
@@ -108,7 +108,7 @@ public class Payment : TenantEntity
     public void Fail()
     {
         if (Status is "captured" or "refunded")
-            throw new InvalidOperationException($"Cannot fail a '{Status}' payment.");
+            throw new BusinessRuleViolationException($"Cannot fail a '{Status}' payment.");
 
         Status    = "failed";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -117,7 +117,7 @@ public class Payment : TenantEntity
     public void MarkRefunded()
     {
         if (Status != "captured")
-            throw new InvalidOperationException("Only captured payments can be marked as refunded.");
+            throw new BusinessRuleViolationException("Only captured payments can be marked as refunded.");
 
         Status    = "refunded";
         UpdatedAt = DateTimeOffset.UtcNow;

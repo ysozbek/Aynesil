@@ -62,7 +62,7 @@ public sealed class GrantConsentCommandHandler
                 ?? throw new KeyNotFoundException($"Consent template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "Consents may only be granted against the current version of a template.");
 
             templateVersion          = tpl.Version;

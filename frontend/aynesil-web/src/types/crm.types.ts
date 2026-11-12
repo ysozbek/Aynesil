@@ -3,7 +3,6 @@
 export interface LeadListItemDto {
   id: string
   childName: string | null
-  childBirthDate: string | null
   contactName: string
   contactPhone: string | null
   contactEmail: string | null
@@ -14,12 +13,13 @@ export interface LeadListItemDto {
   assignedToName: string | null
   score: number | null
   isConverted: boolean
-  presentingNeed: string | null
   createdAt: string
-  updatedAt: string
 }
 
 export interface LeadDto extends LeadListItemDto {
+  childBirthDate: string | null
+  presentingNeed: string | null
+  updatedAt: string
   corporationId: string
   campusId: string | null
   sourceId: string | null

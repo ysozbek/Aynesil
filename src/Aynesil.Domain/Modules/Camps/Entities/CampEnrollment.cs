@@ -68,7 +68,7 @@ public class CampEnrollment : BaseEntity
     public void Enroll()
     {
         if (Status != "waitlist")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only waitlisted enrollments can be moved to enrolled status.");
 
         Status = "enrolled";
@@ -87,7 +87,7 @@ public class CampEnrollment : BaseEntity
     public void Complete()
     {
         if (Status != "enrolled")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only active enrolled students can be marked as completed.");
 
         Status = "completed";
@@ -101,7 +101,7 @@ public class CampEnrollment : BaseEntity
     private void EnsureNotTerminal()
     {
         if (Status is "withdrawn" or "completed")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot change a '{Status}' enrollment.");
     }
 }

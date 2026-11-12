@@ -63,7 +63,7 @@ public class Invoice : TenantEntity
     public void AssignNumber(string invoiceNo)
     {
         if (Status != "draft")
-            throw new InvalidOperationException("Cannot assign a number to a non-draft invoice.");
+            throw new BusinessRuleViolationException("Cannot assign a number to a non-draft invoice.");
 
         InvoiceNo = invoiceNo;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -81,7 +81,7 @@ public class Invoice : TenantEntity
     public void Issue()
     {
         if (Status != "draft")
-            throw new InvalidOperationException("Only draft invoices can be issued.");
+            throw new BusinessRuleViolationException("Only draft invoices can be issued.");
 
         Status    = "issued";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -106,7 +106,7 @@ public class Invoice : TenantEntity
     public void MarkOverdue()
     {
         if (Status is not ("issued" or "partial"))
-            throw new InvalidOperationException("Only issued or partial invoices can become overdue.");
+            throw new BusinessRuleViolationException("Only issued or partial invoices can become overdue.");
 
         Status    = "overdue";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -115,10 +115,10 @@ public class Invoice : TenantEntity
     public void Void()
     {
         if (Status == "void")
-            throw new InvalidOperationException("Invoice is already void.");
+            throw new BusinessRuleViolationException("Invoice is already void.");
 
         if (Status == "paid")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Paid invoices cannot be voided directly. Process a refund first.");
 
         Status    = "void";
@@ -130,9 +130,9 @@ public class Invoice : TenantEntity
     private void EnsureModifiable(string target)
     {
         if (Status == "void")
-            throw new InvalidOperationException("Cannot transition a void invoice.");
+            throw new BusinessRuleViolationException("Cannot transition a void invoice.");
 
         if (Status == "paid" && target != "paid")
-            throw new InvalidOperationException("Cannot re-transition a fully paid invoice.");
+            throw new BusinessRuleViolationException("Cannot re-transition a fully paid invoice.");
     }
 }

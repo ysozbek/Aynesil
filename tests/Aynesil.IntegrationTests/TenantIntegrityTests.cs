@@ -3,8 +3,6 @@ using Aynesil.Api.Middleware;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
@@ -273,7 +271,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
     private static async Task<(int, string)> MapAsync(Exception ex)
     {
         var middleware = new ExceptionMiddleware(_ => throw ex,
-            NullLogger<ExceptionMiddleware>.Instance, new ProductionEnvironment());
+            NullLogger<ExceptionMiddleware>.Instance);
         var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };
 
         await middleware.InvokeAsync(context);
@@ -282,13 +280,5 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
         var body = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
         var message = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("message").GetString()!;
         return (context.Response.StatusCode, message);
-    }
-
-    private sealed class ProductionEnvironment : IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = Environments.Production;
-        public string ApplicationName { get; set; } = "Aynesil.IntegrationTests";
-        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

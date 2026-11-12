@@ -250,7 +250,7 @@ public sealed class DeleteFollowUpActivityCommandHandler
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
         if (activity.Status is "completed")
-            throw new InvalidOperationException("Cannot delete a completed follow-up activity.");
+            throw new BusinessRuleViolationException("Cannot delete a completed follow-up activity.");
 
         _db.FollowUpActivities.Remove(activity);
         await _db.SaveChangesAsync(ct);

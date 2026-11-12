@@ -54,7 +54,7 @@ public sealed class CreatePackageDefinitionCommandHandler
             p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Package definition with code '{req.Code}' already exists for this corporation.");
 
         var definition = PackageDefinition.Create(
@@ -119,7 +119,7 @@ public sealed class UpdatePackageDefinitionCommandHandler
             ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
 
         if (definition.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Package definition was modified by another user. Please refresh and retry.");
 
         definition.UpdateDetails(
@@ -210,7 +210,7 @@ public sealed class DeletePackageDefinitionCommandHandler
             .AnyAsync(sp => sp.PackageDefinitionId == req.Id && sp.Status == "active", ct);
 
         if (hasActivePurchases)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a package definition with active student packages.");
 
         definition.SoftDelete(_currentUser.UserId);

@@ -55,7 +55,7 @@ public sealed class CreateContractTemplateCommandHandler
                         && t.IsCurrent, ct);
 
         if (alreadyExists)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"A current contract template with code '{req.Code}' already exists for this corporation.");
 
         var template = ContractTemplate.Create(
@@ -235,7 +235,7 @@ public sealed class DeleteContractTemplateCommandHandler : IRequestHandler<Delet
             .AnyAsync(c => c.TemplateId == req.Id, ct);
 
         if (hasContracts)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a contract template that is referenced by student contracts.");
 
         template.Delete(_currentUser.UserId);

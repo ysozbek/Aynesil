@@ -120,6 +120,6 @@ public class MenuItem : BaseEntity
     public void EnsureCanBeDeleted()
     {
         if (CorporationId is null)
-            throw new InvalidOperationException("Platform default menu items cannot be deleted.");
+            throw new BusinessRuleViolationException("Platform default menu items cannot be deleted.");
     }
 }

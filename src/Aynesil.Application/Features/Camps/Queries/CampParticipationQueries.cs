@@ -36,17 +36,17 @@ public sealed class GetActivityParticipationsQueryHandler
         if (!string.IsNullOrWhiteSpace(req.Status))
             q = q.Where(p => p.Status == req.Status);
 
+        q = req.SortBy?.ToLowerInvariant() switch
+        {
+            "status" => req.IsDescending ? q.OrderByDescending(x => x.Status) : q.OrderBy(x => x.Status),
+            _        => q.OrderByDescending(x => x.RecordedAt)
+        };
+
         var query = q.Select(p => new CampActivityParticipationDto(
             p.Id, p.CorporationId,
             p.CampActivityId, p.CampEnrollmentId,
             p.Status, p.Notes,
             p.RecordedBy, p.RecordedAt));
-
-        query = req.SortBy?.ToLowerInvariant() switch
-        {
-            "status" => req.IsDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
-            _        => query.OrderByDescending(x => x.RecordedAt)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

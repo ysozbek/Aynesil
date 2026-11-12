@@ -23,6 +23,12 @@ RUN dotnet publish -c Release -o /publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
 WORKDIR /app
 
+# Globalization: Türkçe kültür (tr-TR: ı/İ büyük-küçük harf, sıralama, tarih biçimi) gerekli;
+# ValidationLocalization `new CultureInfo("tr")` kullanır ve invariant modda açılışta çöker.
+# Alpine'de ICU yok → icu-libs + icu-data-full eklenir. Invariant moda GERİ DÖNME.
+RUN apk add --no-cache icu-libs icu-data-full
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
 # Security: create non-root user
 RUN addgroup -S aynesil && adduser -S -G aynesil aynesil
 

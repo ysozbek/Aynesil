@@ -51,7 +51,7 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
 
         var hasChildren = await _db.MenuItems.AnyAsync(m => m.ParentId == req.Id, ct);
         if (hasChildren)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a menu item that has children. Remove or re-parent the children first.");
 
         _db.MenuItems.Remove(item);

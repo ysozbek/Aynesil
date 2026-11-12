@@ -39,6 +39,13 @@ public sealed class GetRecurringSchedulesQueryHandler
         if (req.CampusId.HasValue)      q = q.Where(s => s.CampusId == req.CampusId.Value);
         if (req.IsActive.HasValue)      q = q.Where(s => s.IsActive == req.IsActive.Value);
 
+        q = req.SortBy?.ToLower() switch
+        {
+            "rangestart" => req.IsDescending ? q.OrderByDescending(s => s.RangeStart) : q.OrderBy(s => s.RangeStart),
+            "frequency"  => req.IsDescending ? q.OrderByDescending(s => s.Frequency)  : q.OrderBy(s => s.Frequency),
+            _            => q.OrderByDescending(s => s.RangeStart)
+        };
+
         var query = q.Select(s => new RecurringScheduleListItemDto(
             s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
             s.Frequency, s.StartTime, s.DurationMinutes,
@@ -59,13 +66,6 @@ public sealed class GetRecurringSchedulesQueryHandler
                 .FirstOrDefault(),
             _db.Sessions.Count(x => x.RecurringScheduleId == s.Id),
             s.ByWeekday));
-
-        query = req.SortBy?.ToLower() switch
-        {
-            "rangestart" => req.IsDescending ? query.OrderByDescending(s => s.RangeStart) : query.OrderBy(s => s.RangeStart),
-            "frequency"  => req.IsDescending ? query.OrderByDescending(s => s.Frequency)  : query.OrderBy(s => s.Frequency),
-            _            => query.OrderByDescending(s => s.RangeStart)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

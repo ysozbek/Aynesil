@@ -67,7 +67,7 @@ public class LeaveBalance : TenantEntity
             throw new ArgumentException("Consume amount must be positive.");
 
         if (Used + amount > Entitled)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Insufficient leave balance. Entitled: {Entitled} {Unit}, Used: {Used} {Unit}, Requested: {amount} {Unit}.");
 
         Used += amount;

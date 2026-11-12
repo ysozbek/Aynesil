@@ -85,7 +85,7 @@ public class StudentConsent : TenantEntity
     public void Withdraw(Guid? updatedBy = null)
     {
         if (State != "granted")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Only a granted consent can be withdrawn. Current state: '{State}'.");
 
         State       = "withdrawn";
@@ -99,7 +99,7 @@ public class StudentConsent : TenantEntity
     public void AttachEvidence(Guid evidenceFileId, Guid? updatedBy = null)
     {
         if (State != "granted")
-            throw new InvalidOperationException("Evidence can only be attached to a granted consent.");
+            throw new BusinessRuleViolationException("Evidence can only be attached to a granted consent.");
 
         EvidenceFileId = evidenceFileId;
         UpdatedAt      = DateTimeOffset.UtcNow;

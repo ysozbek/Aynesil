@@ -28,18 +28,42 @@ public sealed class GetLeadActivitiesQueryHandler
             join act in _db.RefValues    on a.ActivityTypeId equals act.Id into actG from act in actG.DefaultIfEmpty()
             join usr in _db.UserAccounts on a.PerformedBy    equals usr.Id into usrG from usr in usrG.DefaultIfEmpty()
             where a.LeadId == req.LeadId
-            select new LeadActivityDto(
-                a.Id, a.LeadId,
-                a.ActivityTypeId, act == null ? null : act.Code,
-                a.Subject, a.Body, a.Direction,
-                a.OccurredAt, a.FollowUpAt,
-                a.PerformedBy, usr == null ? null : usr.FullName,
-                a.CreatedAt);
+            select new
+            {
+                a.Id,
+                a.LeadId,
+                a.ActivityTypeId,
+                ActivityTypeCode = act == null ? null : act.Code,
+                a.Subject,
+                a.Body,
+                a.Direction,
+                a.OccurredAt,
+                a.FollowUpAt,
+                a.PerformedBy,
+                PerformedByName = usr == null ? null : usr.FullName,
+                a.CreatedAt
+            };
 
-        var totalCount = await query.CountAsync(ct);
-
-        var items = await query
+        var projected = query
             .OrderByDescending(a => a.OccurredAt)
+            .Select(r =>
+                new LeadActivityDto(
+                    r.Id,
+                    r.LeadId,
+                    r.ActivityTypeId,
+                    r.ActivityTypeCode,
+                    r.Subject,
+                    r.Body,
+                    r.Direction,
+                    r.OccurredAt,
+                    r.FollowUpAt,
+                    r.PerformedBy,
+                    r.PerformedByName,
+                    r.CreatedAt));
+
+        var totalCount = await projected.CountAsync(ct);
+
+        var items = await projected
             .Skip(req.Skip)
             .Take(req.PageSize)
             .ToListAsync(ct);

@@ -100,7 +100,7 @@ public sealed class UpdateDiagnosisCommandHandler
             ?? throw new KeyNotFoundException($"Diagnosis {req.Id} not found.");
 
         if (diagnosis.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The diagnosis record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The diagnosis record was modified by another user. Please refresh and retry.");
 
         diagnosis.CategoryId   = req.CategoryId;
         diagnosis.IcdCode      = req.IcdCode;

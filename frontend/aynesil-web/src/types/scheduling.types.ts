@@ -10,7 +10,7 @@ export interface RoomDto {
   id: string
   corporationId: string
   campusId: string
-  campusName: string
+  campusName: string | null
   roomTypeId?: string
   meetingUrl?: string
   code: string

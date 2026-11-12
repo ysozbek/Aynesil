@@ -1,4 +1,5 @@
 using Aynesil.Application.Features.Cameras.Commands;
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Legal.Entities;
 using Aynesil.Domain.Modules.Media.Entities;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -112,7 +113,7 @@ public class CameraTenantScopingTests
             NullLogger<GrantViewingAuthorizationCommandHandler>.Instance);
         var act = () => handler.Handle(GrantCommand(guardianId, studentId), default);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.Should().ThrowAsync<BusinessRuleViolationException>();
         (await ctx.Db.ViewingAuthorizations.CountAsync()).Should().Be(0);
     }
 

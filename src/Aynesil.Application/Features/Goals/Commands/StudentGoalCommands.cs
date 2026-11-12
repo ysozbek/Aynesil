@@ -131,7 +131,7 @@ public sealed class UpdateStudentGoalCommandHandler
             ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
 
         if (goal.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The goal was modified by another user. Please refresh and retry.");
 
         goal.UpdateDetails(

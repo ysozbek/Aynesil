@@ -125,7 +125,7 @@ public sealed class CreateRecurringScheduleCommandHandler
             ?? throw new KeyNotFoundException($"StudentProgram {studentProgramId} not found.");
 
         if (studentProgramProgramId != serviceProgramId)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The selected service does not belong to the student's program.");
     }
 
@@ -207,7 +207,7 @@ public sealed class AddRecurrenceExceptionCommandHandler
             e => e.RecurringScheduleId == req.RecurringScheduleId
               && e.ExceptionDate == req.ExceptionDate, ct);
         if (duplicate)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"An exception already exists for {req.ExceptionDate} on this schedule.");
 
         var exception = RecurrenceException.Create(
@@ -267,7 +267,7 @@ public sealed class BulkGenerateSessionsCommandHandler
             ?? throw new KeyNotFoundException($"RecurringSchedule {req.RecurringScheduleId} not found.");
 
         if (!schedule.IsActive)
-            throw new InvalidOperationException("Cannot generate sessions for an inactive recurring schedule.");
+            throw new BusinessRuleViolationException("Cannot generate sessions for an inactive recurring schedule.");
 
         Guid? participantStudentId = null;
         if (schedule.StudentProgramId.HasValue)
@@ -280,7 +280,7 @@ public sealed class BulkGenerateSessionsCommandHandler
                 ?? throw new KeyNotFoundException($"StudentProgram {schedule.StudentProgramId} not found.");
 
             if (studentProgram.Status != "active")
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "Cannot generate sessions: the student's program is not active.");
 
             participantStudentId = studentProgram.StudentId;

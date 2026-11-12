@@ -47,6 +47,11 @@ public sealed class GetGuardiansQueryHandler
                 (g.Phone != null && g.Phone.Contains(search)));
         }
 
+        // Sıralama projeksiyondan önce entity alanı üzerinden yapılır.
+        baseQuery = req.IsDescending
+            ? baseQuery.OrderByDescending(g => g.LastName)
+            : baseQuery.OrderBy(g => g.LastName);
+
         var query = from g in baseQuery
                     select new GuardianListItemDto(
                         g.Id, g.FirstName, g.LastName,
@@ -54,12 +59,6 @@ public sealed class GetGuardiansQueryHandler
                         g.Email, g.Phone,
                         g.UserId != null,
                         _db.StudentGuardians.Count(sg => sg.GuardianId == g.Id));
-
-        query = req.SortBy?.ToLower() switch
-        {
-            "lastname"  => req.IsDescending ? query.OrderByDescending(g => g.LastName)  : query.OrderBy(g => g.LastName),
-            _           => req.IsDescending ? query.OrderByDescending(g => g.LastName)  : query.OrderBy(g => g.LastName)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

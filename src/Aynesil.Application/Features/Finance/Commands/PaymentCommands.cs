@@ -93,7 +93,7 @@ public sealed class CapturePaymentCommandHandler
             ?? throw new KeyNotFoundException($"Payment {req.Id} not found.");
 
         if (payment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Payment was modified by another user. Please refresh and retry.");
 
         payment.Capture(req.GatewayReference, req.PaidAt);
@@ -142,7 +142,7 @@ public sealed class FailPaymentCommandHandler
             ?? throw new KeyNotFoundException($"Payment {req.Id} not found.");
 
         if (payment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Payment was modified by another user. Please refresh and retry.");
 
         payment.Fail();

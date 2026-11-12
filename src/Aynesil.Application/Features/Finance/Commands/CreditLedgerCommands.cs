@@ -48,7 +48,7 @@ public sealed class ConsumeCreditsCommandHandler
         var remaining = package.CreditLedgerEntries.Sum(e => e.Delta);
 
         if (remaining < req.Amount)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Insufficient credits. Package has {remaining:F2} credits remaining; {req.Amount:F2} requested.");
 
         var entry = package.ConsumeCredits(
@@ -219,7 +219,7 @@ public sealed class AdjustCreditsCommandHandler
         var newBalance     = currentBalance + req.Delta;
 
         if (newBalance < 0)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Adjustment would result in a negative balance ({newBalance:F2}).");
 
         var entry = CreditLedger.Adjust(

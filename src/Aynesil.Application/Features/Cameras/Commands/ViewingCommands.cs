@@ -78,7 +78,7 @@ public sealed class GrantViewingAuthorizationCommandHandler
                     && gpa.RevokedAt  == null, ct);
 
         if (portalAccess == null || !portalAccess.CanViewCamera)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Guardian does not have camera viewing access enabled in the portal for this student.");
 
         // ── Gate 2: active camera_viewing consent ──────────────────────────────
@@ -101,7 +101,7 @@ public sealed class GrantViewingAuthorizationCommandHandler
                 && (sc.ValidUntil == null || sc.ValidUntil >= today), ct);
 
         if (!hasConsent)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "A valid camera_viewing consent (KVKK) is required before granting viewing authorization.");
 
         var authorization = ViewingAuthorization.Grant(
@@ -261,7 +261,7 @@ public sealed class StartViewingSessionCommandHandler
         var now = DateTimeOffset.UtcNow;
 
         if (!auth.IsCurrentlyValid(now))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Viewing authorization is revoked or outside its valid time window.");
 
         // Consent re-check: ensure camera_viewing consent is still granted.
@@ -282,7 +282,7 @@ public sealed class StartViewingSessionCommandHandler
                 && (sc.ValidUntil == null || sc.ValidUntil >= today), ct);
 
         if (!hasConsent)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Camera viewing consent has been withdrawn. Access denied.");
 
         IPAddress? parsedIp = null;

@@ -81,7 +81,7 @@ public sealed class UpdateGoalLibraryCommandHandler
             ?? throw new KeyNotFoundException($"GoalLibrary {req.Id} not found.");
 
         if (library.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "The library was modified by another user. Please refresh and retry.");
 
         library.Update(req.Name, req.Description);

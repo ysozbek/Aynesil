@@ -99,7 +99,7 @@ public sealed class ChangeEnrollmentStatusCommandHandler
             ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Enrollment was modified by another user. Please refresh and retry.");
 
         var valid = await _db.RefValues.AnyAsync(
@@ -139,7 +139,7 @@ public sealed class EndEnrollmentCommandHandler : IRequestHandler<EndEnrollmentC
             ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Enrollment was modified by another user. Please refresh and retry.");
 
         enrollment.End(

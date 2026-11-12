@@ -57,7 +57,7 @@ public sealed class SubmitResponsesCommandHandler
             ?? throw new KeyNotFoundException($"Assessment session {req.SessionId} not found.");
 
         if (session.Status != AssessmentSession.SessionStatuses.InProgress)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Responses can only be submitted for sessions in 'in_progress' status.");
 
         var existing = await _db.AssessmentResponses

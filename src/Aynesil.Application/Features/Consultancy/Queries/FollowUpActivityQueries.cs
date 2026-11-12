@@ -159,6 +159,7 @@ public sealed class GetOpenFollowUpsReportQueryHandler
             join v in _db.SchoolVisits.AsNoTracking()
                 on a.SchoolVisitId equals v.Id into visitGrp
             from v in visitGrp.DefaultIfEmpty()
+            orderby a.DueDate, a.CreatedAt
             select new OpenFollowUpReportItemDto(
                 a.Id, a.Title,
                 a.ConsultancyPlanId, p != null ? p.Name : null,
@@ -166,6 +167,6 @@ public sealed class GetOpenFollowUpsReportQueryHandler
                 a.DueDate,
                 a.DueDate.HasValue && a.DueDate < today,
                 a.AssignedTo, a.Status, a.CreatedAt)
-        ).OrderBy(x => x.DueDate).ThenBy(x => x.CreatedAt).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }

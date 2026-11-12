@@ -65,7 +65,7 @@ public sealed class PurchaseStudentPackageCommandHandler
                     $"Package definition {req.PackageDefinitionId} not found.");
 
             if (!def.IsActive)
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Package definition '{def.Name}' is inactive and cannot be purchased.");
         }
 
@@ -113,7 +113,7 @@ public sealed class CancelStudentPackageCommandHandler
             ?? throw new KeyNotFoundException($"Student package {req.Id} not found.");
 
         if (package.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Package was modified by another user. Please refresh and retry.");
 
         package.Cancel(_currentUser.UserId);

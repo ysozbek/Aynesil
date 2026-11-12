@@ -53,12 +53,12 @@ public sealed class LinkGuardianToStudentCommandHandler
             ?? throw new KeyNotFoundException($"Guardian {req.GuardianId} not found.");
 
         if (guardian.CorporationId != student.CorporationId)
-            throw new InvalidOperationException("Guardian and student must belong to the same corporation.");
+            throw new BusinessRuleViolationException("Guardian and student must belong to the same corporation.");
 
         var existing = await _db.StudentGuardians
             .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GuardianId == req.GuardianId, ct);
         if (existing)
-            throw new InvalidOperationException("This guardian is already linked to the student.");
+            throw new BusinessRuleViolationException("This guardian is already linked to the student.");
 
         var link = new StudentGuardian
         {

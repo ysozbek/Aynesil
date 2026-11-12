@@ -70,13 +70,21 @@ public sealed class GetEducationPlansQueryHandler
             join period in _db.AcademicPeriods.AsNoTracking()
                 on p.AcademicPeriodId equals period.Id into periodGrp
             from period in periodGrp.DefaultIfEmpty()
-            select new EducationPlanListItemDto(
-                p.Id, p.StudentId,
-                student.FirstName + " " + student.LastName,
-                p.AcademicPeriodId, period != null ? period.Name : null,
-                p.Title, p.Version, p.Status,
-                p.EffectiveFrom, p.EffectiveTo,
-                p.GuardianVisible, p.CreatedAt);
+            select new
+            {
+                p.Id,
+                p.StudentId,
+                StudentName = student.FirstName + " " + student.LastName,
+                p.AcademicPeriodId,
+                AcademicPeriodName = period != null ? period.Name : null,
+                p.Title,
+                p.Version,
+                p.Status,
+                p.EffectiveFrom,
+                p.EffectiveTo,
+                p.GuardianVisible,
+                p.CreatedAt
+            };
 
         query = req.SortBy?.ToLower() switch
         {
@@ -86,8 +94,23 @@ public sealed class GetEducationPlansQueryHandler
             _           => query.OrderByDescending(p => p.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new EducationPlanListItemDto(
+                    r.Id,
+                    r.StudentId,
+                    r.StudentName,
+                    r.AcademicPeriodId,
+                    r.AcademicPeriodName,
+                    r.Title,
+                    r.Version,
+                    r.Status,
+                    r.EffectiveFrom,
+                    r.EffectiveTo,
+                    r.GuardianVisible,
+                    r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<EducationPlanListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

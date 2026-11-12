@@ -50,7 +50,7 @@ public sealed class RecordAttendanceCommandHandler
             .AnyAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                         && e.Status == "enrolled", ct);
         if (!enrollmentExists)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
 
         var existing = await _db.CampAttendances
@@ -58,7 +58,7 @@ public sealed class RecordAttendanceCommandHandler
                                    && a.AttendanceDate == req.AttendanceDate, ct);
 
         if (existing != null)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Attendance for {req.AttendanceDate:yyyy-MM-dd} is already recorded. Use the update endpoint.");
 
         var attendance = CampAttendance.Record(

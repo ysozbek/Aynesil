@@ -39,6 +39,12 @@ public sealed class GetCampAttendanceQueryHandler
         if (!string.IsNullOrWhiteSpace(req.Status))
             q = q.Where(a => a.Status == req.Status);
 
+        q = req.SortBy?.ToLowerInvariant() switch
+        {
+            "status" => req.IsDescending ? q.OrderByDescending(x => x.Status) : q.OrderBy(x => x.Status),
+            _        => req.IsDescending ? q.OrderByDescending(x => x.AttendanceDate) : q.OrderBy(x => x.AttendanceDate)
+        };
+
         var query = q.Select(a => new CampAttendanceDto(
             a.Id,
             a.CampEnrollmentId,
@@ -46,12 +52,6 @@ public sealed class GetCampAttendanceQueryHandler
             a.Status,
             a.ReasonId,
             a.RecordedBy));
-
-        query = req.SortBy?.ToLowerInvariant() switch
-        {
-            "status" => req.IsDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
-            _        => req.IsDescending ? query.OrderByDescending(x => x.AttendanceDate) : query.OrderBy(x => x.AttendanceDate)
-        };
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

@@ -151,11 +151,16 @@ public sealed class GetTriggerConfigsQueryHandler
             join tmpl in _db.NotificationTemplates.AsNoTracking()
                 on cfg.TemplateId equals tmpl.Id into tmplGrp
             from tmpl in tmplGrp.DefaultIfEmpty()
-            select new NotificationTriggerConfigListItemDto(
-                cfg.Id, cfg.CorporationId, cfg.TriggerCode,
-                tmpl != null ? tmpl.Code : null,
-                cfg.OffsetMinutes, cfg.IsActive,
-                cfg.Channels.Count);
+            select new
+            {
+                cfg.Id,
+                cfg.CorporationId,
+                cfg.TriggerCode,
+                TemplateCode = tmpl != null ? tmpl.Code : null,
+                cfg.OffsetMinutes,
+                cfg.IsActive,
+                ChannelCount = cfg.Channels.Count
+            };
 
         query = query.Where(x => x.CorporationId == corporationId || x.CorporationId == null);
 
@@ -170,8 +175,18 @@ public sealed class GetTriggerConfigsQueryHandler
             _ => query.OrderBy(x => x.TriggerCode)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new NotificationTriggerConfigListItemDto(
+                    r.Id,
+                    r.CorporationId,
+                    r.TriggerCode,
+                    r.TemplateCode,
+                    r.OffsetMinutes,
+                    r.IsActive,
+                    r.ChannelCount));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<NotificationTriggerConfigListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

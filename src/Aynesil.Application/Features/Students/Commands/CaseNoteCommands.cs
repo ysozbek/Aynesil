@@ -99,7 +99,7 @@ public sealed class UpdateCaseNoteCommandHandler
             ?? throw new KeyNotFoundException($"Case note {req.Id} not found.");
 
         if (note.RowVersion != req.RowVersion)
-            throw new InvalidOperationException("The case note was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException("The case note was modified by another user. Please refresh and retry.");
 
         note.NoteType       = req.NoteType;
         note.Body           = req.Body;

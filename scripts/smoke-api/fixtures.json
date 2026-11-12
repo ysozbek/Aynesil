@@ -1,0 +1,65 @@
+{
+  "_comment": "Duman testi sabitleri. Şifre yalnızca yerel/geliştirme veritabanındaki 'smoke' test kurumuna aittir (setup-tenant.sh oluşturur). Gerçek ortamda KULLANMAYIN.",
+  "apiBase": "http://localhost:5001/api",
+  "tenant": {
+    "code": "smoke",
+    "name": "Smoke Test Kurumu",
+    "campus": "Smoke Kampüs:İstanbul"
+  },
+  "admin": {
+    "username": "smoke-admin@aynesil.test",
+    "fullName": "Smoke Admin",
+    "password": "SmokeTest!2026pw"
+  },
+  "pathParamDefaults": {
+    "typeCode": "session_type",
+    "locale": "tr",
+    "namespace": "ui",
+    "activeOnly": "true"
+  },
+  "paramSources": {
+    "studentId": "/students",
+    "educatorId": "/educators",
+    "campusId": "/campuses",
+    "roomId": "/scheduling/rooms",
+    "leadId": "/leads",
+    "goalId": "/goals/student-goals",
+    "campId": "/camps",
+    "enrollmentId": "/camps/enrollments"
+  },
+  "paramSourcesByFile": {
+    "sessionId": {
+      "assessment.service": "/assessment-sessions",
+      "scheduling.service": "/scheduling/sessions"
+    }
+  },
+  "queryDefaults": {
+    "_paged": "page=1&pageSize=20"
+  },
+  "queryOverrides": {
+    "assessment.getHistory": "studentId={{studentId}}",
+    "finance.validatePromotion": "code=SMOKE",
+    "kpi.getEducatorDashboard": "periodStart={{today-30}}&periodEnd={{today}}",
+    "kpi.getEducatorTrend": "kpiCode=educator.session_volume",
+    "kpi.getCorporationTrend": "kpiCode=educator.session_volume",
+    "kpi.getRanking": "kpiCode=educator.session_volume&periodStart={{today-30}}&periodEnd={{today}}",
+    "kpi.getManagerDashboard": "periodStart={{today-30}}&periodEnd={{today}}",
+    "kpi.getExecutiveDashboard": "periodStart={{today-30}}&periodEnd={{today}}",
+    "kpi.getKpiReport": "periodStart={{today-30}}&periodEnd={{today}}",
+    "finance.getRevenueReport": "periodStart={{today-30}}&periodEnd={{today}}",
+    "finance.getCreditUsageReport": "periodStart={{today-30}}&periodEnd={{today}}",
+    "lead.getConversionReport": "from={{today-30}}&to={{today}}",
+    "scheduling.listCalendarEntries": "from={{today-30}}&to={{today}}",
+    "scheduling.getSchoolCalendar": "from={{today-30}}&to={{today}}",
+    "scheduling.getCampusCalendar": "from={{today-30}}&to={{today}}",
+    "scheduling.getRoomCalendar": "from={{today-30}}&to={{today}}",
+    "scheduling.getEducatorCalendar": "from={{today-30}}&to={{today}}",
+    "scheduling.getStudentCalendar": "from={{today-30}}&to={{today}}"
+  },
+  "expectedStatus": {
+    "portal.": {
+      "status": 401,
+      "reason": "Yönetici kullanıcının veli portalı erişimi yok (guardian_portal_access); veli kullanıcısı olmadan test edilemez"
+    }
+  }
+}

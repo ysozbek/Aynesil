@@ -129,10 +129,10 @@ public class ContractTemplate : TenantEntity
     private void EnsureCurrentAndEditable()
     {
         if (!IsCurrent)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Contract template '{Code}' v{Version} is archived and cannot be modified.");
         if (IsDeleted)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Contract template '{Code}' v{Version} has been deleted.");
     }
 }

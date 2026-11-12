@@ -1,3 +1,5 @@
+using Aynesil.Domain.Common;
+
 namespace Aynesil.Application.Common.Exceptions;
 
 /// <summary>
@@ -5,9 +7,9 @@ namespace Aynesil.Application.Common.Exceptions;
 /// (duplicate enrollment, unique business key, invalid state transition, etc.).
 /// Mapped to HTTP 409 by ExceptionMiddleware.
 /// </summary>
-public class ConflictException : Exception
+public class ConflictException : BusinessRuleViolationException
 {
-    public ConflictException() : base() { }
+    public ConflictException() { }
 
     public ConflictException(string message) : base(message) { }
 

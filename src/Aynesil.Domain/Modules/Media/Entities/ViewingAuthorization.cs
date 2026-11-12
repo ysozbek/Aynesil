@@ -80,7 +80,7 @@ public class ViewingAuthorization : TenantEntity
     public void Revoke()
     {
         if (IsRevoked)
-            throw new InvalidOperationException("Viewing authorization is already revoked.");
+            throw new BusinessRuleViolationException("Viewing authorization is already revoked.");
 
         IsRevoked = true;
     }

@@ -57,11 +57,17 @@ public sealed class GetSurveysQueryHandler
             join typ in _db.RefValues.AsNoTracking()
                 on s.TypeId equals typ.Id into typGrp
             from typ in typGrp.DefaultIfEmpty()
-            select new SurveyDefinitionListItemDto(
-                s.Id, s.TypeId, typ != null ? typ.Code : null,
-                s.Title, s.Target, s.IsActive,
-                s.Questions.Count(q2 => true),
-                s.UpdatedAt);
+            select new
+            {
+                s.Id,
+                s.TypeId,
+                TypeCode = typ != null ? typ.Code : null,
+                s.Title,
+                s.Target,
+                s.IsActive,
+                QuestionCount = s.Questions.Count(q2 => true),
+                s.UpdatedAt
+            };
 
         query = req.SortBy?.ToLowerInvariant() switch
         {
@@ -70,8 +76,19 @@ public sealed class GetSurveysQueryHandler
             _           => query.OrderByDescending(x => x.UpdatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new SurveyDefinitionListItemDto(
+                    r.Id,
+                    r.TypeId,
+                    r.TypeCode,
+                    r.Title,
+                    r.Target,
+                    r.IsActive,
+                    r.QuestionCount,
+                    r.UpdatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<SurveyDefinitionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }
@@ -141,10 +158,16 @@ public sealed class GetSurveyResponsesQueryHandler
             from r in _db.SurveyResponses.AsNoTracking()
             join s in _db.SurveyDefinitions.AsNoTracking()
                 on r.SurveyId equals s.Id
-            select new SurveyResponseListItemDto(
-                r.Id, r.SurveyId, s.Title,
-                r.GuardianId, r.StudentId,
-                r.SubmittedAt, r.SubmittedAt != null);
+            select new
+            {
+                r.Id,
+                r.SurveyId,
+                SurveyTitle = s.Title,
+                r.GuardianId,
+                r.StudentId,
+                r.SubmittedAt,
+                IsComplete = r.SubmittedAt != null
+            };
 
         if (req.SurveyId.HasValue)
             query = query.Where(x => x.SurveyId == req.SurveyId.Value);
@@ -171,8 +194,18 @@ public sealed class GetSurveyResponsesQueryHandler
             _ => query.OrderByDescending(x => x.SubmittedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new SurveyResponseListItemDto(
+                    r.Id,
+                    r.SurveyId,
+                    r.SurveyTitle,
+                    r.GuardianId,
+                    r.StudentId,
+                    r.SubmittedAt,
+                    r.IsComplete));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<SurveyResponseListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }
@@ -208,16 +241,33 @@ public sealed class GetParentFeedbackQueryHandler
         if (req.SessionId.HasValue)
             q = q.Where(f => f.SessionId == req.SessionId.Value);
 
-        var query = q.Select(f => new ParentFeedbackListItemDto(
-            f.Id, f.GuardianId, f.EducatorId, f.SessionId,
-            f.Rating, f.Comment, f.CreatedAt));
+        var query = q.Select(f => new
+        {
+            f.Id,
+            f.GuardianId,
+            f.EducatorId,
+            f.SessionId,
+            f.Rating,
+            f.Comment,
+            f.CreatedAt
+        });
 
         query = req.IsDescending
             ? query.OrderByDescending(x => x.CreatedAt)
             : query.OrderBy(x => x.CreatedAt);
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+            new ParentFeedbackListItemDto(
+                r.Id,
+                r.GuardianId,
+                r.EducatorId,
+                r.SessionId,
+                r.Rating,
+                r.Comment,
+                r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
         return PaginatedResult<ParentFeedbackListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

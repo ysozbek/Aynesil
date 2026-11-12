@@ -42,7 +42,7 @@ public sealed class AddGoalToPlanCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot add goals to a plan with status '{plan.Status}'.");
 
         var goalExists = await _db.StudentGoals.AnyAsync(
@@ -54,7 +54,7 @@ public sealed class AddGoalToPlanCommandHandler
 
         var alreadyLinked = plan.PlanGoals.Any(pg => pg.StudentGoalId == req.StudentGoalId);
         if (alreadyLinked)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Goal {req.StudentGoalId} is already linked to this plan.");
 
         var planGoal = EducationPlanGoal.Create(
@@ -86,7 +86,7 @@ public sealed class RemoveGoalFromPlanCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot remove goals from a plan with status '{plan.Status}'.");
 
         var planGoal = await _db.EducationPlanGoals
@@ -125,7 +125,7 @@ public sealed class ReorderPlanGoalsCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 $"Cannot reorder goals on a plan with status '{plan.Status}'.");
 
         var planGoals = await _db.EducationPlanGoals

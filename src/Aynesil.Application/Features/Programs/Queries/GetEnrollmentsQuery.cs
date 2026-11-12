@@ -56,13 +56,19 @@ public sealed class GetStudentEnrollmentsQueryHandler
             join status in _db.RefValues.AsNoTracking()
                 on e.StatusId equals status.Id into statusGrp
             from status in statusGrp.DefaultIfEmpty()
-            select new EnrollmentListItemDto(
-                e.Id, e.StudentId,
-                student.FirstName + " " + student.LastName,
-                e.CampusId, campus != null ? campus.Name : null,
-                e.StatusId, status != null ? status.Code : null,
-                e.EnrolledOn, e.EndedOn,
-                e.StudentPrograms.Count(sp => sp.DeletedAt == null));
+            select new
+            {
+                e.Id,
+                e.StudentId,
+                StudentFullName = student.FirstName + " " + student.LastName,
+                e.CampusId,
+                CampusName = campus != null ? campus.Name : null,
+                e.StatusId,
+                StatusLabel = status != null ? status.Code : null,
+                e.EnrolledOn,
+                e.EndedOn,
+                ProgramCount = e.StudentPrograms.Count(sp => sp.DeletedAt == null)
+            };
 
         query = req.SortBy?.ToLower() switch
         {
@@ -71,8 +77,21 @@ public sealed class GetStudentEnrollmentsQueryHandler
             _            => req.IsDescending ? query.OrderByDescending(e => e.EnrolledOn) : query.OrderByDescending(e => e.EnrolledOn)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+                new EnrollmentListItemDto(
+                    r.Id,
+                    r.StudentId,
+                    r.StudentFullName,
+                    r.CampusId,
+                    r.CampusName,
+                    r.StatusId,
+                    r.StatusLabel,
+                    r.EnrolledOn,
+                    r.EndedOn,
+                    r.ProgramCount));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
 
         return PaginatedResult<EnrollmentListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

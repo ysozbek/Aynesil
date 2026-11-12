@@ -48,7 +48,7 @@ public sealed class CreateAssessmentReportCommandHandler
                 $"Assessment session {req.AssessmentSessionId} not found.");
 
         if (session.Status != AssessmentSession.SessionStatuses.Completed)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Reports can only be created for completed assessment sessions.");
 
         var report = AssessmentReport.Create(
@@ -131,7 +131,7 @@ public sealed class FinalizeAssessmentReportCommandHandler
             ?? throw new KeyNotFoundException($"Assessment report {req.Id} not found.");
 
         if (_currentUser.UserId is null)
-            throw new InvalidOperationException("Authenticated user required to finalize a report.");
+            throw new BusinessRuleViolationException("Authenticated user required to finalize a report.");
 
         report.Finalize(_currentUser.UserId.Value);
         await _db.SaveChangesAsync(ct);

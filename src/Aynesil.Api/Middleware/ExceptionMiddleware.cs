@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,25 +9,24 @@ namespace Aynesil.Api.Middleware;
 /// <summary>
 /// Global exception handler middleware.
 /// Catches all unhandled exceptions and transforms them into consistent ApiResponse envelopes.
-/// Never leaks stack traces or internal details to clients in production.
-/// Writes all unexpected exceptions to Serilog structured logging with a correlation TraceId.
+/// Never leaks exception text, EF queries or stack traces to clients, in any environment:
+/// unrecognised exceptions become a generic 500 carrying only a Turkish message and the TraceId,
+/// and the details go to the structured log (Serilog) under that same TraceId.
 /// </summary>
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
-    private readonly IHostEnvironment _env;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger, IHostEnvironment env)
+    public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
     {
         _next = next;
         _logger = logger;
-        _env = env;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -67,15 +67,14 @@ public class ExceptionMiddleware
                 StatusCodes.Status401Unauthorized,
                 ApiResponse.Fail("Oturum açmanız gerekiyor.")),
 
-            ConflictException ce => (
+            // The application's own conflict exceptions: ConflictException (derives from it) and the
+            // BusinessRuleViolationException thrown by domain entities / handlers for invalid
+            // transitions, duplicates, wrong state, ... Their messages are authored by us and safe to show.
+            // InvalidOperationException is deliberately NOT handled here: framework/system errors
+            // (including EF query-translation failures) must fall through to the generic 500 below.
+            BusinessRuleViolationException bre => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail(ce.Message)),
-
-            // Domain/application handlers use InvalidOperationException for business-rule
-            // violations (duplicate enrollments, invalid transitions, etc.).
-            InvalidOperationException ioe => (
-                StatusCodes.Status409Conflict,
-                ApiResponse.Fail(ioe.Message)),
+                ApiResponse.Fail(bre.Message)),
 
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,
@@ -103,9 +102,7 @@ public class ExceptionMiddleware
 
             _ => (
                 StatusCodes.Status500InternalServerError,
-                ApiResponse.Fail(_env.IsDevelopment()
-                    ? exception.Message
-                    : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
+                ApiResponse.Fail("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
         };
 
         if (PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out var fkConstraint)

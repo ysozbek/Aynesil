@@ -60,7 +60,7 @@ public sealed class ApplyDiscountCommandHandler
                 ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
 
             if (invoice.Status != "draft")
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     "Discounts can only be applied to draft invoices.");
 
             var discount = Discount.Apply(

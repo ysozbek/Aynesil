@@ -127,7 +127,7 @@ public sealed class DeleteCampPeriodCommandHandler : IRequestHandler<DeleteCampP
             .AnyAsync(e => e.CampPeriodId == req.Id, ct);
 
         if (hasEnrollments)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a camp period that has enrollments.");
 
         _db.CampPeriods.Remove(period);

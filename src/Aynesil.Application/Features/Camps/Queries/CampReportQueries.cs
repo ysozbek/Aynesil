@@ -53,6 +53,7 @@ public sealed class GetCampEnrollmentSummaryQueryHandler
         return await (
             from p in _db.CampPeriods.AsNoTracking()
             where p.CampId == req.CampId
+            orderby p.StartDate
             select new CampEnrollmentSummaryDto(
                 p.Id,
                 p.Name,
@@ -63,7 +64,7 @@ public sealed class GetCampEnrollmentSummaryQueryHandler
                 p.Enrollments.Count(e => e.Status == "waitlist"),
                 p.Enrollments.Count(e => e.Status == "withdrawn"),
                 p.Enrollments.Count(e => e.Status == "completed"))
-        ).OrderBy(x => x.StartDate).ToListAsync(ct);
+        ).ToListAsync(ct);
     }
 }
 

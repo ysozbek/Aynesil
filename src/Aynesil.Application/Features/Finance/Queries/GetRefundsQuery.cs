@@ -40,10 +40,17 @@ public sealed class GetRefundsQueryHandler
         if (req.From.HasValue)          q = q.Where(r => r.CreatedAt >= req.From.Value);
         if (req.To.HasValue)            q = q.Where(r => r.CreatedAt <= req.To.Value);
 
-        var query = q.Select(r => new RefundDto(
-            r.Id, r.CorporationId, r.PaymentId,
-            r.Amount, r.Reason, r.Status,
-            r.ProcessedAt, r.CreatedAt));
+        var query = q.Select(r => new
+        {
+            r.Id,
+            r.CorporationId,
+            r.PaymentId,
+            r.Amount,
+            r.Reason,
+            r.Status,
+            r.ProcessedAt,
+            r.CreatedAt
+        });
 
         query = req.SortBy?.ToLower() switch
         {
@@ -52,8 +59,19 @@ public sealed class GetRefundsQueryHandler
             _             => query.OrderByDescending(r => r.CreatedAt)
         };
 
-        var total = await query.CountAsync(ct);
-        var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
+        var projected = query.Select(r =>
+            new RefundDto(
+                r.Id,
+                r.CorporationId,
+                r.PaymentId,
+                r.Amount,
+                r.Reason,
+                r.Status,
+                r.ProcessedAt,
+                r.CreatedAt));
+
+        var total = await projected.CountAsync(ct);
+        var items = await projected.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
 
         return PaginatedResult<RefundDto>.Create(items, total, req.Page, req.PageSize);
     }

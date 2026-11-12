@@ -117,7 +117,7 @@ public sealed class UpdateStudentProgramCommandHandler
             ?? throw new KeyNotFoundException($"StudentProgram {req.StudentProgramId} not found.");
 
         if (sp.RowVersion != req.RowVersion)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Record was modified by another user. Please refresh and retry.");
 
         sp.UpdateDates(req.StartDate, req.EndDate);

@@ -77,7 +77,7 @@ public class Meeting : TenantEntity
         Guid? organizerId)
     {
         if (Status == "cancelled")
-            throw new InvalidOperationException("Cannot update a cancelled meeting.");
+            throw new BusinessRuleViolationException("Cannot update a cancelled meeting.");
 
         if (endsAt.HasValue && scheduledAt.HasValue && endsAt <= scheduledAt)
             throw new ArgumentException("Meeting ends_at must be after scheduled_at.");
@@ -96,9 +96,9 @@ public class Meeting : TenantEntity
     public void Complete()
     {
         if (Status == "cancelled")
-            throw new InvalidOperationException("Cannot complete a cancelled meeting.");
+            throw new BusinessRuleViolationException("Cannot complete a cancelled meeting.");
         if (Status == "completed")
-            throw new InvalidOperationException("Meeting is already completed.");
+            throw new BusinessRuleViolationException("Meeting is already completed.");
 
         Status    = "completed";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -107,9 +107,9 @@ public class Meeting : TenantEntity
     public void Cancel()
     {
         if (Status == "completed")
-            throw new InvalidOperationException("Cannot cancel a completed meeting.");
+            throw new BusinessRuleViolationException("Cannot cancel a completed meeting.");
         if (Status == "cancelled")
-            throw new InvalidOperationException("Meeting is already cancelled.");
+            throw new BusinessRuleViolationException("Meeting is already cancelled.");
 
         Status    = "cancelled";
         UpdatedAt = DateTimeOffset.UtcNow;

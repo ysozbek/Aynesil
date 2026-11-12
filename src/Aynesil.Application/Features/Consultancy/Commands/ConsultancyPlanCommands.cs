@@ -238,14 +238,14 @@ public sealed class DeleteConsultancyPlanCommandHandler
             ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
 
         if (plan.Status != "draft")
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Only draft plans can be deleted. Use Cancel to archive active plans.");
 
         var hasVisits = await _db.SchoolVisits
             .AnyAsync(v => v.ConsultancyPlanId == req.Id, ct);
 
         if (hasVisits)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 "Cannot delete a plan that already has associated visits.");
 
         _db.ConsultancyPlans.Remove(plan);
