@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiService } from '@/services/api.service'
+import { useLocaleStore } from '@/stores/locale.store'
 import type { AuthUser, LoginRequest, LoginResult } from '@/types/auth.types'
 
 function parseJwt(token: string): Record<string, unknown> {
@@ -64,6 +65,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (!response.success || !response.data) throw new Error(response.message)
 
     setTokens(response.data.accessToken, response.data.refreshToken)
+    // Girişte arayüz dili kullanıcının tercihiyle (JWT locale claim'i) başlatılır.
+    if (user.value?.locale) useLocaleStore().setLocale(user.value.locale)
   }
 
   async function refresh(): Promise<LoginResult> {

@@ -133,6 +133,9 @@ try
         opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
     });
 
+    // Dil: Accept-Language → JWT locale → tr. İlk kayıt ExceptionMiddleware'den önce
+    // (auth öncesi hatalar da yerelleşir); ikincisi kimlik doğrulamadan sonra claim'i görür.
+    app.UseMiddleware<RequestCultureMiddleware>();
     app.UseMiddleware<ExceptionMiddleware>();
 
     if (app.Environment.IsDevelopment())
@@ -148,6 +151,7 @@ try
     app.UseHttpsRedirection();
     app.UseCors("AynesilCors");
     app.UseAuthentication();
+    app.UseMiddleware<RequestCultureMiddleware>();
     app.UseMiddleware<StaleTenantMiddleware>();
     app.UseAuthorization();
     app.UseMiddleware<ActivityLoggingMiddleware>();

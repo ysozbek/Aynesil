@@ -3,6 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Aynesil.Application</AssemblyName>
     <RootNamespace>Aynesil.Application</RootNamespace>
+    <NeutralLanguage>tr</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>

@@ -9,6 +9,7 @@
  */
 import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
+import { useLocaleStore } from '@/stores/locale.store'
 import type { ApiResponse } from '@/types/api.types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -58,9 +59,9 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (auth.accessToken && !isAuthEndpoint(config.url)) {
     config.headers.Authorization = `Bearer ${auth.accessToken}`
   }
-  if (auth.user?.locale) {
-    config.headers['Accept-Language'] = auth.user.locale
-  }
+  // Arayüz dili (locale store) her istekte gönderilir; backend: Accept-Language → JWT locale → tr.
+  config.headers['Accept-Language'] = useLocaleStore().current
+
   return config
 })
 

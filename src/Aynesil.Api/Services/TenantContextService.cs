@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Localization;
 
 namespace Aynesil.Api.Services;
 
@@ -22,10 +23,11 @@ public sealed class TenantContextService : ITenantContext
     public Guid? CampusId =>
         Guid.TryParse(User?.FindFirstValue("campus_id"), out var id) ? id : null;
 
+    /// <summary>Accept-Language → JWT locale → tr (bkz. <see cref="LocaleResolver"/>).</summary>
     public string? Locale =>
-        User?.FindFirstValue("locale")
-        ?? _http.HttpContext?.Request.Headers.AcceptLanguage.FirstOrDefault()?.Split(',').First()
-        ?? "tr";
+        LocaleResolver.Resolve(
+            _http.HttpContext?.Request.Headers.AcceptLanguage.ToString(),
+            User?.FindFirstValue("locale"));
 
     public string Timezone =>
         User?.FindFirstValue("timezone") ?? "Europe/Istanbul";
