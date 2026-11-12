@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -45,7 +46,7 @@ public sealed class AssignSpecialtyCommandHandler : IRequestHandler<AssignSpecia
         var alreadyAssigned = await _db.EducatorSpecialties.AnyAsync(
             s => s.EducatorId == req.EducatorId && s.SpecialtyId == req.SpecialtyId, ct);
         if (alreadyAssigned)
-            throw new BusinessRuleViolationException("This specialty is already assigned to the educator.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SpecialtyAlreadyAssigned);
 
         var specialty = new EducatorSpecialty
         {

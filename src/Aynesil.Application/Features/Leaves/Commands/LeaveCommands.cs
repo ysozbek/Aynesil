@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -71,8 +72,7 @@ public sealed class SubmitLeaveRequestCommandHandler : IRequestHandler<SubmitLea
                 && lr.EndsAt > req.StartsAt, ct);
 
         if (overlap)
-            throw new BusinessRuleViolationException(
-                "A pending or approved leave request already exists for the same educator during this period.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveOverlap);
 
         var request = LeaveRequest.Submit(
             corporationId, req.EducatorId, req.LeaveTypeId,
@@ -139,8 +139,7 @@ public sealed class UpdateLeaveRequestCommandHandler : IRequestHandler<UpdateLea
                 && lr.EndsAt > req.StartsAt, ct);
 
         if (overlap)
-            throw new BusinessRuleViolationException(
-                "A pending or approved leave request already exists for the same educator during this period.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveOverlap);
 
         leave.Update(req.LeaveTypeId, req.Unit, req.StartsAt, req.EndsAt, req.Quantity, req.Reason);
         await _db.SaveChangesAsync(ct);
@@ -188,8 +187,7 @@ public sealed class ApproveLeaveRequestCommandHandler
                     && b.PeriodYear == periodYear, ct);
 
             if (balance != null && balance.Remaining < leave.Quantity.Value)
-                throw new BusinessRuleViolationException(
-                    $"Insufficient leave balance. Available: {balance.Remaining} {balance.Unit}, Requested: {leave.Quantity.Value} {leave.Unit}.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.InsufficientLeaveAvailable, balance.Remaining, new EnumValue("LeaveUnit", balance.Unit), leave.Quantity.Value, new EnumValue("LeaveUnit", leave.Unit));
 
             // Deduct from balance.
             if (balance != null)
@@ -345,8 +343,7 @@ public sealed class InitializeLeaveBalanceCommandHandler
                 && b.PeriodYear == req.PeriodYear, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"A leave balance for educator {req.EducatorId}, leave type {req.LeaveTypeId}, year {req.PeriodYear} already exists.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveBalanceExists, req.EducatorId, req.LeaveTypeId, req.PeriodYear);
 
         var balance = LeaveBalance.Initialize(
             corporationId, req.EducatorId, req.LeaveTypeId,

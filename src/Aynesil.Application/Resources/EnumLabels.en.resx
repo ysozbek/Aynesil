@@ -24,6 +24,11 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Action.cancel" xml:space="preserve"><value>cancel</value></data>
+  <data name="Action.complete" xml:space="preserve"><value>complete</value></data>
+  <data name="Action.send" xml:space="preserve"><value>send</value></data>
+  <data name="Action.update" xml:space="preserve"><value>update</value></data>
+  <data name="Action.update details" xml:space="preserve"><value>update details</value></data>
   <data name="ActionItemStatus.cancelled" xml:space="preserve"><value>cancelled</value></data>
   <data name="ActionItemStatus.done" xml:space="preserve"><value>done</value></data>
   <data name="ActionItemStatus.in_progress" xml:space="preserve"><value>in progress</value></data>
@@ -52,6 +57,19 @@
   <data name="EmploymentType.contractor" xml:space="preserve"><value>contractor</value></data>
   <data name="EmploymentType.full_time" xml:space="preserve"><value>full-time</value></data>
   <data name="EmploymentType.part_time" xml:space="preserve"><value>part-time</value></data>
+  <data name="Entity.Camera" xml:space="preserve"><value>camera</value></data>
+  <data name="Entity.Camp" xml:space="preserve"><value>camp</value></data>
+  <data name="Entity.ConsentTemplate" xml:space="preserve"><value>consent template</value></data>
+  <data name="Entity.ContractTemplate" xml:space="preserve"><value>contract template</value></data>
+  <data name="Entity.KpiDefinition" xml:space="preserve"><value>KPI definition</value></data>
+  <data name="Entity.MenuItem" xml:space="preserve"><value>menu item</value></data>
+  <data name="Entity.NotificationTemplate" xml:space="preserve"><value>notification template</value></data>
+  <data name="Entity.PackageDefinition" xml:space="preserve"><value>package definition</value></data>
+  <data name="Entity.Program" xml:space="preserve"><value>program</value></data>
+  <data name="Entity.Promotion" xml:space="preserve"><value>promotion</value></data>
+  <data name="Entity.RefValue" xml:space="preserve"><value>reference value</value></data>
+  <data name="Entity.Role" xml:space="preserve"><value>role</value></data>
+  <data name="Entity.Room" xml:space="preserve"><value>room</value></data>
   <data name="EntryType.closure" xml:space="preserve"><value>closure</value></data>
   <data name="EntryType.event" xml:space="preserve"><value>event</value></data>
   <data name="EntryType.holiday" xml:space="preserve"><value>holiday</value></data>
@@ -97,6 +115,66 @@
   <data name="SignatureMethod.click_wrap" xml:space="preserve"><value>click-wrap</value></data>
   <data name="SignatureMethod.e_sign" xml:space="preserve"><value>e-signature</value></data>
   <data name="SignatureMethod.wet" xml:space="preserve"><value>wet signature</value></data>
+  <data name="Status.absent" xml:space="preserve"><value>absent</value></data>
+  <data name="Status.achieved" xml:space="preserve"><value>achieved</value></data>
+  <data name="Status.active" xml:space="preserve"><value>active</value></data>
+  <data name="Status.approved" xml:space="preserve"><value>approved</value></data>
+  <data name="Status.authorized" xml:space="preserve"><value>authorized</value></data>
+  <data name="Status.bounced" xml:space="preserve"><value>bounced</value></data>
+  <data name="Status.cancelled" xml:space="preserve"><value>cancelled</value></data>
+  <data name="Status.captured" xml:space="preserve"><value>captured</value></data>
+  <data name="Status.clean" xml:space="preserve"><value>clean</value></data>
+  <data name="Status.closed" xml:space="preserve"><value>closed</value></data>
+  <data name="Status.completed" xml:space="preserve"><value>completed</value></data>
+  <data name="Status.delivered" xml:space="preserve"><value>delivered</value></data>
+  <data name="Status.disabled" xml:space="preserve"><value>disabled</value></data>
+  <data name="Status.discontinued" xml:space="preserve"><value>discontinued</value></data>
+  <data name="Status.dispatched" xml:space="preserve"><value>dispatched</value></data>
+  <data name="Status.done" xml:space="preserve"><value>done</value></data>
+  <data name="Status.draft" xml:space="preserve"><value>draft</value></data>
+  <data name="Status.enrolled" xml:space="preserve"><value>enrolled</value></data>
+  <data name="Status.excused" xml:space="preserve"><value>excused</value></data>
+  <data name="Status.exhausted" xml:space="preserve"><value>exhausted</value></data>
+  <data name="Status.expired" xml:space="preserve"><value>expired</value></data>
+  <data name="Status.failed" xml:space="preserve"><value>failed</value></data>
+  <data name="Status.granted" xml:space="preserve"><value>granted</value></data>
+  <data name="Status.in_progress" xml:space="preserve"><value>in progress</value></data>
+  <data name="Status.in_review" xml:space="preserve"><value>under review</value></data>
+  <data name="Status.infected" xml:space="preserve"><value>infected</value></data>
+  <data name="Status.invited" xml:space="preserve"><value>invited</value></data>
+  <data name="Status.issued" xml:space="preserve"><value>issued</value></data>
+  <data name="Status.late" xml:space="preserve"><value>late</value></data>
+  <data name="Status.left_early" xml:space="preserve"><value>left early</value></data>
+  <data name="Status.no_show" xml:space="preserve"><value>no-show</value></data>
+  <data name="Status.on_hold" xml:space="preserve"><value>on hold</value></data>
+  <data name="Status.open" xml:space="preserve"><value>open</value></data>
+  <data name="Status.overdue" xml:space="preserve"><value>overdue</value></data>
+  <data name="Status.paid" xml:space="preserve"><value>paid</value></data>
+  <data name="Status.partial" xml:space="preserve"><value>partially paid</value></data>
+  <data name="Status.paused" xml:space="preserve"><value>paused</value></data>
+  <data name="Status.pending" xml:space="preserve"><value>pending</value></data>
+  <data name="Status.planned" xml:space="preserve"><value>planned</value></data>
+  <data name="Status.present" xml:space="preserve"><value>present</value></data>
+  <data name="Status.processed" xml:space="preserve"><value>processed</value></data>
+  <data name="Status.queued" xml:space="preserve"><value>queued</value></data>
+  <data name="Status.read" xml:space="preserve"><value>read</value></data>
+  <data name="Status.refunded" xml:space="preserve"><value>refunded</value></data>
+  <data name="Status.rejected" xml:space="preserve"><value>rejected</value></data>
+  <data name="Status.requested" xml:space="preserve"><value>requested</value></data>
+  <data name="Status.rescheduled" xml:space="preserve"><value>rescheduled</value></data>
+  <data name="Status.revised" xml:space="preserve"><value>revised</value></data>
+  <data name="Status.revoked" xml:space="preserve"><value>revoked</value></data>
+  <data name="Status.running" xml:space="preserve"><value>running</value></data>
+  <data name="Status.scheduled" xml:space="preserve"><value>scheduled</value></data>
+  <data name="Status.sent" xml:space="preserve"><value>sent</value></data>
+  <data name="Status.signed" xml:space="preserve"><value>signed</value></data>
+  <data name="Status.skipped" xml:space="preserve"><value>skipped</value></data>
+  <data name="Status.succeeded" xml:space="preserve"><value>succeeded</value></data>
+  <data name="Status.suspended" xml:space="preserve"><value>suspended</value></data>
+  <data name="Status.terminated" xml:space="preserve"><value>terminated</value></data>
+  <data name="Status.void" xml:space="preserve"><value>void</value></data>
+  <data name="Status.waitlist" xml:space="preserve"><value>waitlisted</value></data>
+  <data name="Status.withdrawn" xml:space="preserve"><value>withdrawn</value></data>
   <data name="SurveyTarget.educator" xml:space="preserve"><value>educator</value></data>
   <data name="SurveyTarget.guardian" xml:space="preserve"><value>guardian</value></data>
   <data name="SurveyTarget.student" xml:space="preserve"><value>student</value></data>

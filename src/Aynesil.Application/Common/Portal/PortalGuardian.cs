@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +42,7 @@ public static class PortalGuardian
         if (own.HasValue)
         {
             if (requestedGuardianId.HasValue && requestedGuardianId != own)
-                throw new ForbiddenAccessException("Guardians can only act on their own behalf.");
+                throw new ForbiddenAccessException(MsgKeys.Rule.GuardianOwnBehalfOnly);
             return (own, true);
         }
 
@@ -69,6 +70,6 @@ public static class PortalGuardian
                           && gpa.RevokedAt     == null
                           && (!requireCamera || gpa.CanViewCamera), ct);
         if (!ok)
-            throw new ForbiddenAccessException("The signed-in guardian has no active access to this student.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.GuardianNoActiveAccess);
     }
 }

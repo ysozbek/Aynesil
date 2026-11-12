@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -65,8 +66,7 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
 
         if (string.IsNullOrEmpty(user.PasswordHash) ||
             !_passwords.Verify(req.CurrentPassword, user.PasswordHash))
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.CurrentPassword), "Current password is incorrect.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.CurrentPassword), MsgKeys.Rule.CurrentPasswordIncorrect)]);
 
         user.ChangePassword(_passwords.Hash(req.NewPassword), userId);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -63,8 +64,7 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
         var duplicate = await _db.UserRoles.AnyAsync(
             ur => ur.UserId == req.UserId && ur.RoleId == req.RoleId && ur.CampusId == req.CampusId, ct);
         if (duplicate)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RoleId), "This role is already assigned to the user for the specified scope.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RoleId), MsgKeys.Rule.RoleAlreadyAssigned)]);
 
         var grant = new UserRole
         {

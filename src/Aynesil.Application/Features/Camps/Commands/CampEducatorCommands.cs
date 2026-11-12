@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -78,7 +79,7 @@ public sealed class AssignCampEducatorCommandHandler
             && e.CampPeriodId == req.CampPeriodId
             && e.CampActivityId == req.CampActivityId, ct);
         if (duplicate)
-            throw new BusinessRuleViolationException("Educator is already assigned at this scope.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EducatorAlreadyAtScope);
 
         var assignment = CampEducator.Assign(
             corporationId, req.CampId, req.EducatorId, req.Role,

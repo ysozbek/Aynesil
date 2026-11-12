@@ -52,6 +52,9 @@ public static partial class Msg
             return args[i] switch
             {
                 ILocalizedArg a => a.Resolve(culture),
+                EnumValue ev => Enum(ev.Group, ev.Code, culture),
+                Formatted { Value: IFormattable fv } f => fv.ToString(f.Format, culture),
+                Formatted f => f.Value?.ToString() ?? string.Empty,
                 IFormattable f => f.ToString(null, culture),
                 var o => o?.ToString() ?? string.Empty,
             };

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -65,8 +66,7 @@ public sealed class PurchaseStudentPackageCommandHandler
                     $"Package definition {req.PackageDefinitionId} not found.");
 
             if (!def.IsActive)
-                throw new BusinessRuleViolationException(
-                    $"Package definition '{def.Name}' is inactive and cannot be purchased.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.PackageDefinitionInactive, def.Name);
         }
 
         var package = StudentPackage.Purchase(
@@ -113,8 +113,7 @@ public sealed class CancelStudentPackageCommandHandler
             ?? throw new KeyNotFoundException($"Student package {req.Id} not found.");
 
         if (package.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Package was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         package.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -55,8 +56,7 @@ public sealed class CreateStudentCommandHandler
             var taken = await _db.Students
                 .AnyAsync(s => s.CorporationId == corporationId && s.StudentNo == req.StudentNo, ct);
             if (taken)
-                throw new BusinessRuleViolationException(
-                    $"Student number '{req.StudentNo}' is already in use within this corporation.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.StudentNumberInUse, req.StudentNo);
         }
 
         if (req.StatusId.HasValue)
@@ -141,7 +141,7 @@ public sealed class UpdateStudentCommandHandler
             ?? throw new KeyNotFoundException($"Student {req.Id} not found.");
 
         if (student.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The student record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         if (req.StudentNo is not null)
         {
@@ -150,8 +150,7 @@ public sealed class UpdateStudentCommandHandler
                   && s.StudentNo == req.StudentNo
                   && s.Id != req.Id, ct);
             if (taken)
-                throw new BusinessRuleViolationException(
-                    $"Student number '{req.StudentNo}' is already in use within this corporation.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.StudentNumberInUse, req.StudentNo);
         }
 
         student.UpdateProfile(

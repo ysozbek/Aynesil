@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -64,8 +65,7 @@ public sealed class GenerateStudentContractCommandHandler
                 ?? throw new KeyNotFoundException($"Contract template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
-                throw new BusinessRuleViolationException(
-                    "Contracts may only be generated from the current version of a template.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ContractNeedsCurrentVersion);
 
             templateVersion = tpl.Version;
         }

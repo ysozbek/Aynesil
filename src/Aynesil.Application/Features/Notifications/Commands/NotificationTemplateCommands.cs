@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -59,8 +60,7 @@ public sealed class CreateNotificationTemplateCommandHandler
         var existing = await _db.NotificationTemplates.AnyAsync(
             t => t.Code == req.Code && t.CorporationId == corporationId, ct);
         if (existing)
-            throw new BusinessRuleViolationException(
-                $"Notification template with code '{req.Code}' already exists for this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "NotificationTemplate"), req.Code);
 
         var template = new NotificationTemplate
         {

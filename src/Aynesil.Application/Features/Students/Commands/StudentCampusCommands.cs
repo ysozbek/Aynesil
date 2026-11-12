@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -56,7 +57,7 @@ public sealed class EnrollStudentAtCampusCommandHandler
         if (existing is not null)
         {
             if (existing.ActiveTo is null)
-                throw new ConflictException("Öğrenci bu kampüste zaten aktif kayıtlı.");
+                throw new ConflictException(MsgKeys.Rule.StudentAlreadyAtCampus);
 
             // unique(student_id, campus_id) — reopen the closed enrollment instead of inserting.
             existing.ActiveTo = null;
@@ -128,10 +129,10 @@ public sealed class TransferStudentCommandHandler
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         if (student.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The student record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         if (student.PrimaryCampusId == req.NewCampusId)
-            throw new BusinessRuleViolationException("Student is already at this campus.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyAtCampus);
 
         var transferDate = req.TransferDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -189,7 +190,7 @@ public sealed class EndCampusEnrollmentCommandHandler
             ?? throw new KeyNotFoundException($"Campus enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.ActiveTo.HasValue)
-            throw new BusinessRuleViolationException("This enrollment has already been closed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentAlreadyClosed);
 
         enrollment.ActiveTo = req.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -148,8 +149,7 @@ public sealed class SendNotificationCommandHandler
 
         // Body is required — use override if template resolution produced nothing
         if (string.IsNullOrWhiteSpace(body))
-            body = req.BodyOverride ?? throw new BusinessRuleViolationException(
-                "Could not resolve notification body from template or BodyOverride.");
+            body = req.BodyOverride ?? throw new BusinessRuleViolationException(MsgKeys.Rule.NotificationBodyUnresolved);
 
         // 2. Persist notification
         var notification = new AppNotification

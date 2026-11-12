@@ -68,7 +68,7 @@ public class Interview : BaseEntity
     public void Complete(string? outcome, string? recommendation, Guid? conductedBy = null)
     {
         if (Status == InterviewStatus.Cancelled)
-            throw new BusinessRuleViolationException("Cannot complete a cancelled interview.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InterviewCompleteCancelled);
 
         Status = InterviewStatus.Completed;
         ConductedAt = DateTimeOffset.UtcNow;
@@ -81,8 +81,7 @@ public class Interview : BaseEntity
     public void MarkNoShow()
     {
         if (Status is InterviewStatus.Completed or InterviewStatus.Cancelled)
-            throw new BusinessRuleViolationException(
-                $"Cannot mark as no-show when interview status is '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InterviewNoShowStatus, new EnumValue("Status", Status));
 
         Status = InterviewStatus.NoShow;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -91,7 +90,7 @@ public class Interview : BaseEntity
     public void Cancel()
     {
         if (Status == InterviewStatus.Completed)
-            throw new BusinessRuleViolationException("Cannot cancel a completed interview.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InterviewCancelCompleted);
 
         Status = InterviewStatus.Cancelled;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -100,8 +99,7 @@ public class Interview : BaseEntity
     public void Reschedule(DateTimeOffset newScheduledAt, Guid? updatedBy = null)
     {
         if (Status is InterviewStatus.Completed or InterviewStatus.Cancelled)
-            throw new BusinessRuleViolationException(
-                $"Cannot reschedule an interview with status '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InterviewRescheduleStatus, new EnumValue("Status", Status));
 
         ScheduledAt = newScheduledAt;
         Status = InterviewStatus.Scheduled;

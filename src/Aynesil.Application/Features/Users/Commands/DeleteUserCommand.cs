@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Iam.Entities;
@@ -40,12 +42,10 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
             ?? throw new NotFoundException("User", req.UserId);
 
         if (req.RowVersion != user.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The record was modified by another user. Please reload and try again.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (_currentUser.UserId == req.UserId)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.UserId), "You cannot delete your own account.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.UserId), MsgKeys.Rule.CannotDeleteSelf)]);
 
         user.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

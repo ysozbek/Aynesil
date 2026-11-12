@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
@@ -103,8 +104,7 @@ public sealed class UpdateEducationPlanCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
 
         if (plan.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The education plan was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         plan.UpdateDetails(
             req.Title, req.AcademicPeriodId, req.CampusId,
@@ -340,8 +340,7 @@ public sealed class DeleteEducationPlanCommandHandler : IRequestHandler<DeleteEd
             ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
 
         if (plan.Status is not "draft")
-            throw new BusinessRuleViolationException(
-                "Only draft plans can be deleted. Use Close to end an active plan.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftPlanDeleteClose);
 
         plan.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Camps.Events;
 
 namespace Aynesil.Domain.Modules.Camps.Entities;
@@ -106,7 +107,7 @@ public class CampActivity : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (IsActive)
-            throw new BusinessRuleViolationException("Activity is already active.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityAlreadyActive);
         IsActive  = true;
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy;
@@ -115,7 +116,7 @@ public class CampActivity : TenantEntity
     public void Deactivate(Guid? updatedBy = null)
     {
         if (!IsActive)
-            throw new BusinessRuleViolationException("Activity is already inactive.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityAlreadyInactive);
         IsActive  = false;
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy;

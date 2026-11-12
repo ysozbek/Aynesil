@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Legal.Events;
 
 namespace Aynesil.Domain.Modules.Legal.Entities;
@@ -85,8 +86,7 @@ public class StudentConsent : TenantEntity
     public void Withdraw(Guid? updatedBy = null)
     {
         if (State != "granted")
-            throw new BusinessRuleViolationException(
-                $"Only a granted consent can be withdrawn. Current state: '{State}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentWithdrawNeedsGranted, new EnumValue("Status", State));
 
         State       = "withdrawn";
         WithdrawnAt = DateTimeOffset.UtcNow;
@@ -99,7 +99,7 @@ public class StudentConsent : TenantEntity
     public void AttachEvidence(Guid evidenceFileId, Guid? updatedBy = null)
     {
         if (State != "granted")
-            throw new BusinessRuleViolationException("Evidence can only be attached to a granted consent.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EvidenceNeedsGrantedConsent);
 
         EvidenceFileId = evidenceFileId;
         UpdatedAt      = DateTimeOffset.UtcNow;

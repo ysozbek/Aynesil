@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -154,8 +155,7 @@ public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInst
                         && p.Status == "active", ct);
 
         if (hasActivePlans)
-            throw new BusinessRuleViolationException(
-                "Cannot delete an institution with active consultancy plans.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InstitutionHasActivePlans);
 
         institution.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

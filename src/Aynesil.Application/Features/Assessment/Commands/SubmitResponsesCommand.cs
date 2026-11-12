@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -57,8 +58,7 @@ public sealed class SubmitResponsesCommandHandler
             ?? throw new KeyNotFoundException($"Assessment session {req.SessionId} not found.");
 
         if (session.Status != AssessmentSession.SessionStatuses.InProgress)
-            throw new BusinessRuleViolationException(
-                "Responses can only be submitted for sessions in 'in_progress' status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ResponsesNeedInProgress);
 
         var existing = await _db.AssessmentResponses
             .Where(r => r.AssessmentSessionId == req.SessionId)

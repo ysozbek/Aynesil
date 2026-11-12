@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
@@ -51,7 +52,7 @@ public sealed class CreateCampCommandHandler : IRequestHandler<CreateCampCommand
               && c.DeletedAt == null, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException($"A camp with code '{req.Code}' already exists.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Camp"), req.Code);
 
         var camp = Camp.Create(
             corporationId, req.Code, req.Name,
@@ -205,8 +206,7 @@ public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand
         ).AnyAsync(ct);
 
         if (hasActiveEnrollments)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a camp with active enrollments.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampHasActiveEnrollments);
 
         camp.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

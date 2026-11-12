@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Legal.Events;
 
 namespace Aynesil.Domain.Modules.Legal.Entities;
@@ -128,10 +129,8 @@ public class ConsentTemplate : TenantEntity
     private void EnsureCurrentAndEditable()
     {
         if (!IsCurrent)
-            throw new BusinessRuleViolationException(
-                $"Consent template '{Code}' v{Version} is archived and cannot be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentTemplateArchived, Code, Version);
         if (IsDeleted)
-            throw new BusinessRuleViolationException(
-                $"Consent template '{Code}' v{Version} has been deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentTemplateDeleted, Code, Version);
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using FluentValidation.Results;
@@ -31,8 +33,7 @@ public static class ActingEducator
     public static async Task<Guid> RequireIdAsync(
         IAppDbContext db, Guid corporationId, Guid? userId, CancellationToken ct)
         => await FindIdAsync(db, corporationId, userId, ct)
-           ?? throw new ValidationException([new ValidationFailure(
-               "educator", "Bu işlem için oturumdaki kullanıcıya bağlı bir eğitmen kaydı gerekir.")]);
+           ?? throw new ValidationException([ValidationFailures.For("educator", MsgKeys.Rule.ActingEducatorRequired)]);
 
     /// <summary>Display names (first + last) for educator ids; unknown ids are absent.</summary>
     public static async Task<Dictionary<Guid, string>> LoadNamesAsync(

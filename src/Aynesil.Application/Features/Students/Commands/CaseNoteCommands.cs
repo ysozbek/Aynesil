@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -99,7 +100,7 @@ public sealed class UpdateCaseNoteCommandHandler
             ?? throw new KeyNotFoundException($"Case note {req.Id} not found.");
 
         if (note.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The case note was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         note.NoteType       = req.NoteType;
         note.Body           = req.Body;

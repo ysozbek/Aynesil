@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -52,16 +53,14 @@ public sealed class RecordAttendanceCommandHandler
             .AnyAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                         && e.Status == "enrolled", ct);
         if (!enrollmentExists)
-            throw new BusinessRuleViolationException(
-                $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, req.CampEnrollmentId);
 
         var existing = await _db.CampAttendances
             .FirstOrDefaultAsync(a => a.CorporationId == corporationId && a.CampEnrollmentId == req.CampEnrollmentId
                                    && a.AttendanceDate == req.AttendanceDate, ct);
 
         if (existing != null)
-            throw new BusinessRuleViolationException(
-                $"Attendance for {req.AttendanceDate:yyyy-MM-dd} is already recorded. Use the update endpoint.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AttendanceAlreadyRecorded, new Formatted(req.AttendanceDate, "yyyy-MM-dd"));
 
         var attendance = CampAttendance.Record(
             corporationId, req.CampEnrollmentId,

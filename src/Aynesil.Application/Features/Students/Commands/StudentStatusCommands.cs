@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using FluentValidation;
@@ -46,7 +47,7 @@ public sealed class ChangeStudentStatusCommandHandler
             ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
 
         if (student.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The student record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         var validStatus = await _db.RefValues.AnyAsync(
             r => r.Id == req.NewStatusId && r.RefType!.Code == "student_status", ct);

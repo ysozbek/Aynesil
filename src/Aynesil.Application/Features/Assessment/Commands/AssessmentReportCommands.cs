@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -48,8 +49,7 @@ public sealed class CreateAssessmentReportCommandHandler
                 $"Assessment session {req.AssessmentSessionId} not found.");
 
         if (session.Status != AssessmentSession.SessionStatuses.Completed)
-            throw new BusinessRuleViolationException(
-                "Reports can only be created for completed assessment sessions.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ReportNeedsCompletedSession);
 
         var report = AssessmentReport.Create(
             corporationId, req.AssessmentSessionId,
@@ -131,7 +131,7 @@ public sealed class FinalizeAssessmentReportCommandHandler
             ?? throw new KeyNotFoundException($"Assessment report {req.Id} not found.");
 
         if (_currentUser.UserId is null)
-            throw new BusinessRuleViolationException("Authenticated user required to finalize a report.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ReportFinalizeNeedsUser);
 
         report.Finalize(_currentUser.UserId.Value);
         await _db.SaveChangesAsync(ct);

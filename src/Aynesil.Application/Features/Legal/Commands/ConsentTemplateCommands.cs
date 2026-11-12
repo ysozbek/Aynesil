@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -58,8 +59,7 @@ public sealed class CreateConsentTemplateCommandHandler
                         && t.IsCurrent, ct);
 
         if (alreadyExists)
-            throw new BusinessRuleViolationException(
-                $"A current consent template with code '{req.Code}' already exists for this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "ConsentTemplate"), req.Code);
 
         var template = ConsentTemplate.Create(
             corporationId, req.Code, req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);
@@ -236,8 +236,7 @@ public sealed class DeleteConsentTemplateCommandHandler : IRequestHandler<Delete
             .AnyAsync(c => c.TemplateId == req.Id, ct);
 
         if (hasConsents)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a consent template that is referenced by student consent records.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentTemplateInUse);
 
         template.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

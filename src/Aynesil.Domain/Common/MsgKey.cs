@@ -19,3 +19,9 @@ public interface ILocalizableException
     MsgKey? Code { get; }
     IReadOnlyList<object?> Args { get; }
 }
+
+/// <summary>Mesaj parametresi: kod değerinin (durum, eylem, birim…) istek dilindeki etiketi (EnumLabels.resx).</summary>
+public sealed record EnumValue(string Group, string Code);
+
+/// <summary>Mesaj parametresi: sayı/tarih değeri, biçimlendirme anında istek kültürüyle (ör. "F2") yazılır.</summary>
+public sealed record Formatted(object? Value, string Format);

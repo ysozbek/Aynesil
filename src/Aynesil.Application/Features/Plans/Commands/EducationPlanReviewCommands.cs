@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -44,8 +45,7 @@ public sealed class AddPlanReviewCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is "draft" or "closed")
-            throw new BusinessRuleViolationException(
-                $"Cannot add a review to a plan with status '{plan.Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanAddReviewStatus, new EnumValue("Status", plan.Status));
 
         var review = EducationPlanReview.Create(
             plan.CorporationId, plan.Id,

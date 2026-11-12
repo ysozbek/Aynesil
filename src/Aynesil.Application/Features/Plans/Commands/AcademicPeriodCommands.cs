@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -115,8 +116,7 @@ public sealed class UpdateAcademicPeriodCommandHandler
             ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
 
         if (period.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The academic period was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         period.Update(req.Name, req.StartDate, req.EndDate, req.TermId);
         await _db.SaveChangesAsync(ct);
@@ -191,8 +191,7 @@ public sealed class DeleteAcademicPeriodCommandHandler : IRequestHandler<DeleteA
             p => p.AcademicPeriodId == req.Id, ct);
 
         if (hasPlan)
-            throw new BusinessRuleViolationException(
-                "Cannot delete an academic period that has education plans assigned to it.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AcademicPeriodInUse);
 
         _db.AcademicPeriods.Remove(period);
         await _db.SaveChangesAsync(ct);

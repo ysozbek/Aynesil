@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -64,8 +65,7 @@ public sealed class GrantConsentCommandHandler
                 ?? throw new KeyNotFoundException($"Consent template {req.TemplateId} not found.");
 
             if (!tpl.IsCurrent)
-                throw new BusinessRuleViolationException(
-                    "Consents may only be granted against the current version of a template.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentNeedsCurrentVersion);
 
             templateVersion          = tpl.Version;
             resolvedConsentTypeId ??= tpl.ConsentTypeId;

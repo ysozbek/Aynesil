@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -57,8 +58,7 @@ public sealed class ScheduleSchoolVisitCommandHandler
                             && p.InstitutionId == req.InstitutionId
                             && p.Status == "active", ct);
             if (!planExists)
-                throw new BusinessRuleViolationException(
-                    $"Consultancy plan {req.ConsultancyPlanId} not found or is not active for this institution.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ConsultancyPlanNotActive, req.ConsultancyPlanId);
         }
 
         var visit = SchoolVisit.Schedule(
@@ -186,15 +186,13 @@ public sealed class DeleteSchoolVisitCommandHandler : IRequestHandler<DeleteScho
             ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
 
         if (visit.Status != "planned")
-            throw new BusinessRuleViolationException(
-                "Only planned visits can be deleted. Use Cancel to archive the visit.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPlannedVisitDelete);
 
         var hasObservations = await _db.ObservationRecords
             .AnyAsync(o => o.SchoolVisitId == req.Id, ct);
 
         if (hasObservations)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a visit that has recorded observations.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.VisitHasObservations);
 
         _db.SchoolVisits.Remove(visit);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -82,7 +83,7 @@ public class LeaveRequest : TenantEntity
         string? reason)
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException("Only pending leave requests can be updated.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPendingLeaveUpdate);
 
         if (!ValidUnits.Contains(unit))
             throw new ArgumentException($"Invalid unit '{unit}'. Must be: day, hour.");
@@ -105,7 +106,7 @@ public class LeaveRequest : TenantEntity
     public void Approve()
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException($"Cannot approve a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveApproveStatus, new EnumValue("Status", Status));
 
         Status    = "approved";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -114,7 +115,7 @@ public class LeaveRequest : TenantEntity
     public void Reject()
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException($"Cannot reject a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveRejectStatus, new EnumValue("Status", Status));
 
         Status    = "rejected";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -123,7 +124,7 @@ public class LeaveRequest : TenantEntity
     public void Cancel()
     {
         if (Status != "pending" && Status != "approved")
-            throw new BusinessRuleViolationException($"Cannot cancel a leave request with status '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeaveCancelStatus, new EnumValue("Status", Status));
 
         Status    = "cancelled";
         UpdatedAt = DateTimeOffset.UtcNow;

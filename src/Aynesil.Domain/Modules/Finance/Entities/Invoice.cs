@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Finance.Events;
 
 namespace Aynesil.Domain.Modules.Finance.Entities;
@@ -63,7 +64,7 @@ public class Invoice : TenantEntity
     public void AssignNumber(string invoiceNo)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException("Cannot assign a number to a non-draft invoice.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceNumberNeedsDraft);
 
         InvoiceNo = invoiceNo;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -81,7 +82,7 @@ public class Invoice : TenantEntity
     public void Issue()
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException("Only draft invoices can be issued.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftInvoiceIssue);
 
         Status    = "issued";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -106,7 +107,7 @@ public class Invoice : TenantEntity
     public void MarkOverdue()
     {
         if (Status is not ("issued" or "partial"))
-            throw new BusinessRuleViolationException("Only issued or partial invoices can become overdue.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyIssuedBecomeOverdue);
 
         Status    = "overdue";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -115,11 +116,10 @@ public class Invoice : TenantEntity
     public void Void()
     {
         if (Status == "void")
-            throw new BusinessRuleViolationException("Invoice is already void.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceAlreadyVoid);
 
         if (Status == "paid")
-            throw new BusinessRuleViolationException(
-                "Paid invoices cannot be voided directly. Process a refund first.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PaidInvoiceNoVoid);
 
         Status    = "void";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -130,9 +130,9 @@ public class Invoice : TenantEntity
     private void EnsureModifiable(string target)
     {
         if (Status == "void")
-            throw new BusinessRuleViolationException("Cannot transition a void invoice.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceTransitionVoid);
 
         if (Status == "paid" && target != "paid")
-            throw new BusinessRuleViolationException("Cannot re-transition a fully paid invoice.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceFullyPaid);
     }
 }

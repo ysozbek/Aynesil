@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using FluentValidation;
@@ -64,8 +66,7 @@ public sealed class SuspendUserCommandHandler : IRequestHandler<SuspendUserComma
             ?? throw new NotFoundException("User", req.UserId);
 
         if (_currentUser.UserId == req.UserId)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.UserId), "You cannot suspend your own account.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.UserId), MsgKeys.Rule.CannotSuspendSelf)]);
 
         user.Suspend(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

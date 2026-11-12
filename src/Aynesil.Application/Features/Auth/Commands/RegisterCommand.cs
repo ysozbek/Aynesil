@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using System.Security.Cryptography;
@@ -87,8 +88,7 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Us
 
         // Global check: usernames are unique across all corporations (login has no tenant)
         if (await _db.UsernameExistsAsync(usernameLower, ct))
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.Username), $"Username '{usernameLower}' is already taken.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.Username), MsgKeys.Rule.UsernameTaken, usernameLower)]);
 
         if (req.Email is not null)
         {
@@ -96,8 +96,7 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Us
             var emailTaken = await _db.UserAccounts.AnyAsync(
                 u => u.CorporationId == corporationId && u.Email == emailLower, ct);
             if (emailTaken)
-                throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                    nameof(req.Email), $"Email '{emailLower}' is already registered.")]);
+                throw new ValidationException([ValidationFailures.For(nameof(req.Email), MsgKeys.Rule.EmailRegistered, emailLower)]);
         }
 
         var passwordHash = req.Password is not null ? _passwords.Hash(req.Password) : null;

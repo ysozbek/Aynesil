@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Media.Entities;
 using FluentValidation;
@@ -47,8 +48,7 @@ public sealed class RegisterCameraCommandHandler : IRequestHandler<RegisterCamer
             .AnyAsync(c => c.CorporationId == corporationId && c.Code == req.Code, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"A camera with code '{req.Code}' already exists in this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Camera"), req.Code);
 
         var camera = Camera.Register(
             corporationId, req.Code, req.Name,

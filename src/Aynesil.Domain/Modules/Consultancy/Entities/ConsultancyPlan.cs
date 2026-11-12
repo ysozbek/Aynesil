@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -106,8 +107,7 @@ public class ConsultancyPlan : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException(
-                $"Only a draft plan can be activated. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanActivateNeedsDraft, new EnumValue("Status", Status));
 
         var prev = Status;
         Status    = "active";
@@ -121,8 +121,7 @@ public class ConsultancyPlan : TenantEntity
     public void Complete(Guid? updatedBy = null)
     {
         if (Status != "active")
-            throw new BusinessRuleViolationException(
-                $"Only an active plan can be completed. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanCompleteNeedsActive, new EnumValue("Status", Status));
 
         var prev = Status;
         Status    = "completed";
@@ -136,8 +135,7 @@ public class ConsultancyPlan : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is "completed" or "cancelled")
-            throw new BusinessRuleViolationException(
-                $"A '{Status}' plan cannot be cancelled.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanCancelStatus, new EnumValue("Status", Status));
 
         var prev = Status;
         Status    = "cancelled";
@@ -153,7 +151,6 @@ public class ConsultancyPlan : TenantEntity
     private void EnsureEditable()
     {
         if (Status is "completed" or "cancelled")
-            throw new BusinessRuleViolationException(
-                $"A '{Status}' consultancy plan cannot be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ConsultancyPlanModifyStatus, new EnumValue("Status", Status));
     }
 }

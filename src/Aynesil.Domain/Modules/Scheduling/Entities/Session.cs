@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Scheduling.Events;
 
 namespace Aynesil.Domain.Modules.Scheduling.Entities;
@@ -161,20 +162,19 @@ public class Session : TenantEntity
     private void EnsureNotTerminal()
     {
         if (TerminalStatuses.Contains(Status))
-            throw new BusinessRuleViolationException(
-                $"Session is in terminal status '{Status}' and cannot be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionTerminalStatus, new EnumValue("Status", Status));
     }
 
     private void EnsureTransitionAllowed(string target)
     {
         // cancelled and no_show sessions cannot transition further
         if (Status == "cancelled")
-            throw new BusinessRuleViolationException("Cannot transition a cancelled session.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionTransitionCancelled);
 
         if (Status == "no_show")
-            throw new BusinessRuleViolationException("Cannot transition a no-show session.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionTransitionNoShow);
 
         if (Status == "completed" && target != "completed")
-            throw new BusinessRuleViolationException("Completed sessions cannot change status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionCompletedLocked);
     }
 }

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -76,7 +77,7 @@ public sealed class SetMenuItemTranslationsCommandHandler
             ?? throw new NotFoundException("MenuItem", req.MenuItemId);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
 
         // Remove all existing translations and replace with the incoming set
         _db.MenuItemTranslations.RemoveRange(item.Translations);

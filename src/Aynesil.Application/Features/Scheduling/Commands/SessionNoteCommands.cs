@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
@@ -93,7 +94,7 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
             ?? throw new KeyNotFoundException($"SessionNote {req.Id} not found.");
 
         if (note.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("Note was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         note.Edit(req.Body, req.ParentVisible);
         await _db.SaveChangesAsync(ct);

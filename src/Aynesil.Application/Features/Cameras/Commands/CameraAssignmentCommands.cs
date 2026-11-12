@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Media.Entities;
 using FluentValidation;
@@ -49,7 +50,7 @@ public sealed class AssignCameraToRoomCommandHandler : IRequestHandler<AssignCam
         var duplicate = await _db.RoomCameras
             .AnyAsync(rc => rc.RoomId == req.RoomId && rc.CameraId == req.CameraId, ct);
         if (duplicate)
-            throw new BusinessRuleViolationException("Camera is already assigned to this room.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CameraAlreadyInRoom);
 
         var assignment = RoomCamera.Assign(corporationId, req.RoomId, req.CameraId);
         _db.RoomCameras.Add(assignment);
@@ -132,7 +133,7 @@ public sealed class AssignCameraToSessionCommandHandler : IRequestHandler<Assign
         var duplicate = await _db.SessionCameras
             .AnyAsync(sc => sc.SessionId == req.SessionId && sc.CameraId == req.CameraId, ct);
         if (duplicate)
-            throw new BusinessRuleViolationException("Camera is already assigned to this session.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CameraAlreadyInSession);
 
         var assignment = SessionCamera.Assign(corporationId, req.SessionId, req.CameraId);
         _db.SessionCameras.Add(assignment);

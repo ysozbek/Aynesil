@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -147,8 +148,7 @@ public sealed class UpdateScholarshipCommandHandler
             ?? throw new KeyNotFoundException($"Scholarship {req.Id} not found.");
 
         if (scholarship.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Scholarship was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         scholarship.Update(
             req.ScholarshipTypeId,

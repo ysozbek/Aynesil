@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -99,8 +100,7 @@ public sealed class ChangeEnrollmentStatusCommandHandler
             ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Enrollment was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         var valid = await _db.RefValues.AnyAsync(
             r => r.Id == req.NewStatusId && r.RefType!.Code == "enrollment_status", ct);
@@ -139,8 +139,7 @@ public sealed class EndEnrollmentCommandHandler : IRequestHandler<EndEnrollmentC
             ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
 
         if (enrollment.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Enrollment was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         enrollment.End(
             req.EndedOn ?? DateOnly.FromDateTime(DateTime.UtcNow),

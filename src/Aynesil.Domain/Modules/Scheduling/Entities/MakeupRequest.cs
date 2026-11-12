@@ -83,7 +83,7 @@ public class MakeupRequest : BaseEntity
     public void Reject(string? note = null)
     {
         if (Status is "completed" or "rejected")
-            throw new BusinessRuleViolationException($"Cannot reject a makeup request in '{Status}' status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MakeupRejectStatus, new EnumValue("Status", Status));
 
         Status    = "rejected";
         Note      = note ?? Note;
@@ -114,7 +114,7 @@ public class MakeupRequest : BaseEntity
     public void Expire()
     {
         if (Status is "completed" or "rejected" or "expired")
-            throw new BusinessRuleViolationException($"Cannot expire makeup request in '{Status}' status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MakeupExpireStatus, new EnumValue("Status", Status));
 
         Status    = "expired";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -125,7 +125,6 @@ public class MakeupRequest : BaseEntity
     private void EnsureStatus(string expected)
     {
         if (Status != expected)
-            throw new BusinessRuleViolationException(
-                $"Makeup request must be in '{expected}' status for this operation. Current: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MakeupWrongStatus, new EnumValue("Status", expected), new EnumValue("Status", Status));
     }
 }

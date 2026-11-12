@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -59,8 +60,7 @@ public sealed class EnrollStudentCommandHandler
                         && e.StudentId == req.StudentId
                         && e.Status != "withdrawn", ct);
         if (alreadyEnrolled)
-            throw new BusinessRuleViolationException(
-                "Student is already enrolled or waitlisted in this camp period.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyInCampPeriod);
 
         if (req.Status == "enrolled")
         {
@@ -75,8 +75,7 @@ public sealed class EnrollStudentCommandHandler
                     .CountAsync(e => e.CampPeriodId == req.CampPeriodId
                                   && e.Status == "enrolled", ct);
                 if (activeCount >= capacity.Value)
-                    throw new BusinessRuleViolationException(
-                        "Camp period is at full capacity. Use 'waitlist' status.");
+                    throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodFullUseWaitlist);
             }
         }
 
@@ -139,8 +138,7 @@ public sealed class PromoteFromWaitlistCommandHandler : IRequestHandler<PromoteF
                 .CountAsync(e => e.CampPeriodId == enrollment.CampPeriodId
                               && e.Status == "enrolled", ct);
             if (activeCount >= enrollment.Period.Capacity.Value)
-                throw new BusinessRuleViolationException(
-                    "Camp period is still at full capacity.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodStillFull);
         }
 
         enrollment.Enroll();

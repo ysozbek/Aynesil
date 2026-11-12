@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -87,8 +88,7 @@ public sealed class GetPortalStudentSummaryQueryHandler
                 access.CanViewReports, access.CanViewPlan,
                 access.CanViewFinance, access.CanViewCamera)
         ).FirstOrDefaultAsync(ct)
-         ?? throw new ForbiddenAccessException(
-             $"Guardian does not have active portal access to student {req.StudentId}.");
+         ?? throw new ForbiddenAccessException(MsgKeys.Rule.GuardianNoPortalAccess, req.StudentId);
 
         return dto;
     }

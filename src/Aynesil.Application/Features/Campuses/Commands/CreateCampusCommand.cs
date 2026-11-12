@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -76,8 +77,7 @@ public sealed class CreateCampusCommandHandler : IRequestHandler<CreateCampusCom
             .IgnoreQueryFilters()
             .AnyAsync(c => c.CorporationId == corporationId && c.Code == codeNormalized, ct);
         if (codeExists)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                "Code", $"Campus code '{codeNormalized}' already exists in this corporation.")]);
+            throw new ValidationException([ValidationFailures.For("Code", MsgKeys.Rule.CampusCodeExists, codeNormalized)]);
 
         var campus = Campus.Create(
             corporationId,

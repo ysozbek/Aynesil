@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Permissions.Dtos;
@@ -42,7 +43,7 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
 
         // Tenants may only modify their own roles, not system-level templates
         if (role.CorporationId.HasValue && role.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this role.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "Role"));
 
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
             ?? throw new NotFoundException("Permission", req.PermissionId);

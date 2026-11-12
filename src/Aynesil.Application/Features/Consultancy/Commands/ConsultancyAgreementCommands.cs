@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -58,7 +59,7 @@ public sealed class CreateConsultancyAgreementCommandHandler
             ?? throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
 
         if (plan.Status is "cancelled")
-            throw new BusinessRuleViolationException("Cannot create an agreement for a cancelled plan.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementForCancelledPlan);
 
         var agreement = ConsultancyAgreement.Create(
             corporationId, req.ConsultancyPlanId, plan.InstitutionId,
@@ -294,8 +295,7 @@ public sealed class DeleteConsultancyAgreementCommandHandler
             ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
 
         if (agreement.IsSigned)
-            throw new BusinessRuleViolationException(
-                "A signed or expired agreement cannot be deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementSignedNoDelete);
 
         agreement.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

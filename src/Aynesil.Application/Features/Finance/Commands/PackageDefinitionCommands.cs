@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -54,8 +55,7 @@ public sealed class CreatePackageDefinitionCommandHandler
             p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"Package definition with code '{req.Code}' already exists for this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "PackageDefinition"), req.Code);
 
         var definition = PackageDefinition.Create(
             corporationId, req.Code, req.Name, req.ListPrice,
@@ -119,8 +119,7 @@ public sealed class UpdatePackageDefinitionCommandHandler
             ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
 
         if (definition.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Package definition was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         definition.UpdateDetails(
             req.Code, req.Name, req.ListPrice,
@@ -210,8 +209,7 @@ public sealed class DeletePackageDefinitionCommandHandler
             .AnyAsync(sp => sp.PackageDefinitionId == req.Id && sp.Status == "active", ct);
 
         if (hasActivePurchases)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a package definition with active student packages.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PackageDefinitionInUse);
 
         definition.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

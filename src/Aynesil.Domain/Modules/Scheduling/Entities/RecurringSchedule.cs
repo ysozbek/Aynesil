@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Scheduling.Events;
 
 namespace Aynesil.Domain.Modules.Scheduling.Entities;
@@ -114,7 +115,7 @@ public class RecurringSchedule : TenantEntity
     public void AssignEducator(Guid educatorId, string role = "lead")
     {
         if (Educators.Any(e => e.EducatorId == educatorId))
-            throw new BusinessRuleViolationException("Educator is already assigned to this recurring schedule.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EducatorAlreadyOnSchedule);
 
         Educators.Add(RecurringScheduleEducator.Assign(CorporationId, Id, educatorId, role));
     }

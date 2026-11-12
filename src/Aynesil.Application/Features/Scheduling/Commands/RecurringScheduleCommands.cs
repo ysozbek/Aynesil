@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -127,8 +128,7 @@ public sealed class CreateRecurringScheduleCommandHandler
             ?? throw new KeyNotFoundException($"StudentProgram {studentProgramId} not found.");
 
         if (studentProgramProgramId != serviceProgramId)
-            throw new BusinessRuleViolationException(
-                "The selected service does not belong to the student's program.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ServiceNotInProgram);
     }
 
     internal static RecurringScheduleDto ToDto(RecurringSchedule s)
@@ -209,8 +209,7 @@ public sealed class AddRecurrenceExceptionCommandHandler
             e => e.RecurringScheduleId == req.RecurringScheduleId
               && e.ExceptionDate == req.ExceptionDate, ct);
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"An exception already exists for {req.ExceptionDate} on this schedule.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ExceptionExistsForDate, req.ExceptionDate);
 
         var exception = RecurrenceException.Create(
             schedule.CorporationId, req.RecurringScheduleId,
@@ -269,7 +268,7 @@ public sealed class BulkGenerateSessionsCommandHandler
             ?? throw new KeyNotFoundException($"RecurringSchedule {req.RecurringScheduleId} not found.");
 
         if (!schedule.IsActive)
-            throw new BusinessRuleViolationException("Cannot generate sessions for an inactive recurring schedule.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RecurringScheduleInactive);
 
         Guid? participantStudentId = null;
         if (schedule.StudentProgramId.HasValue)
@@ -282,8 +281,7 @@ public sealed class BulkGenerateSessionsCommandHandler
                 ?? throw new KeyNotFoundException($"StudentProgram {schedule.StudentProgramId} not found.");
 
             if (studentProgram.Status != "active")
-                throw new BusinessRuleViolationException(
-                    "Cannot generate sessions: the student's program is not active.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.StudentProgramInactive);
 
             participantStudentId = studentProgram.StudentId;
         }

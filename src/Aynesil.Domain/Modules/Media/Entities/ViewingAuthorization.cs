@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Media.Entities;
 
 /// <summary>
@@ -80,7 +81,7 @@ public class ViewingAuthorization : TenantEntity
     public void Revoke()
     {
         if (IsRevoked)
-            throw new BusinessRuleViolationException("Viewing authorization is already revoked.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ViewingAuthAlreadyRevoked);
 
         IsRevoked = true;
     }

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using System.Net;
 
 namespace Aynesil.Domain.Modules.Media.Entities;
@@ -55,7 +56,7 @@ public class ViewingLog
     public void End(DateTimeOffset endedAt)
     {
         if (EndedAt.HasValue)
-            throw new BusinessRuleViolationException("Viewing session has already been ended.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ViewingSessionEnded);
 
         if (endedAt <= StartedAt)
             throw new ArgumentException("EndedAt must be after StartedAt.");

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
@@ -51,8 +53,7 @@ public sealed class ConvertLeadToStudentCommandHandler : IRequestHandler<Convert
             ?? throw new NotFoundException("Lead", req.LeadId);
 
         if (lead.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The lead was modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         lead.ConvertToStudent(req.StudentId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);

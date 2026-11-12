@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -240,15 +241,13 @@ public sealed class DeleteConsultancyPlanCommandHandler
             ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
 
         if (plan.Status != "draft")
-            throw new BusinessRuleViolationException(
-                "Only draft plans can be deleted. Use Cancel to archive active plans.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftPlanDeleteCancel);
 
         var hasVisits = await _db.SchoolVisits
             .AnyAsync(v => v.ConsultancyPlanId == req.Id, ct);
 
         if (hasVisits)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a plan that already has associated visits.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanHasVisits);
 
         _db.ConsultancyPlans.Remove(plan);
         await _db.SaveChangesAsync(ct);

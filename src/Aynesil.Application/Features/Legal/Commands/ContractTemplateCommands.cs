@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -57,8 +58,7 @@ public sealed class CreateContractTemplateCommandHandler
                         && t.IsCurrent, ct);
 
         if (alreadyExists)
-            throw new BusinessRuleViolationException(
-                $"A current contract template with code '{req.Code}' already exists for this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "ContractTemplate"), req.Code);
 
         var template = ContractTemplate.Create(
             corporationId, req.Code, req.ContractTypeId, req.EffectiveFrom);
@@ -237,8 +237,7 @@ public sealed class DeleteContractTemplateCommandHandler : IRequestHandler<Delet
             .AnyAsync(c => c.TemplateId == req.Id, ct);
 
         if (hasContracts)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a contract template that is referenced by student contracts.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractTemplateInUse);
 
         template.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

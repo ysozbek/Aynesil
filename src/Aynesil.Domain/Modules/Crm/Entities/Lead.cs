@@ -168,7 +168,7 @@ public class Lead : TenantBranchEntity
     public void ConvertToStudent(Guid studentId, Guid? convertedBy = null)
     {
         if (ConvertedStudentId.HasValue)
-            throw new BusinessRuleViolationException("Lead is already converted to a student.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeadAlreadyConverted);
 
         ConvertedStudentId = studentId;
         ConvertedAt = DateTimeOffset.UtcNow;

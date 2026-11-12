@@ -39,6 +39,207 @@
   <data name="Error.Unauthorized" xml:space="preserve"><value>You need to sign in.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>An unexpected error occurred. Please try again.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Validation failed.</value></data>
+  <data name="Rule.AcademicPeriodInUse" xml:space="preserve"><value>Cannot delete an academic period that has education plans assigned to it.</value></data>
+  <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>This action requires an educator record linked to the signed-in user.</value></data>
+  <data name="Rule.ActivityActionStatus" xml:space="preserve"><value>Cannot {0} an activity in '{1}' status.</value></data>
+  <data name="Rule.ActivityAlreadyActive" xml:space="preserve"><value>Activity is already active.</value></data>
+  <data name="Rule.ActivityAlreadyInactive" xml:space="preserve"><value>Activity is already inactive.</value></data>
+  <data name="Rule.ActivityFull" xml:space="preserve"><value>Activity is at full capacity.</value></data>
+  <data name="Rule.ActivityStartNeedsPending" xml:space="preserve"><value>Only pending activities can be started. Current status: '{0}'.</value></data>
+  <data name="Rule.AdjustmentNegativeBalance" xml:space="preserve"><value>Adjustment would result in a negative balance ({0}).</value></data>
+  <data name="Rule.AgreementActionStatus" xml:space="preserve"><value>Cannot {0} an agreement in '{1}' status. Only draft agreements can be modified.</value></data>
+  <data name="Rule.AgreementCancelStatus" xml:space="preserve"><value>A '{0}' agreement cannot be cancelled.</value></data>
+  <data name="Rule.AgreementExpireNeedsSigned" xml:space="preserve"><value>Only a signed agreement can be expired. Current status: '{0}'.</value></data>
+  <data name="Rule.AgreementForCancelledPlan" xml:space="preserve"><value>Cannot create an agreement for a cancelled plan.</value></data>
+  <data name="Rule.AgreementSignNeedsSent" xml:space="preserve"><value>Only a sent agreement can be signed. Current status: '{0}'.</value></data>
+  <data name="Rule.AgreementSignedNoDelete" xml:space="preserve"><value>A signed or expired agreement cannot be deleted.</value></data>
+  <data name="Rule.AssignmentAlreadyEnded" xml:space="preserve"><value>Assignment is already ended.</value></data>
+  <data name="Rule.AssignmentNotFoundAfterSave" xml:space="preserve"><value>Assignment not found after save.</value></data>
+  <data name="Rule.AttendanceAlreadyRecorded" xml:space="preserve"><value>Attendance for {0} is already recorded. Use update instead.</value></data>
+  <data name="Rule.CameraAlreadyInRoom" xml:space="preserve"><value>Camera is already assigned to this room.</value></data>
+  <data name="Rule.CameraAlreadyInSession" xml:space="preserve"><value>Camera is already assigned to this session.</value></data>
+  <data name="Rule.CameraConsentRequired" xml:space="preserve"><value>A valid camera viewing consent (KVKK) is required before granting viewing authorization.</value></data>
+  <data name="Rule.CameraConsentWithdrawn" xml:space="preserve"><value>Camera viewing consent has been withdrawn. Access denied.</value></data>
+  <data name="Rule.CampAlreadyActive" xml:space="preserve"><value>Camp is already active.</value></data>
+  <data name="Rule.CampAlreadyInactive" xml:space="preserve"><value>Camp is already inactive.</value></data>
+  <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Cannot delete a camp with active enrollments.</value></data>
+  <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Camp period is at full capacity. Use 'waitlist' status.</value></data>
+  <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Cannot delete a camp period that has enrollments.</value></data>
+  <data name="Rule.CampPeriodStillFull" xml:space="preserve"><value>Camp period is still at full capacity.</value></data>
+  <data name="Rule.CampusCodeExists" xml:space="preserve"><value>Campus code '{0}' already exists in this corporation.</value></data>
+  <data name="Rule.CannotDeleteSelf" xml:space="preserve"><value>You cannot delete your own account.</value></data>
+  <data name="Rule.CannotSuspendSelf" xml:space="preserve"><value>You cannot suspend your own account.</value></data>
+  <data name="Rule.ClosedCorporationNoReactivate" xml:space="preserve"><value>A closed corporation cannot be reactivated.</value></data>
+  <data name="Rule.ClosedCorporationNoSuspend" xml:space="preserve"><value>A closed corporation cannot be suspended.</value></data>
+  <data name="Rule.CodeAlreadyExists" xml:space="preserve"><value>A {0} with code '{1}' already exists.</value></data>
+  <data name="Rule.ConsentNeedsCurrentVersion" xml:space="preserve"><value>Consents may only be granted against the current version of a template.</value></data>
+  <data name="Rule.ConsentTemplateArchived" xml:space="preserve"><value>Consent template '{0}' v{1} is archived and cannot be modified.</value></data>
+  <data name="Rule.ConsentTemplateDeleted" xml:space="preserve"><value>Consent template '{0}' v{1} has been deleted.</value></data>
+  <data name="Rule.ConsentTemplateInUse" xml:space="preserve"><value>Cannot delete a consent template that is referenced by student consent records.</value></data>
+  <data name="Rule.ConsentWithdrawNeedsGranted" xml:space="preserve"><value>Only a granted consent can be withdrawn. Current status: '{0}'.</value></data>
+  <data name="Rule.ConsultancyPlanModifyStatus" xml:space="preserve"><value>A '{0}' consultancy plan cannot be modified.</value></data>
+  <data name="Rule.ConsultancyPlanNotActive" xml:space="preserve"><value>Consultancy plan {0} not found or is not active for this institution.</value></data>
+  <data name="Rule.ContractActivateNeedsSigned" xml:space="preserve"><value>Only signed contracts can be activated. Current status: '{0}'.</value></data>
+  <data name="Rule.ContractExpireNeedsActive" xml:space="preserve"><value>Only active contracts can be expired. Current status: '{0}'.</value></data>
+  <data name="Rule.ContractModifyStatus" xml:space="preserve"><value>A '{0}' contract cannot be modified.</value></data>
+  <data name="Rule.ContractNeedsCurrentVersion" xml:space="preserve"><value>Contracts may only be generated from the current version of a template.</value></data>
+  <data name="Rule.ContractSendNeedsDraft" xml:space="preserve"><value>Only draft contracts can be sent. Current status: '{0}'.</value></data>
+  <data name="Rule.ContractSignNeedsSent" xml:space="preserve"><value>Only sent contracts can be signed. Current status: '{0}'.</value></data>
+  <data name="Rule.ContractTemplateArchived" xml:space="preserve"><value>Contract template '{0}' v{1} is archived and cannot be modified.</value></data>
+  <data name="Rule.ContractTemplateDeleted" xml:space="preserve"><value>Contract template '{0}' v{1} has been deleted.</value></data>
+  <data name="Rule.ContractTemplateInUse" xml:space="preserve"><value>Cannot delete a contract template that is referenced by student contracts.</value></data>
+  <data name="Rule.ContractTerminateStatus" xml:space="preserve"><value>A '{0}' contract cannot be terminated.</value></data>
+  <data name="Rule.CorporationCodeTaken" xml:space="preserve"><value>Corporation code '{0}' is already taken.</value></data>
+  <data name="Rule.CurrentPasswordIncorrect" xml:space="preserve"><value>The current password is incorrect.</value></data>
+  <data name="Rule.DiscountNeedsDraftInvoice" xml:space="preserve"><value>Discounts can only be applied to draft invoices.</value></data>
+  <data name="Rule.EducatorAlreadyAtScope" xml:space="preserve"><value>Educator is already assigned at this scope.</value></data>
+  <data name="Rule.EducatorAlreadyInSession" xml:space="preserve"><value>Educator is already assigned to this session.</value></data>
+  <data name="Rule.EducatorAlreadyOnCampus" xml:space="preserve"><value>Educator is already actively assigned to this campus.</value></data>
+  <data name="Rule.EducatorAlreadyOnSchedule" xml:space="preserve"><value>Educator is already assigned to this recurring schedule.</value></data>
+  <data name="Rule.EducatorBookedOverlap" xml:space="preserve"><value>Educator {0} is already booked in an overlapping session.</value></data>
+  <data name="Rule.EducatorBookedSlot" xml:space="preserve"><value>Educator {0} is already booked for the requested time slot.</value></data>
+  <data name="Rule.EmailRegistered" xml:space="preserve"><value>Email '{0}' is already registered.</value></data>
+  <data name="Rule.EnrollmentActivityPeriodMismatch" xml:space="preserve"><value>Enrollment and activity must belong to the same camp period.</value></data>
+  <data name="Rule.EnrollmentAlreadyClosed" xml:space="preserve"><value>This enrollment has already been closed.</value></data>
+  <data name="Rule.EnrollmentChangeStatus" xml:space="preserve"><value>Cannot change a '{0}' enrollment.</value></data>
+  <data name="Rule.EnrollmentNotActive" xml:space="preserve"><value>Enrollment {0} not found or student is not actively enrolled.</value></data>
+  <data name="Rule.EvidenceNeedsGrantedConsent" xml:space="preserve"><value>Evidence can only be attached to a granted consent.</value></data>
+  <data name="Rule.ExceptionExistsForDate" xml:space="preserve"><value>An exception already exists for {0} on this schedule.</value></data>
+  <data name="Rule.FollowUpDeleteCompleted" xml:space="preserve"><value>Cannot delete a completed follow-up activity.</value></data>
+  <data name="Rule.FollowUpReopenCancelled" xml:space="preserve"><value>Cannot reopen a cancelled follow-up.</value></data>
+  <data name="Rule.FollowUpReopenCompleted" xml:space="preserve"><value>Cannot reopen a completed follow-up.</value></data>
+  <data name="Rule.FollowUpUpdateClosed" xml:space="preserve"><value>Cannot update a closed follow-up.</value></data>
+  <data name="Rule.GoalAlreadyLinked" xml:space="preserve"><value>Goal {0} is already linked to this plan.</value></data>
+  <data name="Rule.GrantReasonRequired" xml:space="preserve"><value>Reason is required for grant_type '{0}'.</value></data>
+  <data name="Rule.GuardianAlreadyLinked" xml:space="preserve"><value>This guardian is already linked to the student.</value></data>
+  <data name="Rule.GuardianNoActiveAccess" xml:space="preserve"><value>The signed-in guardian has no active access to this student.</value></data>
+  <data name="Rule.GuardianNoCameraAccess" xml:space="preserve"><value>Guardian does not have camera viewing access enabled in the portal for this student.</value></data>
+  <data name="Rule.GuardianNoPortalAccess" xml:space="preserve"><value>Guardian does not have active portal access to student {0}.</value></data>
+  <data name="Rule.GuardianOwnBehalfOnly" xml:space="preserve"><value>Guardians can only act on their own behalf.</value></data>
+  <data name="Rule.GuardianStudentCorpMismatch" xml:space="preserve"><value>Guardian and student must belong to the same corporation.</value></data>
+  <data name="Rule.GuardianVisibilityNeedsApprovedPlan" xml:space="preserve"><value>Guardian visibility can only be enabled for approved or active plans.</value></data>
+  <data name="Rule.InstitutionHasActivePlans" xml:space="preserve"><value>Cannot delete an institution with active consultancy plans.</value></data>
+  <data name="Rule.InsufficientCredits" xml:space="preserve"><value>Insufficient credits. Package has {0} credits remaining; {1} requested.</value></data>
+  <data name="Rule.InsufficientLeaveAvailable" xml:space="preserve"><value>Insufficient leave balance. Available: {0} {1}, Requested: {2} {3}.</value></data>
+  <data name="Rule.InsufficientLeaveDetail" xml:space="preserve"><value>Insufficient leave balance. Entitled: {0} {1}, Used: {2} {1}, Requested: {3} {1}.</value></data>
+  <data name="Rule.InterviewCancelCompleted" xml:space="preserve"><value>Cannot cancel a completed interview.</value></data>
+  <data name="Rule.InterviewCompleteCancelled" xml:space="preserve"><value>Cannot complete a cancelled interview.</value></data>
+  <data name="Rule.InterviewNoShowStatus" xml:space="preserve"><value>Cannot mark as no-show when interview status is '{0}'.</value></data>
+  <data name="Rule.InterviewRescheduleStatus" xml:space="preserve"><value>Cannot reschedule an interview with status '{0}'.</value></data>
+  <data name="Rule.InvalidCareTeamRole" xml:space="preserve"><value>{0} is not a valid care-team role.</value></data>
+  <data name="Rule.InvalidGrantType" xml:space="preserve"><value>{0} is not a valid care-team grant type.</value></data>
+  <data name="Rule.InvoiceAlreadyVoid" xml:space="preserve"><value>Invoice is already void.</value></data>
+  <data name="Rule.InvoiceFullyPaid" xml:space="preserve"><value>Cannot re-transition a fully paid invoice.</value></data>
+  <data name="Rule.InvoiceLinesAddNeedsDraft" xml:space="preserve"><value>Lines can only be added to draft invoices.</value></data>
+  <data name="Rule.InvoiceLinesRemoveNeedsDraft" xml:space="preserve"><value>Lines can only be removed from draft invoices.</value></data>
+  <data name="Rule.InvoiceNoLines" xml:space="preserve"><value>Cannot issue an invoice with no lines.</value></data>
+  <data name="Rule.InvoiceNumberNeedsDraft" xml:space="preserve"><value>Cannot assign a number to a non-draft invoice.</value></data>
+  <data name="Rule.InvoiceTransitionVoid" xml:space="preserve"><value>Cannot transition a void invoice.</value></data>
+  <data name="Rule.KpiAlreadyActive" xml:space="preserve"><value>KPI definition is already active.</value></data>
+  <data name="Rule.KpiAlreadyInactive" xml:space="preserve"><value>KPI definition is already inactive.</value></data>
+  <data name="Rule.LeadAlreadyConverted" xml:space="preserve"><value>Lead is already converted to a student.</value></data>
+  <data name="Rule.LeadConvertedNoDelete" xml:space="preserve"><value>Cannot delete a lead that has been converted to a student.</value></data>
+  <data name="Rule.LeaveApproveStatus" xml:space="preserve"><value>Cannot approve a leave request with status '{0}'.</value></data>
+  <data name="Rule.LeaveBalanceExists" xml:space="preserve"><value>A leave balance for educator {0}, leave type {1}, year {2} already exists.</value></data>
+  <data name="Rule.LeaveCancelStatus" xml:space="preserve"><value>Cannot cancel a leave request with status '{0}'.</value></data>
+  <data name="Rule.LeaveOverlap" xml:space="preserve"><value>A pending or approved leave request already exists for the same educator during this period.</value></data>
+  <data name="Rule.LeaveRejectStatus" xml:space="preserve"><value>Cannot reject a leave request with status '{0}'.</value></data>
+  <data name="Rule.MakeupExpireStatus" xml:space="preserve"><value>Cannot expire makeup request in '{0}' status.</value></data>
+  <data name="Rule.MakeupRejectStatus" xml:space="preserve"><value>Cannot reject a makeup request in '{0}' status.</value></data>
+  <data name="Rule.MakeupWrongStatus" xml:space="preserve"><value>Makeup request must be in '{0}' status for this operation. Current: '{1}'.</value></data>
+  <data name="Rule.MeetingAlreadyCancelled" xml:space="preserve"><value>Meeting is already cancelled.</value></data>
+  <data name="Rule.MeetingAlreadyCompleted" xml:space="preserve"><value>Meeting is already completed.</value></data>
+  <data name="Rule.MeetingCancelCompleted" xml:space="preserve"><value>Cannot cancel a completed meeting.</value></data>
+  <data name="Rule.MeetingCompleteCancelled" xml:space="preserve"><value>Cannot complete a cancelled meeting.</value></data>
+  <data name="Rule.MeetingUpdateCancelled" xml:space="preserve"><value>Cannot update a cancelled meeting.</value></data>
+  <data name="Rule.MenuItemCodeExists" xml:space="preserve"><value>Menu item code '{0}' already exists in this organization.</value></data>
+  <data name="Rule.MenuItemHasChildren" xml:space="preserve"><value>Cannot delete a menu item that has children. Remove or re-parent the children first.</value></data>
+  <data name="Rule.MenuItemOwnParent" xml:space="preserve"><value>A menu item cannot be its own parent.</value></data>
+  <data name="Rule.NoAccessToEntity" xml:space="preserve"><value>You do not have access to this {0}.</value></data>
+  <data name="Rule.NotificationBodyUnresolved" xml:space="preserve"><value>The notification body could not be resolved from the template or the body override.</value></data>
+  <data name="Rule.OnlyCapturedCanRefund" xml:space="preserve"><value>Only captured payments can be marked as refunded.</value></data>
+  <data name="Rule.OnlyDraftContractDelete" xml:space="preserve"><value>Only draft contracts can be deleted. Use terminate for active contracts.</value></data>
+  <data name="Rule.OnlyDraftInvoiceIssue" xml:space="preserve"><value>Only draft invoices can be issued.</value></data>
+  <data name="Rule.OnlyDraftPlanDeleteCancel" xml:space="preserve"><value>Only draft plans can be deleted. Use cancel to archive active plans.</value></data>
+  <data name="Rule.OnlyDraftPlanDeleteClose" xml:space="preserve"><value>Only draft plans can be deleted. Use close to end an active plan.</value></data>
+  <data name="Rule.OnlyEnrolledCanComplete" xml:space="preserve"><value>Only active enrolled students can be marked as completed.</value></data>
+  <data name="Rule.OnlyIssuedBecomeOverdue" xml:space="preserve"><value>Only issued or partial invoices can become overdue.</value></data>
+  <data name="Rule.OnlyPendingLeaveUpdate" xml:space="preserve"><value>Only pending leave requests can be updated.</value></data>
+  <data name="Rule.OnlyPendingPaymentAuthorize" xml:space="preserve"><value>Only pending payments can be authorized.</value></data>
+  <data name="Rule.OnlyPendingPaymentCapture" xml:space="preserve"><value>Only pending or authorized payments can be captured.</value></data>
+  <data name="Rule.OnlyPendingRefundFail" xml:space="preserve"><value>Only pending refunds can be marked as failed.</value></data>
+  <data name="Rule.OnlyPendingRefundProcess" xml:space="preserve"><value>Only pending refunds can be processed.</value></data>
+  <data name="Rule.OnlyPlannedSessionDelete" xml:space="preserve"><value>Only sessions in 'planned' status can be deleted.</value></data>
+  <data name="Rule.OnlyPlannedVisitDelete" xml:space="preserve"><value>Only planned visits can be deleted. Use cancel to archive the visit.</value></data>
+  <data name="Rule.OnlyWaitlistedToEnrolled" xml:space="preserve"><value>Only waitlisted enrollments can be moved to enrolled status.</value></data>
+  <data name="Rule.PackageCancelStatus" xml:space="preserve"><value>Cannot cancel a package in '{0}' status.</value></data>
+  <data name="Rule.PackageDefinitionInUse" xml:space="preserve"><value>Cannot delete a package definition with active student packages.</value></data>
+  <data name="Rule.PackageDefinitionInactive" xml:space="preserve"><value>Package definition '{0}' is inactive and cannot be purchased.</value></data>
+  <data name="Rule.PackageNotActiveForCredits" xml:space="preserve"><value>Package is in '{0}' status. Only active packages accept credit operations.</value></data>
+  <data name="Rule.PaidInvoiceNoVoid" xml:space="preserve"><value>Paid invoices cannot be voided directly. Process a refund first.</value></data>
+  <data name="Rule.ParticipationAlreadyRecorded" xml:space="preserve"><value>Participation already recorded for this enrollment and activity.</value></data>
+  <data name="Rule.PaymentFailStatus" xml:space="preserve"><value>Cannot fail a '{0}' payment.</value></data>
+  <data name="Rule.PlanActivateNeedsApproved" xml:space="preserve"><value>Only an approved plan can be activated. Current status: {0}.</value></data>
+  <data name="Rule.PlanActivateNeedsDraft" xml:space="preserve"><value>Only a draft plan can be activated. Current status: '{0}'.</value></data>
+  <data name="Rule.PlanAddGoalsStatus" xml:space="preserve"><value>Cannot add goals to a plan with status '{0}'.</value></data>
+  <data name="Rule.PlanAddReviewStatus" xml:space="preserve"><value>Cannot add a review to a plan with status '{0}'.</value></data>
+  <data name="Rule.PlanApproveNeedsInReview" xml:space="preserve"><value>Only a plan under review can be approved. Current status: '{0}'.</value></data>
+  <data name="Rule.PlanCancelStatus" xml:space="preserve"><value>A '{0}' plan cannot be cancelled.</value></data>
+  <data name="Rule.PlanCloseStatus" xml:space="preserve"><value>Plan in status '{0}' cannot be closed.</value></data>
+  <data name="Rule.PlanCompleteNeedsActive" xml:space="preserve"><value>Only an active plan can be completed. Current status: '{0}'.</value></data>
+  <data name="Rule.PlanHasVisits" xml:space="preserve"><value>Cannot delete a plan that already has associated visits.</value></data>
+  <data name="Rule.PlanOperationStatus" xml:space="preserve"><value>Cannot {0} a plan in '{1}' status.</value></data>
+  <data name="Rule.PlanRejectNeedsInReview" xml:space="preserve"><value>Only a plan under review can be rejected. Current status: '{0}'.</value></data>
+  <data name="Rule.PlanRemoveGoalsStatus" xml:space="preserve"><value>Cannot remove goals from a plan with status '{0}'.</value></data>
+  <data name="Rule.PlanReorderGoalsStatus" xml:space="preserve"><value>Cannot reorder goals on a plan with status '{0}'.</value></data>
+  <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>A plan in status '{0}' cannot be revised.</value></data>
+  <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Only a draft plan can be submitted for review. Current status: {0}.</value></data>
+  <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform default menu items cannot be deleted.</value></data>
+  <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>A primary care-team assignment already exists for this student. Remove the existing primary assignment before assigning a new one.</value></data>
+  <data name="Rule.ProgramHasAssignments" xml:space="preserve"><value>Cannot delete a program with active student assignments. Deactivate it instead.</value></data>
+  <data name="Rule.RecurringScheduleInactive" xml:space="preserve"><value>Cannot generate sessions for an inactive recurring schedule.</value></data>
+  <data name="Rule.RefTypeNoTenantValues" xml:space="preserve"><value>Reference type '{0}' does not allow tenant-specific values.</value></data>
+  <data name="Rule.RefValueCodeExists" xml:space="preserve"><value>A value with code '{0}' already exists in '{1}' for this corporation.</value></data>
+  <data name="Rule.RefundExceedsRemaining" xml:space="preserve"><value>Refund amount ({0}) would exceed the remaining refundable amount ({1}).</value></data>
+  <data name="Rule.RefundNeedsCaptured" xml:space="preserve"><value>Refunds can only be requested against captured payments.</value></data>
+  <data name="Rule.ReportAlreadyFinalized" xml:space="preserve"><value>Report is already finalized.</value></data>
+  <data name="Rule.ReportFinalizeNeedsUser" xml:space="preserve"><value>Authenticated user required to finalize a report.</value></data>
+  <data name="Rule.ReportFinalizedImmutable" xml:space="preserve"><value>Finalized reports are immutable and cannot be edited.</value></data>
+  <data name="Rule.ReportNeedsCompletedSession" xml:space="preserve"><value>Reports can only be created for completed assessment sessions.</value></data>
+  <data name="Rule.ResponsesNeedInProgress" xml:space="preserve"><value>Responses can only be submitted for sessions in 'in_progress' status.</value></data>
+  <data name="Rule.RoleAlreadyAssigned" xml:space="preserve"><value>This role is already assigned to the user for the specified scope.</value></data>
+  <data name="Rule.RoleCodeExists" xml:space="preserve"><value>Role code '{0}' already exists in this organization.</value></data>
+  <data name="Rule.RoleStillAssigned" xml:space="preserve"><value>Cannot delete a role that is still assigned to one or more users. Remove all assignments first.</value></data>
+  <data name="Rule.RoomBookedNewSlot" xml:space="preserve"><value>Room {0} is already booked for the new time slot.</value></data>
+  <data name="Rule.RoomBookedSlot" xml:space="preserve"><value>Room {0} is already booked for the requested time slot.</value></data>
+  <data name="Rule.RoomHasUpcomingSessions" xml:space="preserve"><value>Cannot delete a room that has upcoming scheduled sessions. Deactivate it instead.</value></data>
+  <data name="Rule.ServiceNotInProgram" xml:space="preserve"><value>The selected service does not belong to the student's program.</value></data>
+  <data name="Rule.SessionCancelStatus" xml:space="preserve"><value>Cannot cancel a session in '{0}' status.</value></data>
+  <data name="Rule.SessionCompleteStatus" xml:space="preserve"><value>Cannot complete a session in '{0}' status. Only 'in progress' sessions can be completed.</value></data>
+  <data name="Rule.SessionCompletedLocked" xml:space="preserve"><value>Completed sessions cannot change status.</value></data>
+  <data name="Rule.SessionRescheduleClosed" xml:space="preserve"><value>Cannot reschedule a completed or cancelled session.</value></data>
+  <data name="Rule.SessionStartStatus" xml:space="preserve"><value>Cannot start a session in '{0}' status. Only 'planned' sessions can be started.</value></data>
+  <data name="Rule.SessionTerminalStatus" xml:space="preserve"><value>Session is in terminal status '{0}' and cannot be modified.</value></data>
+  <data name="Rule.SessionTransitionCancelled" xml:space="preserve"><value>Cannot transition a cancelled session.</value></data>
+  <data name="Rule.SessionTransitionNoShow" xml:space="preserve"><value>Cannot transition a no-show session.</value></data>
+  <data name="Rule.SpecialtyAlreadyAssigned" xml:space="preserve"><value>This specialty is already assigned to the educator.</value></data>
+  <data name="Rule.StudentAlreadyAtCampus" xml:space="preserve"><value>Student is already at this campus.</value></data>
+  <data name="Rule.StudentAlreadyInCampPeriod" xml:space="preserve"><value>Student is already enrolled or waitlisted in this camp period.</value></data>
+  <data name="Rule.StudentAlreadyInSession" xml:space="preserve"><value>Student is already a participant in this session.</value></data>
+  <data name="Rule.StudentHasOriginLead" xml:space="preserve"><value>Student {0} already has an origin lead (lead ID: {1}). It cannot be re-linked.</value></data>
+  <data name="Rule.StudentNumberInUse" xml:space="preserve"><value>Student number '{0}' is already in use within this corporation.</value></data>
+  <data name="Rule.StudentProgramInactive" xml:space="preserve"><value>Cannot generate sessions: the student's program is not active.</value></data>
+  <data name="Rule.SurveyAlreadySubmitted" xml:space="preserve"><value>Survey response has already been submitted.</value></data>
+  <data name="Rule.SystemRefValueNoEdit" xml:space="preserve"><value>System reference values cannot be edited. Use activate/deactivate to override.</value></data>
+  <data name="Rule.SystemRoleNoDelete" xml:space="preserve"><value>System roles cannot be deleted.</value></data>
+  <data name="Rule.UsernameTaken" xml:space="preserve"><value>Username '{0}' is already taken.</value></data>
+  <data name="Rule.ViewingAuthAlreadyRevoked" xml:space="preserve"><value>Viewing authorization is already revoked.</value></data>
+  <data name="Rule.ViewingAuthInvalid" xml:space="preserve"><value>Viewing authorization is revoked or outside its valid time window.</value></data>
+  <data name="Rule.ViewingAuthNotOwned" xml:space="preserve"><value>This viewing authorization does not belong to the signed-in guardian.</value></data>
+  <data name="Rule.ViewingAuthOtherSession" xml:space="preserve"><value>This viewing authorization is bound to a different session.</value></data>
+  <data name="Rule.ViewingSessionEnded" xml:space="preserve"><value>Viewing session has already been ended.</value></data>
+  <data name="Rule.VisitActionStatus" xml:space="preserve"><value>Cannot {0} a visit in '{1}' status. Only 'planned' visits can be modified.</value></data>
+  <data name="Rule.VisitHasObservations" xml:space="preserve"><value>Cannot delete a visit that has recorded observations.</value></data>
   <data name="Validation.AtLeastOneItem" xml:space="preserve"><value>At least one {0} is required.</value></data>
   <data name="Validation.AtLeastOneOf" xml:space="preserve"><value>At least one of {0} must be provided.</value></data>
   <data name="Validation.CodeFormatLowerDotUnderscore" xml:space="preserve"><value>Code must be lowercase alphanumeric with dots or underscores.</value></data>

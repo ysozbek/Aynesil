@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -149,8 +150,7 @@ public sealed class UpdateGoalTemplateCommandHandler
             ?? throw new KeyNotFoundException($"GoalTemplate {req.Id} not found.");
 
         if (template.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The template was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         template.Update(req.LibraryId, req.CategoryId, req.DevelopmentAreaId,
             req.Code, req.Statement, req.DefaultCriteria);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -133,8 +134,7 @@ public sealed class UpdateStudentGoalCommandHandler
             ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
 
         if (goal.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The goal was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         goal.UpdateDetails(
             req.Statement, req.CategoryId, req.DevelopmentAreaId,

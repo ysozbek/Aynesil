@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -101,7 +102,7 @@ public sealed class UpdateGuardianCommandHandler
             ?? throw new KeyNotFoundException($"Guardian {req.Id} not found.");
 
         if (guardian.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The guardian record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         guardian.UpdateContactInfo(
             req.FirstName, req.LastName, req.NationalId,

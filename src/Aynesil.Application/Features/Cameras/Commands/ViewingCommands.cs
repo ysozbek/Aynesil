@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using System.Net;
@@ -80,8 +81,7 @@ public sealed class GrantViewingAuthorizationCommandHandler
                     && gpa.RevokedAt  == null, ct);
 
         if (portalAccess == null || !portalAccess.CanViewCamera)
-            throw new BusinessRuleViolationException(
-                "Guardian does not have camera viewing access enabled in the portal for this student.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.GuardianNoCameraAccess);
 
         // ── Gate 2: active camera_viewing consent ──────────────────────────────
         var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.Date);
@@ -103,8 +103,7 @@ public sealed class GrantViewingAuthorizationCommandHandler
                 && (sc.ValidUntil == null || sc.ValidUntil >= today), ct);
 
         if (!hasConsent)
-            throw new BusinessRuleViolationException(
-                "A valid camera_viewing consent (KVKK) is required before granting viewing authorization.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CameraConsentRequired);
 
         var authorization = ViewingAuthorization.Grant(
             corporationId, req.GuardianId, req.StudentId,
@@ -246,15 +245,14 @@ public sealed class StartViewingSessionCommandHandler
             if (!await _db.Sessions.AnyAsync(s => s.Id == req.SessionId.Value && s.CorporationId == corporationId, ct))
                 throw new KeyNotFoundException($"Session {req.SessionId} not found.");
             if (auth.SessionId.HasValue && auth.SessionId != req.SessionId)
-                throw new ForbiddenAccessException("This viewing authorization is bound to a different session.");
+                throw new ForbiddenAccessException(MsgKeys.Rule.ViewingAuthOtherSession);
         }
 
         var guardianId = await PortalGuardian.FindCurrentGuardianIdAsync(_db, corporationId, userId, ct);
         if (guardianId.HasValue)
         {
             if (auth.GuardianId != guardianId.Value)
-                throw new ForbiddenAccessException(
-                    "This viewing authorization does not belong to the signed-in guardian.");
+                throw new ForbiddenAccessException(MsgKeys.Rule.ViewingAuthNotOwned);
 
             await PortalGuardian.EnsureCanAccessStudentAsync(
                 _db, corporationId, guardianId.Value, auth.StudentId, ct, requireCamera: true);
@@ -263,8 +261,7 @@ public sealed class StartViewingSessionCommandHandler
         var now = DateTimeOffset.UtcNow;
 
         if (!auth.IsCurrentlyValid(now))
-            throw new BusinessRuleViolationException(
-                "Viewing authorization is revoked or outside its valid time window.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ViewingAuthInvalid);
 
         // Consent re-check: ensure camera_viewing consent is still granted.
         var today = DateOnly.FromDateTime(now.Date);
@@ -284,8 +281,7 @@ public sealed class StartViewingSessionCommandHandler
                 && (sc.ValidUntil == null || sc.ValidUntil >= today), ct);
 
         if (!hasConsent)
-            throw new BusinessRuleViolationException(
-                "Camera viewing consent has been withdrawn. Access denied.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CameraConsentWithdrawn);
 
         IPAddress? parsedIp = null;
         if (!string.IsNullOrWhiteSpace(req.IpAddress))

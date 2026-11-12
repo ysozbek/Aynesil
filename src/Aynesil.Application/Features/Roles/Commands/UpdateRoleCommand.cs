@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Roles.Dtos;
@@ -41,8 +43,7 @@ public sealed class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand
             ?? throw new NotFoundException("Role", req.RoleId);
 
         if (req.RowVersion != role.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The record was modified by another user. Please reload and try again.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         role.Update(req.Name, req.Description);
         await _db.SaveChangesAsync(ct);

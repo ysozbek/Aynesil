@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -81,8 +82,7 @@ public sealed class UpdateGoalLibraryCommandHandler
             ?? throw new KeyNotFoundException($"GoalLibrary {req.Id} not found.");
 
         if (library.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The library was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         library.Update(req.Name, req.Description);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Iam.Events;
 
 namespace Aynesil.Domain.Modules.Iam.Entities;
@@ -74,7 +75,7 @@ public class Role : BaseEntity
     public void SoftDelete()
     {
         if (IsSystem)
-            throw new BusinessRuleViolationException("System roles cannot be deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SystemRoleNoDelete);
 
         DeletedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;

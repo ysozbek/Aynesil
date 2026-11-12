@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Domain.Modules.Finance.Entities;
@@ -39,17 +40,14 @@ public sealed class RequestRefundCommandHandler
             ?? throw new KeyNotFoundException($"Payment {req.PaymentId} not found.");
 
         if (payment.Status != "captured")
-            throw new BusinessRuleViolationException(
-                "Refunds can only be requested against captured payments.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RefundNeedsCaptured);
 
         var alreadyRefunded = payment.Refunds
             .Where(r => r.Status == "processed")
             .Sum(r => r.Amount);
 
         if (alreadyRefunded + req.Amount > payment.Amount)
-            throw new BusinessRuleViolationException(
-                $"Refund amount ({req.Amount:F2}) would exceed the remaining refundable amount " +
-                $"({payment.Amount - alreadyRefunded:F2}).");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RefundExceedsRemaining, new Formatted(req.Amount, "F2"), new Formatted(payment.Amount - alreadyRefunded, "F2"));
 
         var refund = Refund.Request(payment.CorporationId, req.PaymentId, req.Amount, req.Reason);
 

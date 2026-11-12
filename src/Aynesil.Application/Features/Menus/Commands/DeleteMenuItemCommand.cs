@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Shared.Constants;
@@ -45,14 +46,13 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
 
         item.EnsureCanBeDeleted();
 
         var hasChildren = await _db.MenuItems.AnyAsync(m => m.ParentId == req.Id, ct);
         if (hasChildren)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a menu item that has children. Remove or re-parent the children first.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MenuItemHasChildren);
 
         _db.MenuItems.Remove(item);
         await _db.SaveChangesAsync(ct);

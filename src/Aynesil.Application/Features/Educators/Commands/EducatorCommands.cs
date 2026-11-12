@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -117,8 +118,7 @@ public sealed class UpdateEducatorCommandHandler : IRequestHandler<UpdateEducato
             ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
 
         if (educator.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "The educator record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         if (req.TitleId.HasValue)
         {

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -71,16 +72,14 @@ public sealed class CreateRefValueCommandHandler : IRequestHandler<CreateRefValu
             ?? throw new NotFoundException("RefType", typeCode);
 
         if (!refType.AllowsTenantValues)
-            throw new BusinessRuleViolationException(
-                $"Reference type '{typeCode}' does not allow tenant-specific values.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RefTypeNoTenantValues, typeCode);
 
         var codeExists = await _db.RefValues.AnyAsync(
             v => v.RefTypeId == refType.Id
                  && v.CorporationId == corporationId
                  && v.Code == code, ct);
         if (codeExists)
-            throw new BusinessRuleViolationException(
-                $"A value with code '{code}' already exists for this corporation in '{typeCode}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RefValueCodeExists, code, typeCode);
 
         if (req.IsDefault)
             await ClearTenantDefaultsAsync(refType.Id, corporationId, excludeId: null, ct);
@@ -198,12 +197,11 @@ public sealed class UpdateRefValueCommandHandler : IRequestHandler<UpdateRefValu
 
         // Other tenants' rows are never editable.
         if (!isTenantOwned && !isSharedGlobal)
-            throw new ForbiddenAccessException("You do not have access to this reference value.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "RefValue"));
 
         // Platform-owned system vocabulary is immutable; use activate/deactivate override instead.
         if (value.IsSystem)
-            throw new BusinessRuleViolationException(
-                "System reference values cannot be edited. Use activate/deactivate to override.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SystemRefValueNoEdit);
 
         if (req.IsDefault && !value.IsDefault)
         {
@@ -299,7 +297,7 @@ public sealed class SetRefValueActiveCommandHandler : IRequestHandler<SetRefValu
 
         // Tenant may only touch own rows or shared (corporation_id null) rows visible to them.
         if (value.CorporationId is not null && value.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this reference value.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "RefValue"));
 
         if (value.CorporationId == corporationId)
         {

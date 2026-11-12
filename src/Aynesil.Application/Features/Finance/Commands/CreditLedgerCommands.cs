@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -50,8 +51,7 @@ public sealed class ConsumeCreditsCommandHandler
         var remaining = package.CreditLedgerEntries.Sum(e => e.Delta);
 
         if (remaining < req.Amount)
-            throw new BusinessRuleViolationException(
-                $"Insufficient credits. Package has {remaining:F2} credits remaining; {req.Amount:F2} requested.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InsufficientCredits, new Formatted(remaining, "F2"), new Formatted(req.Amount, "F2"));
 
         var entry = package.ConsumeCredits(
             req.Amount, req.SessionId, req.Reason, _currentUser.UserId);
@@ -221,8 +221,7 @@ public sealed class AdjustCreditsCommandHandler
         var newBalance     = currentBalance + req.Delta;
 
         if (newBalance < 0)
-            throw new BusinessRuleViolationException(
-                $"Adjustment would result in a negative balance ({newBalance:F2}).");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AdjustmentNegativeBalance, new Formatted(newBalance, "F2"));
 
         var entry = CreditLedger.Adjust(
             package.CorporationId, req.StudentPackageId,

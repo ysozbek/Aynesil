@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Camps.Events;
 
 namespace Aynesil.Domain.Modules.Camps.Entities;
@@ -68,8 +69,7 @@ public class CampEnrollment : BaseEntity
     public void Enroll()
     {
         if (Status != "waitlist")
-            throw new BusinessRuleViolationException(
-                "Only waitlisted enrollments can be moved to enrolled status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyWaitlistedToEnrolled);
 
         Status = "enrolled";
         AddDomainEvent(new CampEnrolledEvent(
@@ -87,8 +87,7 @@ public class CampEnrollment : BaseEntity
     public void Complete()
     {
         if (Status != "enrolled")
-            throw new BusinessRuleViolationException(
-                "Only active enrolled students can be marked as completed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyEnrolledCanComplete);
 
         Status = "completed";
         AddDomainEvent(new CampEnrollmentCompletedEvent(
@@ -101,7 +100,6 @@ public class CampEnrollment : BaseEntity
     private void EnsureNotTerminal()
     {
         if (Status is "withdrawn" or "completed")
-            throw new BusinessRuleViolationException(
-                $"Cannot change a '{Status}' enrollment.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentChangeStatus, new EnumValue("Status", Status));
     }
 }

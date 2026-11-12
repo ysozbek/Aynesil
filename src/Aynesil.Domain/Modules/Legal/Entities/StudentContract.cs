@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Legal.Events;
 
 namespace Aynesil.Domain.Modules.Legal.Entities;
@@ -105,8 +106,7 @@ public class StudentContract : TenantEntity
     public void Send(Guid? updatedBy = null)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException(
-                $"Only draft contracts can be sent. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractSendNeedsDraft, new EnumValue("Status", Status));
 
         Transition("sent");
     }
@@ -123,8 +123,7 @@ public class StudentContract : TenantEntity
         Guid? updatedBy = null)
     {
         if (Status != "sent")
-            throw new BusinessRuleViolationException(
-                $"Only sent contracts can be signed. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractSignNeedsSent, new EnumValue("Status", Status));
         if (string.IsNullOrWhiteSpace(signedByName))
             throw new ArgumentException("Signed-by name is required.", nameof(signedByName));
         if (!ValidSignatureMethods.Contains(signatureMethod))
@@ -149,8 +148,7 @@ public class StudentContract : TenantEntity
     public void Activate(Guid? signedFileId = null, Guid? updatedBy = null)
     {
         if (Status != "signed")
-            throw new BusinessRuleViolationException(
-                $"Only signed contracts can be activated. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractActivateNeedsSigned, new EnumValue("Status", Status));
 
         if (signedFileId.HasValue)
             SignedFileId = signedFileId;
@@ -162,8 +160,7 @@ public class StudentContract : TenantEntity
     public void Expire(Guid? updatedBy = null)
     {
         if (Status != "active")
-            throw new BusinessRuleViolationException(
-                $"Only active contracts can be expired. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractExpireNeedsActive, new EnumValue("Status", Status));
         Transition("expired");
     }
 
@@ -171,8 +168,7 @@ public class StudentContract : TenantEntity
     public void Terminate(Guid? updatedBy = null)
     {
         if (Status is "expired" or "terminated")
-            throw new BusinessRuleViolationException(
-                $"A '{Status}' contract cannot be terminated.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractTerminateStatus, new EnumValue("Status", Status));
         Transition("terminated");
     }
 
@@ -181,8 +177,7 @@ public class StudentContract : TenantEntity
     public void Delete(Guid? deletedBy = null)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException(
-                "Only draft contracts can be deleted. Use Terminate() for active contracts.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftContractDelete);
         SoftDelete(deletedBy);
     }
 
@@ -199,7 +194,6 @@ public class StudentContract : TenantEntity
     private void EnsureEditable()
     {
         if (Status is "signed" or "active" or "expired" or "terminated")
-            throw new BusinessRuleViolationException(
-                $"A '{Status}' contract cannot be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractModifyStatus, new EnumValue("Status", Status));
     }
 }

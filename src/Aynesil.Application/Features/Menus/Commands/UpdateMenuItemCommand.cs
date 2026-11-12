@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Menus.Dtos;
@@ -67,17 +69,15 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
 
         // Tenants may update their own items and platform defaults (e.g. reorder)
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
 
         if (req.RowVersion != item.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The record was modified by another user. Please reload and try again.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (req.ParentId.HasValue)
         {
             if (req.ParentId == req.Id)
-                throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                    nameof(req.ParentId), "A menu item cannot be its own parent.")]);
+                throw new ValidationException([ValidationFailures.For(nameof(req.ParentId), MsgKeys.Rule.MenuItemOwnParent)]);
 
             var parentExists = await _db.MenuItems.AnyAsync(
                 m => m.Id == req.ParentId &&

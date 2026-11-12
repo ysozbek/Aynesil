@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Iam.Events;
 
 namespace Aynesil.Domain.Modules.Iam.Entities;
@@ -120,6 +121,6 @@ public class MenuItem : BaseEntity
     public void EnsureCanBeDeleted()
     {
         if (CorporationId is null)
-            throw new BusinessRuleViolationException("Platform default menu items cannot be deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlatformMenuNoDelete);
     }
 }

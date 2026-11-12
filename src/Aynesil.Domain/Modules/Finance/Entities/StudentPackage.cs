@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Finance.Events;
 
 namespace Aynesil.Domain.Modules.Finance.Entities;
@@ -90,8 +91,7 @@ public class StudentPackage : TenantEntity
     public void Cancel(Guid? cancelledBy = null)
     {
         if (Status is "exhausted" or "expired")
-            throw new BusinessRuleViolationException(
-                $"Cannot cancel a package in '{Status}' status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PackageCancelStatus, new EnumValue("Status", Status));
 
         Status    = "cancelled";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -135,7 +135,6 @@ public class StudentPackage : TenantEntity
     private void EnsureActive()
     {
         if (Status != "active")
-            throw new BusinessRuleViolationException(
-                $"Package is in '{Status}' status. Only active packages accept credit operations.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PackageNotActiveForCredits, new EnumValue("Status", Status));
     }
 }

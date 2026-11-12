@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -78,8 +79,7 @@ public sealed class UpdateCorporationSettingsCommandHandler
             ?? throw new NotFoundException("Corporation", req.Id);
 
         if (corp.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The corporation settings were modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         corp.DefaultLocale = req.DefaultLocale;
         corp.DefaultCurrency = req.DefaultCurrency;

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -100,7 +101,7 @@ public sealed class UpdateMedicalReportCommandHandler
             ?? throw new KeyNotFoundException($"Medical report {req.Id} not found.");
 
         if (report.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The report record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         report.Title      = req.Title;
         report.ReportDate = req.ReportDate;

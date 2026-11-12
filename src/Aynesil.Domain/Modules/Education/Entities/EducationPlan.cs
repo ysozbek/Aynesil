@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Education.Events;
 
 namespace Aynesil.Domain.Modules.Education.Entities;
@@ -120,8 +121,7 @@ public class EducationPlan : TenantEntity
     public void SubmitForReview(Guid? updatedBy = null)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException(
-                $"Only a draft plan can be submitted for review. Current status: {Status}.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanSubmitNeedsDraft, new EnumValue("Status", Status));
 
         ChangeStatus("in_review", updatedBy);
     }
@@ -129,8 +129,7 @@ public class EducationPlan : TenantEntity
     public void Approve(Guid approverId, Guid? updatedBy = null)
     {
         if (Status != "in_review")
-            throw new BusinessRuleViolationException(
-                $"Only a plan in_review can be approved. Current status: {Status}.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanApproveNeedsInReview, new EnumValue("Status", Status));
 
         ApprovedBy  = approverId;
         ApprovedAt  = DateTimeOffset.UtcNow;
@@ -143,8 +142,7 @@ public class EducationPlan : TenantEntity
     public void Reject(Guid? updatedBy = null)
     {
         if (Status != "in_review")
-            throw new BusinessRuleViolationException(
-                $"Only a plan in_review can be rejected. Current status: {Status}.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanRejectNeedsInReview, new EnumValue("Status", Status));
 
         ChangeStatus("draft", updatedBy);
     }
@@ -152,8 +150,7 @@ public class EducationPlan : TenantEntity
     public void Activate(Guid? updatedBy = null)
     {
         if (Status != "approved")
-            throw new BusinessRuleViolationException(
-                $"Only an approved plan can be activated. Current status: {Status}.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanActivateNeedsApproved, new EnumValue("Status", Status));
 
         ChangeStatus("active", updatedBy);
     }
@@ -161,8 +158,7 @@ public class EducationPlan : TenantEntity
     public void Close(Guid? updatedBy = null)
     {
         if (Status is "draft" or "revised" or "closed")
-            throw new BusinessRuleViolationException(
-                $"Plan in status '{Status}' cannot be closed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanCloseStatus, new EnumValue("Status", Status));
 
         ChangeStatus("closed", updatedBy);
     }
@@ -174,8 +170,7 @@ public class EducationPlan : TenantEntity
     public EducationPlanRevision CreateRevision(string? changeSummary, object? snapshot, Guid educatorId)
     {
         if (Status is "draft" or "closed")
-            throw new BusinessRuleViolationException(
-                $"A plan in status '{Status}' cannot be revised.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanReviseStatus, new EnumValue("Status", Status));
 
         var from = Version;
         Version++;
@@ -191,8 +186,7 @@ public class EducationPlan : TenantEntity
     public void MakeGuardianVisible(Guid? updatedBy = null)
     {
         if (Status is not ("approved" or "active"))
-            throw new BusinessRuleViolationException(
-                "Guardian visibility can only be enabled for approved or active plans.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.GuardianVisibilityNeedsApprovedPlan);
 
         GuardianVisible = true;
         UpdatedAt       = DateTimeOffset.UtcNow;
@@ -222,7 +216,6 @@ public class EducationPlan : TenantEntity
     private void GuardDraftOrInReview(string operation)
     {
         if (Status is not ("draft" or "in_review"))
-            throw new BusinessRuleViolationException(
-                $"Cannot {operation} on a plan with status '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanOperationStatus, new EnumValue("Action", operation), new EnumValue("Status", Status));
     }
 }

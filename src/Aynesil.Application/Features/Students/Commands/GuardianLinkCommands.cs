@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -53,12 +54,12 @@ public sealed class LinkGuardianToStudentCommandHandler
             ?? throw new KeyNotFoundException($"Guardian {req.GuardianId} not found.");
 
         if (guardian.CorporationId != student.CorporationId)
-            throw new BusinessRuleViolationException("Guardian and student must belong to the same corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.GuardianStudentCorpMismatch);
 
         var existing = await _db.StudentGuardians
             .AnyAsync(sg => sg.StudentId == req.StudentId && sg.GuardianId == req.GuardianId, ct);
         if (existing)
-            throw new BusinessRuleViolationException("This guardian is already linked to the student.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.GuardianAlreadyLinked);
 
         var link = new StudentGuardian
         {

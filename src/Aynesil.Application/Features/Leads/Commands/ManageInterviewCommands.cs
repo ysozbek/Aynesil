@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
@@ -56,8 +57,7 @@ public sealed class CompleteInterviewCommandHandler : IRequestHandler<CompleteIn
         await TenantUserGuard.EnsureBelongsToTenantAsync(_db, corporationId, req.ConductedBy, nameof(req.ConductedBy), ct);
 
         if (interview.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The interview was modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         interview.Complete(req.Outcome, req.Recommendation, req.ConductedBy ?? _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -92,8 +92,7 @@ public sealed class CancelInterviewCommandHandler : IRequestHandler<CancelInterv
             ?? throw new NotFoundException("Interview", req.InterviewId);
 
         if (interview.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The interview was modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         interview.Cancel();
         await _db.SaveChangesAsync(ct);
@@ -134,8 +133,7 @@ public sealed class RescheduleInterviewCommandHandler : IRequestHandler<Reschedu
             ?? throw new NotFoundException("Interview", req.InterviewId);
 
         if (interview.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The interview was modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         interview.Reschedule(req.NewScheduledAt);
         await _db.SaveChangesAsync(ct);
@@ -167,8 +165,7 @@ public sealed class MarkInterviewNoShowCommandHandler : IRequestHandler<MarkInte
             ?? throw new NotFoundException("Interview", req.InterviewId);
 
         if (interview.RowVersion != req.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The interview was modified by another user. Please refresh and retry.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         interview.MarkNoShow();
         await _db.SaveChangesAsync(ct);

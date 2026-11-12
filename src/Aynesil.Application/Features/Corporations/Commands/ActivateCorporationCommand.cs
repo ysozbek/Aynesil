@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
@@ -39,8 +41,7 @@ public sealed class ActivateCorporationCommandHandler : IRequestHandler<Activate
             ?? throw new NotFoundException("Corporation", req.Id);
 
         if (corp.Status == "closed")
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.Id), "A closed corporation cannot be reactivated.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.Id), MsgKeys.Rule.ClosedCorporationNoReactivate)]);
 
         corp.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

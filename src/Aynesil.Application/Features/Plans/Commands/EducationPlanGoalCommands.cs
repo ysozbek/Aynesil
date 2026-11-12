@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -44,8 +45,7 @@ public sealed class AddGoalToPlanCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new BusinessRuleViolationException(
-                $"Cannot add goals to a plan with status '{plan.Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanAddGoalsStatus, new EnumValue("Status", plan.Status));
 
         var goalExists = await _db.StudentGoals.AnyAsync(
             g => g.Id == req.StudentGoalId && g.StudentId == plan.StudentId, ct);
@@ -56,8 +56,7 @@ public sealed class AddGoalToPlanCommandHandler
 
         var alreadyLinked = plan.PlanGoals.Any(pg => pg.StudentGoalId == req.StudentGoalId);
         if (alreadyLinked)
-            throw new BusinessRuleViolationException(
-                $"Goal {req.StudentGoalId} is already linked to this plan.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.GoalAlreadyLinked, req.StudentGoalId);
 
         var planGoal = EducationPlanGoal.Create(
             plan.CorporationId, plan.Id, req.StudentGoalId, req.Horizon, req.SortOrder);
@@ -88,8 +87,7 @@ public sealed class RemoveGoalFromPlanCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new BusinessRuleViolationException(
-                $"Cannot remove goals from a plan with status '{plan.Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanRemoveGoalsStatus, new EnumValue("Status", plan.Status));
 
         var planGoal = await _db.EducationPlanGoals
             .FirstOrDefaultAsync(pg => pg.Id == req.PlanGoalId
@@ -127,8 +125,7 @@ public sealed class ReorderPlanGoalsCommandHandler
             ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
 
         if (plan.Status is not ("draft" or "in_review"))
-            throw new BusinessRuleViolationException(
-                $"Cannot reorder goals on a plan with status '{plan.Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanReorderGoalsStatus, new EnumValue("Status", plan.Status));
 
         var planGoals = await _db.EducationPlanGoals
             .Where(pg => pg.EducationPlanId == req.EducationPlanId)

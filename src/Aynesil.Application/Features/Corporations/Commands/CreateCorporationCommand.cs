@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -64,9 +65,7 @@ public sealed class CreateCorporationCommandHandler : IRequestHandler<CreateCorp
             .IgnoreQueryFilters()
             .AnyAsync(c => c.Code == codeNormalized, ct);
         if (codeExists)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(CreateCorporationCommand.Code),
-                $"Corporation code '{codeNormalized}' is already taken.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(CreateCorporationCommand.Code), MsgKeys.Rule.CorporationCodeTaken, codeNormalized)]);
 
         var corp = Corporation.Create(codeNormalized, req.LegalName.Trim(), req.DisplayName.Trim(), req.DefaultLocale);
         corp.DefaultCurrency = req.DefaultCurrency;
@@ -83,9 +82,7 @@ public sealed class CreateCorporationCommandHandler : IRequestHandler<CreateCorp
         }
         catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(CreateCorporationCommand.Code),
-                $"Corporation code '{codeNormalized}' is already taken.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(CreateCorporationCommand.Code), MsgKeys.Rule.CorporationCodeTaken, codeNormalized)]);
         }
 
         return corp.ToDto(campusCount: 0);

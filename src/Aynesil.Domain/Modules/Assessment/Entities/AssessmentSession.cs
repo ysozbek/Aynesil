@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Assessment.Events;
 
 namespace Aynesil.Domain.Modules.Assessment.Entities;
@@ -104,8 +105,7 @@ public class AssessmentSession : TenantEntity
     public void Start(Guid? updatedBy = null)
     {
         if (Status != SessionStatuses.Planned)
-            throw new BusinessRuleViolationException(
-                $"Cannot start a session in '{Status}' status. Only 'planned' sessions can be started.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionStartStatus, new EnumValue("Status", Status));
 
         Status    = SessionStatuses.InProgress;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -117,8 +117,7 @@ public class AssessmentSession : TenantEntity
     public void Complete(decimal? totalScore, Guid? updatedBy = null)
     {
         if (Status != SessionStatuses.InProgress)
-            throw new BusinessRuleViolationException(
-                $"Cannot complete a session in '{Status}' status. Only 'in_progress' sessions can be completed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionCompleteStatus, new EnumValue("Status", Status));
 
         Status      = SessionStatuses.Completed;
         PerformedAt = DateTimeOffset.UtcNow;
@@ -133,8 +132,7 @@ public class AssessmentSession : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is SessionStatuses.Completed or SessionStatuses.Cancelled)
-            throw new BusinessRuleViolationException(
-                $"Cannot cancel a session in '{Status}' status.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionCancelStatus, new EnumValue("Status", Status));
 
         Status    = SessionStatuses.Cancelled;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -150,8 +148,7 @@ public class AssessmentSession : TenantEntity
         Guid? updatedBy = null)
     {
         if (Status is SessionStatuses.Completed or SessionStatuses.Cancelled)
-            throw new BusinessRuleViolationException(
-                "Cannot reschedule a completed or cancelled session.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SessionRescheduleClosed);
 
         ScheduledAt = scheduledAt;
         AssessorId  = assessorId;

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -104,8 +105,7 @@ public sealed class UpdateCertificationCommandHandler
             ?? throw new KeyNotFoundException($"Certification {req.CertificationId} not found.");
 
         if (cert.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Certification was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         cert.Update(req.Name, req.CertificationTypeId, req.Issuer,
             req.IssuedOn, req.ExpiresOn, req.FileId);

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using FluentValidation;
@@ -34,8 +36,7 @@ public sealed class DeleteRoleCommandHandler : IRequestHandler<DeleteRoleCommand
         // Block deletion if any users are still assigned this role
         var hasUsers = await _db.UserRoles.AnyAsync(ur => ur.RoleId == req.RoleId, ct);
         if (hasUsers)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RoleId), "Cannot delete a role that is still assigned to one or more users. Remove all assignments first.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RoleId), MsgKeys.Rule.RoleStillAssigned)]);
 
         role.SoftDelete();
         await _db.SaveChangesAsync(ct);

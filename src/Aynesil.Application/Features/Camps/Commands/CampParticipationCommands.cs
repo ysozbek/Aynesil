@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -61,19 +62,16 @@ public sealed class RegisterParticipationCommandHandler
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
                                    && e.Status == "enrolled", ct)
-            ?? throw new BusinessRuleViolationException(
-                $"Enrollment {req.CampEnrollmentId} not found or student is not actively enrolled.");
+            ?? throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, req.CampEnrollmentId);
 
         if (enrollment.CampPeriodId != activity.CampPeriodId)
-            throw new BusinessRuleViolationException(
-                "Enrollment and activity must belong to the same camp period.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentActivityPeriodMismatch);
 
         var duplicate = await _db.CampActivityParticipations
             .AnyAsync(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
                         && p.CampEnrollmentId == req.CampEnrollmentId, ct);
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                "Participation already recorded for this enrollment and activity.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ParticipationAlreadyRecorded);
 
         if (activity.Capacity.HasValue && req.Status is "registered" or "attended")
         {
@@ -81,7 +79,7 @@ public sealed class RegisterParticipationCommandHandler
                 .CountAsync(p => p.CorporationId == corporationId && (p.CampActivityId == req.CampActivityId
                               && (p.Status == "registered" || p.Status == "attended")), ct);
             if (count >= activity.Capacity.Value)
-                throw new BusinessRuleViolationException("Activity is at full capacity.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityFull);
         }
 
         var participation = CampActivityParticipation.Register(

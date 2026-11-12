@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -100,7 +101,7 @@ public sealed class UpdateDiagnosisCommandHandler
             ?? throw new KeyNotFoundException($"Diagnosis {req.Id} not found.");
 
         if (diagnosis.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The diagnosis record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         diagnosis.CategoryId   = req.CategoryId;
         diagnosis.IcdCode      = req.IcdCode;

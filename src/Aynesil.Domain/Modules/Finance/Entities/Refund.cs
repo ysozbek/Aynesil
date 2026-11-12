@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Finance.Events;
 
 namespace Aynesil.Domain.Modules.Finance.Entities;
@@ -52,7 +53,7 @@ public class Refund : BaseEntity
     public void Process()
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException("Only pending refunds can be processed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPendingRefundProcess);
 
         Status      = "processed";
         ProcessedAt = DateTimeOffset.UtcNow;
@@ -63,7 +64,7 @@ public class Refund : BaseEntity
     public void Fail()
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException("Only pending refunds can be marked as failed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPendingRefundFail);
 
         Status = "failed";
     }

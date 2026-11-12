@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -129,8 +130,7 @@ public sealed class DeleteCampPeriodCommandHandler : IRequestHandler<DeleteCampP
             .AnyAsync(e => e.CampPeriodId == req.Id, ct);
 
         if (hasEnrollments)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a camp period that has enrollments.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodHasEnrollments);
 
         _db.CampPeriods.Remove(period);
         await _db.SaveChangesAsync(ct);

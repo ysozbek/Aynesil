@@ -97,6 +97,22 @@ public class ExceptionMiddlewareTests
     }
 
     [Fact]
+    public async Task Status_and_number_arguments_are_rendered_in_the_request_language()
+    {
+        var status = new BusinessRuleViolationException(MsgKeys.Rule.PlanCancelStatus, new EnumValue("Status", "draft"));
+        var (_, _, tr, _) = await RunAsync(status, "tr");
+        var (_, _, en, _) = await RunAsync(status, "en");
+        tr.GetProperty("message").GetString().Should().Be("'taslak' durumundaki bir plan iptal edilemez.");
+        en.GetProperty("message").GetString().Should().Be("A 'draft' plan cannot be cancelled.");
+
+        var money = new BusinessRuleViolationException(MsgKeys.Rule.AdjustmentNegativeBalance, new Formatted(-5m, "F2"));
+        var (_, _, trMoney, _) = await RunAsync(money, "tr");
+        var (_, _, enMoney, _) = await RunAsync(money, "en");
+        trMoney.GetProperty("message").GetString().Should().Contain("-5,00");
+        enMoney.GetProperty("message").GetString().Should().Contain("-5.00");
+    }
+
+    [Fact]
     public async Task ConflictException_without_code_keeps_its_own_message()
     {
         var (status, _, json, _) = await RunAsync(new ConflictException("Zaten kayıtlı."));

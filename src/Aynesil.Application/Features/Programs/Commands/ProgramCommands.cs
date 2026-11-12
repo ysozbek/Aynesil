@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -42,8 +43,7 @@ public sealed class CreateProgramCommandHandler : IRequestHandler<CreateProgramC
         var codeTaken = await _db.EducationPrograms.AnyAsync(
             p => p.CorporationId == corporationId && p.Code == req.Code, ct);
         if (codeTaken)
-            throw new BusinessRuleViolationException(
-                $"Program code '{req.Code}' is already in use within this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Program"), req.Code);
 
         if (req.ProgramTypeId.HasValue)
         {
@@ -95,15 +95,13 @@ public sealed class UpdateProgramCommandHandler : IRequestHandler<UpdateProgramC
             ?? throw new KeyNotFoundException($"Program {req.Id} not found.");
 
         if (program.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Program was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         var codeTaken = await _db.EducationPrograms.AnyAsync(
             p => p.CorporationId == program.CorporationId
               && p.Code == req.Code && p.Id != req.Id, ct);
         if (codeTaken)
-            throw new BusinessRuleViolationException(
-                $"Program code '{req.Code}' is already in use within this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Program"), req.Code);
 
         program.Update(req.Code, req.Name, req.ProgramTypeId, req.Description);
         await _db.SaveChangesAsync(ct);
@@ -135,8 +133,7 @@ public sealed class DeleteProgramCommandHandler : IRequestHandler<DeleteProgramC
         var hasActiveAssignments = await _db.StudentPrograms.AnyAsync(
             sp => sp.ProgramId == req.Id && sp.Status == "active" && sp.DeletedAt == null, ct);
         if (hasActiveAssignments)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a program with active student assignments. Deactivate it instead.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ProgramHasAssignments);
 
         program.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

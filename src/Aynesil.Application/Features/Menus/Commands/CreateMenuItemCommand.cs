@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
@@ -96,8 +97,7 @@ public sealed class CreateMenuItemCommandHandler : IRequestHandler<CreateMenuIte
         var codeTaken = await _db.MenuItems.AnyAsync(
             m => m.CorporationId == corporationId && m.Code == codeLower, ct);
         if (codeTaken)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.Code), $"Menu item code '{codeLower}' already exists in this organization.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.Code), MsgKeys.Rule.MenuItemCodeExists, codeLower)]);
 
         var item = MenuItem.Create(
             corporationId,

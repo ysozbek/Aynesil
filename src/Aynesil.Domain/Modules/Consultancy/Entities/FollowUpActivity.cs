@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -100,8 +101,7 @@ public class FollowUpActivity : TenantEntity
     public void StartProgress(Guid? updatedBy = null)
     {
         if (Status != "pending")
-            throw new BusinessRuleViolationException(
-                $"Only pending activities can be started. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityStartNeedsPending, new EnumValue("Status", Status));
 
         Status    = "in_progress";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -140,7 +140,6 @@ public class FollowUpActivity : TenantEntity
     private void EnsureActive(string action)
     {
         if (Status is "completed" or "cancelled")
-            throw new BusinessRuleViolationException(
-                $"Cannot {action} a '{Status}' activity.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityActionStatus, new EnumValue("Action", action), new EnumValue("Status", Status));
     }
 }

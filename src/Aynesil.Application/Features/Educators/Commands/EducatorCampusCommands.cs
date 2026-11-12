@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -51,8 +52,7 @@ public sealed class AssignEducatorToCampusCommandHandler
               && c.CampusId == req.CampusId
               && c.ActiveTo == null, ct);
         if (existing)
-            throw new BusinessRuleViolationException(
-                "Educator is already actively assigned to this campus.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EducatorAlreadyOnCampus);
 
         var assignment = new EducatorCampus
         {

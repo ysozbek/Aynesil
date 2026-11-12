@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -119,8 +120,7 @@ public sealed class UpdateStudentProgramCommandHandler
             ?? throw new KeyNotFoundException($"StudentProgram {req.StudentProgramId} not found.");
 
         if (sp.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException(
-                "Record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         sp.UpdateDates(req.StartDate, req.EndDate);
         sp.ChangeStatus(req.Status);

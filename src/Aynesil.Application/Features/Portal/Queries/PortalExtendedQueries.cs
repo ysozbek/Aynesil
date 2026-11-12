@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
@@ -31,8 +32,7 @@ internal static class PortalAccessHelper
         ).FirstOrDefaultAsync(ct);
 
         if (access is null)
-            throw new ForbiddenAccessException(
-                $"Guardian does not have active portal access to student {studentId}.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.GuardianNoPortalAccess, studentId);
 
         return (access.GuardianId, access.CanViewSessions, access.CanViewAttendance,
                 access.CanViewReports, access.CanViewPlan, access.CanViewFinance);

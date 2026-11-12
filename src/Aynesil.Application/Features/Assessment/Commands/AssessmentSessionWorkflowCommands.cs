@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using FluentValidation;
@@ -193,8 +194,7 @@ public sealed class DeleteAssessmentSessionCommandHandler
             ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
 
         if (session.Status != Domain.Modules.Assessment.Entities.AssessmentSession.SessionStatuses.Planned)
-            throw new BusinessRuleViolationException(
-                "Only sessions in 'planned' status can be deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPlannedSessionDelete);
 
         session.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

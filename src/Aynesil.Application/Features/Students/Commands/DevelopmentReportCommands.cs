@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -105,7 +106,7 @@ public sealed class UpdateDevelopmentReportCommandHandler
             ?? throw new KeyNotFoundException($"Development report {req.Id} not found.");
 
         if (report.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("The report record was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         report.PeriodLabel = req.PeriodLabel;
         report.ReportDate  = req.ReportDate;

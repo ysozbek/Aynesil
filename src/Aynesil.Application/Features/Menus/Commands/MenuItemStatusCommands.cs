@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Shared.Constants;
@@ -40,7 +41,7 @@ public sealed class ActivateMenuItemCommandHandler : IRequestHandler<ActivateMen
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
 
         if (item.IsActive) return; // idempotent
 
@@ -84,7 +85,7 @@ public sealed class DeactivateMenuItemCommandHandler : IRequestHandler<Deactivat
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
 
         if (!item.IsActive) return; // idempotent
 

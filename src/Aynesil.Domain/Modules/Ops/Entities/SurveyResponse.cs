@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -56,7 +57,7 @@ public class SurveyResponse : TenantEntity
     public void Submit()
     {
         if (SubmittedAt.HasValue)
-            throw new BusinessRuleViolationException("Survey response has already been submitted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.SurveyAlreadySubmitted);
 
         SubmittedAt = DateTimeOffset.UtcNow;
     }

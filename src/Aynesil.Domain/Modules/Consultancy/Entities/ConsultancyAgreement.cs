@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -120,8 +121,7 @@ public class ConsultancyAgreement : TenantEntity
     public void Sign(DateOnly signedDate, string? signedByName, Guid? fileId, Guid? updatedBy = null)
     {
         if (Status != "sent")
-            throw new BusinessRuleViolationException(
-                $"Only a sent agreement can be signed. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementSignNeedsSent, new EnumValue("Status", Status));
 
         var prev      = Status;
         Status        = "signed";
@@ -140,8 +140,7 @@ public class ConsultancyAgreement : TenantEntity
     public void MarkExpired(Guid? updatedBy = null)
     {
         if (Status != "signed")
-            throw new BusinessRuleViolationException(
-                $"Only a signed agreement can be expired. Current status: '{Status}'.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementExpireNeedsSigned, new EnumValue("Status", Status));
 
         var prev  = Status;
         Status    = "expired";
@@ -154,8 +153,7 @@ public class ConsultancyAgreement : TenantEntity
     public void Cancel(Guid? updatedBy = null)
     {
         if (Status is "signed" or "expired" or "cancelled")
-            throw new BusinessRuleViolationException(
-                $"A '{Status}' agreement cannot be cancelled.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementCancelStatus, new EnumValue("Status", Status));
 
         var prev  = Status;
         Status    = "cancelled";
@@ -171,7 +169,6 @@ public class ConsultancyAgreement : TenantEntity
     private void EnsureDraft(string action)
     {
         if (Status != "draft")
-            throw new BusinessRuleViolationException(
-                $"Cannot {action} a '{Status}' agreement. Only draft agreements can be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementActionStatus, new EnumValue("Action", action), new EnumValue("Status", Status));
     }
 }

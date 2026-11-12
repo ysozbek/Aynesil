@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Validation;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Users.Dtos;
@@ -53,8 +55,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
             ?? throw new NotFoundException("User", req.UserId);
 
         if (req.RowVersion != user.RowVersion)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.RowVersion), "The record was modified by another user. Please reload and try again.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (req.Email is not null && req.Email.ToLowerInvariant() != user.Email)
         {
@@ -63,8 +64,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
             var taken = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AnyAsync(
                 _db.UserAccounts, u => u.CorporationId == corporationId && u.Email == emailLower && u.Id != req.UserId, ct);
             if (taken)
-                throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                    nameof(req.Email), $"Email '{emailLower}' is already registered.")]);
+                throw new ValidationException([ValidationFailures.For(nameof(req.Email), MsgKeys.Rule.EmailRegistered, emailLower)]);
         }
 
         user.UpdateProfile(req.FullName, req.Phone, req.Email, req.PreferredLocale, req.PrimaryCampusId, _currentUser.UserId);

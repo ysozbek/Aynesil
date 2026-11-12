@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Legal.Events;
 
 namespace Aynesil.Domain.Modules.Legal.Entities;
@@ -129,10 +130,8 @@ public class ContractTemplate : TenantEntity
     private void EnsureCurrentAndEditable()
     {
         if (!IsCurrent)
-            throw new BusinessRuleViolationException(
-                $"Contract template '{Code}' v{Version} is archived and cannot be modified.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractTemplateArchived, Code, Version);
         if (IsDeleted)
-            throw new BusinessRuleViolationException(
-                $"Contract template '{Code}' v{Version} has been deleted.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ContractTemplateDeleted, Code, Version);
     }
 }

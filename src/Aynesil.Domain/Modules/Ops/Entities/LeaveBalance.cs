@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -67,8 +68,7 @@ public class LeaveBalance : TenantEntity
             throw new ArgumentException("Consume amount must be positive.");
 
         if (Used + amount > Entitled)
-            throw new BusinessRuleViolationException(
-                $"Insufficient leave balance. Entitled: {Entitled} {Unit}, Used: {Used} {Unit}, Requested: {amount} {Unit}.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InsufficientLeaveDetail, Entitled, new EnumValue("LeaveUnit", Unit), Used, amount);
 
         Used += amount;
     }

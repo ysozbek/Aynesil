@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -77,7 +78,7 @@ public class Meeting : TenantEntity
         Guid? organizerId)
     {
         if (Status == "cancelled")
-            throw new BusinessRuleViolationException("Cannot update a cancelled meeting.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingUpdateCancelled);
 
         if (endsAt.HasValue && scheduledAt.HasValue && endsAt <= scheduledAt)
             throw new ArgumentException("Meeting ends_at must be after scheduled_at.");
@@ -96,9 +97,9 @@ public class Meeting : TenantEntity
     public void Complete()
     {
         if (Status == "cancelled")
-            throw new BusinessRuleViolationException("Cannot complete a cancelled meeting.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingCompleteCancelled);
         if (Status == "completed")
-            throw new BusinessRuleViolationException("Meeting is already completed.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingAlreadyCompleted);
 
         Status    = "completed";
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -107,9 +108,9 @@ public class Meeting : TenantEntity
     public void Cancel()
     {
         if (Status == "completed")
-            throw new BusinessRuleViolationException("Cannot cancel a completed meeting.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingCancelCompleted);
         if (Status == "cancelled")
-            throw new BusinessRuleViolationException("Meeting is already cancelled.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingAlreadyCancelled);
 
         Status    = "cancelled";
         UpdatedAt = DateTimeOffset.UtcNow;

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Assessment.Events;
 
 namespace Aynesil.Domain.Modules.Assessment.Entities;
@@ -61,7 +62,7 @@ public class AssessmentReport : AuditableEntity
         Guid? updatedBy = null)
     {
         if (IsFinalized)
-            throw new BusinessRuleViolationException("Finalized reports are immutable and cannot be edited.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ReportFinalizedImmutable);
 
         Summary   = summary;
         Findings  = findings;
@@ -78,7 +79,7 @@ public class AssessmentReport : AuditableEntity
     public void Finalize(Guid finalizedBy)
     {
         if (IsFinalized)
-            throw new BusinessRuleViolationException("Report is already finalized.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ReportAlreadyFinalized);
 
         FinalizedAt = DateTimeOffset.UtcNow;
         FinalizedBy = finalizedBy;

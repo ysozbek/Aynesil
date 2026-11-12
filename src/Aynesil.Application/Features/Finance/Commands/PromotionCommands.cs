@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -59,8 +60,7 @@ public sealed class CreatePromotionCommandHandler
             p => p.CorporationId == corporationId && p.Code == req.Code, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"Promotion with code '{req.Code}' already exists for this corporation.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Promotion"), req.Code);
 
         var promotion = Promotion.Create(
             corporationId, req.Code, req.Name, req.Value,

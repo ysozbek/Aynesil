@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using MediatR;
@@ -27,8 +28,7 @@ public sealed class DeleteLeadCommandHandler : IRequestHandler<DeleteLeadCommand
             ?? throw new NotFoundException("Lead", req.Id);
 
         if (lead.ConvertedStudentId.HasValue)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a lead that has been converted to a student.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.LeadConvertedNoDelete);
 
         lead.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

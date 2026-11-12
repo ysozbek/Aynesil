@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -252,7 +253,7 @@ public sealed class DeleteFollowUpActivityCommandHandler
             ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
 
         if (activity.Status is "completed")
-            throw new BusinessRuleViolationException("Cannot delete a completed follow-up activity.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpDeleteCompleted);
 
         _db.FollowUpActivities.Remove(activity);
         await _db.SaveChangesAsync(ct);

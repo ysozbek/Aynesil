@@ -56,7 +56,7 @@ public class MeetingFollowUp : BaseEntity
     public void Update(string action, Guid? assigneeId, DateOnly? dueDate)
     {
         if (Status is "done" or "cancelled")
-            throw new BusinessRuleViolationException("Cannot update a closed follow-up.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpUpdateClosed);
 
         Action     = action.Trim();
         AssigneeId = assigneeId;
@@ -70,10 +70,10 @@ public class MeetingFollowUp : BaseEntity
                 $"Invalid status '{status}'. Must be: open, in_progress, done, cancelled.");
 
         if (Status == "done" && status != "done")
-            throw new BusinessRuleViolationException("Cannot reopen a completed follow-up.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpReopenCompleted);
 
         if (Status == "cancelled" && status != "cancelled")
-            throw new BusinessRuleViolationException("Cannot reopen a cancelled follow-up.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpReopenCancelled);
 
         Status = status;
     }

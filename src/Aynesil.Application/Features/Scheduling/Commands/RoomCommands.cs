@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -67,8 +68,7 @@ public sealed class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand
               && r.Code == req.Code, ct);
 
         if (duplicate)
-            throw new BusinessRuleViolationException(
-                $"Room with code '{req.Code}' already exists in this campus.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CodeAlreadyExists, new EnumValue("Entity", "Room"), req.Code);
 
         var room = Room.Create(
             corporationId, req.Code, req.Name, req.Capacity,
@@ -116,7 +116,7 @@ public sealed class UpdateRoomCommandHandler : IRequestHandler<UpdateRoomCommand
             ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
 
         if (room.RowVersion != req.RowVersion)
-            throw new BusinessRuleViolationException("Room was modified by another user. Please refresh and retry.");
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         room.UpdateDetails(req.Code, req.Name, req.Capacity, req.RoomTypeId, req.MeetingUrl);
 
@@ -171,8 +171,7 @@ public sealed class DeleteRoomCommandHandler : IRequestHandler<DeleteRoomCommand
               && s.StartsAt > DateTimeOffset.UtcNow, ct);
 
         if (hasFutureSessions)
-            throw new BusinessRuleViolationException(
-                "Cannot delete a room that has upcoming scheduled sessions. Deactivate it instead.");
+            throw new BusinessRuleViolationException(MsgKeys.Rule.RoomHasUpcomingSessions);
 
         room.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

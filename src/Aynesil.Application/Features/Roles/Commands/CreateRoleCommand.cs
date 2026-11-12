@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -56,8 +57,7 @@ public sealed class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand
         var taken = await _db.Roles.AnyAsync(
             r => r.CorporationId == corporationId && r.Code == codeLower, ct);
         if (taken)
-            throw new ValidationException([new FluentValidation.Results.ValidationFailure(
-                nameof(req.Code), $"Role code '{codeLower}' already exists in this organization.")]);
+            throw new ValidationException([ValidationFailures.For(nameof(req.Code), MsgKeys.Rule.RoleCodeExists, codeLower)]);
 
         var role = Role.Create(corporationId, codeLower, req.Name, req.Description, isSystem: false);
 

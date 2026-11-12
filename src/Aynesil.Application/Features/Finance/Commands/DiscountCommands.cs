@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
@@ -62,8 +63,7 @@ public sealed class ApplyDiscountCommandHandler
                 ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
 
             if (invoice.Status != "draft")
-                throw new BusinessRuleViolationException(
-                    "Discounts can only be applied to draft invoices.");
+                throw new BusinessRuleViolationException(MsgKeys.Rule.DiscountNeedsDraftInvoice);
 
             var discount = Discount.Apply(
                 corporationId, req.Value, req.IsPercentage,
