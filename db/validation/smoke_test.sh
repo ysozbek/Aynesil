@@ -2,8 +2,8 @@
 # =====================================================================
 # Akran Platform :: DDL smoke test (Docker-first, PostgreSQL 17 only)
 # Spins up a clean PG17 container, applies all DDL + seed in dependency
-# order, then verifies extensions / schemas / 137 tables / RLS /
-# exclusion constraints. Exits non-zero with the exact failing file on error.
+# order, then verifies extensions / schemas / RLS / exclusion constraints, and
+# compares the result with a second database built by the Flyway migrations (drift.sql). Exits non-zero with the exact failing file on error.
 #
 # Usage:   bash db/validation/smoke_test.sh
 # Cleanup: docker compose -f db/validation/docker-compose.yml down -v
@@ -38,17 +38,19 @@ FILES=(
   db/layer2_sped/12_consultancy.sql
   db/layer2_sped/13_parent_portal.sql
   db/layer2_sped/14_care_team.sql
+  db/layer2_sped/16_surveys.sql
+  db/98_tenant_integrity.sql
   db/99_triggers_rls_policies.sql
   db/layer2_sped/15_care_team_rls.sql
   db/seed/01_reference_data_seed.sql
   db/seed/02_akran_bootstrap.sql
 )
 
-echo "==> [1/4] Fresh PostgreSQL 17 container"
+echo "==> [1/6] Fresh PostgreSQL 17 container"
 "${COMPOSE[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
 "${COMPOSE[@]}" up -d
 
-echo "==> [2/4] Waiting for readiness"
+echo "==> [2/6] Waiting for readiness"
 for _ in $(seq 1 60); do
   if "${COMPOSE[@]}" exec -T db pg_isready -U postgres -d akran >/dev/null 2>&1; then break; fi
   sleep 1
@@ -56,7 +58,7 @@ done
 echo -n "    server: "
 "${COMPOSE[@]}" exec -T db psql -tA -U postgres -d akran -c "select version();"
 
-echo "==> [3/4] Applying DDL + seed in dependency order"
+echo "==> [3/6] Applying DDL + seed in dependency order"
 for f in "${FILES[@]}"; do
   printf '    -- %s\n' "$f"
   if ! "${PSQL_QUIET[@]}" -f "/repo/$f"; then
@@ -67,10 +69,43 @@ for f in "${FILES[@]}"; do
   fi
 done
 
-echo "==> [4/4] Verifying objects"
+echo "==> [4/6] Verifying objects"
 if ! "${PSQL[@]}" -f /repo/db/validation/verify.sql; then
   echo ""
   echo "❌ VERIFICATION FAILED (see assertion error above)"
+  exit 1
+fi
+
+echo "==> [5/6] Building a second database from the Flyway migrations"
+# Same container, separate database. Roles referenced by migrations are cluster-wide.
+REPO_ROOT="$(cd ../.. && pwd)"
+NETWORK="$("${COMPOSE[@]}" ps -q db | xargs docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')"
+"${PSQL[@]}" -q <<'SQL'
+do $$ begin
+  if not exists (select from pg_roles where rolname = 'aynesil_app')   then create role aynesil_app;   end if;
+  if not exists (select from pg_roles where rolname = 'aynesil_owner') then create role aynesil_owner; end if;
+end $$;
+drop database if exists akran_flyway;
+create database akran_flyway;
+SQL
+if ! docker run --rm --network "$NETWORK" \
+      -v "$REPO_ROOT/db/migrations:/flyway/sql:ro" \
+      -v "$REPO_ROOT/docker/flyway.conf:/flyway/conf/flyway.conf:ro" \
+      -e FLYWAY_URL=jdbc:postgresql://db:5432/akran_flyway \
+      -e FLYWAY_USER=postgres -e FLYWAY_PASSWORD=postgres \
+      flyway/flyway:10.20-alpine migrate > /tmp/akran_flyway.log 2>&1; then
+  tail -40 /tmp/akran_flyway.log
+  echo ""
+  echo "❌ FLYWAY MIGRATE FAILED (log above)"
+  exit 1
+fi
+grep -E "Successfully applied|now at version" /tmp/akran_flyway.log | sed 's/^/    /'
+
+echo "==> [6/6] Schema drift: layer DDL vs Flyway migrations"
+"${PSQL[@]}" -q -c "drop database if exists akran_drift" -c "create database akran_drift"
+if ! "${COMPOSE[@]}" exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d akran_drift -f /repo/db/validation/drift.sql; then
+  echo ""
+  echo "❌ SCHEMA DRIFT (differences listed above)"
   exit 1
 fi
 

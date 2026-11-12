@@ -45,6 +45,36 @@ select
 select conrelid::regclass as table, conname from pg_constraint where contype='x' order by 1;
 
 \echo ''
+-- ---------------------------------------------------------------------
+-- #86 tenant integrity (db/98_tenant_integrity.sql, migrations V38–V41)
+-- ---------------------------------------------------------------------
+\echo '== Tenant integrity =='
+do $$
+declare
+  v_fk   int;
+  v_left int;
+  v_trg  int;
+begin
+  -- every FK between two tenant tables is a validated composite (corporation_id, x) FK
+  select count(*) into v_fk
+    from pg_constraint where contype = 'f' and conname like 'fk\_%\_tnt%' and convalidated;
+  select count(*) into v_left
+    from pg_constraint c
+    join pg_attribute a  on a.attrelid = c.conrelid  and a.attnum = c.conkey[1]
+    join pg_attribute af on af.attrelid = c.confrelid and af.attnum = c.confkey[1]
+   where c.contype = 'f' and c.conparentid = 0 and cardinality(c.conkey) = 1
+     and af.attname = 'id' and a.attname <> 'corporation_id'
+     and exists (select 1 from pg_attribute x where x.attrelid = c.conrelid  and x.attname = 'corporation_id' and x.attnotnull)
+     and exists (select 1 from pg_attribute y where y.attrelid = c.confrelid and y.attname = 'corporation_id' and y.attnotnull);
+  select count(*) into v_trg
+    from pg_trigger where not tgisinternal and tgfoid = 'core.enforce_global_or_tenant_ref'::regproc;
+
+  if v_fk < 202 then raise exception 'FAIL tenant FKs: expected >= 202 validated composite FKs, got %', v_fk; end if;
+  if v_left > 0 then raise exception 'FAIL tenant FKs: % single-column FK(s) between tenant tables remain', v_left; end if;
+  if v_trg < 63 then raise exception 'FAIL tenant scope triggers: expected >= 63, got %', v_trg; end if;
+  raise notice 'TENANT INTEGRITY OK (composite_fks=%, scope_triggers=%)', v_fk, v_trg;
+end $$;
+
 \echo '== Assertions =='
 do $$
 declare
@@ -63,7 +93,8 @@ begin
     where n.nspname in ('core','iam','ref','crm','students','assessment','educators',
                         'education','scheduling','finance','legal','media','ops','camps','consultancy')
       and c.relkind in ('r','p') and not c.relispartition;
-  if v_tab <> 137 then raise exception 'FAIL tables: expected 137, got %', v_tab; end if;
+  -- No fixed table count: completeness is checked by drift.sql, which compares this
+  -- layer-built schema with the Flyway-built one (tables, columns, FKs, unique indexes, triggers).
 
   select count(*) into v_excl from pg_constraint where contype='x';
   if v_excl <> 2 then raise exception 'FAIL exclusion constraints: expected 2, got %', v_excl; end if;

@@ -12,6 +12,7 @@ create table media.camera (
   name           text not null,
   stream_provider_id uuid references core.integration_connection(id),  -- streaming provider (vendor-agnostic)
   stream_ref     text,                                          -- provider-specific stream id (no raw secrets)
+  camera_type_id uuid references ref.ref_value(id),             -- ref_type 'camera_type' (V20)
   is_active      boolean not null default true,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
@@ -44,6 +45,7 @@ create table media.viewing_authorization (
   student_id     uuid not null references students.student(id),
   session_id     uuid references scheduling.session(id),        -- NULL => standing authorization for the student
   consent_id     uuid references legal.student_consent(id),     -- the camera_viewing consent backing this grant
+  access_type_id uuid references ref.ref_value(id),             -- ref_type 'access_type' (V20)
   valid_from     timestamptz not null default now(),
   valid_to       timestamptz,
   granted_by     uuid,

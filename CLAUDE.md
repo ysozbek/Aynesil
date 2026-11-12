@@ -27,6 +27,8 @@ dotnet build Aynesil.sln
 dotnet run --project src/Aynesil.Api          # http://localhost:5000
 dotnet test tests/Aynesil.Tests                # xUnit + FluentAssertions + Moq + Testcontainers
 dotnet test tests/Aynesil.Tests --filter "FullyQualifiedName~SomeTest"
+dotnet test tests/Aynesil.IntegrationTests        # Docker: PG17 + real Flyway; [Trait("Category","Integration")]
+dotnet test Aynesil.sln --filter "Category!=Integration"   # everything except Docker tests
 
 # Frontend (frontend/aynesil-web)
 npm run dev          # Vite on :5173, proxies /api → VITE_API_BASE_URL (default http://localhost:5000)
@@ -67,9 +69,10 @@ New customer (tenant) onboarding: `python3 devops/new_tenant.py --check --code <
 Permission-based RBAC: `[HasPermission(Permissions.X.Y)]` with a dynamic policy provider (`Api/Authorization`). Never check role names. On the frontend, use `composables/usePermission.ts`. Menus are DB-driven (`iam.menu_item` + translations, `required_permission`, `feature_flag`).
 
 ### Database changes
-- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (currently V37). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
+- Schema changes go in Flyway migrations `db/migrations/V{N}__description.sql`, using the next sequential number (latest is V42, so the next is V43). Requires PostgreSQL 15+ (target 17). `afterMigrate__app_role_grants.sql` re-grants the app role. Migrations must be idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). New tables need RLS policies and grants to `aynesil_app`.
 - A new module typically ships a `V{N}__<module>_permissions_and_menu.sql` that seeds `iam` permissions, `menu_item` rows and their `tr` translations. Keep it in sync with `Shared/Constants/Permissions.cs` and frontend routes.
-- The layered DDL files (`db/layer*/`) are also kept in sync when a migration changes a table.
+- The layered DDL files (`db/layer*/`) are also kept in sync when a migration changes a table. Migrations are the source of truth; `bash db/validation/smoke_test.sh` builds both and fails on any drift (`db/validation/drift.sql`, incl. RLS/policies) or on a tenant table without RLS + `tenant_isolation`. A table created by a migration must enable RLS and add its policy itself — `99_triggers_rls_policies.sql` only runs in the V1 baseline.
+- **Tenant integrity (#86, V38–V41, `db/98_tenant_integrity.sql`):** an FK between two tenant tables must be composite — `FOREIGN KEY (corporation_id, x) REFERENCES parent (corporation_id, id)` — and the parent needs a unique `(corporation_id, id)` index (FK checks bypass RLS). References to tables that also hold global rows (`ref.ref_value`, templates, definitions) get a `core.enforce_global_or_tenant_ref` trigger instead. New tables/FKs follow the same rule. Manual down scripts live in `db/rollback/`.
 
 ### Frontend (frontend/aynesil-web)
 Vue 3 Composition API + Pinia + Vue Router + vue-i18n + Metronic 9 (Tailwind 4, `@keenthemes/ktui`). Per-module layering: `services/*.service.ts` (Axios via `api.service.ts`), `stores/*.store.ts`, `types/*.types.ts`, `views/<module>/`. Shared UI is in `components/shared` (DataTable, FormModal, ConfirmModal). All display text goes through i18n (`i18n/locales/tr.ts`). `@` aliases `src/`.

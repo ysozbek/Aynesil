@@ -25,6 +25,11 @@ create table ops.survey_definition (
   deleted_at  timestamptz,
   row_version integer not null default 1
 );
+
+-- core.audit_trigger on survey definitions (as in migration V17; ops is outside 99's audit loop)
+create or replace trigger trg_audit
+  after insert or update or delete on ops.survey_definition
+  for each row execute function core.audit_trigger();
 comment on table ops.survey_definition is
   'Configurable survey/feedback form header. Multi-question. '
   'Targets: guardian (parent portal), educator (internal), student.';

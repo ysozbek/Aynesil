@@ -62,7 +62,7 @@ create table iam.auth_session (
   expires_at         timestamptz not null,
   revoked_at         timestamptz,
   refresh_token_hash text,
-  ip_address         inet,
+  ip_address         text,                                    -- EF maps string? (V5)
   user_agent         text
 );
 create index ix_auth_session_user on iam.auth_session(user_id) where revoked_at is null;

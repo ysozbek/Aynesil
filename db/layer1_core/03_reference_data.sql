@@ -46,6 +46,7 @@ create table ref.ref_value (
   updated_at  timestamptz not null default now(),
   updated_by  uuid,
   deleted_at  timestamptz,
+  deleted_by  uuid,                                             -- V30
   row_version integer not null default 1,
   primary key (id),
   -- enables composite FK pinning so a business column can only point at the RIGHT category:

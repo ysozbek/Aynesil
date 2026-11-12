@@ -63,6 +63,27 @@ begin
   end loop;
 end $$;
 
+-- Tables added by later migrations define a strict tenant policy (no `corporation_id IS NULL`
+-- branch; the column is NOT NULL there). Mirror them exactly so layer DDL and migrations agree
+-- (checked by db/validation/drift.sql): V17 surveys, V22 camp activities, V35 recurring educators.
+do $$
+declare r record;
+begin
+  for r in
+    select * from (values
+      ('ops', 'survey_definition'), ('ops', 'survey_response'),
+      ('camps', 'camp_activity'), ('camps', 'camp_educator'), ('camps', 'camp_activity_participation'),
+      ('scheduling', 'recurring_schedule_educator')
+    ) as t(sch, tbl)
+  loop
+    execute format('drop policy if exists tenant_isolation on %I.%I', r.sch, r.tbl);
+    execute format(
+      'create policy tenant_isolation on %I.%I
+         using (corporation_id = core.current_corporation_id())
+         with check (corporation_id = core.current_corporation_id())', r.sch, r.tbl);
+  end loop;
+end $$;
+
 -- iam.menu_item: platform defaults (corporation_id IS NULL) are readable/updatable
 -- by every tenant (reorder, activate/deactivate) but INSERT/DELETE stay tenant-scoped.
 alter table iam.menu_item enable row level security;

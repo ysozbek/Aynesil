@@ -85,6 +85,18 @@ public class ExceptionMiddleware
                 StatusCodes.Status409Conflict,
                 ApiResponse.Fail("Aynı anahtara sahip bir kayıt zaten mevcut.")),
 
+            // 23503 from a composite tenant FK or the global-or-tenant reference trigger (#86).
+            // Raw SQL (ExecuteSqlRaw) surfaces the PostgresException without a DbUpdateException.
+            _ when PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out _)
+                   == PostgresErrorClassifier.ForeignKeyViolation.MissingOrForeignReference => (
+                StatusCodes.Status422UnprocessableEntity,
+                ApiResponse.Fail("İlişkili kayıt bulunamadı veya bu kuruma ait değil.")),
+
+            _ when PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out _)
+                   == PostgresErrorClassifier.ForeignKeyViolation.StillReferenced => (
+                StatusCodes.Status409Conflict,
+                ApiResponse.Fail("Bu kayıt başka kayıtlarda kullanıldığı için silinemez.")),
+
             OperationCanceledException => (
                 StatusCodes.Status499ClientClosedRequest,
                 ApiResponse.Fail("İstek iptal edildi.")),
@@ -95,6 +107,14 @@ public class ExceptionMiddleware
                     ? exception.Message
                     : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
         };
+
+        if (PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out var fkConstraint)
+            != PostgresErrorClassifier.ForeignKeyViolation.None)
+        {
+            // Client gets a generic message; the constraint name stays in the logs for diagnosis.
+            _logger.LogWarning("Foreign key violation on {Constraint}. TraceId={TraceId} Path={Path}",
+                fkConstraint, traceId, context.Request.Path);
+        }
 
         if (statusCode == StatusCodes.Status500InternalServerError)
         {

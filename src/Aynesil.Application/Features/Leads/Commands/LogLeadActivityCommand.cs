@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Leads.Dtos;
 using Aynesil.Domain.Modules.Crm.Entities;
 using FluentValidation;
@@ -43,19 +44,27 @@ public sealed class LogLeadActivityCommandHandler : IRequestHandler<LogLeadActiv
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public LogLeadActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public LogLeadActivityCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<LeadActivityDto> Handle(LogLeadActivityCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var lead = await _db.Leads
             .AsNoTracking()
-            .FirstOrDefaultAsync(l => l.Id == req.LeadId, ct)
+            .FirstOrDefaultAsync(l => l.Id == req.LeadId && l.CorporationId == corporationId, ct)
             ?? throw new NotFoundException("Lead", req.LeadId);
+
+        // PerformedBy is chosen by the client (the activity may have been done by a colleague),
+        // but it must be a user of this corporation.
+        await TenantUserGuard.EnsureBelongsToTenantAsync(_db, corporationId, req.PerformedBy, nameof(req.PerformedBy), ct);
 
         var activity = LeadActivity.Create(
             lead.CorporationId,

@@ -1,5 +1,6 @@
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using Aynesil.Application.Features.Leads.Dtos;
 using FluentValidation;
@@ -32,18 +33,26 @@ public sealed class CompleteInterviewCommandHandler : IRequestHandler<CompleteIn
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public CompleteInterviewCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public CompleteInterviewCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<InterviewDto> Handle(CompleteInterviewCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var interview = await _db.Interviews
-            .FirstOrDefaultAsync(i => i.Id == req.InterviewId, ct)
+            .FirstOrDefaultAsync(i => i.Id == req.InterviewId && i.CorporationId == corporationId, ct)
             ?? throw new NotFoundException("Interview", req.InterviewId);
+
+        // ConductedBy is chosen by the client (another staff member may have run the interview),
+        // but it must be a user of this corporation.
+        await TenantUserGuard.EnsureBelongsToTenantAsync(_db, corporationId, req.ConductedBy, nameof(req.ConductedBy), ct);
 
         if (interview.RowVersion != req.RowVersion)
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(

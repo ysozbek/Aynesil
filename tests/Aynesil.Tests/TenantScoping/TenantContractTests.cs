@@ -35,6 +35,8 @@ public class TenantContractTests
     private static readonly string[] TenantScopedRequests =
     [
         "AddMeetingFollowUpCommand",
+        "CompleteInterviewCommand",
+        "LogLeadActivityCommand",
         "AddMeetingParticipantCommand",
         "ApplyDiscountCommand",
         "AssignCameraToRoomCommand",

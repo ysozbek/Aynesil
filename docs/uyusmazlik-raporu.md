@@ -7,7 +7,7 @@
 
 ## 1. Özet
 
-Toplam **86** bulgu: Kritik: **19**, Yüksek: **35**, Orta: **19**, Düşük: **13**, Şüpheli: **0**.
+Toplam **87** bulgu: Kritik: **20**, Yüksek: **35**, Orta: **19**, Düşük: **13**, Şüpheli: **0**.
 
 | Modül | Kritik | Yüksek | Orta | Düşük | Şüpheli | Toplam |
 |---|---|---|---|---|---|---|
@@ -23,14 +23,14 @@ Toplam **86** bulgu: Kritik: **19**, Yüksek: **35**, Orta: **19**, Düşük: **
 | Kullanıcılar | 1 | 0 | 1 | 0 | 0 | 2 |
 | Kurumlar | 1 | 0 | 1 | 0 | 0 | 2 |
 | CRM (Aday) | 0 | 5 | 0 | 0 | 0 | 5 |
-| Okul Danışmanlığı | 0 | 2 | 3 | 1 | 0 | 6 |
+| Okul Danışmanlığı | 1 | 2 | 3 | 1 | 0 | 7 |
 | Performans / KPI | 0 | 1 | 0 | 1 | 0 | 2 |
 | Roller / İzinler | 0 | 1 | 0 | 0 | 0 | 1 |
 | Genel | 1 | 0 | 2 | 1 | 0 | 4 |
 | Değerlendirme | 0 | 0 | 0 | 1 | 0 | 1 |
 | Platform | 0 | 0 | 0 | 1 | 0 | 1 |
 | Programlar / Kayıtlar | 0 | 0 | 0 | 1 | 0 | 1 |
-| **Toplam** | **19** | **35** | **19** | **13** | **0** | **86** |
+| **Toplam** | **20** | **35** | **19** | **13** | **0** | **87** |
 
 ## 2. Bulgular
 
@@ -288,7 +288,8 @@ Tüm modüller tarandı; yarım kalan modül yok.
 
 | # | Önem | Modül | Kategori | Ekran / Akış | Frontend (dosya:satır) | Backend veya DB (dosya:satır) | Sorun | Kullanıcıya etkisi | Önerilen düzeltme |
 |---|---|---|---|---|---|---|---|---|---|
-| 86 | Kritik | Genel (çok kiracılık) | güvenlik | İstemcinin alt kayıt id'si gönderdiği tüm oluşturma akışları (kamp kaydı, toplantı katılımcısı/takip görevi, izleme yetkisi vb.) | — | db/layer2_sped/11_camps.sql, 10_ops.sql, 09_media.sql; ilgili handler'lar (Features/Camps, Meetings, Cameras) | PostgreSQL FK kontrolleri RLS'e takılmaz. İstemci başka kiracıya ait bir `student_id`, `user_id`, `guardian_id` vb. gönderirse FK doğrulaması geçer ve satır mevcut kiracı altında yazılır. Handler'lar yalnızca üst kaydı (kamp dönemi, toplantı vb.) kiracıya göre doğruluyor; alt kimlikleri doğrulamıyor. | Kiracılar arası veri bağlantısı kurulabilir (ör. A kurumunun toplantısına B kurumunun kullanıcısını katılımcı eklemek). Bu kayıtlar üzerinden yabancı kiracının kimlikleri ve ilişkili veriler sızabilir. | (1) DB: üst tablolara `UNIQUE (corporation_id, id)`, alt tablolara `FOREIGN KEY (corporation_id, x_id) REFERENCES parent (corporation_id, id)` composite FK eklenmeli (Flyway migration + layer DDL senkronu). (2) Uygulama: handler'larda alt kimlikler `CorporationId == tenant` ile doğrulanmalı ve anlamlı bir 404/422 dönmeli. |
+| 86 ✅ | Kritik | Genel (çok kiracılık) | güvenlik | İstemcinin alt kayıt id'si gönderdiği tüm oluşturma akışları (kamp kaydı, toplantı katılımcısı/takip görevi, izleme yetkisi vb.) | — | db/layer2_sped/11_camps.sql, 10_ops.sql, 09_media.sql; ilgili handler'lar (Features/Camps, Meetings, Cameras) | PostgreSQL FK kontrolleri RLS'e takılmaz. İstemci başka kiracıya ait bir `student_id`, `user_id`, `guardian_id` vb. gönderirse FK doğrulaması geçer ve satır mevcut kiracı altında yazılır. Handler'lar yalnızca üst kaydı (kamp dönemi, toplantı vb.) kiracıya göre doğruluyor; alt kimlikleri doğrulamıyor. | Kiracılar arası veri bağlantısı kurulabilir (ör. A kurumunun toplantısına B kurumunun kullanıcısını katılımcı eklemek). Bu kayıtlar üzerinden yabancı kiracının kimlikleri ve ilişkili veriler sızabilir. | (1) DB: üst tablolara `UNIQUE (corporation_id, id)`, alt tablolara `FOREIGN KEY (corporation_id, x_id) REFERENCES parent (corporation_id, id)` composite FK eklenmeli (Flyway migration + layer DDL senkronu). (2) Uygulama: handler'larda alt kimlikler `CorporationId == tenant` ile doğrulanmalı ve anlamlı bir 404/422 dönmeli. |
+| 87 ✅ | Kritik | Okul Danışmanlığı | güvenlik | Okul danışmanlığı → Sözleşmeler, Takip faaliyetleri | — | db/migrations/V26__consultancy_agreements_and_followups.sql; db/99_triggers_rls_policies.sql | V26 `consultancy.consultancy_agreement` ve `consultancy.follow_up_activity` tablolarını oluşturdu ve RLS ile updated_at tetikleyicisinin 99 tarafından "otomatik" uygulanacağını varsaydı. 99 ise yalnızca V1 baseline'ında çalışıyor. Migration yoluyla kurulan her veritabanında bu iki tabloda RLS kapalıydı, politika yoktu ve `aynesil_app` okuma yetkisine sahipti. | Her kurum, diğer kurumların danışmanlık sözleşmelerini ve takip faaliyetlerini görebiliyordu (kiracı izolasyonu yok). | ✅ V42: RLS açıldı; `tenant_isolation` politikası ve `trg_set_updated_at` tetikleyicisi diğer tablolarla birebir aynı tanımla eklendi. `db/validation/drift.sql` içine "her kiracı tablosunda RLS + tenant_isolation" değişmez kontrolü eklendi. Entegrasyon testi: A kiracısı B'nin satırlarını görmüyor. |
 
 **#86 — etkilenen tablolar ve FK'lar** (bu partide ele alınan komutlarla sınırlı tarama; aynı desen başka modüllerde de muhtemel):
 
@@ -302,6 +303,44 @@ Tüm modüller tarandı; yarım kalan modül yok.
 | `core.notification_preference`, `consultancy.observation_record`, `media.viewing_authorization` | `category_id`, `channel_id`, `observation_type_id`, `access_type_id` → `ref.ref_value(id)` | Ref değerleri global olabiliyor (`corporation_id IS NULL`), bu yüzden composite FK uygun değil. Doğrulama "global ya da kendi kiracısı" şeklinde olmalı |
 
 Composite FK, üst tabloda `(corporation_id, id)` üzerinde unique kısıt gerektiriyor. `id` zaten PK olduğu için bu kısıt veri açısından risksiz; yalnızca ek bir index maliyeti var.
+
+**#86 çözüm notu (2026-11-12):** Tarama, yukarıdaki örneklemle sınırlı kalmadı; şemanın tamamına uygulandı.
+
+- **Composite FK'lar:** İki kiracı tablosu arasındaki **202 FK**'nın tamamı `(corporation_id, x) → parent(corporation_id, id)` biçimine çevrildi. 39 hedef tabloya unique `(corporation_id, id)` index'i eklendi.
+  - V38: index'ler, `CONCURRENTLY` ile.
+  - V39: FK'lar, `NOT VALID` olarak.
+  - V40: `VALIDATE` adımı.
+  - `ON DELETE` davranışları korundu: 125 NO ACTION, 74 CASCADE, 1 RESTRICT, 2 SET NULL. SET NULL için `SET NULL (col)` biçimi kullanıldı; bu yüzden **PG15+ zorunlu** oldu.
+- **Global olabilen tablolar:** Global satır da tutan tablolara giden **72 FK** için genel bir tetikleyici eklendi (`core.enforce_global_or_tenant_ref`, V41, 63 tetikleyici). Kural: hedef satır global olmalı ya da aynı kiracıya ait olmalı.
+- **`media.viewing_log`:** DB'de FK yok. `StartViewingSession` kamera ve seansı kiracıya göre doğruluyor; yetki belirli bir seansa bağlıysa başka bir seans için kullanılamıyor.
+- **CRM:** `CompleteInterview.ConductedBy` ve `LogLeadActivity.PerformedBy` istemciden gelmeye devam ediyor, ama seçilen kullanıcı mevcut kiracıya ait olmak zorunda (`TenantUserGuard`).
+- **API hata eşlemesi:** 23503 ikiye ayrıldı:
+  - ekleme/güncelleme ihlali → 422, "İlişkili kayıt bulunamadı veya bu kuruma ait değil."
+  - silme ihlali → 409, "Bu kayıt başka kayıtlarda kullanıldığı için silinemez."
+
+  Npgsql `Detail` alanını varsayılan olarak gizlediği için ayrım, gizlenmeyen `MessageText` üzerinden yapılıyor; `Detail` doluysa o da kullanılıyor (`PostgresErrorClassifier`).
+- **Geri alma:** `db/rollback/V38-V41__tenant_integrity_down.sql`.
+- **Doğrulama:**
+  - Seed verisinde kiracılar arası referans yoktu (275 FK kontrol edildi).
+  - PG17 + Flyway üzerinde V38–V41 uygulandı; down betiğinden sonra FK envanteri V38 öncesiyle birebir aynı çıktı; yeniden uygulama da çalıştı.
+  - `tests/Aynesil.IntegrationTests` 8/8 geçti.
+  - Layer kaynağı: `db/98_tenant_integrity.sql`. Migration'larla aynı sonucu üretiyor: 202 composite FK, 72 FK için 63 tetikleyici.
+  - Bunun için migration'larda olup layer'da eksik olan şu nesneler layer dosyalarına eklendi:
+    - `consultancy_agreement` ve `follow_up_activity` tabloları (V26),
+    - `core.notification_trigger_config` tablosu (V17),
+    - `consultancy_plan.consultancy_type_id` ve `observation_record.observation_type_id` kolonları (V24),
+    - `camera.camera_type_id` ve `viewing_authorization.access_type_id` kolonları (V20).
+  - Smoke testteki sabit tablo sayısı kontrolü kaldırıldı. Yerine `db/validation/drift.sql` geldi: aynı container'da layer DDL + seed ve Flyway ile iki veritabanı kuruluyor ve katalogları karşılaştırılıyor. Karşılaştırılanlar: tablolar, kolonlar (tip, nullability), FK'lar, unique index'ler, tetikleyiciler, RLS bayrakları ve politikalar.
+  - Ayrıca iki veritabanında da bir değişmez kontrolü çalışıyor: `corporation_id` kolonu olan her tabloda RLS açık olmalı ve `tenant_isolation` politikası bulunmalı. İstisna listesindeki 6 tablonun (`menu_item`, dört log tablosu, `outbox_event`) kendi beklenen kurulumları da doğrulanıyor.
+  - Kontrolün bulduğu kaymalar kapatıldı. Kural: migration'lar doğru kaynak; migration'ın hatalı olduğu yerler V42 ile düzeltildi.
+    - **V42 (migration hatası):**
+      - #87 (iki consultancy tablosunda RLS ve updated_at tetikleyicisi yoktu).
+      - `media.viewing_log.ip_address` tekrar `inet` oldu. Entity `IPAddress` ve EF `HasColumnType("inet")` eşlemesi kullanıyor; V29'un text'e çevirmesi hatalıydı.
+    - **Layer migration'lara uyduruldu:**
+      - `iam.auth_session.ip_address` ve `core.activity_log.ip_address` text yapıldı (entity'ler `string?`).
+      - Eklenenler: `core.notification_trigger_channel` (V17), `kpi_definition.is_active` (V23), `ref_value.deleted_by` (V30), `survey_definition.trg_audit` (V17).
+      - Sonradan eklenen 6 tablodaki sıkı `tenant_isolation` politikası 99'a yansıtıldı (V17, V22, V35).
+  - `bash db/validation/smoke_test.sh` yeşil bitiyor: kayma yok, değişmez kontrolü geçiyor.
 
 ## Ek D — Kiracı taraması (2026-11-12)
 

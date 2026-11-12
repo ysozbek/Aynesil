@@ -91,7 +91,7 @@ create table core.activity_log (
   target_table   text,
   target_id      uuid,
   context        jsonb not null default '{}'::jsonb,
-  ip_address     inet,
+  ip_address     text,                                          -- EF maps string? (V29)
   occurred_at    timestamptz not null default now(),
   primary key (id, occurred_at)
 ) partition by range (occurred_at);
@@ -124,6 +124,64 @@ create table core.notification_template_translation (
   body        text not null,
   primary key (template_id, locale)
 );
+
+-- ---------------------------------------------------------------------
+-- Configurable notification trigger rules (synced from migration V17)
+-- RLS tenant_isolation and trg_set_updated_at come from 99_triggers_rls_policies.sql;
+-- core is outside 99's audit loop, so the audit trigger is declared here as in V17.
+-- ---------------------------------------------------------------------
+create table core.notification_trigger_config (
+  id             uuid primary key default core.uuid_generate_v7(),
+  corporation_id uuid references core.corporation(id),             -- NULL = platform default rule
+  trigger_code   text not null,
+  -- 'session_reminder' | 'session_completed' | 'session_cancelled' |
+  -- 'educator_reassigned' | 'package_expiring' | 'package_expired' |
+  -- 'assessment_reminder' | 'meeting_reminder' | 'goal_milestone'
+  template_id    uuid references core.notification_template(id),
+  -- When to fire relative to the triggering event.
+  -- Negative = before event (e.g. -1440 = 24 h before session).
+  -- Zero or positive = at / after event.
+  offset_minutes integer not null default 0,
+  is_active      boolean not null default true,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  created_by     uuid,
+  row_version    integer not null default 1,
+  unique nulls not distinct (corporation_id, trigger_code)
+);
+comment on table core.notification_trigger_config is
+  'Business-configurable mapping: trigger event code → notification template + timing offset. '
+  'Channels are managed via core.notification_trigger_channel (junction). '
+  'One row per (tenant, trigger_code). NULL corporation_id = platform default, overridable per tenant.';
+comment on column core.notification_trigger_config.trigger_code is
+  'Stable application event code, e.g. ''session_reminder''. '
+  'Matches the code constant used in domain-event handlers.';
+comment on column core.notification_trigger_config.offset_minutes is
+  'Signed offset from the event timestamp. '
+  '-1440 = 24 h before, 0 = at event time, 60 = 1 h after.';
+
+create index ix_notification_trigger_config_corp
+  on core.notification_trigger_config (corporation_id, trigger_code)
+  where is_active;
+
+create or replace trigger trg_audit
+  after insert or update or delete on core.notification_trigger_config
+  for each row execute function core.audit_trigger();
+
+-- Trigger config → channel junction (synced from migration V17)
+create table core.notification_trigger_channel (
+  id               uuid primary key default core.uuid_generate_v7(),
+  trigger_config_id uuid not null
+    references core.notification_trigger_config(id) on delete cascade,
+  channel_id        uuid not null
+    references ref.ref_value(id),                                  -- ref_type 'notification_channel'
+  unique (trigger_config_id, channel_id)
+);
+create index ix_notification_trigger_channel_config
+  on core.notification_trigger_channel (trigger_config_id);
+comment on table core.notification_trigger_channel is
+  'Junction: one trigger config → many channels (email, sms, push, in_app, future). '
+  'channel_id → ref.ref_value(notification_channel).';
 
 create table core.notification (
   id             uuid primary key default core.uuid_generate_v7(),
@@ -211,6 +269,7 @@ create table core.kpi_definition (
   category_id    uuid references ref.ref_value(id),             -- ref_type 'kpi_category'
   unit           text,                                          -- '%','count','hours'
   spec           jsonb not null default '{}'::jsonb,            -- formula / aggregation definition
+  is_active      boolean not null default true,                 -- V23
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   row_version integer not null default 1,

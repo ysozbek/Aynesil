@@ -2,6 +2,11 @@
 
 PostgreSQL 17 schema for a two-layer enterprise SaaS platform:
 
+> **Minimum server version: PostgreSQL 15.** The target and the only tested version is
+> PostgreSQL 17. PG15+ is a hard requirement since migrations V38–V41 (#86 tenant integrity):
+> composite foreign keys use the column-list form `ON DELETE SET NULL (col)`, which older
+> versions reject.
+
 - **Layer 1 — Generic Enterprise Platform** (`core`, `iam`, `ref`): tenancy, identity/RBAC, configurable reference data, localization, settings, files, audit, notifications, reporting, integration. Reusable by any organization.
 - **Layer 2 — Special Education & Therapy** (`crm`, `students`, `assessment`, `educators`, `education`, `scheduling`, `finance`, `legal`, `media`, `ops`, `camps`, `consultancy`): the Akran Hareket domain.
 
@@ -12,6 +17,7 @@ See `../docs/` for the full architecture analysis (ER explanations, boundaries, 
 | Choice | Decision |
 |---|---|
 | Multi-tenancy | Shared schema, row-level isolation by `corporation_id`, enforced by **RLS** |
+| Cross-tenant references | FKs between tenant tables are composite `(corporation_id, x) → parent(corporation_id, id)` (FK checks bypass RLS); references to tables that also hold global rows (`ref.ref_value`, templates…) are checked by `core.enforce_global_or_tenant_ref()` — see `98_tenant_integrity.sql` / V38–V41 |
 | Primary keys | **UUID v7** (`core.uuid_generate_v7()`; native `uuidv7()` on PG18+) |
 | Module boundaries | One **PostgreSQL schema per bounded context** |
 | Configurable lists | `ref.ref_type` / `ref.ref_value` engine — new lists are data, not DDL |
@@ -27,6 +33,7 @@ export PGURL="postgres://OWNER@localhost/akran"      # OWNER role bypasses RLS f
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/00_extensions_conventions.sql
 for f in db/layer1_core/*.sql; do psql "$PGURL" -v ON_ERROR_STOP=1 -f "$f"; done
 for f in db/layer2_sped/*.sql; do psql "$PGURL" -v ON_ERROR_STOP=1 -f "$f"; done
+psql "$PGURL" -v ON_ERROR_STOP=1 -f db/98_tenant_integrity.sql
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/99_triggers_rls_policies.sql
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/seed/01_reference_data_seed.sql
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/seed/02_akran_bootstrap.sql
@@ -61,3 +68,15 @@ db/
 - Replace the `DEFAULT` log partitions with monthly partitions (pg_partman) + retention.
 - Add field-level encryption for `national_id` and raw clinical text (KVKK).
 - Wire migrations (Flyway/Liquibase) using these files as the baseline.
+
+## Rollback scripts
+
+`db/rollback/` holds manual down scripts for migrations that need one. They are **not**
+Flyway migrations (Flyway Community has no undo, and `R__`-prefixed files inside
+`db/migrations` would run as repeatable migrations). Run them as the owner role with
+`psql -v ON_ERROR_STOP=1 -f <file>`; each script also removes its versions from
+`flyway_schema_history`.
+
+| Script | Reverts |
+|---|---|
+| `rollback/V38-V41__tenant_integrity_down.sql` | #86 composite tenant FKs, unique `(corporation_id, id)` keys and global-or-tenant reference triggers |

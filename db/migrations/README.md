@@ -84,3 +84,14 @@ flyway.baselineVersion=1
 ```
 
 Baseline = migrate.sh'ın uyguladığı tüm DDL (zaten green-build doğrulanmış).
+
+## Transaction dışı migration'lar (`CREATE INDEX CONCURRENTLY`)
+
+`docker/flyway.conf` içinde `flyway.mixed=true` açık; transaction içinde çalışamayan bir ifade
+(ör. `CREATE INDEX CONCURRENTLY`, V38) içeren dosya Flyway tarafından transaction dışında
+çalıştırılır. Bunun için `flyway.postgresql.transactional.lock=false` de **gereklidir**: aksi
+halde Flyway kilit bağlantısında açık bir transaction tutar ve `CONCURRENTLY` onun bitmesini
+sonsuza kadar bekler. Böyle dosyalar yarıda kalabileceği için tekrar çalıştırılabilir yazılmalı
+(`IF NOT EXISTS`, yarım kalan `INVALID` index'lerin temizliği).
+
+Geri alma betikleri `db/rollback/` altındadır, bu klasörde değil (bkz. `db/README.md`).

@@ -232,6 +232,21 @@ public sealed class StartViewingSessionCommandHandler
                 $"ViewingAuthorization {req.AuthorizationId} not found.");
 
         // ── Guardian identity: derived from the signed-in portal user, never from the client.
+        // media.viewing_log has no FKs (append-only audit trail), so the referenced camera and
+        // session are validated here (#86): both must belong to this tenant, and a session-bound
+        // authorization can only be used for its own session.
+        if (req.CameraId.HasValue &&
+            !await _db.Cameras.AnyAsync(c => c.Id == req.CameraId.Value && c.CorporationId == corporationId, ct))
+            throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
+
+        if (req.SessionId.HasValue)
+        {
+            if (!await _db.Sessions.AnyAsync(s => s.Id == req.SessionId.Value && s.CorporationId == corporationId, ct))
+                throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            if (auth.SessionId.HasValue && auth.SessionId != req.SessionId)
+                throw new ForbiddenAccessException("This viewing authorization is bound to a different session.");
+        }
+
         var guardianId = await PortalGuardian.FindCurrentGuardianIdAsync(_db, corporationId, userId, ct);
         if (guardianId.HasValue)
         {
