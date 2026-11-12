@@ -178,3 +178,6 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
+
+// WebApplicationFactory<Program> (entegrasyon testleri) için erişilebilir giriş noktası.
+public partial class Program;
