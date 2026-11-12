@@ -66,6 +66,8 @@ public static class ApiServiceCollectionExtensions
 
         // ── API controllers & OpenAPI ─────────────────────────────────────────────
         services.AddControllers()
+            // JSON çözümleyicinin ham hata metni (iç tip adı, namespace, satır/konum) istemciye gitmez (Y8).
+            .AddJsonOptions(o => o.AllowInputFormatterExceptionMessages = false)
             .ConfigureApiBehaviorOptions(opts =>
             {
                 // Model bağlama hatalarını (400) ExceptionMiddleware ile aynı
@@ -73,14 +75,14 @@ public static class ApiServiceCollectionExtensions
                 opts.InvalidModelStateResponseFactory = ctx =>
                 {
                     // Kültür RequestCultureMiddleware'den gelir. Model bağlama hatalarının kodu yoktur → Error.InvalidValue.
+                    // Çerçevenin ürettiği metinler (JSON çözümleyici, "The X field is required." vb.) İngilizcedir ve
+                    // iç tip/yol bilgisi içerebilir; istemciye yalnızca yerelleştirilmiş genel metin gider (alan anahtarı korunur).
                     var invalidValue = Msg.Get(MsgKeys.Error.InvalidValue);
                     var pairs = ctx.ModelState
                         .Where(kv => kv.Value is { Errors.Count: > 0 })
                         .Select(kv => new KeyValuePair<string, string[]>(
                             kv.Key,
-                            kv.Value!.Errors
-                                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? invalidValue : e.ErrorMessage)
-                                .ToArray()))
+                            kv.Value!.Errors.Select(_ => invalidValue).Distinct().ToArray()))
                         .ToList();
                     var errors = Aynesil.Shared.ErrorKeyFormatter.Normalize(pairs);
                     var details = Aynesil.Shared.ErrorKeyFormatter.Normalize(pairs.Select(kv =>

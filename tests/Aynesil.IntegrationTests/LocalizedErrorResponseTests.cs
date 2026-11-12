@@ -114,4 +114,21 @@ public sealed class LocalizedErrorResponseTests : IDisposable
         en.GetProperty("code").GetString().Should().Be("Error.InvalidRequest");
         tr.TryGetProperty("errorDetails", out _).Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData("""{ "username": 123 }""")]                       // tip uyuşmazlığı
+    [InlineData("""{ "username": "a", "password": """)]          // bozuk JSON
+    [InlineData("""{ "username": "a", "password": "b", }""")]    // sondaki virgül
+    public async Task Model_binding_errors_do_not_leak_parser_details(string json)
+    {
+        var (status, body) = await PostLoginAsync(json, "en");
+
+        status.Should().Be(HttpStatusCode.BadRequest);
+        var raw = body.GetRawText();
+        raw.Should().NotContain("Aynesil.").And.NotContain("LineNumber").And.NotContain("BytePosition")
+            .And.NotContain("Path:").And.NotContain("could not be converted").And.NotContain("field is required");
+        foreach (var field in body.GetProperty("errors").EnumerateObject())
+            foreach (var message in field.Value.EnumerateArray())
+                message.GetString().Should().Be("Invalid value.");
+    }
 }
