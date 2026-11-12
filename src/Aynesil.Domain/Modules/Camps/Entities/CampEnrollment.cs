@@ -39,8 +39,7 @@ public class CampEnrollment : BaseEntity
         Guid? studentPackageId = null)
     {
         if (!ValidStatuses.Contains(status))
-            throw new ArgumentException(
-                $"Invalid enrollment status '{status}'. Valid: {string.Join(", ", ValidStatuses)}");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("Status", ValidStatuses));
 
         var enrollment = new CampEnrollment
         {

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -44,7 +45,7 @@ public sealed class AddMedicalReportCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var report = new MedicalReport
         {
@@ -98,7 +99,7 @@ public sealed class UpdateMedicalReportCommandHandler
     {
         var report = await _db.MedicalReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Medical report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MedicalReport"));
 
         if (report.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -135,7 +136,7 @@ public sealed class DeleteMedicalReportCommandHandler : IRequestHandler<DeleteMe
     {
         var report = await _db.MedicalReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Medical report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MedicalReport"));
 
         report.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

@@ -52,7 +52,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
     public async Task<UserDto> Handle(UpdateUserCommand req, CancellationToken ct)
     {
         var user = await _db.UserAccounts.FindAsync([req.UserId], ct)
-            ?? throw new NotFoundException("User", req.UserId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         if (req.RowVersion != user.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

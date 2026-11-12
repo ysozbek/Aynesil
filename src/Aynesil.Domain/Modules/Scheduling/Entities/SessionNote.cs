@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Scheduling.Entities;
 
 /// <summary>
@@ -29,7 +30,7 @@ public class SessionNote : TenantEntity
         Guid? authoredBy = null)
     {
         if (string.IsNullOrWhiteSpace(body))
-            throw new ArgumentException("Session note body cannot be empty.");
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
 
         return new SessionNote
         {
@@ -48,7 +49,7 @@ public class SessionNote : TenantEntity
     public void Edit(string body, bool parentVisible)
     {
         if (string.IsNullOrWhiteSpace(body))
-            throw new ArgumentException("Session note body cannot be empty.");
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
 
         Body          = body;
         ParentVisible = parentVisible;

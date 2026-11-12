@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -52,7 +53,7 @@ public sealed class AddAssessmentItemCommandHandler
     {
         var section = await _db.AssessmentSections
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
-            ?? throw new KeyNotFoundException($"Assessment section {req.SectionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
 
         var item = AssessmentItem.Create(
             req.SectionId, req.Code, req.Prompt,
@@ -109,7 +110,7 @@ public sealed class UpdateAssessmentItemCommandHandler
     {
         var item = await _db.AssessmentItems
             .FirstOrDefaultAsync(i => i.Id == req.ItemId, ct)
-            ?? throw new KeyNotFoundException($"Assessment item {req.ItemId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentItem"));
 
         item.Update(req.Code, req.Prompt, req.ResponseType, req.Choices, req.Weight, req.SortOrder);
         await _db.SaveChangesAsync(ct);
@@ -134,7 +135,7 @@ public sealed class DeleteAssessmentItemCommandHandler : IRequestHandler<DeleteA
     {
         var item = await _db.AssessmentItems
             .FirstOrDefaultAsync(i => i.Id == req.ItemId, ct)
-            ?? throw new KeyNotFoundException($"Assessment item {req.ItemId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentItem"));
 
         _db.AssessmentItems.Remove(item);
         await _db.SaveChangesAsync(ct);

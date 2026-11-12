@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -73,7 +74,7 @@ public sealed class DeleteCalendarEntryCommandHandler : IRequestHandler<DeleteCa
     public async Task Handle(DeleteCalendarEntryCommand req, CancellationToken ct)
     {
         var entry = await _db.CalendarEntries.FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"CalendarEntry {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CalendarEntry"));
 
         _db.CalendarEntries.Remove(entry);
         await _db.SaveChangesAsync(ct);

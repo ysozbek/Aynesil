@@ -76,7 +76,7 @@ public sealed class UpdateCorporationSettingsCommandHandler
     {
         var corp = await _db.Corporations
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Corporation", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         if (corp.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

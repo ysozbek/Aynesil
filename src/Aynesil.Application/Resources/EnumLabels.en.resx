@@ -48,6 +48,10 @@
   <data name="CampParticipationStatus.attended" xml:space="preserve"><value>attended</value></data>
   <data name="CampParticipationStatus.excused" xml:space="preserve"><value>excused</value></data>
   <data name="CampParticipationStatus.registered" xml:space="preserve"><value>registered</value></data>
+  <data name="Decision.approved" xml:space="preserve"><value>approved</value></data>
+  <data name="Decision.changes_requested" xml:space="preserve"><value>changes requested</value></data>
+  <data name="Decision.pending" xml:space="preserve"><value>pending</value></data>
+  <data name="Decision.rejected" xml:space="preserve"><value>rejected</value></data>
   <data name="Direction.inbound" xml:space="preserve"><value>inbound</value></data>
   <data name="Direction.outbound" xml:space="preserve"><value>outbound</value></data>
   <data name="EducatorRole.assistant" xml:space="preserve"><value>assistant</value></data>
@@ -57,19 +61,101 @@
   <data name="EmploymentType.contractor" xml:space="preserve"><value>contractor</value></data>
   <data name="EmploymentType.full_time" xml:space="preserve"><value>full-time</value></data>
   <data name="EmploymentType.part_time" xml:space="preserve"><value>part-time</value></data>
+  <data name="Entity.AcademicPeriod" xml:space="preserve"><value>academic period</value></data>
+  <data name="Entity.ActiveAssessmentTemplate" xml:space="preserve"><value>active assessment template</value></data>
+  <data name="Entity.ActiveProgram" xml:space="preserve"><value>active program</value></data>
+  <data name="Entity.ActiveSurveyDefinition" xml:space="preserve"><value>active survey definition</value></data>
+  <data name="Entity.Agreement" xml:space="preserve"><value>agreement</value></data>
+  <data name="Entity.AssessmentItem" xml:space="preserve"><value>assessment item</value></data>
+  <data name="Entity.AssessmentReport" xml:space="preserve"><value>assessment report</value></data>
+  <data name="Entity.AssessmentSection" xml:space="preserve"><value>assessment section</value></data>
+  <data name="Entity.AssessmentSession" xml:space="preserve"><value>assessment session</value></data>
+  <data name="Entity.AssessmentTemplate" xml:space="preserve"><value>assessment template</value></data>
+  <data name="Entity.AttendanceRecord" xml:space="preserve"><value>attendance record</value></data>
+  <data name="Entity.CalendarEntry" xml:space="preserve"><value>calendar entry</value></data>
   <data name="Entity.Camera" xml:space="preserve"><value>camera</value></data>
   <data name="Entity.Camp" xml:space="preserve"><value>camp</value></data>
+  <data name="Entity.CampActivity" xml:space="preserve"><value>camp activity</value></data>
+  <data name="Entity.CampEducatorAssignment" xml:space="preserve"><value>camp educator assignment</value></data>
+  <data name="Entity.CampPeriod" xml:space="preserve"><value>camp period</value></data>
+  <data name="Entity.Campus" xml:space="preserve"><value>campus</value></data>
+  <data name="Entity.CampusAssignment" xml:space="preserve"><value>campus assignment</value></data>
+  <data name="Entity.CampusEnrollment" xml:space="preserve"><value>campus enrollment</value></data>
+  <data name="Entity.CareTeamAssignment" xml:space="preserve"><value>care team assignment</value></data>
+  <data name="Entity.CaseNote" xml:space="preserve"><value>case note</value></data>
+  <data name="Entity.Certification" xml:space="preserve"><value>certification</value></data>
   <data name="Entity.ConsentTemplate" xml:space="preserve"><value>consent template</value></data>
+  <data name="Entity.ConsultancyPlan" xml:space="preserve"><value>consultancy plan</value></data>
+  <data name="Entity.ConsultancyReport" xml:space="preserve"><value>consultancy report</value></data>
   <data name="Entity.ContractTemplate" xml:space="preserve"><value>contract template</value></data>
+  <data name="Entity.Corporation" xml:space="preserve"><value>corporation</value></data>
+  <data name="Entity.DevelopmentReport" xml:space="preserve"><value>development report</value></data>
+  <data name="Entity.Diagnosis" xml:space="preserve"><value>diagnosis</value></data>
+  <data name="Entity.EducationPlan" xml:space="preserve"><value>education plan</value></data>
+  <data name="Entity.Educator" xml:space="preserve"><value>educator</value></data>
+  <data name="Entity.Enrollment" xml:space="preserve"><value>enrollment</value></data>
+  <data name="Entity.ExternalInstitutionReport" xml:space="preserve"><value>external institution report</value></data>
+  <data name="Entity.File" xml:space="preserve"><value>file</value></data>
+  <data name="Entity.FollowUpActivity" xml:space="preserve"><value>follow up activity</value></data>
+  <data name="Entity.GoalLibrary" xml:space="preserve"><value>goal library</value></data>
+  <data name="Entity.GoalTemplate" xml:space="preserve"><value>goal template</value></data>
+  <data name="Entity.Guardian" xml:space="preserve"><value>guardian</value></data>
+  <data name="Entity.GuardianLink" xml:space="preserve"><value>guardian link</value></data>
+  <data name="Entity.HierarchyEdge" xml:space="preserve"><value>hierarchy edge</value></data>
+  <data name="Entity.Institution" xml:space="preserve"><value>institution</value></data>
+  <data name="Entity.Interview" xml:space="preserve"><value>interview</value></data>
+  <data name="Entity.Invoice" xml:space="preserve"><value>invoice</value></data>
+  <data name="Entity.InvoiceLine" xml:space="preserve"><value>invoice line</value></data>
   <data name="Entity.KpiDefinition" xml:space="preserve"><value>KPI definition</value></data>
+  <data name="Entity.Lead" xml:space="preserve"><value>lead</value></data>
+  <data name="Entity.LeaveBalance" xml:space="preserve"><value>leave balance</value></data>
+  <data name="Entity.LeaveRequest" xml:space="preserve"><value>leave request</value></data>
+  <data name="Entity.MakeupRequest" xml:space="preserve"><value>makeup request</value></data>
+  <data name="Entity.MedicalReport" xml:space="preserve"><value>medical report</value></data>
+  <data name="Entity.Meeting" xml:space="preserve"><value>meeting</value></data>
+  <data name="Entity.MeetingFollowUp" xml:space="preserve"><value>meeting follow up</value></data>
+  <data name="Entity.MeetingOutcome" xml:space="preserve"><value>meeting outcome</value></data>
+  <data name="Entity.MeetingParticipant" xml:space="preserve"><value>meeting participant</value></data>
   <data name="Entity.MenuItem" xml:space="preserve"><value>menu item</value></data>
+  <data name="Entity.Notification" xml:space="preserve"><value>notification</value></data>
   <data name="Entity.NotificationTemplate" xml:space="preserve"><value>notification template</value></data>
+  <data name="Entity.NotificationTriggerConfig" xml:space="preserve"><value>notification trigger config</value></data>
+  <data name="Entity.Observation" xml:space="preserve"><value>observation</value></data>
   <data name="Entity.PackageDefinition" xml:space="preserve"><value>package definition</value></data>
+  <data name="Entity.Participation" xml:space="preserve"><value>participation</value></data>
+  <data name="Entity.Payment" xml:space="preserve"><value>payment</value></data>
+  <data name="Entity.Permission" xml:space="preserve"><value>permission</value></data>
+  <data name="Entity.PlanGoal" xml:space="preserve"><value>plan goal</value></data>
   <data name="Entity.Program" xml:space="preserve"><value>program</value></data>
+  <data name="Entity.ProgramRecommendation" xml:space="preserve"><value>program recommendation</value></data>
+  <data name="Entity.ProgramService" xml:space="preserve"><value>program service</value></data>
   <data name="Entity.Promotion" xml:space="preserve"><value>promotion</value></data>
-  <data name="Entity.RefValue" xml:space="preserve"><value>reference value</value></data>
+  <data name="Entity.Record" xml:space="preserve"><value>record</value></data>
+  <data name="Entity.RecurringSchedule" xml:space="preserve"><value>recurring schedule</value></data>
+  <data name="Entity.RefType" xml:space="preserve"><value>ref type</value></data>
+  <data name="Entity.RefValue" xml:space="preserve"><value>ref value</value></data>
+  <data name="Entity.Refund" xml:space="preserve"><value>refund</value></data>
   <data name="Entity.Role" xml:space="preserve"><value>role</value></data>
+  <data name="Entity.RolePermission" xml:space="preserve"><value>role permission</value></data>
   <data name="Entity.Room" xml:space="preserve"><value>room</value></data>
+  <data name="Entity.Scholarship" xml:space="preserve"><value>scholarship</value></data>
+  <data name="Entity.SchoolVisit" xml:space="preserve"><value>school visit</value></data>
+  <data name="Entity.Session" xml:space="preserve"><value>session</value></data>
+  <data name="Entity.SessionNote" xml:space="preserve"><value>session note</value></data>
+  <data name="Entity.SourceAssignment" xml:space="preserve"><value>source assignment</value></data>
+  <data name="Entity.SpecialtyAssignment" xml:space="preserve"><value>specialty assignment</value></data>
+  <data name="Entity.Student" xml:space="preserve"><value>student</value></data>
+  <data name="Entity.StudentConsent" xml:space="preserve"><value>student consent</value></data>
+  <data name="Entity.StudentContract" xml:space="preserve"><value>student contract</value></data>
+  <data name="Entity.StudentGoal" xml:space="preserve"><value>student goal</value></data>
+  <data name="Entity.StudentPackage" xml:space="preserve"><value>student package</value></data>
+  <data name="Entity.StudentProgram" xml:space="preserve"><value>student program</value></data>
+  <data name="Entity.SupervisorEducator" xml:space="preserve"><value>supervisor educator</value></data>
+  <data name="Entity.SurveyDefinition" xml:space="preserve"><value>survey definition</value></data>
+  <data name="Entity.User" xml:space="preserve"><value>user</value></data>
+  <data name="Entity.UserAccount" xml:space="preserve"><value>user account</value></data>
+  <data name="Entity.UserRole" xml:space="preserve"><value>user role</value></data>
+  <data name="Entity.ViewingAuthorization" xml:space="preserve"><value>viewing authorization</value></data>
   <data name="EntryType.closure" xml:space="preserve"><value>closure</value></data>
   <data name="EntryType.event" xml:space="preserve"><value>event</value></data>
   <data name="EntryType.holiday" xml:space="preserve"><value>holiday</value></data>
@@ -103,6 +189,16 @@
   <data name="RecurrenceAction.cancel" xml:space="preserve"><value>cancel</value></data>
   <data name="RecurrenceAction.reschedule" xml:space="preserve"><value>reschedule</value></data>
   <data name="RecurrenceAction.skip" xml:space="preserve"><value>skip</value></data>
+  <data name="RefType.certification_type" xml:space="preserve"><value>certification type</value></data>
+  <data name="RefType.development_area" xml:space="preserve"><value>development area</value></data>
+  <data name="RefType.educator_relationship" xml:space="preserve"><value>educator relationship</value></data>
+  <data name="RefType.educator_title" xml:space="preserve"><value>educator title</value></data>
+  <data name="RefType.enrollment_status" xml:space="preserve"><value>enrollment status</value></data>
+  <data name="RefType.goal_category" xml:space="preserve"><value>goal category</value></data>
+  <data name="RefType.program_type" xml:space="preserve"><value>program type</value></data>
+  <data name="RefType.service_type" xml:space="preserve"><value>service type</value></data>
+  <data name="RefType.specialty" xml:space="preserve"><value>specialty</value></data>
+  <data name="RefType.student_status" xml:space="preserve"><value>student status</value></data>
   <data name="ResponseType.boolean" xml:space="preserve"><value>yes/no</value></data>
   <data name="ResponseType.choice" xml:space="preserve"><value>choice</value></data>
   <data name="ResponseType.numeric" xml:space="preserve"><value>numeric</value></data>
@@ -119,6 +215,7 @@
   <data name="Status.achieved" xml:space="preserve"><value>achieved</value></data>
   <data name="Status.active" xml:space="preserve"><value>active</value></data>
   <data name="Status.approved" xml:space="preserve"><value>approved</value></data>
+  <data name="Status.attended" xml:space="preserve"><value>attended</value></data>
   <data name="Status.authorized" xml:space="preserve"><value>authorized</value></data>
   <data name="Status.bounced" xml:space="preserve"><value>bounced</value></data>
   <data name="Status.cancelled" xml:space="preserve"><value>cancelled</value></data>
@@ -159,6 +256,7 @@
   <data name="Status.queued" xml:space="preserve"><value>queued</value></data>
   <data name="Status.read" xml:space="preserve"><value>read</value></data>
   <data name="Status.refunded" xml:space="preserve"><value>refunded</value></data>
+  <data name="Status.registered" xml:space="preserve"><value>registered</value></data>
   <data name="Status.rejected" xml:space="preserve"><value>rejected</value></data>
   <data name="Status.requested" xml:space="preserve"><value>requested</value></data>
   <data name="Status.rescheduled" xml:space="preserve"><value>rescheduled</value></data>

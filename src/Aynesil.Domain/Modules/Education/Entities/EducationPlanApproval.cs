@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Education.Entities;
 
 /// <summary>
@@ -31,8 +32,7 @@ public class EducationPlanApproval : BaseEntity
         string? comment = null)
     {
         if (!new[] { "approved", "rejected", "changes_requested" }.Contains(decision))
-            throw new ArgumentException(
-                $"Invalid decision '{decision}'. Must be approved, rejected, or changes_requested.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Decision"), MsgArg.Values("Decision", "approved", "rejected", "changes_requested"));
 
         return new EducationPlanApproval
         {

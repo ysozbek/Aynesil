@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Finance.Entities;
 
 /// <summary>
@@ -42,7 +43,7 @@ public class Promotion : BaseEntity
         ValidateValue(value, isPercentage);
 
         if (validFrom.HasValue && validTo.HasValue && validTo < validFrom)
-            throw new ArgumentException("Promotion valid_to must be on or after valid_from.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("ValidTo"), MsgArg.Field("ValidFrom"));
 
         return new Promotion
         {
@@ -93,9 +94,9 @@ public class Promotion : BaseEntity
     private static void ValidateValue(decimal value, bool isPercentage)
     {
         if (value <= 0)
-            throw new ArgumentException("Promotion value must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Value"));
 
         if (isPercentage && value > 100)
-            throw new ArgumentException("Percentage promotion cannot exceed 100%.");
+            throw new InvalidArgumentException(MsgKeys.Validation.PercentageMax100, MsgArg.Field("PromotionPercentage"));
     }
 }

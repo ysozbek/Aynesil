@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Shared;
@@ -78,7 +80,7 @@ public sealed class GetMakeupRequestQueryHandler : IRequestHandler<GetMakeupRequ
     {
         var m = await _db.MakeupRequests.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         var student = await _db.Students.AsNoTracking()
             .Where(s => s.Id == m.StudentId)

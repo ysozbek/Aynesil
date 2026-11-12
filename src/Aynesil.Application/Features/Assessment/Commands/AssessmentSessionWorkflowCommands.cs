@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
@@ -43,7 +44,7 @@ public sealed class UpdateAssessmentSessionCommandHandler
     {
         var session = await _db.AssessmentSessions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         session.UpdateSchedule(req.ScheduledAt, req.AssessorId, req.CampusId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -73,7 +74,7 @@ public sealed class StartAssessmentSessionCommandHandler
     {
         var session = await _db.AssessmentSessions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         session.Start(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -105,7 +106,7 @@ public sealed class CompleteAssessmentSessionCommandHandler
             .Include(s => s.Responses)
                 .ThenInclude(r => r.Item)
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         var template = await _db.AssessmentTemplates
             .AsNoTracking()
@@ -162,7 +163,7 @@ public sealed class CancelAssessmentSessionCommandHandler
     {
         var session = await _db.AssessmentSessions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         session.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -191,7 +192,7 @@ public sealed class DeleteAssessmentSessionCommandHandler
     {
         var session = await _db.AssessmentSessions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         if (session.Status != Domain.Modules.Assessment.Entities.AssessmentSession.SessionStatuses.Planned)
             throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPlannedSessionDelete);

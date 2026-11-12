@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Campuses.Dtos;
@@ -22,7 +23,7 @@ public sealed class GetCampusQueryHandler : IRequestHandler<GetCampusQuery, Camp
             .AsNoTracking()
             .Include(c => c.Corporation)
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Campus", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Campus"));
 
         return campus.ToDto(campus.Corporation?.DisplayName ?? string.Empty);
     }

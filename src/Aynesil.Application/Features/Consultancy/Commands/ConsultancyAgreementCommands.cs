@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -56,7 +57,7 @@ public sealed class CreateConsultancyAgreementCommandHandler
             .Where(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId)
             .Select(p => new { p.Id, p.InstitutionId, p.Name, p.Status })
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         if (plan.Status is "cancelled")
             throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementForCancelledPlan);
@@ -74,7 +75,7 @@ public sealed class CreateConsultancyAgreementCommandHandler
 
     private async Task<ConsultancyAgreementDto> BuildDto(Guid id, CancellationToken ct)
         => await ProjectAgreementDto(_db, id, ct)
-           ?? throw new KeyNotFoundException($"Agreement {id} not found after save.");
+           ?? throw new NotFoundException(MsgKeys.Rule.AgreementNotFoundAfterSave);
 
     internal static async Task<ConsultancyAgreementDto?> ProjectAgreementDto(
         IAppDbContext db, Guid id, CancellationToken ct)
@@ -139,7 +140,7 @@ public sealed class UpdateConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         agreement.Update(req.Title, req.AgreementTypeId, req.Description,
             req.StartDate, req.EndDate, _currentUser.UserId);
@@ -168,7 +169,7 @@ public sealed class SendConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         agreement.Send(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -211,7 +212,7 @@ public sealed class SignConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         agreement.Sign(req.SignedDate, req.SignedByName, req.FileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -238,7 +239,7 @@ public sealed class ExpireConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         agreement.MarkExpired(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -265,7 +266,7 @@ public sealed class CancelConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         agreement.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -292,7 +293,7 @@ public sealed class DeleteConsultancyAgreementCommandHandler
     {
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 
         if (agreement.IsSigned)
             throw new BusinessRuleViolationException(MsgKeys.Rule.AgreementSignedNoDelete);

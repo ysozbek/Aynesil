@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -46,7 +47,7 @@ public sealed class ConsumeCreditsCommandHandler
         var package = await _db.StudentPackages
             .Include(p => p.CreditLedgerEntries)
             .FirstOrDefaultAsync(p => p.Id == req.StudentPackageId, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var remaining = package.CreditLedgerEntries.Sum(e => e.Delta);
 
@@ -107,7 +108,7 @@ public sealed class GrantBonusCreditsCommandHandler
         var package = await _db.StudentPackages
             .Include(p => p.CreditLedgerEntries)
             .FirstOrDefaultAsync(p => p.Id == req.StudentPackageId, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var entry = package.GrantCredits(req.Amount, req.Reason, _currentUser.UserId);
 
@@ -160,7 +161,7 @@ public sealed class RefundSessionCreditsCommandHandler
         var package = await _db.StudentPackages
             .Include(p => p.CreditLedgerEntries)
             .FirstOrDefaultAsync(p => p.Id == req.StudentPackageId, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var entry = package.RefundCredits(req.Amount, req.Reason, _currentUser.UserId);
 
@@ -215,7 +216,7 @@ public sealed class AdjustCreditsCommandHandler
         var package = await _db.StudentPackages
             .Include(p => p.CreditLedgerEntries)
             .FirstOrDefaultAsync(p => p.Id == req.StudentPackageId, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var currentBalance = package.CreditLedgerEntries.Sum(e => e.Delta);
         var newBalance     = currentBalance + req.Delta;

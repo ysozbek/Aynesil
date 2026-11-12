@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Shared;
@@ -80,7 +82,7 @@ public sealed class GetRoomQueryHandler : IRequestHandler<GetRoomQuery, RoomDto>
     {
         var room = await _db.Rooms.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
 
         var campusName = room.CampusId is null ? null
             : await _db.Campuses.AsNoTracking()

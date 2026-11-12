@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -118,7 +119,7 @@ public sealed class UpdateKpiDefinitionCommandHandler
     {
         var kpi = await _db.KpiDefinitions
             .FirstOrDefaultAsync(k => k.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "KpiDefinition"));
 
         kpi.Name      = req.Name.Trim();
         kpi.CategoryId = req.CategoryId;
@@ -154,7 +155,7 @@ public sealed class ActivateKpiDefinitionCommandHandler
     {
         var kpi = await _db.KpiDefinitions
             .FirstOrDefaultAsync(k => k.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "KpiDefinition"));
 
         if (kpi.IsActive)
             throw new BusinessRuleViolationException(MsgKeys.Rule.KpiAlreadyActive);
@@ -180,7 +181,7 @@ public sealed class DeactivateKpiDefinitionCommandHandler
     {
         var kpi = await _db.KpiDefinitions
             .FirstOrDefaultAsync(k => k.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "KpiDefinition"));
 
         if (!kpi.IsActive)
             throw new BusinessRuleViolationException(MsgKeys.Rule.KpiAlreadyInactive);

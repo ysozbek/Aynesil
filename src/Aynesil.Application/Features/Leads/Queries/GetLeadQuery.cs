@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Leads.Dtos;
@@ -23,5 +24,5 @@ public sealed class GetLeadQueryHandler : IRequestHandler<GetLeadQuery, LeadDto>
 
     public async Task<LeadDto> Handle(GetLeadQuery req, CancellationToken ct)
         => await LeadProjection.LoadAsync(_db, req.Id, _tenant.Locale, ct)
-            ?? throw new NotFoundException("Lead", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 }

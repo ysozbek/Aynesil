@@ -31,7 +31,7 @@ public sealed class DeleteRoleCommandHandler : IRequestHandler<DeleteRoleCommand
     public async Task Handle(DeleteRoleCommand req, CancellationToken ct)
     {
         var role = await _db.Roles.FindAsync([req.RoleId], ct)
-            ?? throw new NotFoundException("Role", req.RoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         // Block deletion if any users are still assigned this role
         var hasUsers = await _db.UserRoles.AnyAsync(ur => ur.RoleId == req.RoleId, ct);

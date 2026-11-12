@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Permissions.Dtos;
@@ -22,7 +23,7 @@ public sealed class GetRoleQueryHandler : IRequestHandler<GetRoleQuery, RoleDto>
             .Include(r => r.RolePermissions)
                 .ThenInclude(rp => rp.Permission)
             .FirstOrDefaultAsync(r => r.Id == req.RoleId, ct)
-            ?? throw new NotFoundException("Role", req.RoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         var permissions = role.RolePermissions
             .Select(rp => rp.Permission!.ToListItemDto())

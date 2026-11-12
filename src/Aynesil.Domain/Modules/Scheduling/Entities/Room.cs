@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Scheduling.Entities;
 
 /// <summary>
@@ -46,10 +47,10 @@ public class Room : TenantEntity
         string? meetingUrl = null)
     {
         if (capacity < 0)
-            throw new ArgumentException("Room capacity cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("Capacity"));
 
         if (isVirtual && campusId is not null)
-            throw new ArgumentException("Virtual rooms must not be assigned to a campus.");
+            throw new InvalidArgumentException(MsgKeys.Validation.VirtualRoomNoCampus);
 
         return new Room
         {
@@ -77,7 +78,7 @@ public class Room : TenantEntity
         string? meetingUrl)
     {
         if (capacity < 0)
-            throw new ArgumentException("Room capacity cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("Capacity"));
 
         Code       = code;
         Name       = name;

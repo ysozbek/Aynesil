@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -71,7 +72,7 @@ public sealed class GrantScholarshipCommandHandler
             .Where(s => s.CorporationId == corporationId && s.Id == req.StudentId)
             .Select(s => new { s.FirstName, s.LastName })
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var scholarship = Scholarship.Grant(
             corporationId, req.StudentId,
@@ -145,7 +146,7 @@ public sealed class UpdateScholarshipCommandHandler
     {
         var scholarship = await _db.Scholarships
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Scholarship {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Scholarship"));
 
         if (scholarship.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

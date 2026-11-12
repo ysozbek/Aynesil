@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -113,7 +114,7 @@ public sealed class UpdateAcademicPeriodCommandHandler
     public async Task<AcademicPeriodDto> Handle(UpdateAcademicPeriodCommand req, CancellationToken ct)
     {
         var period = await _db.AcademicPeriods.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AcademicPeriod"));
 
         if (period.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -148,7 +149,7 @@ public sealed class SetCurrentAcademicPeriodCommandHandler
         SetCurrentAcademicPeriodCommand req, CancellationToken ct)
     {
         var period = await _db.AcademicPeriods.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AcademicPeriod"));
 
         var existing = await _db.AcademicPeriods
             .Where(p => p.CorporationId == period.CorporationId && p.IsCurrent && p.Id != req.Id)
@@ -185,7 +186,7 @@ public sealed class DeleteAcademicPeriodCommandHandler : IRequestHandler<DeleteA
     public async Task Handle(DeleteAcademicPeriodCommand req, CancellationToken ct)
     {
         var period = await _db.AcademicPeriods.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AcademicPeriod"));
 
         var hasPlan = await _db.EducationPlans.AnyAsync(
             p => p.AcademicPeriodId == req.Id, ct);

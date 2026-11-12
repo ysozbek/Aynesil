@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -40,13 +41,11 @@ public class ConsultancyReport : BaseEntity
         Guid? authoredBy = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Report title is required.", nameof(title));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
         if (consultancyPlanId == null && schoolVisitId == null)
-            throw new ArgumentException(
-                "A consultancy report must be linked to a plan, a visit, or both.");
+            throw new InvalidArgumentException(MsgKeys.Validation.AtLeastOneOf, MsgArg.Fields("ConsultancyPlanId", "SchoolVisitId"));
         if (string.IsNullOrWhiteSpace(summary) && fileId == null)
-            throw new ArgumentException(
-                "A consultancy report must include at least a summary or an attached file.");
+            throw new InvalidArgumentException(MsgKeys.Validation.AtLeastOneOf, MsgArg.Fields("Summary", "AttachedFile"));
 
         var report = new ConsultancyReport
         {

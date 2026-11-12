@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -37,7 +39,7 @@ public sealed class AddAssessmentSectionCommandHandler
     {
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
-            ?? throw new KeyNotFoundException($"Assessment template {req.TemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
 
         var section = AssessmentSection.Create(
             req.TemplateId, req.Code, req.SortOrder, req.DevelopmentAreaId);
@@ -79,7 +81,7 @@ public sealed class UpdateAssessmentSectionCommandHandler
     {
         var section = await _db.AssessmentSections
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
-            ?? throw new KeyNotFoundException($"Assessment section {req.SectionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
 
         section.Update(req.Code, req.SortOrder, req.DevelopmentAreaId);
         await _db.SaveChangesAsync(ct);
@@ -105,7 +107,7 @@ public sealed class DeleteAssessmentSectionCommandHandler
     {
         var section = await _db.AssessmentSections
             .FirstOrDefaultAsync(s => s.Id == req.SectionId, ct)
-            ?? throw new KeyNotFoundException($"Assessment section {req.SectionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSection"));
 
         _db.AssessmentSections.Remove(section);
         await _db.SaveChangesAsync(ct);

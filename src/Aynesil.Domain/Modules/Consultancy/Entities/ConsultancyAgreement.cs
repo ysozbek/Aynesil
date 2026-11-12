@@ -55,9 +55,9 @@ public class ConsultancyAgreement : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Agreement title is required.", nameof(title));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
         if (startDate.HasValue && endDate.HasValue && endDate < startDate)
-            throw new ArgumentException("End date cannot be before start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         var agreement = new ConsultancyAgreement
         {
@@ -91,9 +91,9 @@ public class ConsultancyAgreement : TenantEntity
     {
         EnsureDraft("update");
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Agreement title is required.", nameof(title));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
         if (startDate.HasValue && endDate.HasValue && endDate < startDate)
-            throw new ArgumentException("End date cannot be before start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         Title           = title.Trim();
         AgreementTypeId = agreementTypeId;

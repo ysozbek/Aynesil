@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
@@ -45,8 +46,7 @@ public sealed class CreateAssessmentReportCommandHandler
         var session = await _db.AssessmentSessions
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.CorporationId == corporationId && s.Id == req.AssessmentSessionId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Assessment session {req.AssessmentSessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         if (session.Status != AssessmentSession.SessionStatuses.Completed)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ReportNeedsCompletedSession);
@@ -98,7 +98,7 @@ public sealed class UpdateAssessmentReportCommandHandler
     {
         var report = await _db.AssessmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentReport"));
 
         report.Update(req.Summary, req.Findings, req.FileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -128,7 +128,7 @@ public sealed class FinalizeAssessmentReportCommandHandler
     {
         var report = await _db.AssessmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentReport"));
 
         if (_currentUser.UserId is null)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ReportFinalizeNeedsUser);

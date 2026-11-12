@@ -69,7 +69,7 @@ public sealed class CreateCampusCommandHandler : IRequestHandler<CreateCampusCom
         var corp = await _db.Corporations
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == corporationId, ct)
-            ?? throw new NotFoundException("Corporation", corporationId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         var codeNormalized = req.Code.Trim().ToUpperInvariant();
         // Unique (corporation_id, code) applies to soft-deleted rows too.

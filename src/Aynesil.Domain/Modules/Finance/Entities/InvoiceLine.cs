@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Finance.Entities;
 
 /// <summary>
@@ -30,10 +31,10 @@ public class InvoiceLine : BaseEntity
         int sortOrder = 0)
     {
         if (quantity <= 0)
-            throw new ArgumentException("Quantity must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Quantity"));
 
         if (unitPrice < 0)
-            throw new ArgumentException("Unit price cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("UnitPrice"));
 
         return new InvoiceLine
         {

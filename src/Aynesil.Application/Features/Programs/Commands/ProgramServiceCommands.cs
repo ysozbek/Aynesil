@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Domain.Modules.Education.Entities;
@@ -38,14 +40,14 @@ public sealed class AddProgramServiceCommandHandler
     public async Task<ProgramServiceDto> Handle(AddProgramServiceCommand req, CancellationToken ct)
     {
         var program = await _db.EducationPrograms.FirstOrDefaultAsync(p => p.Id == req.ProgramId, ct)
-            ?? throw new KeyNotFoundException($"Program {req.ProgramId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
 
         if (req.ServiceTypeId.HasValue)
         {
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.ServiceTypeId.Value && r.RefType!.Code == "service_type", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid service_type ref_value: {req.ServiceTypeId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "service_type"), req.ServiceTypeId);
         }
 
         var service = new ProgramService
@@ -104,7 +106,7 @@ public sealed class UpdateProgramServiceCommandHandler
     public async Task<ProgramServiceDto> Handle(UpdateProgramServiceCommand req, CancellationToken ct)
     {
         var service = await _db.ProgramServices.FirstOrDefaultAsync(s => s.Id == req.ServiceId, ct)
-            ?? throw new KeyNotFoundException($"Program service {req.ServiceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramService"));
 
         service.Name                   = req.Name;
         service.ServiceTypeId          = req.ServiceTypeId;
@@ -139,7 +141,7 @@ public sealed class DeleteProgramServiceCommandHandler : IRequestHandler<DeleteP
     public async Task Handle(DeleteProgramServiceCommand req, CancellationToken ct)
     {
         var service = await _db.ProgramServices.FirstOrDefaultAsync(s => s.Id == req.ServiceId, ct)
-            ?? throw new KeyNotFoundException($"Program service {req.ServiceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramService"));
 
         _db.ProgramServices.Remove(service);
         await _db.SaveChangesAsync(ct);

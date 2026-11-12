@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -38,7 +39,7 @@ public class Institution : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Institution name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
 
         var institution = new Institution
         {
@@ -72,7 +73,7 @@ public class Institution : TenantEntity
         Guid? updatedBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Institution name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
 
         Name              = name.Trim();
         InstitutionTypeId = institutionTypeId;

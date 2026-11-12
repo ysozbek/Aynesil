@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.CareTeam.Commands;
 using Aynesil.Application.Features.CareTeam.Dtos;
@@ -143,5 +145,5 @@ public sealed class GetCareTeamAssignmentQueryHandler
         GetCareTeamAssignmentQuery req, CancellationToken ct)
         => await AssignCareTeamMemberCommandHandler
                 .LoadAssignmentDtoAsync(_db, req.Id, ct)
-            ?? throw new KeyNotFoundException($"CareTeamAssignment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CareTeamAssignment"));
 }

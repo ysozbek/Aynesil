@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -69,8 +70,7 @@ public sealed class ComputePerformanceSnapshotCommandHandler
             .FirstOrDefaultAsync(e => e.Id == req.EducatorId
                                    && e.CorporationId == corporationId
                                    && e.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException(
-                $"Educator {req.EducatorId} not found in this corporation.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         // Inclusive UTC bounds for the period
         var periodFrom = new DateTimeOffset(

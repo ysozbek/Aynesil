@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using MediatR;
@@ -100,7 +102,7 @@ public sealed class GetInstitutionQueryHandler : IRequestHandler<GetInstitutionQ
                 i.ContactName, i.ContactPhone, i.ContactEmail,
                 i.CreatedAt, i.UpdatedAt, i.RowVersion)
         ).FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Institution {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
 
         return institution;
     }

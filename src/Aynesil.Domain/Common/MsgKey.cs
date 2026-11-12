@@ -25,3 +25,38 @@ public sealed record EnumValue(string Group, string Code);
 
 /// <summary>Mesaj parametresi: sayı/tarih değeri, biçimlendirme anında istek kültürüyle (ör. "F2") yazılır.</summary>
 public sealed record Formatted(object? Value, string Format);
+
+/// <summary>Mesaj parametresi: alan adının istek dilindeki etiketi (FieldNames.resx; property/camel/snake adı kabul eder).</summary>
+public sealed record FieldRef(string Name);
+
+/// <summary>Mesaj parametresi: alan adı listesi, seçili dilde etiketlerle ("Puan, Yorum").</summary>
+public sealed record FieldRefs(string[] Names);
+
+/// <summary>Mesaj parametresi: kod listesi, seçili dilde etiketlerle ("devam, geç").</summary>
+public sealed record EnumValues(string Group, IReadOnlyList<string> Codes);
+
+/// <summary>Domain katmanında mesaj parametresi üretmek için kısa yollar.</summary>
+public static class MsgArg
+{
+    public static FieldRef Field(string name) => new(name);
+    public static FieldRefs Fields(params string[] names) => new(names);
+    public static EnumValues Values(string group, params string[] codes) => new(group, codes);
+    public static EnumValues Values(string group, IEnumerable<string> codes) => new(group, codes.ToList());
+}
+
+/// <summary>
+/// Domain guard'larının (tarih sırası, tutar, zorunlu alan, geçersiz kod değeri…) attığı, kod + parametre taşıyan hata.
+/// Middleware 422 döner; metin istek dilinde çözülür.
+/// </summary>
+public class InvalidArgumentException : ArgumentException, ILocalizableException
+{
+    public InvalidArgumentException(MsgKey code, params object?[] args) : base(code.Value)
+    {
+        Code = code;
+        Args = args;
+    }
+
+    public MsgKey? Code { get; }
+
+    public IReadOnlyList<object?> Args { get; }
+}

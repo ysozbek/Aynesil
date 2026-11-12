@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
 using MediatR;
@@ -98,7 +100,7 @@ public sealed class GetKpiDefinitionQueryHandler
         var kpi = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"KPI definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "KpiDefinition"));
 
         var categoryCode = kpi.CategoryId.HasValue
             ? await _db.RefValues.AsNoTracking()

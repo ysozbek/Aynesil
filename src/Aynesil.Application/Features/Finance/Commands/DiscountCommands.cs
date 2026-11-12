@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -60,7 +61,7 @@ public sealed class ApplyDiscountCommandHandler
                 .Include(i => i.Lines)
                 .Include(i => i.Discounts)
                 .FirstOrDefaultAsync(i => i.CorporationId == corporationId && i.Id == req.InvoiceId.Value, ct)
-                ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
+                ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 
             if (invoice.Status != "draft")
                 throw new BusinessRuleViolationException(MsgKeys.Rule.DiscountNeedsDraftInvoice);
@@ -83,7 +84,7 @@ public sealed class ApplyDiscountCommandHandler
                 .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.StudentPackageId!.Value, ct);
 
             if (!packageExists)
-                throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
             var discount = Discount.Apply(
                 corporationId, req.Value, req.IsPercentage,

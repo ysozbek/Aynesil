@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using MediatR;
@@ -79,7 +81,7 @@ public sealed class GetGuardianQueryHandler : IRequestHandler<GetGuardianQuery, 
 
     public async Task<GuardianDto> Handle(GetGuardianQuery req, CancellationToken ct)
         => await StudentProjection.LoadGuardianAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Guardian {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
 }
 
 // ── GetStudentGuardiansQuery ──────────────────────────────────────────────────

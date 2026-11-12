@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +22,6 @@ public static class TenantUserGuard
                         && u.CorporationId == corporationId
                         && u.DeletedAt == null, ct);
         if (!exists)
-            throw new KeyNotFoundException($"{field}: user {userId} not found in this corporation.");
+            throw new NotFoundException(MsgKeys.Rule.UserNotInCorporation, MsgArg.Field(field), userId);
     }
 }

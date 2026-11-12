@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -132,7 +133,7 @@ public sealed class UpdateNotificationTemplateCommandHandler
         var template = await _db.NotificationTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"NotificationTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTemplate"));
 
         template.CategoryId = req.CategoryId;
         template.TypeId     = req.TypeId;
@@ -186,7 +187,7 @@ public sealed class DeleteNotificationTemplateCommandHandler
     {
         var template = await _db.NotificationTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"NotificationTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTemplate"));
 
         // Soft-deactivate: templates referenced by trigger configs cannot be hard-deleted
         var isReferenced = await _db.NotificationTriggerConfigs

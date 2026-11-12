@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -46,12 +47,12 @@ public sealed class LinkGuardianToStudentCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var guardian = await _db.Guardians
             .AsNoTracking()
             .FirstOrDefaultAsync(g => g.Id == req.GuardianId, ct)
-            ?? throw new KeyNotFoundException($"Guardian {req.GuardianId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
 
         if (guardian.CorporationId != student.CorporationId)
             throw new BusinessRuleViolationException(MsgKeys.Rule.GuardianStudentCorpMismatch);
@@ -105,7 +106,7 @@ public sealed class UpdateGuardianLinkCommandHandler
     {
         var link = await _db.StudentGuardians
             .FirstOrDefaultAsync(sg => sg.Id == req.LinkId, ct)
-            ?? throw new KeyNotFoundException($"Guardian link {req.LinkId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GuardianLink"));
 
         link.RelationshipId      = req.RelationshipId;
         link.IsPrimary           = req.IsPrimary;
@@ -141,7 +142,7 @@ public sealed class UnlinkGuardianFromStudentCommandHandler
     {
         var link = await _db.StudentGuardians
             .FirstOrDefaultAsync(sg => sg.Id == req.LinkId, ct)
-            ?? throw new KeyNotFoundException($"Guardian link {req.LinkId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GuardianLink"));
 
         _db.StudentGuardians.Remove(link);
         await _db.SaveChangesAsync(ct);

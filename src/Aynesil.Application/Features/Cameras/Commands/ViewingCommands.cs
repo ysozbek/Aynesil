@@ -158,7 +158,7 @@ public sealed class RevokeViewingAuthorizationCommandHandler
     {
         var auth = await _db.ViewingAuthorizations
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"ViewingAuthorization {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ViewingAuthorization"));
 
         auth.Revoke();
         await _db.SaveChangesAsync(ct);
@@ -229,8 +229,7 @@ public sealed class StartViewingSessionCommandHandler
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == req.AuthorizationId
                                    && a.CorporationId == corporationId, ct)
-            ?? throw new KeyNotFoundException(
-                $"ViewingAuthorization {req.AuthorizationId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ViewingAuthorization"));
 
         // ── Guardian identity: derived from the signed-in portal user, never from the client.
         // media.viewing_log has no FKs (append-only audit trail), so the referenced camera and
@@ -238,12 +237,12 @@ public sealed class StartViewingSessionCommandHandler
         // authorization can only be used for its own session.
         if (req.CameraId.HasValue &&
             !await _db.Cameras.AnyAsync(c => c.Id == req.CameraId.Value && c.CorporationId == corporationId, ct))
-            throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         if (req.SessionId.HasValue)
         {
             if (!await _db.Sessions.AnyAsync(s => s.Id == req.SessionId.Value && s.CorporationId == corporationId, ct))
-                throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
             if (auth.SessionId.HasValue && auth.SessionId != req.SessionId)
                 throw new ForbiddenAccessException(MsgKeys.Rule.ViewingAuthOtherSession);
         }
@@ -351,8 +350,7 @@ public sealed class EndViewingSessionCommandHandler : IRequestHandler<EndViewing
             .FirstOrDefaultAsync(l => l.Id == req.LogId
                                    && l.StartedAt == req.StartedAt
                                    && l.CorporationId == corporationId, ct)
-            ?? throw new KeyNotFoundException(
-                $"ViewingLog {req.LogId} (startedAt={req.StartedAt:O}) not found.");
+            ?? throw new NotFoundException(MsgKeys.Rule.ViewingLogNotFound, req.LogId, new Formatted(req.StartedAt, "O"));
 
         var endedAt = DateTimeOffset.UtcNow;
         log.End(endedAt);

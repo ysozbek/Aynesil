@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -113,7 +114,7 @@ public sealed class UpdateRoomCommandHandler : IRequestHandler<UpdateRoomCommand
     public async Task<RoomDto> Handle(UpdateRoomCommand req, CancellationToken ct)
     {
         var room = await _db.Rooms.FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
 
         if (room.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -138,7 +139,7 @@ public sealed class DeactivateRoomCommandHandler : IRequestHandler<DeactivateRoo
     public async Task Handle(DeactivateRoomCommand req, CancellationToken ct)
     {
         var room = await _db.Rooms.FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
 
         room.Deactivate();
         await _db.SaveChangesAsync(ct);
@@ -163,7 +164,7 @@ public sealed class DeleteRoomCommandHandler : IRequestHandler<DeleteRoomCommand
     public async Task Handle(DeleteRoomCommand req, CancellationToken ct)
     {
         var room = await _db.Rooms.FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Room {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
 
         var hasFutureSessions = await _db.Sessions.AnyAsync(
             s => s.RoomId == req.Id

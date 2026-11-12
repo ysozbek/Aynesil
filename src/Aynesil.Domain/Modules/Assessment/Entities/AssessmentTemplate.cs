@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Assessment.Events;
 
 namespace Aynesil.Domain.Modules.Assessment.Entities;
@@ -165,7 +166,6 @@ public class AssessmentTemplate : AuditableEntity
         if (model is null) return;
         if (model is ScoringModels.Sum or ScoringModels.Average or ScoringModels.Rubric or ScoringModels.None)
             return;
-        throw new ArgumentException(
-            $"Invalid scoring model '{model}'. Allowed: sum, average, rubric, none.", nameof(model));
+        throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("ScoringModel"), MsgArg.Values("ScoringModel", "sum", "average", "rubric", "none"));
     }
 }

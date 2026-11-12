@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using MediatR;
@@ -62,6 +64,6 @@ public sealed class GetObservationQueryHandler
                 o.Subject, o.Observation, o.Recommendations,
                 o.CreatedAt, o.CreatedBy)
         ).FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Observation {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Observation"));
     }
 }

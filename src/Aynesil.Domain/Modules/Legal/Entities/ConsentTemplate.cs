@@ -46,7 +46,7 @@ public class ConsentTemplate : TenantEntity
         DateOnly? effectiveFrom = null)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Consent template code is required.", nameof(code));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Code"));
 
         var template = new ConsentTemplate
         {

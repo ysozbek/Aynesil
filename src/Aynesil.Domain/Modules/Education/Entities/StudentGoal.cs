@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Education.Events;
 
 namespace Aynesil.Domain.Modules.Education.Entities;
@@ -152,13 +153,12 @@ public class StudentGoal : TenantEntity
     private static void ValidateHorizon(string horizon)
     {
         if (!ValidHorizons.Contains(horizon))
-            throw new ArgumentException($"Invalid goal horizon '{horizon}'. Must be long_term or short_term.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Horizon"), MsgArg.Values("Horizon", "long_term", "short_term"));
     }
 
     private static void ValidateStatus(string status)
     {
         if (!ValidStatuses.Contains(status))
-            throw new ArgumentException(
-                $"Invalid goal status '{status}'. Must be active, achieved, discontinued, or on_hold.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("GoalStatus", "active", "achieved", "discontinued", "on_hold"));
     }
 }

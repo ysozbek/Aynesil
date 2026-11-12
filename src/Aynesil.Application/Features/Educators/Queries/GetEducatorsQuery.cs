@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Shared;
@@ -108,7 +110,7 @@ public sealed class GetEducatorQueryHandler : IRequestHandler<GetEducatorQuery, 
 
     public async Task<EducatorDto> Handle(GetEducatorQuery req, CancellationToken ct)
         => await EducatorProjection.LoadAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 }
 
 // ── GetEducatorAvailabilityQuery ──────────────────────────────────────────────
@@ -135,7 +137,7 @@ public sealed class GetEducatorAvailabilityQueryHandler
             .Include(e => e.Campuses)
             .Include(e => e.Specialties)
             .FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         var activeCampuses = new List<EducatorCampusDto>();
         foreach (var c in educator.Campuses.Where(c => c.IsActive))

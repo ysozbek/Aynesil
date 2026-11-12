@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
@@ -49,7 +50,7 @@ public sealed class ScheduleSchoolVisitCommandHandler
         var institutionExists = await _db.Institutions
             .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InstitutionId && i.DeletedAt == null, ct);
         if (!institutionExists)
-            throw new KeyNotFoundException($"Institution {req.InstitutionId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
 
         if (req.ConsultancyPlanId.HasValue)
         {
@@ -119,7 +120,7 @@ public sealed class UpdateSchoolVisitCommandHandler : IRequestHandler<UpdateScho
     {
         var visit = await _db.SchoolVisits
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
 
         visit.Update(req.VisitDate, req.VisitorId, req.Purpose, req.ConsultancyPlanId);
         await _db.SaveChangesAsync(ct);
@@ -141,7 +142,7 @@ public sealed class CompleteSchoolVisitCommandHandler
     {
         var visit = await _db.SchoolVisits
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
 
         visit.Complete();
         await _db.SaveChangesAsync(ct);
@@ -162,7 +163,7 @@ public sealed class CancelSchoolVisitCommandHandler : IRequestHandler<CancelScho
     {
         var visit = await _db.SchoolVisits
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
 
         visit.Cancel();
         await _db.SaveChangesAsync(ct);
@@ -183,7 +184,7 @@ public sealed class DeleteSchoolVisitCommandHandler : IRequestHandler<DeleteScho
     {
         var visit = await _db.SchoolVisits
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
 
         if (visit.Status != "planned")
             throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPlannedVisitDelete);

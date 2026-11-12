@@ -40,7 +40,7 @@ public sealed class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand
     public async Task<RoleListItemDto> Handle(UpdateRoleCommand req, CancellationToken ct)
     {
         var role = await _db.Roles.FindAsync([req.RoleId], ct)
-            ?? throw new NotFoundException("Role", req.RoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         if (req.RowVersion != role.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

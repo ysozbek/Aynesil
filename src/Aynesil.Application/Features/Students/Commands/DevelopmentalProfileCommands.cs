@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -48,7 +50,7 @@ public sealed class UpsertDevelopmentalProfileCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var profile = req.DevelopmentAreaId.HasValue
             ? await _db.DevelopmentalProfiles

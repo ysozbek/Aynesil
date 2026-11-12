@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Corporations.Dtos;
@@ -23,7 +24,7 @@ public sealed class GetCorporationSettingsQueryHandler
         var corp = await _db.Corporations
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Corporation", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         return corp.ToSettingsDto();
     }

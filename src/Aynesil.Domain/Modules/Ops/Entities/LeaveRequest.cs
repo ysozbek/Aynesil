@@ -49,13 +49,13 @@ public class LeaveRequest : TenantEntity
         Guid? createdBy = null)
     {
         if (!ValidUnits.Contains(unit))
-            throw new ArgumentException($"Invalid unit '{unit}'. Must be: day, hour.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Unit"), MsgArg.Values("LeaveUnit", "day", "hour"));
 
         if (endsAt <= startsAt)
-            throw new ArgumentException("EndsAt must be after StartsAt.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
 
         if (quantity.HasValue && quantity.Value <= 0)
-            throw new ArgumentException("Quantity must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Quantity"));
 
         return new LeaveRequest
         {
@@ -86,13 +86,13 @@ public class LeaveRequest : TenantEntity
             throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyPendingLeaveUpdate);
 
         if (!ValidUnits.Contains(unit))
-            throw new ArgumentException($"Invalid unit '{unit}'. Must be: day, hour.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Unit"), MsgArg.Values("LeaveUnit", "day", "hour"));
 
         if (endsAt <= startsAt)
-            throw new ArgumentException("EndsAt must be after StartsAt.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
 
         if (quantity.HasValue && quantity.Value <= 0)
-            throw new ArgumentException("Quantity must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Quantity"));
 
         LeaveTypeId = leaveTypeId;
         Unit        = unit;

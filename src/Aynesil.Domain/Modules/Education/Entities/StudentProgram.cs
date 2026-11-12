@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Education.Events;
 
 namespace Aynesil.Domain.Modules.Education.Entities;
@@ -69,7 +70,7 @@ public class StudentProgram : TenantEntity
     {
         string[] allowed = ["active", "paused", "completed", "cancelled"];
         if (!allowed.Contains(newStatus))
-            throw new ArgumentException($"Invalid student program status: '{newStatus}'.");
+            throw new InvalidArgumentException(MsgKeys.Rule.InvalidStudentProgramStatus, new EnumValue("Status", newStatus));
 
         Status    = newStatus;
         UpdatedAt = DateTimeOffset.UtcNow;

@@ -38,7 +38,7 @@ public class CalendarEntry : BaseEntity
         ValidateEntryType(entryType);
 
         if (endsAt <= startsAt)
-            throw new ArgumentException("Calendar entry ends_at must be after starts_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
 
         return new CalendarEntry
         {
@@ -60,7 +60,6 @@ public class CalendarEntry : BaseEntity
     private static void ValidateEntryType(string type)
     {
         if (!ValidTypes.Contains(type))
-            throw new ArgumentException(
-                $"Invalid calendar entry type '{type}'. Must be holiday, closure, event, or term_break.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("EntryType"), MsgArg.Values("EntryType", "holiday", "closure", "event", "term_break"));
     }
 }

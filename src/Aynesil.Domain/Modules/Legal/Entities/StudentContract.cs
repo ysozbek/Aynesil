@@ -63,7 +63,7 @@ public class StudentContract : TenantEntity
         Guid? createdBy = null)
     {
         if (startsOn.HasValue && endsOn.HasValue && endsOn < startsOn)
-            throw new ArgumentException("Contract end date cannot be before start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         var contract = new StudentContract
         {
@@ -92,7 +92,7 @@ public class StudentContract : TenantEntity
     {
         EnsureEditable();
         if (startsOn.HasValue && endsOn.HasValue && endsOn < startsOn)
-            throw new ArgumentException("Contract end date cannot be before start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         GuardianId = guardianId;
         StartsOn   = startsOn;
@@ -125,10 +125,9 @@ public class StudentContract : TenantEntity
         if (Status != "sent")
             throw new BusinessRuleViolationException(MsgKeys.Rule.ContractSignNeedsSent, new EnumValue("Status", Status));
         if (string.IsNullOrWhiteSpace(signedByName))
-            throw new ArgumentException("Signed-by name is required.", nameof(signedByName));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("SignedByName"));
         if (!ValidSignatureMethods.Contains(signatureMethod))
-            throw new ArgumentException(
-                $"Invalid signature method '{signatureMethod}'. Allowed: wet, e_sign, click_wrap.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("SignatureMethod"), MsgArg.Values("SignatureMethod", "wet", "e_sign", "click_wrap"));
 
         SignedAt        = DateTimeOffset.UtcNow;
         SignedByName    = signedByName.Trim();

@@ -51,9 +51,9 @@ public class ConsultancyPlan : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Consultancy plan name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (periodStart.HasValue && periodEnd.HasValue && periodEnd < periodStart)
-            throw new ArgumentException("Period end cannot be before period start.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("PeriodEnd"), MsgArg.Field("PeriodStart"));
 
         var plan = new ConsultancyPlan
         {
@@ -88,9 +88,9 @@ public class ConsultancyPlan : TenantEntity
     {
         EnsureEditable();
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Consultancy plan name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (periodStart.HasValue && periodEnd.HasValue && periodEnd < periodStart)
-            throw new ArgumentException("Period end cannot be before period start.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("PeriodEnd"), MsgArg.Field("PeriodStart"));
 
         Name              = name.Trim();
         ConsultancyTypeId = consultancyTypeId;

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
 using MediatR;
@@ -40,8 +42,7 @@ public sealed class GetEducatorDashboardQueryHandler
             .FirstOrDefaultAsync(e => e.Id == req.EducatorId
                                    && e.CorporationId == corporationId
                                    && e.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException(
-                $"Educator {req.EducatorId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         var fullName   = $"{educator.FirstName} {educator.LastName}";
         var titleCode  = educator.TitleId.HasValue

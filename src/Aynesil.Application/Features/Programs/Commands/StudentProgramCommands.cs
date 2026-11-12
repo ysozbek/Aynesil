@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -51,20 +52,19 @@ public sealed class AssignStudentToProgramCommandHandler
 
         var studentExists = await _db.Students.AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var programExists = await _db.EducationPrograms.AnyAsync(
             p => p.CorporationId == corporationId && p.Id == req.ProgramId && p.IsActive, ct);
         if (!programExists)
-            throw new KeyNotFoundException($"Active program {req.ProgramId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ActiveProgram"));
 
         if (req.EnrollmentId.HasValue)
         {
             var enrollmentExists = await _db.Enrollments.AnyAsync(
                 e => e.CorporationId == corporationId && e.Id == req.EnrollmentId.Value && e.StudentId == req.StudentId, ct);
             if (!enrollmentExists)
-                throw new KeyNotFoundException(
-                    $"Enrollment {req.EnrollmentId} not found for student {req.StudentId}.");
+                throw new NotFoundException(MsgKeys.Rule.EnrollmentNotFoundForStudent, req.EnrollmentId, req.StudentId);
         }
 
         var sp = StudentProgram.Create(
@@ -117,7 +117,7 @@ public sealed class UpdateStudentProgramCommandHandler
     public async Task<StudentProgramDto> Handle(UpdateStudentProgramCommand req, CancellationToken ct)
     {
         var sp = await _db.StudentPrograms.FirstOrDefaultAsync(s => s.Id == req.StudentProgramId, ct)
-            ?? throw new KeyNotFoundException($"StudentProgram {req.StudentProgramId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentProgram"));
 
         if (sp.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -158,7 +158,7 @@ public sealed class RemoveStudentFromProgramCommandHandler
     public async Task Handle(RemoveStudentFromProgramCommand req, CancellationToken ct)
     {
         var sp = await _db.StudentPrograms.FirstOrDefaultAsync(s => s.Id == req.StudentProgramId, ct)
-            ?? throw new KeyNotFoundException($"StudentProgram {req.StudentProgramId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentProgram"));
 
         sp.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

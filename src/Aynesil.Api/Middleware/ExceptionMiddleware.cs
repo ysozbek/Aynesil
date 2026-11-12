@@ -64,9 +64,10 @@ public class ExceptionMiddleware
                 StatusCodes.Status404NotFound,
                 Localized(nfe, MsgKeys.Error.NotFound, nfe.Message)),
 
-            KeyNotFoundException knf => (
+            // Çerçeve/BCL KeyNotFoundException'ının metni (sözlük anahtarı vb.) istemciye sızdırılmaz.
+            KeyNotFoundException => (
                 StatusCodes.Status404NotFound,
-                Fail(MsgKeys.Error.NotFound, knf.Message)),
+                ApiResponse.Fail(Msg.Get(MsgKeys.Error.NotFound, new EnumValue("Entity", "Record")), MsgKeys.Error.NotFound.Value)),
 
             ForbiddenAccessException fae => (
                 StatusCodes.Status403Forbidden,
@@ -109,7 +110,9 @@ public class ExceptionMiddleware
             // gider (istisna metni sızmaz), ayrıntı log'da. ArgumentNullException programcı hatasıdır → 500.
             ArgumentException and not ArgumentNullException => (
                 StatusCodes.Status422UnprocessableEntity,
-                Fail(MsgKeys.Error.InvalidArgument)),
+                exception is ILocalizableException localizableArgument
+                    ? Localized(localizableArgument, MsgKeys.Error.InvalidArgument, null)
+                    : Fail(MsgKeys.Error.InvalidArgument)),
 
             OperationCanceledException => (
                 StatusCodes.Status499ClientClosedRequest,

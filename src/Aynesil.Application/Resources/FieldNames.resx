@@ -33,26 +33,33 @@
   <data name="Attendance" xml:space="preserve"><value>Katılım</value></data>
   <data name="AttendanceRecord" xml:space="preserve"><value>Yoklama kaydı</value></data>
   <data name="BirthDate" xml:space="preserve"><value>Doğum tarihi</value></data>
+  <data name="Body" xml:space="preserve"><value>Metin</value></data>
   <data name="BodyOverride" xml:space="preserve"><value>Metin değişikliği</value></data>
   <data name="CampPeriodId" xml:space="preserve"><value>Kamp dönemi</value></data>
   <data name="CampusId" xml:space="preserve"><value>Kampüs</value></data>
+  <data name="Capacity" xml:space="preserve"><value>Kapasite</value></data>
+  <data name="CarryForward" xml:space="preserve"><value>Devreden miktar</value></data>
   <data name="Code" xml:space="preserve"><value>Kod</value></data>
   <data name="Comment" xml:space="preserve"><value>Yorum</value></data>
   <data name="ConsentTypeId" xml:space="preserve"><value>Onay türü</value></data>
   <data name="ConsultancyPlanId" xml:space="preserve"><value>Danışmanlık planı</value></data>
   <data name="CorporationId" xml:space="preserve"><value>Kurum</value></data>
+  <data name="Decision" xml:space="preserve"><value>Karar</value></data>
   <data name="Decisions" xml:space="preserve"><value>Kararlar</value></data>
   <data name="Delta" xml:space="preserve"><value>Düzeltme miktarı</value></data>
   <data name="Description" xml:space="preserve"><value>Açıklama</value></data>
   <data name="Direction" xml:space="preserve"><value>Yön</value></data>
   <data name="DiscountPercentage" xml:space="preserve"><value>İndirim yüzdesi</value></data>
   <data name="DueDate" xml:space="preserve"><value>Vade tarihi</value></data>
+  <data name="Duration" xml:space="preserve"><value>Süre</value></data>
   <data name="EducatorId" xml:space="preserve"><value>Eğitimci</value></data>
   <data name="Email" xml:space="preserve"><value>E-posta</value></data>
   <data name="EmploymentType" xml:space="preserve"><value>İstihdam türü</value></data>
   <data name="EndDate" xml:space="preserve"><value>Bitiş tarihi</value></data>
   <data name="EndTime" xml:space="preserve"><value>Bitiş saati</value></data>
+  <data name="EndedAt" xml:space="preserve"><value>Bitiş zamanı</value></data>
   <data name="EndsAt" xml:space="preserve"><value>Bitiş</value></data>
+  <data name="EntitledLeave" xml:space="preserve"><value>Hak edilen izin</value></data>
   <data name="EntryType" xml:space="preserve"><value>Kayıt türü</value></data>
   <data name="ExpiresOn" xml:space="preserve"><value>Son geçerlilik tarihi</value></data>
   <data name="ExternalName" xml:space="preserve"><value>Harici ad</value></data>
@@ -72,6 +79,8 @@
   <data name="KpiCode" xml:space="preserve"><value>KPI kodu</value></data>
   <data name="LastName" xml:space="preserve"><value>Soyad</value></data>
   <data name="LeadId" xml:space="preserve"><value>Aday</value></data>
+  <data name="ListPrice" xml:space="preserve"><value>Liste fiyatı</value></data>
+  <data name="Locale" xml:space="preserve"><value>Dil</value></data>
   <data name="MaxCarryForward" xml:space="preserve"><value>Devredilebilir azami miktar</value></data>
   <data name="MaxPeriods" xml:space="preserve"><value>Azami dönem sayısı</value></data>
   <data name="Name" xml:space="preserve"><value>Ad</value></data>
@@ -79,6 +88,7 @@
   <data name="NewStartAt" xml:space="preserve"><value>Yeni başlangıç zamanı</value></data>
   <data name="Note" xml:space="preserve"><value>Not</value></data>
   <data name="Notes" xml:space="preserve"><value>Not</value></data>
+  <data name="Observation" xml:space="preserve"><value>Gözlem</value></data>
   <data name="Outcome" xml:space="preserve"><value>Sonuç</value></data>
   <data name="PackageDefinitionId" xml:space="preserve"><value>Paket tanımı</value></data>
   <data name="Page" xml:space="preserve"><value>Sayfa</value></data>
@@ -92,6 +102,7 @@
   <data name="PeriodEnd" xml:space="preserve"><value>Dönem bitişi</value></data>
   <data name="PeriodStart" xml:space="preserve"><value>Dönem başlangıcı</value></data>
   <data name="Phone" xml:space="preserve"><value>Telefon</value></data>
+  <data name="Price" xml:space="preserve"><value>Fiyat</value></data>
   <data name="PromotionPercentage" xml:space="preserve"><value>Promosyon yüzdesi</value></data>
   <data name="Quantity" xml:space="preserve"><value>Adet</value></data>
   <data name="Question" xml:space="preserve"><value>Soru</value></data>
@@ -108,8 +119,10 @@
   <data name="SessionId" xml:space="preserve"><value>Seans</value></data>
   <data name="Settings" xml:space="preserve"><value>Ayarlar</value></data>
   <data name="SignatureMethod" xml:space="preserve"><value>İmza yöntemi</value></data>
+  <data name="SignedByName" xml:space="preserve"><value>İmzalayan adı</value></data>
   <data name="StartDate" xml:space="preserve"><value>Başlangıç tarihi</value></data>
   <data name="StartTime" xml:space="preserve"><value>Başlangıç saati</value></data>
+  <data name="StartedAt" xml:space="preserve"><value>Başlangıç zamanı</value></data>
   <data name="StartsAt" xml:space="preserve"><value>Başlangıç</value></data>
   <data name="Status" xml:space="preserve"><value>Durum</value></data>
   <data name="StudentId" xml:space="preserve"><value>Öğrenci</value></data>
@@ -119,14 +132,18 @@
   <data name="Title" xml:space="preserve"><value>Başlık</value></data>
   <data name="To" xml:space="preserve"><value>Bitiş</value></data>
   <data name="ToYear" xml:space="preserve"><value>Bitiş yılı</value></data>
+  <data name="TotalCredits" xml:space="preserve"><value>Toplam kredi</value></data>
   <data name="Translation" xml:space="preserve"><value>Çeviri</value></data>
   <data name="Trend" xml:space="preserve"><value>Gidişat</value></data>
   <data name="TriggerCode" xml:space="preserve"><value>Tetikleyici kodu</value></data>
   <data name="Unit" xml:space="preserve"><value>Birim</value></data>
+  <data name="UnitPrice" xml:space="preserve"><value>Birim fiyat</value></data>
   <data name="UserId" xml:space="preserve"><value>Kullanıcı</value></data>
   <data name="Username" xml:space="preserve"><value>Kullanıcı adı</value></data>
   <data name="ValidFrom" xml:space="preserve"><value>Geçerlilik başlangıcı</value></data>
   <data name="ValidTo" xml:space="preserve"><value>Geçerlilik bitişi</value></data>
+  <data name="ValidityDays" xml:space="preserve"><value>Geçerlilik günü</value></data>
+  <data name="Value" xml:space="preserve"><value>Değer</value></data>
   <data name="WindowEnd" xml:space="preserve"><value>Pencere bitişi</value></data>
   <data name="WindowStart" xml:space="preserve"><value>Pencere başlangıcı</value></data>
   <data name="Word.Address" xml:space="preserve"><value>Adres</value></data>

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -43,7 +44,7 @@ public sealed class AddCaseNoteCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var note = new CaseNote
         {
@@ -97,7 +98,7 @@ public sealed class UpdateCaseNoteCommandHandler
     {
         var note = await _db.CaseNotes
             .FirstOrDefaultAsync(n => n.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Case note {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CaseNote"));
 
         if (note.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -127,7 +128,7 @@ public sealed class DeleteCaseNoteCommandHandler : IRequestHandler<DeleteCaseNot
     {
         var note = await _db.CaseNotes
             .FirstOrDefaultAsync(n => n.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Case note {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CaseNote"));
 
         note.SoftDelete();
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
@@ -79,7 +81,7 @@ public sealed class GetGoalTrendQueryHandler : IRequestHandler<GetGoalTrendQuery
             .AsNoTracking()
             .Include(g => g.ProgressRecords)
             .FirstOrDefaultAsync(g => g.Id == req.StudentGoalId, ct)
-            ?? throw new KeyNotFoundException($"StudentGoal {req.StudentGoalId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 
         var series = goal.ProgressRecords
             .OrderBy(p => p.MeasuredOn)

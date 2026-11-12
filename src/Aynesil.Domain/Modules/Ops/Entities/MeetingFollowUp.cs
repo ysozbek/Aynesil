@@ -66,8 +66,7 @@ public class MeetingFollowUp : BaseEntity
     public void UpdateStatus(string status)
     {
         if (!ValidStatuses.Contains(status))
-            throw new ArgumentException(
-                $"Invalid status '{status}'. Must be: open, in_progress, done, cancelled.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("ActionItemStatus", "open", "in_progress", "done", "cancelled"));
 
         if (Status == "done" && status != "done")
             throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpReopenCompleted);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Camps.Entities;
 
 /// <summary>
@@ -30,11 +31,11 @@ public class CampPeriod : BaseEntity
         int? capacity = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Period name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (endDate < startDate)
-            throw new ArgumentException("Period end date must be on or after start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         return new CampPeriod
         {
@@ -52,11 +53,11 @@ public class CampPeriod : BaseEntity
     public void Update(string name, DateOnly startDate, DateOnly endDate, int? capacity)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Period name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (endDate < startDate)
-            throw new ArgumentException("Period end date must be on or after start date.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         Name      = name.Trim();
         StartDate = startDate;

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using MediatR;
@@ -94,7 +96,7 @@ public sealed class GetCampQueryHandler : IRequestHandler<GetCampQuery, CampDto>
     {
         var camp = await _db.Camps.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         var typeCode = camp.CampTypeId.HasValue
             ? await _db.RefValues.AsNoTracking()

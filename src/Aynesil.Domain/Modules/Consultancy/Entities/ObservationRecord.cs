@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Consultancy.Events;
 
 namespace Aynesil.Domain.Modules.Consultancy.Entities;
@@ -45,7 +46,7 @@ public class ObservationRecord : BaseEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(observation))
-            throw new ArgumentException("Observation text is required.", nameof(observation));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Observation"));
 
         var record = new ObservationRecord
         {
@@ -74,7 +75,7 @@ public class ObservationRecord : BaseEntity
         string? recommendations)
     {
         if (string.IsNullOrWhiteSpace(observation))
-            throw new ArgumentException("Observation text is required.", nameof(observation));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Observation"));
 
         Observation       = observation.Trim();
         ObservationTypeId = observationTypeId;

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -91,7 +92,7 @@ public sealed class CreateRecurringScheduleCommandHandler
             var found = await _db.Educators.AsNoTracking()
                 .CountAsync(e => ids.Contains(e.Id) && e.IsActive, ct);
             if (found != ids.Count)
-                throw new KeyNotFoundException("One or more educators were not found or are inactive.");
+                throw new NotFoundException(MsgKeys.Rule.EducatorsNotFoundOrInactive);
         }
 
         var schedule = RecurringSchedule.Create(
@@ -117,7 +118,7 @@ public sealed class CreateRecurringScheduleCommandHandler
             .Where(ps => ps.Id == programServiceId)
             .Select(ps => (Guid?)ps.ProgramId)
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"ProgramService {programServiceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramService"));
 
         if (!studentProgramId.HasValue) return;
 
@@ -125,7 +126,7 @@ public sealed class CreateRecurringScheduleCommandHandler
             .Where(sp => sp.Id == studentProgramId.Value)
             .Select(sp => (Guid?)sp.ProgramId)
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"StudentProgram {studentProgramId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentProgram"));
 
         if (studentProgramProgramId != serviceProgramId)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ServiceNotInProgram);
@@ -160,7 +161,7 @@ public sealed class DeactivateRecurringScheduleCommandHandler
     {
         var schedule = await _db.RecurringSchedules
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"RecurringSchedule {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
 
         schedule.Deactivate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -203,7 +204,7 @@ public sealed class AddRecurrenceExceptionCommandHandler
         var schedule = await _db.RecurringSchedules
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.RecurringScheduleId, ct)
-            ?? throw new KeyNotFoundException($"RecurringSchedule {req.RecurringScheduleId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
 
         var duplicate = await _db.RecurrenceExceptions.AnyAsync(
             e => e.RecurringScheduleId == req.RecurringScheduleId
@@ -265,7 +266,7 @@ public sealed class BulkGenerateSessionsCommandHandler
             .Include(s => s.Exceptions)
             .Include(s => s.Educators)
             .FirstOrDefaultAsync(s => s.Id == req.RecurringScheduleId, ct)
-            ?? throw new KeyNotFoundException($"RecurringSchedule {req.RecurringScheduleId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
 
         if (!schedule.IsActive)
             throw new BusinessRuleViolationException(MsgKeys.Rule.RecurringScheduleInactive);
@@ -278,7 +279,7 @@ public sealed class BulkGenerateSessionsCommandHandler
                 .Where(sp => sp.Id == schedule.StudentProgramId.Value)
                 .Select(sp => new { sp.StudentId, sp.Status })
                 .FirstOrDefaultAsync(ct)
-                ?? throw new KeyNotFoundException($"StudentProgram {schedule.StudentProgramId} not found.");
+                ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentProgram"));
 
             if (studentProgram.Status != "active")
                 throw new BusinessRuleViolationException(MsgKeys.Rule.StudentProgramInactive);

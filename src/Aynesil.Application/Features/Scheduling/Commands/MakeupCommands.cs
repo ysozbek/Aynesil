@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
@@ -59,7 +60,7 @@ public sealed class RequestMakeupCommandHandler : IRequestHandler<RequestMakeupC
     {
         var m = await db.MakeupRequests.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         var student = await db.Students.AsNoTracking()
             .Where(s => s.Id == m.StudentId)
@@ -84,7 +85,7 @@ public sealed class ApproveMakeupCommandHandler : IRequestHandler<ApproveMakeupC
     public async Task<MakeupRequestDto> Handle(ApproveMakeupCommand req, CancellationToken ct)
     {
         var makeup = await _db.MakeupRequests.FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         if (makeup.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -108,7 +109,7 @@ public sealed class RejectMakeupCommandHandler : IRequestHandler<RejectMakeupCom
     public async Task<MakeupRequestDto> Handle(RejectMakeupCommand req, CancellationToken ct)
     {
         var makeup = await _db.MakeupRequests.FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         if (makeup.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -136,14 +137,14 @@ public sealed class AssignMakeupSessionCommandHandler
     public async Task<MakeupRequestDto> Handle(AssignMakeupSessionCommand req, CancellationToken ct)
     {
         var makeup = await _db.MakeupRequests.FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         if (makeup.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         var sessionExists = await _db.Sessions.AnyAsync(s => s.Id == req.MakeupSessionId, ct);
         if (!sessionExists)
-            throw new KeyNotFoundException($"Session {req.MakeupSessionId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         makeup.AssignMakeupSession(req.MakeupSessionId);
         await _db.SaveChangesAsync(ct);
@@ -164,7 +165,7 @@ public sealed class CompleteMakeupCommandHandler : IRequestHandler<CompleteMakeu
     public async Task<MakeupRequestDto> Handle(CompleteMakeupCommand req, CancellationToken ct)
     {
         var makeup = await _db.MakeupRequests.FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MakeupRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MakeupRequest"));
 
         if (makeup.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

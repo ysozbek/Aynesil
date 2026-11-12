@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Finance.Events;
 
 namespace Aynesil.Domain.Modules.Finance.Entities;
@@ -129,7 +130,7 @@ public class CreditLedger : BaseEntity
         Guid? createdBy = null)
     {
         if (delta == 0)
-            throw new ArgumentException("Adjustment delta cannot be zero.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeZero, MsgArg.Field("Delta"));
 
         return new CreditLedger
         {

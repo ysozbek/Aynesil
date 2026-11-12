@@ -66,6 +66,29 @@ public static class MsgKeys
     /// <summary>İş kuralı ihlalleri (BusinessRuleViolation/Conflict/Forbidden).</summary>
     public static class Rule
     {
+        public static readonly MsgKey ActivePortalAccessNotFound = new("Rule.ActivePortalAccessNotFound");
+        public static readonly MsgKey AgreementNotFoundAfterSave = new("Rule.AgreementNotFoundAfterSave");
+        public static readonly MsgKey CameraNotInRoom = new("Rule.CameraNotInRoom");
+        public static readonly MsgKey CameraNotInSession = new("Rule.CameraNotInSession");
+        public static readonly MsgKey CampPeriodNotInCamp = new("Rule.CampPeriodNotInCamp");
+        public static readonly MsgKey EducatorNotInSession = new("Rule.EducatorNotInSession");
+        public static readonly MsgKey EducatorsNotFoundOrInactive = new("Rule.EducatorsNotFoundOrInactive");
+        public static readonly MsgKey EnrollmentNotFoundForStudent = new("Rule.EnrollmentNotFoundForStudent");
+        public static readonly MsgKey EnrollmentsNotInPeriod = new("Rule.EnrollmentsNotInPeriod");
+        public static readonly MsgKey FollowUpNotFoundAfterSave = new("Rule.FollowUpNotFoundAfterSave");
+        public static readonly MsgKey GoalNotInSession = new("Rule.GoalNotInSession");
+        public static readonly MsgKey InvalidRefValue = new("Rule.InvalidRefValue");
+        public static readonly MsgKey InvalidStudentProgramStatus = new("Rule.InvalidStudentProgramStatus");
+        public static readonly MsgKey KpiCodeNotFound = new("Rule.KpiCodeNotFound");
+        public static readonly MsgKey LeaveBalanceNotFound = new("Rule.LeaveBalanceNotFound");
+        public static readonly MsgKey LocaleNotSupported = new("Rule.LocaleNotSupported");
+        public static readonly MsgKey ParentGoalNotFound = new("Rule.ParentGoalNotFound");
+        public static readonly MsgKey ParticipantNotInSession = new("Rule.ParticipantNotInSession");
+        public static readonly MsgKey PortalAccessNotFound = new("Rule.PortalAccessNotFound");
+        public static readonly MsgKey StudentGoalNotFoundForStudent = new("Rule.StudentGoalNotFoundForStudent");
+        public static readonly MsgKey UserNotInCorporation = new("Rule.UserNotInCorporation");
+        public static readonly MsgKey ViewingLogNotFound = new("Rule.ViewingLogNotFound");
+        public static readonly MsgKey VisitNotFoundOrCancelled = new("Rule.VisitNotFoundOrCancelled");
         public static readonly MsgKey ActingEducatorRequired = new("Rule.ActingEducatorRequired");
         public static readonly MsgKey CampusCodeExists = new("Rule.CampusCodeExists");
         public static readonly MsgKey CannotDeleteSelf = new("Rule.CannotDeleteSelf");

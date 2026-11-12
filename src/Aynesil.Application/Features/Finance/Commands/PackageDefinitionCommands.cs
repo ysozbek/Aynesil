@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -116,7 +117,7 @@ public sealed class UpdatePackageDefinitionCommandHandler
     {
         var definition = await _db.PackageDefinitions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
         if (definition.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -153,7 +154,7 @@ public sealed class ActivatePackageDefinitionCommandHandler
     {
         var definition = await _db.PackageDefinitions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
         definition.Activate();
         await _db.SaveChangesAsync(ct);
@@ -175,7 +176,7 @@ public sealed class DeactivatePackageDefinitionCommandHandler
     {
         var definition = await _db.PackageDefinitions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
         definition.Deactivate();
         await _db.SaveChangesAsync(ct);
@@ -203,7 +204,7 @@ public sealed class DeletePackageDefinitionCommandHandler
     {
         var definition = await _db.PackageDefinitions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
         var hasActivePurchases = await _db.StudentPackages
             .AnyAsync(sp => sp.PackageDefinitionId == req.Id && sp.Status == "active", ct);

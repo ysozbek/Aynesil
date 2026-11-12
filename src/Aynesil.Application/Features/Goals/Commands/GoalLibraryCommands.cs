@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
@@ -79,7 +80,7 @@ public sealed class UpdateGoalLibraryCommandHandler
     public async Task<GoalLibraryDto> Handle(UpdateGoalLibraryCommand req, CancellationToken ct)
     {
         var library = await _db.GoalLibraries.FirstOrDefaultAsync(l => l.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalLibrary {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalLibrary"));
 
         if (library.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -109,7 +110,7 @@ public sealed class DeleteGoalLibraryCommandHandler : IRequestHandler<DeleteGoal
     public async Task Handle(DeleteGoalLibraryCommand req, CancellationToken ct)
     {
         var library = await _db.GoalLibraries.FirstOrDefaultAsync(l => l.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalLibrary {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalLibrary"));
 
         _db.GoalLibraries.Remove(library);
         await _db.SaveChangesAsync(ct);

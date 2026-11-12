@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
@@ -127,7 +129,7 @@ public sealed class GetEducationPlanQueryHandler : IRequestHandler<GetEducationP
 
     public async Task<EducationPlanDto> Handle(GetEducationPlanQuery req, CancellationToken ct)
         => await PlanProjection.LoadAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 }
 
 // ── GetGuardianVisiblePlanQuery ───────────────────────────────────────────────

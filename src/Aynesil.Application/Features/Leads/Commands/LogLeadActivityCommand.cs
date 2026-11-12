@@ -62,7 +62,7 @@ public sealed class LogLeadActivityCommandHandler : IRequestHandler<LogLeadActiv
         var lead = await _db.Leads
             .AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == req.LeadId && l.CorporationId == corporationId, ct)
-            ?? throw new NotFoundException("Lead", req.LeadId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 
         // PerformedBy is chosen by the client (the activity may have been done by a colleague),
         // but it must be a user of this corporation.

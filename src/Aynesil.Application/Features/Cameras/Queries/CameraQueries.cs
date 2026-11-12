@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Cameras.Dtos;
 using Aynesil.Shared;
@@ -103,7 +105,7 @@ public sealed class GetCameraQueryHandler : IRequestHandler<GetCameraQuery, Came
     {
         var camera = await _db.Cameras.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         var campusName = camera.CampusId.HasValue
             ? await _db.Campuses.AsNoTracking()
@@ -318,7 +320,7 @@ public sealed class GetViewingAuthorizationQueryHandler
 
         var a = await _db.ViewingAuthorizations.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"ViewingAuthorization {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ViewingAuthorization"));
 
         var guardian = await _db.Guardians.AsNoTracking()
             .Where(g => g.Id == a.GuardianId)

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -31,7 +32,7 @@ public class ParentFeedback : TenantEntity
         string? comment)
     {
         if (rating.HasValue && (rating < 1 || rating > 5))
-            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 1 and 5.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeBetween, MsgArg.Field("Rating"), 1, 5);
 
         return new()
         {

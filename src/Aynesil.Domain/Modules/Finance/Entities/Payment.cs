@@ -60,7 +60,7 @@ public class Payment : TenantEntity
         DateTimeOffset? paidAt = null)
     {
         if (amount <= 0)
-            throw new ArgumentException("Payment amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         return new Payment
         {

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Education.Events;
 
 namespace Aynesil.Domain.Modules.Education.Entities;
@@ -78,7 +79,6 @@ public class GoalProgress : BaseEntity
     private static void ValidateTrend(string? trend)
     {
         if (trend is not null && !ValidTrends.Contains(trend))
-            throw new ArgumentException(
-                $"Invalid trend '{trend}'. Must be improving, stable, or declining.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Trend"), MsgArg.Values("Trend", "improving", "stable", "declining"));
     }
 }

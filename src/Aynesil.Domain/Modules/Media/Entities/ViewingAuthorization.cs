@@ -59,7 +59,7 @@ public class ViewingAuthorization : TenantEntity
         Guid? grantedBy = null)
     {
         if (validTo <= validFrom)
-            throw new ArgumentException("ValidTo must be after ValidFrom.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("ValidTo"), MsgArg.Field("ValidFrom"));
 
         return new ViewingAuthorization
         {

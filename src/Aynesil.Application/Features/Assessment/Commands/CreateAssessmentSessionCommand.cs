@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -59,8 +60,7 @@ public sealed class CreateAssessmentSessionCommandHandler
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId && t.IsActive
                                    && (t.CorporationId == null || t.CorporationId == corporationId), ct)
-            ?? throw new KeyNotFoundException(
-                $"Active assessment template {req.TemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ActiveAssessmentTemplate"));
 
         var session = AssessmentSession.Create(
             corporationId, req.TemplateId, template.Version,

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -58,7 +59,7 @@ public sealed class CreateCampActivityCommandHandler
             .AnyAsync(p => p.Id == req.CampPeriodId
                         && p.CorporationId == corporationId, ct);
         if (!periodExists)
-            throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         var activity = CampActivity.Create(
             corporationId, req.CampPeriodId, req.Name,
@@ -130,7 +131,7 @@ public sealed class UpdateCampActivityCommandHandler : IRequestHandler<UpdateCam
     {
         var activity = await _db.CampActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
         activity.Update(req.Name, req.ActivityTypeId, req.Description,
             req.StartsAt, req.EndsAt, req.Location, req.Capacity,
@@ -159,7 +160,7 @@ public sealed class DeleteCampActivityCommandHandler : IRequestHandler<DeleteCam
     {
         var activity = await _db.CampActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
         activity.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

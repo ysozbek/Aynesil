@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -56,14 +57,14 @@ public sealed class AssignCampEducatorCommandHandler
                         && c.CorporationId == corporationId
                         && c.DeletedAt == null, ct);
         if (!campExists)
-            throw new KeyNotFoundException($"Camp {req.CampId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         if (req.CampPeriodId.HasValue)
         {
             var periodOk = await _db.CampPeriods
                 .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.CampPeriodId.Value && p.CampId == req.CampId, ct);
             if (!periodOk)
-                throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found for this camp.");
+                throw new NotFoundException(MsgKeys.Rule.CampPeriodNotInCamp, req.CampPeriodId);
         }
 
         if (req.CampActivityId.HasValue)
@@ -71,7 +72,7 @@ public sealed class AssignCampEducatorCommandHandler
             var activityOk = await _db.CampActivities
                 .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId.Value && a.DeletedAt == null, ct);
             if (!activityOk)
-                throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
         }
 
         var duplicate = await _db.CampEducators.AnyAsync(e => e.CorporationId == corporationId && e.CampId == req.CampId
@@ -124,7 +125,7 @@ public sealed class UpdateCampEducatorRoleCommandHandler
     {
         var assignment = await _db.CampEducators
             .FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camp educator assignment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampEducatorAssignment"));
 
         assignment.UpdateRole(req.Role);
         await _db.SaveChangesAsync(ct);
@@ -145,7 +146,7 @@ public sealed class RemoveCampEducatorCommandHandler : IRequestHandler<RemoveCam
     {
         var assignment = await _db.CampEducators
             .FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camp educator assignment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampEducatorAssignment"));
 
         _db.CampEducators.Remove(assignment);
         await _db.SaveChangesAsync(ct);

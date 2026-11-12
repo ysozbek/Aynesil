@@ -44,11 +44,11 @@ public class Camp : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Camp code is required.", nameof(code));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Code"));
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Camp name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         var camp = new Camp
         {
@@ -80,9 +80,9 @@ public class Camp : TenantEntity
         Guid? updatedBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Camp name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         Name        = name.Trim();
         CampTypeId  = campTypeId;

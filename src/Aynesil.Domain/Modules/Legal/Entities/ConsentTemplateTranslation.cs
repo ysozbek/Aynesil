@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Legal.Entities;
 
 /// <summary>
@@ -16,9 +17,9 @@ public class ConsentTemplateTranslation
 
     public ConsentTemplateTranslation(Guid consentTemplateId, string locale, string title, string body)
     {
-        if (string.IsNullOrWhiteSpace(locale)) throw new ArgumentException("Locale is required.",  nameof(locale));
-        if (string.IsNullOrWhiteSpace(title))  throw new ArgumentException("Title is required.",   nameof(title));
-        if (string.IsNullOrWhiteSpace(body))   throw new ArgumentException("Body is required.",    nameof(body));
+        if (string.IsNullOrWhiteSpace(locale)) throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Locale"));
+        if (string.IsNullOrWhiteSpace(title))  throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
+        if (string.IsNullOrWhiteSpace(body))   throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
 
         ConsentTemplateId = consentTemplateId;
         Locale            = locale.Trim().ToLowerInvariant();
@@ -28,8 +29,8 @@ public class ConsentTemplateTranslation
 
     public void Update(string title, string body)
     {
-        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title is required.", nameof(title));
-        if (string.IsNullOrWhiteSpace(body))  throw new ArgumentException("Body is required.",  nameof(body));
+        if (string.IsNullOrWhiteSpace(title)) throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
+        if (string.IsNullOrWhiteSpace(body))  throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
 
         Title = title.Trim();
         Body  = body.Trim();

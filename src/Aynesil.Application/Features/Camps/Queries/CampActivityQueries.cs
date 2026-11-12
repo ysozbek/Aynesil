@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using MediatR;
@@ -103,7 +105,7 @@ public sealed class GetCampActivityQueryHandler : IRequestHandler<GetCampActivit
     {
         var a = await _db.CampActivities.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id && x.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
         var typeCode = a.ActivityTypeId.HasValue
             ? await _db.RefValues.AsNoTracking()

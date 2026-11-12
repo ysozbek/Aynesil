@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -46,7 +47,7 @@ public sealed class AddDiagnosisCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var diagnosis = new Diagnosis
         {
@@ -98,7 +99,7 @@ public sealed class UpdateDiagnosisCommandHandler
     {
         var diagnosis = await _db.Diagnoses
             .FirstOrDefaultAsync(d => d.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Diagnosis {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Diagnosis"));
 
         if (diagnosis.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -136,7 +137,7 @@ public sealed class DeleteDiagnosisCommandHandler : IRequestHandler<DeleteDiagno
     {
         var diagnosis = await _db.Diagnoses
             .FirstOrDefaultAsync(d => d.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Diagnosis {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Diagnosis"));
 
         diagnosis.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

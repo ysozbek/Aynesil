@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -63,7 +64,7 @@ public sealed class CreateStudentGoalCommandHandler
                 t => t.Id == req.TemplateId.Value
                   && (t.CorporationId == null || t.CorporationId == corporationId), ct);
             if (!templateExists)
-                throw new KeyNotFoundException($"GoalTemplate {req.TemplateId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
         }
 
         if (req.ParentGoalId.HasValue)
@@ -74,8 +75,7 @@ public sealed class CreateStudentGoalCommandHandler
                   && g.StudentId == req.StudentId
                   && g.Horizon == "long_term", ct);
             if (!parentExists)
-                throw new KeyNotFoundException(
-                    $"Parent long-term goal {req.ParentGoalId} not found for this student.");
+                throw new NotFoundException(MsgKeys.Rule.ParentGoalNotFound, req.ParentGoalId);
         }
 
         var goal = StudentGoal.Create(
@@ -131,7 +131,7 @@ public sealed class UpdateStudentGoalCommandHandler
     public async Task<StudentGoalDto> Handle(UpdateStudentGoalCommand req, CancellationToken ct)
     {
         var goal = await _db.StudentGoals.FirstOrDefaultAsync(g => g.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 
         if (goal.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -180,7 +180,7 @@ public sealed class ChangeStudentGoalStatusCommandHandler
     public async Task<StudentGoalDto> Handle(ChangeStudentGoalStatusCommand req, CancellationToken ct)
     {
         var goal = await _db.StudentGoals.FirstOrDefaultAsync(g => g.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 
         goal.ChangeStatus(req.NewStatus, req.AchievedDate, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -206,7 +206,7 @@ public sealed class DeleteStudentGoalCommandHandler : IRequestHandler<DeleteStud
     public async Task Handle(DeleteStudentGoalCommand req, CancellationToken ct)
     {
         var goal = await _db.StudentGoals.FirstOrDefaultAsync(g => g.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 
         goal.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

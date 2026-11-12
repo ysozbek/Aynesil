@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Education.Entities;
 
 /// <summary>
@@ -34,8 +35,7 @@ public class EducationPlanReview : BaseEntity
         string? outcome)
     {
         if (outcome is not null && !new[] { "on_track", "needs_revision", "met" }.Contains(outcome))
-            throw new ArgumentException(
-                $"Invalid review outcome '{outcome}'. Must be on_track, needs_revision, or met.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Outcome"), MsgArg.Values("Outcome", "on_track", "needs_revision", "met"));
 
         return new EducationPlanReview
         {

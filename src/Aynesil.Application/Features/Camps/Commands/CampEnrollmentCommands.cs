@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -53,7 +54,7 @@ public sealed class EnrollStudentCommandHandler
             .AnyAsync(p => p.Id == req.CampPeriodId
                         && p.CorporationId == corporationId, ct);
         if (!periodExists)
-            throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         var alreadyEnrolled = await _db.CampEnrollments
             .AnyAsync(e => e.CampPeriodId == req.CampPeriodId
@@ -108,7 +109,7 @@ public sealed class MoveToWaitlistCommandHandler : IRequestHandler<MoveToWaitlis
     {
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         enrollment.MoveToWaitlist();
         await _db.SaveChangesAsync(ct);
@@ -130,7 +131,7 @@ public sealed class PromoteFromWaitlistCommandHandler : IRequestHandler<PromoteF
         var enrollment = await _db.CampEnrollments
             .Include(e => e.Period)
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         if (enrollment.Period.Capacity.HasValue)
         {
@@ -160,7 +161,7 @@ public sealed class WithdrawEnrollmentCommandHandler : IRequestHandler<WithdrawE
     {
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         enrollment.Withdraw();
         await _db.SaveChangesAsync(ct);
@@ -181,7 +182,7 @@ public sealed class CompleteEnrollmentCommandHandler : IRequestHandler<CompleteE
     {
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         enrollment.Complete();
         await _db.SaveChangesAsync(ct);
@@ -231,7 +232,7 @@ public sealed class UpdateEnrollmentPackageCommandHandler
     {
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         enrollment.UpdatePackage(req.StudentPackageId);
         await _db.SaveChangesAsync(ct);

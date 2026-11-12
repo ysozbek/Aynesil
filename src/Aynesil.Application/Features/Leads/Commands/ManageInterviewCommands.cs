@@ -50,7 +50,7 @@ public sealed class CompleteInterviewCommandHandler : IRequestHandler<CompleteIn
 
         var interview = await _db.Interviews
             .FirstOrDefaultAsync(i => i.Id == req.InterviewId && i.CorporationId == corporationId, ct)
-            ?? throw new NotFoundException("Interview", req.InterviewId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Interview"));
 
         // ConductedBy is chosen by the client (another staff member may have run the interview),
         // but it must be a user of this corporation.
@@ -89,7 +89,7 @@ public sealed class CancelInterviewCommandHandler : IRequestHandler<CancelInterv
     {
         var interview = await _db.Interviews
             .FirstOrDefaultAsync(i => i.Id == req.InterviewId, ct)
-            ?? throw new NotFoundException("Interview", req.InterviewId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Interview"));
 
         if (interview.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
@@ -130,7 +130,7 @@ public sealed class RescheduleInterviewCommandHandler : IRequestHandler<Reschedu
     {
         var interview = await _db.Interviews
             .FirstOrDefaultAsync(i => i.Id == req.InterviewId, ct)
-            ?? throw new NotFoundException("Interview", req.InterviewId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Interview"));
 
         if (interview.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
@@ -162,7 +162,7 @@ public sealed class MarkInterviewNoShowCommandHandler : IRequestHandler<MarkInte
     {
         var interview = await _db.Interviews
             .FirstOrDefaultAsync(i => i.Id == req.InterviewId, ct)
-            ?? throw new NotFoundException("Interview", req.InterviewId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Interview"));
 
         if (interview.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

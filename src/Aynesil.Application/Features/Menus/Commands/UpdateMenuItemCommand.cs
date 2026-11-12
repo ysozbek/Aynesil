@@ -65,7 +65,7 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
             .Include(m => m.Translations)
             .Include(m => m.RequiredPermission)
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new NotFoundException("MenuItem", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
         // Tenants may update their own items and platform defaults (e.g. reorder)
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
@@ -83,7 +83,7 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
                 m => m.Id == req.ParentId &&
                      (m.CorporationId == null || m.CorporationId == corporationId), ct);
             if (!parentExists)
-                throw new NotFoundException("MenuItem", req.ParentId.Value);
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
         }
 
         if (req.RequiredPermissionId.HasValue)
@@ -91,7 +91,7 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
             var permExists = await _db.Permissions.AnyAsync(
                 p => p.Id == req.RequiredPermissionId, ct);
             if (!permExists)
-                throw new NotFoundException("Permission", req.RequiredPermissionId.Value);
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
         }
 
         item.Update(

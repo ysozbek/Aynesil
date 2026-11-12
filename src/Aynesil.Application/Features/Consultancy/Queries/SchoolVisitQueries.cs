@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using MediatR;
@@ -103,7 +105,7 @@ public sealed class GetSchoolVisitQueryHandler
     {
         var visit = await _db.SchoolVisits.AsNoTracking()
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"School visit {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
 
         var institutionName = await _db.Institutions.AsNoTracking()
             .Where(i => i.Id == visit.InstitutionId)

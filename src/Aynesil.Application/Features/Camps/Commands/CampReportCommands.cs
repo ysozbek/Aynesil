@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -51,7 +52,7 @@ public sealed class CreateCampReportCommandHandler
                         && e.CorporationId == corporationId, ct);
 
         if (!enrollmentExists)
-            throw new KeyNotFoundException($"Enrollment {req.CampEnrollmentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         var report = CampReport.Create(
             corporationId, req.CampEnrollmentId,

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
@@ -108,7 +110,7 @@ public sealed class UpdateProgramRecommendationCommandHandler
     {
         var rec = await _db.ProgramRecommendations
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Program recommendation {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramRecommendation"));
 
         rec.Update(req.RecommendedProgramId, req.RecommendedIntensity,
                    req.Rationale, req.RecommendedBy, _currentUser.UserId);

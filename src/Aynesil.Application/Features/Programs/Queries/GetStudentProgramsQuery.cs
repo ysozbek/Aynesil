@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Shared;
@@ -115,7 +117,7 @@ public sealed class GetStudentProgramQueryHandler : IRequestHandler<GetStudentPr
     {
         var sp = await _db.StudentPrograms.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"StudentProgram {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentProgram"));
 
         var program = await _db.EducationPrograms.AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == sp.ProgramId, ct);

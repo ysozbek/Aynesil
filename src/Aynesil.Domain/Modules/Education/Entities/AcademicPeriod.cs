@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Education.Entities;
 
 /// <summary>
@@ -37,7 +38,7 @@ public class AcademicPeriod : TenantEntity
         bool isCurrent = false)
     {
         if (endDate <= startDate)
-            throw new ArgumentException("EndDate must be after StartDate.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         return new AcademicPeriod
         {
@@ -57,7 +58,7 @@ public class AcademicPeriod : TenantEntity
     public void Update(string name, DateOnly startDate, DateOnly endDate, Guid? termId)
     {
         if (endDate <= startDate)
-            throw new ArgumentException("EndDate must be after StartDate.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
         Name      = name;
         TermId    = termId;

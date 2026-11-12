@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -51,7 +52,7 @@ public sealed class UpdateAssessmentTemplateCommandHandler
     {
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
 
         template.Update(req.Name, req.TypeId, req.CategoryId, req.ScoringModel, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -82,7 +83,7 @@ public sealed class SetAssessmentTemplateActiveCommandHandler
     {
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
 
         if (req.IsActive) template.Activate(_currentUser.UserId);
         else              template.Deactivate(_currentUser.UserId);
@@ -119,7 +120,7 @@ public sealed class CreateAssessmentTemplateVersionCommandHandler
     {
         var source = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Assessment template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
 
         var newVersion = source.CreateNewVersion(_currentUser.UserId);
         _db.AssessmentTemplates.Add(newVersion);
@@ -157,7 +158,7 @@ public sealed class UpsertTemplateTranslationCommandHandler
         var template = await _db.AssessmentTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
-            ?? throw new KeyNotFoundException($"Assessment template {req.TemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
 
         template.UpsertTranslation(req.Locale, req.Name, req.Description);
         await _db.SaveChangesAsync(ct);

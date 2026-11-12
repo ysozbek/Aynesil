@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.PerformanceKpi.Dtos;
 using MediatR;
@@ -37,8 +39,7 @@ public sealed class GetEducatorKpiTrendQueryHandler
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
-            ?? throw new KeyNotFoundException(
-                $"KPI definition with code '{req.KpiCode}' not found.");
+            ?? throw new NotFoundException(MsgKeys.Rule.KpiCodeNotFound, req.KpiCode);
 
         var q = _db.KpiValues
             .AsNoTracking()
@@ -95,8 +96,7 @@ public sealed class GetCorporationKpiTrendQueryHandler
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
-            ?? throw new KeyNotFoundException(
-                $"KPI definition with code '{req.KpiCode}' not found.");
+            ?? throw new NotFoundException(MsgKeys.Rule.KpiCodeNotFound, req.KpiCode);
 
         var q = _db.KpiValues
             .AsNoTracking()
@@ -167,8 +167,7 @@ public sealed class GetEducatorRankingQueryHandler
         var kpiDef = await _db.KpiDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Code == req.KpiCode, ct)
-            ?? throw new KeyNotFoundException(
-                $"KPI definition with code '{req.KpiCode}' not found.");
+            ?? throw new NotFoundException(MsgKeys.Rule.KpiCodeNotFound, req.KpiCode);
 
         var kpiValues = await _db.KpiValues
             .AsNoTracking()

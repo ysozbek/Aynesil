@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -62,7 +63,7 @@ public sealed class SubmitLeaveRequestCommandHandler : IRequestHandler<SubmitLea
             .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == corporationId, ct);
 
         if (!educatorExists)
-            throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         // Application-level overlap check (DB constraint will enforce at commit, but we give a friendly message).
         var overlap = await _db.LeaveRequests
@@ -127,7 +128,7 @@ public sealed class UpdateLeaveRequestCommandHandler : IRequestHandler<UpdateLea
     {
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         // Overlap check excluding the current request.
         var overlap = await _db.LeaveRequests
@@ -174,7 +175,7 @@ public sealed class ApproveLeaveRequestCommandHandler
     {
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         // Balance validation — if a balance record exists, enforce it.
         if (leave.Quantity.HasValue && leave.LeaveTypeId.HasValue)
@@ -240,7 +241,7 @@ public sealed class RejectLeaveRequestCommandHandler
     {
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         leave.Reject();
 
@@ -274,7 +275,7 @@ public sealed class CancelLeaveRequestCommandHandler : IRequestHandler<CancelLea
     {
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         var wasApproved = leave.Status == "approved";
 
@@ -381,7 +382,7 @@ public sealed class AdjustLeaveEntitlementCommandHandler
     {
         var balance = await _db.LeaveBalances
             .FirstOrDefaultAsync(b => b.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveBalance {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveBalance"));
 
         balance.AdjustEntitlement(req.Entitled);
         await _db.SaveChangesAsync(ct);
@@ -435,8 +436,7 @@ public sealed class CarryForwardLeaveBalanceCommandHandler
             .FirstOrDefaultAsync(b => b.CorporationId == corporationId && b.EducatorId == req.EducatorId
                 && b.LeaveTypeId == req.LeaveTypeId
                 && b.PeriodYear == req.FromYear, ct)
-            ?? throw new KeyNotFoundException(
-                $"No leave balance found for educator {req.EducatorId}, leave type {req.LeaveTypeId}, year {req.FromYear}.");
+            ?? throw new NotFoundException(MsgKeys.Rule.LeaveBalanceNotFound, req.EducatorId, req.LeaveTypeId, req.FromYear);
 
         var carryAmount = source.Remaining;
         if (req.MaxCarryForward.HasValue)

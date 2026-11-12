@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
@@ -44,14 +45,14 @@ public sealed class CreateEnrollmentCommandHandler
 
         var studentExists = await _db.Students.AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         if (req.StatusId.HasValue)
         {
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.StatusId.Value && r.RefType!.Code == "enrollment_status", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid enrollment_status ref_value: {req.StatusId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "enrollment_status"), req.StatusId);
         }
 
         var enrollment = Enrollment.Create(
@@ -97,7 +98,7 @@ public sealed class ChangeEnrollmentStatusCommandHandler
     public async Task<EnrollmentDto> Handle(ChangeEnrollmentStatusCommand req, CancellationToken ct)
     {
         var enrollment = await _db.Enrollments.FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         if (enrollment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -105,7 +106,7 @@ public sealed class ChangeEnrollmentStatusCommandHandler
         var valid = await _db.RefValues.AnyAsync(
             r => r.Id == req.NewStatusId && r.RefType!.Code == "enrollment_status", ct);
         if (!valid)
-            throw new KeyNotFoundException($"Invalid enrollment_status ref_value: {req.NewStatusId}");
+            throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "enrollment_status"), req.NewStatusId);
 
         enrollment.ChangeStatus(req.NewStatusId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -136,7 +137,7 @@ public sealed class EndEnrollmentCommandHandler : IRequestHandler<EndEnrollmentC
     public async Task<EnrollmentDto> Handle(EndEnrollmentCommand req, CancellationToken ct)
     {
         var enrollment = await _db.Enrollments.FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         if (enrollment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

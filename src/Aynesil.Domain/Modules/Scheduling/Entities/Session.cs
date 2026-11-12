@@ -63,7 +63,7 @@ public class Session : TenantEntity
         Guid? createdBy = null)
     {
         if (endsAt <= startsAt)
-            throw new ArgumentException("Session ends_at must be after starts_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
 
         var session = new Session
         {
@@ -101,7 +101,7 @@ public class Session : TenantEntity
         EnsureNotTerminal();
 
         if (newEndsAt <= newStartsAt)
-            throw new ArgumentException("Session ends_at must be after starts_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
 
         var previous = Status;
         StartsAt  = newStartsAt;

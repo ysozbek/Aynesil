@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
@@ -55,7 +56,7 @@ public sealed class SubmitResponsesCommandHandler
     {
         var session = await _db.AssessmentSessions
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
-            ?? throw new KeyNotFoundException($"Assessment session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 
         if (session.Status != AssessmentSession.SessionStatuses.InProgress)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ResponsesNeedInProgress);

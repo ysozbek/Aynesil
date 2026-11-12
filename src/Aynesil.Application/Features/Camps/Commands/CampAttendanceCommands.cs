@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -112,7 +113,7 @@ public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAtten
     {
         var attendance = await _db.CampAttendances
             .FirstOrDefaultAsync(a => a.Id == req.AttendanceId, ct)
-            ?? throw new KeyNotFoundException($"Attendance record {req.AttendanceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AttendanceRecord"));
 
         attendance.Update(req.Status, req.ReasonId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -172,7 +173,7 @@ public sealed class BulkRecordAttendanceCommandHandler
         var periodExists = await _db.CampPeriods
             .AnyAsync(p => p.Id == req.CampPeriodId && p.CorporationId == corporationId, ct);
         if (!periodExists)
-            throw new KeyNotFoundException($"Camp period {req.CampPeriodId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         var enrollmentIds = req.Records.Select(r => r.EnrollmentId).Distinct().ToList();
 
@@ -182,7 +183,7 @@ public sealed class BulkRecordAttendanceCommandHandler
                           && e.CampPeriodId == req.CampPeriodId
                           && e.CorporationId == corporationId, ct);
         if (validCount != enrollmentIds.Count)
-            throw new KeyNotFoundException("One or more enrollments do not belong to this camp period.");
+            throw new NotFoundException(MsgKeys.Rule.EnrollmentsNotInPeriod);
 
         var existingDates = await _db.CampAttendances
             .Where(a => enrollmentIds.Contains(a.CampEnrollmentId)

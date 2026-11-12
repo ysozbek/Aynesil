@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -96,7 +98,7 @@ public sealed class GetPackageDefinitionQueryHandler
     {
         var p = await _db.PackageDefinitions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Package definition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
         return new PackageDefinitionDto(
             p.Id, p.CorporationId, p.Code, p.Name,

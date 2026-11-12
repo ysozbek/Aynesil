@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -53,7 +54,7 @@ public sealed class GrantConsentCommandHandler
             .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId && s.DeletedAt == null, ct);
 
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         int? templateVersion = null;
         Guid? resolvedConsentTypeId = req.ConsentTypeId;
@@ -62,7 +63,7 @@ public sealed class GrantConsentCommandHandler
         {
             var tpl = await _db.ConsentTemplates.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.CorporationId == corporationId && t.Id == req.TemplateId.Value, ct)
-                ?? throw new KeyNotFoundException($"Consent template {req.TemplateId} not found.");
+                ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
 
             if (!tpl.IsCurrent)
                 throw new BusinessRuleViolationException(MsgKeys.Rule.ConsentNeedsCurrentVersion);
@@ -139,7 +140,7 @@ public sealed class WithdrawConsentCommandHandler : IRequestHandler<WithdrawCons
     {
         var consent = await _db.StudentConsents
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student consent {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentConsent"));
 
         consent.Withdraw(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -178,13 +179,13 @@ public sealed class AttachConsentEvidenceCommandHandler
     {
         var consent = await _db.StudentConsents
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student consent {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentConsent"));
 
         var fileExists = await _db.FileObjects
             .AnyAsync(f => f.Id == req.EvidenceFileId, ct);
 
         if (!fileExists)
-            throw new KeyNotFoundException($"File {req.EvidenceFileId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "File"));
 
         consent.AttachEvidence(req.EvidenceFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);

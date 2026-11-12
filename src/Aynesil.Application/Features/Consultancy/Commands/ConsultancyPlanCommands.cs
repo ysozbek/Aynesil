@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -58,7 +59,7 @@ public sealed class CreateConsultancyPlanCommandHandler
             .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InstitutionId && i.DeletedAt == null, ct);
 
         if (!institutionExists)
-            throw new KeyNotFoundException($"Institution {req.InstitutionId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
 
         var plan = ConsultancyPlan.Create(
             corporationId, req.InstitutionId, req.Name,
@@ -132,7 +133,7 @@ public sealed class UpdateConsultancyPlanCommandHandler
     {
         var plan = await _db.ConsultancyPlans
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         plan.Update(req.Name, req.ConsultancyTypeId,
             req.PeriodStart, req.PeriodEnd,
@@ -162,7 +163,7 @@ public sealed class ActivateConsultancyPlanCommandHandler
     {
         var plan = await _db.ConsultancyPlans
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         plan.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -189,7 +190,7 @@ public sealed class CompleteConsultancyPlanCommandHandler
     {
         var plan = await _db.ConsultancyPlans
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         plan.Complete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -216,7 +217,7 @@ public sealed class CancelConsultancyPlanCommandHandler
     {
         var plan = await _db.ConsultancyPlans
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         plan.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -238,7 +239,7 @@ public sealed class DeleteConsultancyPlanCommandHandler
     {
         var plan = await _db.ConsultancyPlans
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy plan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
 
         if (plan.Status != "draft")
             throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftPlanDeleteCancel);

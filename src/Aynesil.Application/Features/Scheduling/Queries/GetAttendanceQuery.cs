@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Shared;
@@ -132,7 +134,7 @@ public sealed class GetAttendanceSummaryQueryHandler
             .Where(s => s.Id == req.StudentId)
             .Select(s => new { s.FirstName, s.LastName })
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var studentName = $"{student.FirstName} {student.LastName}".Trim();
 

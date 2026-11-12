@@ -69,7 +69,7 @@ public sealed class CreateRefValueCommandHandler : IRequestHandler<CreateRefValu
 
         var refType = await _db.RefTypes.AsNoTracking()
             .FirstOrDefaultAsync(t => t.Code == typeCode, ct)
-            ?? throw new NotFoundException("RefType", typeCode);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RefType"));
 
         if (!refType.AllowsTenantValues)
             throw new BusinessRuleViolationException(MsgKeys.Rule.RefTypeNoTenantValues, typeCode);
@@ -190,7 +190,7 @@ public sealed class UpdateRefValueCommandHandler : IRequestHandler<UpdateRefValu
             .Include(v => v.Translations)
             .Include(v => v.RefType)
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new NotFoundException("RefValue", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RefValue"));
 
         var isTenantOwned = value.CorporationId == corporationId;
         var isSharedGlobal = value.CorporationId is null;
@@ -293,7 +293,7 @@ public sealed class SetRefValueActiveCommandHandler : IRequestHandler<SetRefValu
         var value = await _db.RefValues
             .Include(v => v.RefType)
             .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
-            ?? throw new NotFoundException("RefValue", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RefValue"));
 
         // Tenant may only touch own rows or shared (corporation_id null) rows visible to them.
         if (value.CorporationId is not null && value.CorporationId != corporationId)

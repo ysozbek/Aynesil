@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using MediatR;
@@ -110,7 +112,7 @@ public sealed class GetStudentConsentQueryHandler
         var c = await _db.StudentConsents.AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student consent {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentConsent"));
 
         var studentName = await _db.Students.AsNoTracking()
             .Where(s => s.Id == c.StudentId)

@@ -43,10 +43,10 @@ public class LeaveBalance : TenantEntity
         string unit = "day")
     {
         if (!ValidUnits.Contains(unit))
-            throw new ArgumentException($"Invalid unit '{unit}'. Must be: day, hour.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Unit"), MsgArg.Values("LeaveUnit", "day", "hour"));
 
         if (entitled < 0)
-            throw new ArgumentException("Entitled leave must be non-negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("EntitledLeave"));
 
         return new LeaveBalance
         {
@@ -65,7 +65,7 @@ public class LeaveBalance : TenantEntity
     public void Consume(decimal amount)
     {
         if (amount <= 0)
-            throw new ArgumentException("Consume amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         if (Used + amount > Entitled)
             throw new BusinessRuleViolationException(MsgKeys.Rule.InsufficientLeaveDetail, Entitled, new EnumValue("LeaveUnit", Unit), Used, amount);
@@ -76,7 +76,7 @@ public class LeaveBalance : TenantEntity
     public void Restore(decimal amount)
     {
         if (amount <= 0)
-            throw new ArgumentException("Restore amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         Used = Math.Max(0, Used - amount);
     }
@@ -84,7 +84,7 @@ public class LeaveBalance : TenantEntity
     public void AdjustEntitlement(decimal entitled)
     {
         if (entitled < 0)
-            throw new ArgumentException("Entitled leave must be non-negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("EntitledLeave"));
 
         Entitled = entitled;
     }
@@ -92,7 +92,7 @@ public class LeaveBalance : TenantEntity
     public void CarryForward(decimal amount)
     {
         if (amount < 0)
-            throw new ArgumentException("Carry-forward amount must be non-negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("CarryForward"));
 
         Entitled += amount;
     }

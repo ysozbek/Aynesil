@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Camps.Entities;
 
 /// <summary>
@@ -30,8 +31,7 @@ public class CampReport : BaseEntity
         Guid? authoredBy = null)
     {
         if (string.IsNullOrWhiteSpace(summary) && fileId == null)
-            throw new ArgumentException(
-                "A camp report must include at least a summary text or an attached file.");
+            throw new InvalidArgumentException(MsgKeys.Validation.AtLeastOneOf, MsgArg.Fields("Summary", "AttachedFile"));
 
         return new CampReport
         {

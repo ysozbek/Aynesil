@@ -45,7 +45,7 @@ public static partial class Msg
         if (args.Length == 0) return template;
 
         // string.Format kullanılmaz: FluentValidation'ın {PropertyName} gibi adlı yer tutucuları korunmalı.
-        return IndexPlaceholder().Replace(template, m =>
+        var result = IndexPlaceholder().Replace(template, m =>
         {
             var i = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             if (i >= args.Length) return m.Value;
@@ -53,12 +53,20 @@ public static partial class Msg
             {
                 ILocalizedArg a => a.Resolve(culture),
                 EnumValue ev => Enum(ev.Group, ev.Code, culture),
+                FieldRef fr => Field(fr.Name, culture),
+                FieldRefs frs => string.Join(", ", frs.Names.Select(n => Field(n, culture))),
+                EnumValues evs => string.Join(", ", evs.Codes.Select(c => Enum(evs.Group, c, culture))),
                 Formatted { Value: IFormattable fv } f => fv.ToString(f.Format, culture),
                 Formatted f => f.Value?.ToString() ?? string.Empty,
                 IFormattable f => f.ToString(null, culture),
                 var o => o?.ToString() ?? string.Empty,
             };
         });
+
+        // Şablon bir etiketle başlıyorsa ("{0} bulunamadı.") etiketler küçük harfle tutulduğundan cümle büyük harfle başlar.
+        return template.StartsWith("{0}", StringComparison.Ordinal) && result.Length > 0
+            ? char.ToUpper(result[0], culture) + result[1..]
+            : result;
     }
 
     /// <summary>Alan adı etiketi (property/camel/snake adı kabul eder); bulunamazsa okunur hale getirir.</summary>

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -59,7 +60,7 @@ public sealed class RecordPaymentCommandHandler
                 .AnyAsync(i => i.CorporationId == corporationId && i.Id == req.InvoiceId.Value, ct);
 
             if (!invoiceExists)
-                throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
         }
 
         var payment = Payment.Record(
@@ -93,7 +94,7 @@ public sealed class CapturePaymentCommandHandler
     {
         var payment = await _db.Payments
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Payment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Payment"));
 
         if (payment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -141,7 +142,7 @@ public sealed class FailPaymentCommandHandler
     {
         var payment = await _db.Payments
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Payment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Payment"));
 
         if (payment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

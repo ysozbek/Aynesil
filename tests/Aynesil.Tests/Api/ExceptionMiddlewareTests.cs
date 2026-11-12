@@ -113,6 +113,42 @@ public class ExceptionMiddlewareTests
     }
 
     [Fact]
+    public async Task NotFoundException_names_the_entity_in_the_request_language()
+    {
+        var ex = new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
+        var (statusTr, _, tr, _) = await RunAsync(ex, "tr");
+        var (_, _, en, _) = await RunAsync(ex, "en");
+
+        statusTr.Should().Be(StatusCodes.Status404NotFound);
+        tr.GetProperty("message").GetString().Should().Be("Öğrenci bulunamadı.");
+        en.GetProperty("message").GetString().Should().Be("Student was not found.");
+        tr.GetProperty("code").GetString().Should().Be(MsgKeys.Error.NotFound.Value);
+    }
+
+    [Fact]
+    public async Task Framework_KeyNotFoundException_returns_404_without_leaking_its_text()
+    {
+        var (status, body, json, _) = await RunAsync(new KeyNotFoundException("The given key 'secret-key' was not present in the dictionary."), "en");
+
+        status.Should().Be(StatusCodes.Status404NotFound);
+        body.Should().NotContain("secret-key");
+        json.GetProperty("message").GetString().Should().Be("Record was not found.");
+    }
+
+    [Fact]
+    public async Task InvalidArgumentException_carries_code_and_parameters()
+    {
+        var ex = new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
+        var (status, _, tr, _) = await RunAsync(ex, "tr");
+        var (_, _, en, _) = await RunAsync(ex, "en");
+
+        status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+        tr.GetProperty("code").GetString().Should().Be(MsgKeys.Validation.MustBeAfter.Value);
+        tr.GetProperty("message").GetString().Should().Be("Bitiş, Başlangıç alanından sonra olmalıdır.");
+        en.GetProperty("message").GetString().Should().Be("Ends at must be after Starts at.");
+    }
+
+    [Fact]
     public async Task ConflictException_without_code_keeps_its_own_message()
     {
         var (status, _, json, _) = await RunAsync(new ConflictException("Zaten kayıtlı."));

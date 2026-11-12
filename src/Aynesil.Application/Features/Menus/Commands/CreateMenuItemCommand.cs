@@ -82,7 +82,7 @@ public sealed class CreateMenuItemCommandHandler : IRequestHandler<CreateMenuIte
                 m => m.Id == req.ParentId &&
                      (m.CorporationId == null || m.CorporationId == corporationId), ct);
             if (!parentExists)
-                throw new NotFoundException("MenuItem", req.ParentId.Value);
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
         }
 
         if (req.RequiredPermissionId.HasValue)
@@ -90,7 +90,7 @@ public sealed class CreateMenuItemCommandHandler : IRequestHandler<CreateMenuIte
             var permExists = await _db.Permissions.AnyAsync(
                 p => p.Id == req.RequiredPermissionId, ct);
             if (!permExists)
-                throw new NotFoundException("Permission", req.RequiredPermissionId.Value);
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
         }
 
         var codeLower = req.Code.Trim().ToLowerInvariant().Replace(' ', '-');

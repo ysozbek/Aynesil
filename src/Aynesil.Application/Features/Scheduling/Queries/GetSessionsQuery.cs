@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Shared;
@@ -102,5 +104,5 @@ public sealed class GetSessionQueryHandler : IRequestHandler<GetSessionQuery, Se
 
     public async Task<SessionDto> Handle(GetSessionQuery req, CancellationToken ct)
         => await SchedulingProjection.LoadSessionAsync(_db, req.Id, _tenant.Locale, ct)
-           ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 }

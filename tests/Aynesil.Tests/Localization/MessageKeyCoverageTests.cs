@@ -56,9 +56,9 @@ public class MessageKeyCoverageTests
     public void Every_FieldArg_and_FieldList_name_used_in_validators_has_a_FieldNames_entry()
     {
         var tr = ResourceParityTests.Load("FieldNames", "tr");
-        var names = SourceFiles("src/Aynesil.Application/Features")
-            .SelectMany(f => Regex.Matches(File.ReadAllText(f), @"Msg\.(?:FieldArg|Field)\(""(\w+)""\)").Select(m => m.Groups[1].Value)
-                .Concat(Regex.Matches(File.ReadAllText(f), @"Msg\.FieldList\(([^)]*)\)")
+        var names = SourceFiles("src")
+            .SelectMany(f => Regex.Matches(File.ReadAllText(f), @"(?:Msg\.FieldArg|Msg\.Field|MsgArg\.Field)\(""(\w+)""\)").Select(m => m.Groups[1].Value)
+                .Concat(Regex.Matches(File.ReadAllText(f), @"(?:Msg\.FieldList|MsgArg\.Fields)\(([^)]*)\)")
                     .SelectMany(m => Regex.Matches(m.Groups[1].Value, @"""(\w+)""").Select(x => x.Groups[1].Value))))
             .Distinct()
             .ToList();
@@ -114,5 +114,33 @@ public class MessageKeyCoverageTests
             .ToList();
 
         missing.Should().BeEmpty("EnumLabels.resx'te (tr+en) karşılığı olmayan EnumValue");
+    }
+
+    [Fact]
+    public void Every_literal_MsgArg_Values_code_has_a_label()
+    {
+        var tr = ResourceParityTests.Load("EnumLabels", "tr");
+        var en = ResourceParityTests.Load("EnumLabels", "en");
+        var missing = new List<string>();
+        foreach (var f in SourceFiles("src"))
+            foreach (Match m in Regex.Matches(File.ReadAllText(f), @"MsgArg\.Values\(""(\w+)"",([^)]*)\)"))
+                foreach (Match code in Regex.Matches(m.Groups[2].Value, @"""([^""]+)"""))
+                {
+                    var key = $"{m.Groups[1].Value}.{code.Groups[1].Value}";
+                    if (!tr.ContainsKey(key) || !en.ContainsKey(key)) missing.Add(key);
+                }
+
+        missing.Distinct().Should().BeEmpty("EnumLabels.resx'te (tr+en) karşılığı olmayan MsgArg.Values kodu");
+    }
+
+    [Fact]
+    public void Domain_and_handlers_do_not_throw_raw_text_not_found_or_argument_exceptions()
+    {
+        var rx = new Regex(@"throw new (KeyNotFoundException|ArgumentException|ArgumentOutOfRangeException)\(");
+        var offenders = SourceFiles("src")
+            .SelectMany(f => rx.Matches(File.ReadAllText(f)).Select(m => $"{Path.GetFileName(f)}: {m.Groups[1].Value}"))
+            .ToList();
+
+        offenders.Should().BeEmpty("NotFoundException / InvalidArgumentException + MsgKeys kullanılmalı");
     }
 }

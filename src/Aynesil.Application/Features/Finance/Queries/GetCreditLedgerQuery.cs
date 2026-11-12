@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
@@ -121,7 +123,7 @@ public sealed class GetCreditSummaryQueryHandler
             .Where(s => s.Id == req.StudentId && s.CorporationId == corporationId)
             .Select(s => new { s.FirstName, s.LastName })
             .FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var packages = await _db.StudentPackages.AsNoTracking()
             .Where(p => p.StudentId == req.StudentId)

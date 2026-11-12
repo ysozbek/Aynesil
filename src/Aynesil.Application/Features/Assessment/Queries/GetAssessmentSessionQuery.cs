@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using MediatR;
@@ -16,5 +18,5 @@ public sealed class GetAssessmentSessionQueryHandler
     public async Task<AssessmentSessionDto> Handle(
         GetAssessmentSessionQuery req, CancellationToken ct)
         => await AssessmentProjection.LoadSessionAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Assessment session {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentSession"));
 }

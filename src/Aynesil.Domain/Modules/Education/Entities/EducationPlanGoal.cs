@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Education.Entities;
 
 /// <summary>
@@ -33,7 +34,7 @@ public class EducationPlanGoal : BaseEntity
         int sortOrder = 0)
     {
         if (!new[] { "long_term", "short_term" }.Contains(horizon))
-            throw new ArgumentException($"Invalid horizon '{horizon}'. Must be long_term or short_term.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Horizon"), MsgArg.Values("Horizon", "long_term", "short_term"));
 
         return new EducationPlanGoal
         {

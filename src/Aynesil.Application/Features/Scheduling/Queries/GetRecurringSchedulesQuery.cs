@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Commands;
 using Aynesil.Application.Features.Scheduling.Dtos;
@@ -89,7 +91,7 @@ public sealed class GetRecurringScheduleQueryHandler
         var s = await _db.RecurringSchedules.AsNoTracking()
             .Include(x => x.Educators)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"RecurringSchedule {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
 
         return CreateRecurringScheduleCommandHandler.ToDto(s);
     }

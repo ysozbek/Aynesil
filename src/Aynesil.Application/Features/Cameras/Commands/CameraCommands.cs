@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Media.Entities;
@@ -99,7 +100,7 @@ public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCom
     {
         var camera = await _db.Cameras
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         camera.Update(req.Name, req.CampusId, req.CameraTypeId,
             req.StreamProviderId, req.StreamRef, _currentUser.UserId);
@@ -127,7 +128,7 @@ public sealed class DeleteCameraCommandHandler : IRequestHandler<DeleteCameraCom
     {
         var camera = await _db.Cameras
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         camera.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -161,7 +162,7 @@ public sealed class SetCameraActiveCommandHandler : IRequestHandler<SetCameraAct
     {
         var camera = await _db.Cameras
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camera {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         if (req.IsActive)
             camera.Activate(_currentUser.UserId);

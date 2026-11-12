@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Shared;
@@ -90,5 +92,5 @@ public sealed class GetProgramQueryHandler : IRequestHandler<GetProgramQuery, Pr
 
     public async Task<ProgramDto> Handle(GetProgramQuery req, CancellationToken ct)
         => await ProgramProjection.LoadAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Program {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
 }

@@ -31,7 +31,7 @@ public sealed class ActivateUserCommandHandler : IRequestHandler<ActivateUserCom
     public async Task Handle(ActivateUserCommand req, CancellationToken ct)
     {
         var user = await _db.UserAccounts.FindAsync([req.UserId], ct)
-            ?? throw new NotFoundException("User", req.UserId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         user.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -63,7 +63,7 @@ public sealed class SuspendUserCommandHandler : IRequestHandler<SuspendUserComma
     public async Task Handle(SuspendUserCommand req, CancellationToken ct)
     {
         var user = await _db.UserAccounts.FindAsync([req.UserId], ct)
-            ?? throw new NotFoundException("User", req.UserId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         if (_currentUser.UserId == req.UserId)
             throw new ValidationException([ValidationFailures.For(nameof(req.UserId), MsgKeys.Rule.CannotSuspendSelf)]);

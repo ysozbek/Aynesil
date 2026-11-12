@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
@@ -42,7 +43,7 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
     {
         var session = await _db.Sessions.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         // authored_by FK → educators.educator: the author is the educator linked to the signed-in user.
         var educatorId = await ActingEducator.RequireIdAsync(
@@ -91,7 +92,7 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
     public async Task<SessionNoteDto> Handle(EditSessionNoteCommand req, CancellationToken ct)
     {
         var note = await _db.SessionNotes.FirstOrDefaultAsync(n => n.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"SessionNote {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SessionNote"));
 
         if (note.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -129,7 +130,7 @@ public sealed class DeleteSessionNoteCommandHandler : IRequestHandler<DeleteSess
     public async Task Handle(DeleteSessionNoteCommand req, CancellationToken ct)
     {
         var note = await _db.SessionNotes.FirstOrDefaultAsync(n => n.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"SessionNote {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SessionNote"));
 
         note.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

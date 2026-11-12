@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -55,15 +56,14 @@ public sealed class PurchaseStudentPackageCommandHandler
             .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId, ct);
 
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         if (req.PackageDefinitionId.HasValue)
         {
             var def = await _db.PackageDefinitions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.CorporationId == corporationId && p.Id == req.PackageDefinitionId, ct)
-                ?? throw new KeyNotFoundException(
-                    $"Package definition {req.PackageDefinitionId} not found.");
+                ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PackageDefinition"));
 
             if (!def.IsActive)
                 throw new BusinessRuleViolationException(MsgKeys.Rule.PackageDefinitionInactive, def.Name);
@@ -110,7 +110,7 @@ public sealed class CancelStudentPackageCommandHandler
     {
         var package = await _db.StudentPackages
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         if (package.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -145,7 +145,7 @@ public sealed class ExpireStudentPackageCommandHandler
         var package = await _db.StudentPackages
             .Include(p => p.CreditLedgerEntries)
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var remaining = package.CreditLedgerEntries.Sum(e => e.Delta);
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Shared;
@@ -88,7 +90,7 @@ public sealed class GetGoalLibraryQueryHandler : IRequestHandler<GetGoalLibraryQ
     {
         var library = await _db.GoalLibraries.AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalLibrary {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalLibrary"));
 
         var templateCount = await _db.GoalTemplates.CountAsync(
             t => t.LibraryId == library.Id, ct);

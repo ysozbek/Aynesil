@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Users.Dtos;
@@ -17,7 +18,7 @@ public sealed class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery
     public async Task<IReadOnlyList<UserRoleDto>> Handle(GetUserRolesQuery req, CancellationToken ct)
     {
         var exists = await _db.UserAccounts.AnyAsync(u => u.Id == req.UserId, ct);
-        if (!exists) throw new NotFoundException("User", req.UserId);
+        if (!exists) throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         return await _db.UserRoles
             .AsNoTracking()

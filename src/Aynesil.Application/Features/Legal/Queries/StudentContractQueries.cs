@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using MediatR;
@@ -94,7 +96,7 @@ public sealed class GetStudentContractQueryHandler
     {
         var c = await _db.StudentContracts.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         var studentName = await _db.Students.AsNoTracking()
             .Where(s => s.Id == c.StudentId)

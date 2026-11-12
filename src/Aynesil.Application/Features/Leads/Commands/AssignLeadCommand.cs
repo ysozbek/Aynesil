@@ -45,14 +45,14 @@ public sealed class AssignLeadCommandHandler : IRequestHandler<AssignLeadCommand
     {
         var lead = await _db.Leads
             .FirstOrDefaultAsync(l => l.Id == req.LeadId, ct)
-            ?? throw new NotFoundException("Lead", req.LeadId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 
         if (lead.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         var userExists = await _db.UserAccounts.AnyAsync(u => u.Id == req.UserId, ct);
         if (!userExists)
-            throw new NotFoundException("UserAccount", req.UserId);
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "UserAccount"));
 
         lead.Assign(req.UserId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);

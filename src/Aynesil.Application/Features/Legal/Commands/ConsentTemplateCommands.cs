@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -135,7 +136,7 @@ public sealed class UpdateConsentTemplateCommandHandler : IRequestHandler<Update
         var template = await _db.ConsentTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consent template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
 
         template.Update(req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);
 
@@ -182,7 +183,7 @@ public sealed class NewVersionConsentTemplateCommandHandler
         var current = await _db.ConsentTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.CurrentTemplateId, ct)
-            ?? throw new KeyNotFoundException($"Consent template {req.CurrentTemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
 
         var next = current.NewVersion(req.EffectiveFrom);
 
@@ -230,7 +231,7 @@ public sealed class DeleteConsentTemplateCommandHandler : IRequestHandler<Delete
     {
         var template = await _db.ConsentTemplates
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consent template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
 
         var hasConsents = await _db.StudentConsents
             .AnyAsync(c => c.TemplateId == req.Id, ct);

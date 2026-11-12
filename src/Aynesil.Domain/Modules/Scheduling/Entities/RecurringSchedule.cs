@@ -76,10 +76,10 @@ public class RecurringSchedule : TenantEntity
         ValidateFrequency(frequency);
 
         if (durationMinutes <= 0)
-            throw new ArgumentException("Duration must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Duration"));
 
         if (rangeEnd.HasValue && rangeEnd.Value <= rangeStart)
-            throw new ArgumentException("Range end must be after range start.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("RangeEnd"), MsgArg.Field("RangeStart"));
 
         var schedule = new RecurringSchedule
         {
@@ -142,7 +142,6 @@ public class RecurringSchedule : TenantEntity
     private static void ValidateFrequency(string frequency)
     {
         if (!ValidFrequencies.Contains(frequency))
-            throw new ArgumentException(
-                $"Invalid frequency '{frequency}'. Must be weekly, biweekly, or monthly.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Frequency"), MsgArg.Values("Frequency", "weekly", "biweekly", "monthly"));
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Domain.Modules.Core.Entities;
@@ -100,7 +102,7 @@ public sealed class DeleteNotificationTriggerConfigCommandHandler
     {
         var config = await _db.NotificationTriggerConfigs
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"NotificationTriggerConfig {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTriggerConfig"));
 
         _db.NotificationTriggerConfigs.Remove(config);
         await _db.SaveChangesAsync(ct);

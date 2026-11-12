@@ -91,7 +91,6 @@ public class Attendance : BaseEntity
     private static void ValidateStatus(string status)
     {
         if (!ValidStatuses.Contains(status))
-            throw new ArgumentException(
-                $"Invalid attendance status '{status}'. Must be present, absent, late, excused, or left_early.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("AttendanceStatus", "present", "absent", "late", "excused", "left_early"));
     }
 }

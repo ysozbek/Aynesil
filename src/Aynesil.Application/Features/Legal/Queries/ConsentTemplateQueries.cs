@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using MediatR;
@@ -93,7 +95,7 @@ public sealed class GetConsentTemplateQueryHandler
             .Include(x => x.Translations)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consent template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
 
         string? typeCode = null;
         if (t.ConsentTypeId.HasValue)

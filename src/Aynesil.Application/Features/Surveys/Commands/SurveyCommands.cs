@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -126,7 +127,7 @@ public sealed class UpdateSurveyDefinitionCommandHandler
     {
         var survey = await _db.SurveyDefinitions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"SurveyDefinition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SurveyDefinition"));
 
         survey.Update(req.Title, req.Description, req.Target, req.TypeId, req.IsActive);
         await _db.SaveChangesAsync(ct);
@@ -148,7 +149,7 @@ public sealed class DeleteSurveyDefinitionCommandHandler
     {
         var survey = await _db.SurveyDefinitions
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"SurveyDefinition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SurveyDefinition"));
 
         var hasResponses = await _db.SurveyResponses.AnyAsync(r => r.SurveyId == req.Id, ct);
         if (hasResponses)
@@ -215,7 +216,7 @@ public sealed class SubmitSurveyResponseCommandHandler
 
         var survey = await _db.SurveyDefinitions.AsNoTracking()
             .FirstOrDefaultAsync(s => s.CorporationId == corporationId && s.Id == req.SurveyId && s.IsActive && s.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Active SurveyDefinition {req.SurveyId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ActiveSurveyDefinition"));
 
         var userId = _currentUser.UserId;
         var (guardianId, isGuardian) = await PortalGuardian.ResolveAsync(

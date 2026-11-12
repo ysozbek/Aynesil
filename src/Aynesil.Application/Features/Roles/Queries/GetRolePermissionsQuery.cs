@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Permissions.Dtos;
@@ -18,7 +19,7 @@ public sealed class GetRolePermissionsQueryHandler
     public async Task<IReadOnlyList<PermissionListItemDto>> Handle(GetRolePermissionsQuery req, CancellationToken ct)
     {
         var exists = await _db.Roles.AnyAsync(r => r.Id == req.RoleId, ct);
-        if (!exists) throw new NotFoundException("Role", req.RoleId);
+        if (!exists) throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         return await _db.RolePermissions
             .AsNoTracking()

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -64,7 +65,7 @@ public sealed class CreateStudentCommandHandler
             var validStatus = await _db.RefValues.AnyAsync(
                 r => r.Id == req.StatusId.Value && r.RefType!.Code == "student_status", ct);
             if (!validStatus)
-                throw new KeyNotFoundException($"Invalid student_status ref_value: {req.StatusId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "student_status"), req.StatusId);
         }
 
         var student = Student.Create(
@@ -138,7 +139,7 @@ public sealed class UpdateStudentCommandHandler
     {
         var student = await _db.Students
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         if (student.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -183,7 +184,7 @@ public sealed class DeleteStudentCommandHandler : IRequestHandler<DeleteStudentC
     {
         var student = await _db.Students
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         student.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

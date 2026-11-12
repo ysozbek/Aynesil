@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -34,8 +35,7 @@ public class LeaveApproval : TenantEntity
         int stepNo = 1)
     {
         if (!ValidDecisions.Contains(decision))
-            throw new ArgumentException(
-                $"Invalid decision '{decision}'. Must be: approved, rejected, pending.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Decision"), MsgArg.Values("Decision", "approved", "rejected", "pending"));
 
         return new LeaveApproval
         {

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
@@ -83,7 +85,7 @@ public sealed class GetPromotionQueryHandler : IRequestHandler<GetPromotionQuery
     {
         var p = await _db.Promotions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Promotion {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Promotion"));
 
         return new PromotionDto(
             p.Id, p.CorporationId, p.Code, p.Name,

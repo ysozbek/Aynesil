@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using FluentValidation;
@@ -35,7 +36,7 @@ public sealed class DeleteCampusCommandHandler : IRequestHandler<DeleteCampusCom
     {
         var campus = await _db.Campuses
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Campus", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Campus"));
 
         if (campus.IsDeleted)
             return; // idempotent

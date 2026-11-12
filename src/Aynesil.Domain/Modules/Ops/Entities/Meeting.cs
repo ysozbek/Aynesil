@@ -47,7 +47,7 @@ public class Meeting : TenantEntity
         Guid? createdBy = null)
     {
         if (endsAt.HasValue && scheduledAt.HasValue && endsAt <= scheduledAt)
-            throw new ArgumentException("Meeting ends_at must be after scheduled_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("ScheduledAt"));
 
         return new Meeting
         {
@@ -81,7 +81,7 @@ public class Meeting : TenantEntity
             throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingUpdateCancelled);
 
         if (endsAt.HasValue && scheduledAt.HasValue && endsAt <= scheduledAt)
-            throw new ArgumentException("Meeting ends_at must be after scheduled_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("ScheduledAt"));
 
         Title         = title.Trim();
         MeetingTypeId = meetingTypeId;

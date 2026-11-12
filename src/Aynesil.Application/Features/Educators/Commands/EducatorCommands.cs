@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -57,7 +58,7 @@ public sealed class CreateEducatorCommandHandler : IRequestHandler<CreateEducato
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.TitleId.Value && r.RefType!.Code == "educator_title", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid educator_title ref_value: {req.TitleId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "educator_title"), req.TitleId);
         }
 
         var educator = Educator.Create(
@@ -115,7 +116,7 @@ public sealed class UpdateEducatorCommandHandler : IRequestHandler<UpdateEducato
     public async Task<EducatorDto> Handle(UpdateEducatorCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         if (educator.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -125,7 +126,7 @@ public sealed class UpdateEducatorCommandHandler : IRequestHandler<UpdateEducato
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.TitleId.Value && r.RefType!.Code == "educator_title", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid educator_title ref_value: {req.TitleId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "educator_title"), req.TitleId);
         }
 
         educator.UpdateProfile(
@@ -156,7 +157,7 @@ public sealed class DeleteEducatorCommandHandler : IRequestHandler<DeleteEducato
     public async Task Handle(DeleteEducatorCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         educator.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -181,7 +182,7 @@ public sealed class ActivateEducatorCommandHandler : IRequestHandler<ActivateEdu
     public async Task<EducatorDto> Handle(ActivateEducatorCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         educator.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -205,7 +206,7 @@ public sealed class DeactivateEducatorCommandHandler : IRequestHandler<Deactivat
     public async Task<EducatorDto> Handle(DeactivateEducatorCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         educator.Deactivate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

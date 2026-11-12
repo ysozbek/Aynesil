@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -71,8 +72,7 @@ public sealed class SubmitParentFeedbackCommandHandler
                   && s.DeletedAt == null, ct);
 
             if (!sessionExists)
-                throw new KeyNotFoundException(
-                    $"Session {req.SessionId} not found in this corporation.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
         }
 
         if (req.EducatorId.HasValue)
@@ -83,8 +83,7 @@ public sealed class SubmitParentFeedbackCommandHandler
                   && e.DeletedAt == null, ct);
 
             if (!educatorExists)
-                throw new KeyNotFoundException(
-                    $"Educator {req.EducatorId} not found in this corporation.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
         }
 
         var feedback = ParentFeedback.Create(

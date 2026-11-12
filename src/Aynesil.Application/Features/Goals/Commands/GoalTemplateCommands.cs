@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
@@ -62,7 +63,7 @@ public sealed class CreateGoalTemplateCommandHandler
         {
             var libraryExists = await _db.GoalLibraries.AnyAsync(l => l.Id == libraryId.Value, ct);
             if (!libraryExists)
-                throw new KeyNotFoundException($"GoalLibrary {libraryId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalLibrary"));
         }
 
         if (categoryId.HasValue)
@@ -70,7 +71,7 @@ public sealed class CreateGoalTemplateCommandHandler
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == categoryId.Value && r.RefType!.Code == "goal_category", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid goal_category ref_value: {categoryId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "goal_category"), categoryId);
         }
 
         if (devAreaId.HasValue)
@@ -78,7 +79,7 @@ public sealed class CreateGoalTemplateCommandHandler
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == devAreaId.Value && r.RefType!.Code == "development_area", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid development_area ref_value: {devAreaId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "development_area"), devAreaId);
         }
     }
 
@@ -87,7 +88,7 @@ public sealed class CreateGoalTemplateCommandHandler
         var t = await _db.GoalTemplates
             .AsNoTracking()
             .Include(x => x.Translations)
-            .FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new KeyNotFoundException();
+            .FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
 
         var catLabel = t.CategoryId.HasValue
             ? await _db.RefValues.AsNoTracking()
@@ -147,7 +148,7 @@ public sealed class UpdateGoalTemplateCommandHandler
         var template = await _db.GoalTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
 
         if (template.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -212,12 +213,12 @@ public sealed class SetGoalTemplateTranslationCommandHandler
     {
         var localeExists = await _db.Locales.AnyAsync(l => l.Code == req.Locale, ct);
         if (!localeExists)
-            throw new KeyNotFoundException($"Locale '{req.Locale}' not found.");
+            throw new NotFoundException(MsgKeys.Rule.LocaleNotSupported, req.Locale);
 
         var template = await _db.GoalTemplates
             .Include(t => t.Translations)
             .FirstOrDefaultAsync(t => t.Id == req.TemplateId, ct)
-            ?? throw new KeyNotFoundException($"GoalTemplate {req.TemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
 
         var translation = template.SetTranslation(req.Locale, req.Statement, req.DefaultCriteria);
 
@@ -245,7 +246,7 @@ public sealed class DeleteGoalTemplateCommandHandler : IRequestHandler<DeleteGoa
     public async Task Handle(DeleteGoalTemplateCommand req, CancellationToken ct)
     {
         var template = await _db.GoalTemplates.FirstOrDefaultAsync(t => t.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
 
         template.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

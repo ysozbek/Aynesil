@@ -62,7 +62,7 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
             ?? throw new UnauthorizedAccessException("User must be authenticated to change password.");
 
         var user = await _db.UserAccounts.FindAsync([userId], ct)
-            ?? throw new NotFoundException("User", userId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         if (string.IsNullOrEmpty(user.PasswordHash) ||
             !_passwords.Verify(req.CurrentPassword, user.PasswordHash))

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -44,7 +45,7 @@ public sealed class ChangeStudentStatusCommandHandler
     {
         var student = await _db.Students
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         if (student.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -52,7 +53,7 @@ public sealed class ChangeStudentStatusCommandHandler
         var validStatus = await _db.RefValues.AnyAsync(
             r => r.Id == req.NewStatusId && r.RefType!.Code == "student_status", ct);
         if (!validStatus)
-            throw new KeyNotFoundException($"Invalid student_status ref_value: {req.NewStatusId}");
+            throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "student_status"), req.NewStatusId);
 
         var history = student.ChangeStatus(req.NewStatusId, req.Reason, _currentUser.UserId);
 

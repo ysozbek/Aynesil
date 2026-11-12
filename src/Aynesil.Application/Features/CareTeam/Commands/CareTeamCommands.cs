@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -66,13 +67,13 @@ public sealed class AssignCareTeamMemberCommandHandler
         var studentExists = await _db.Students
             .AnyAsync(s => s.Id == req.StudentId && s.CorporationId == corporationId, ct);
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         // Validate educator exists within tenant
         var educatorExists = await _db.Educators
             .AnyAsync(e => e.Id == req.EducatorId && e.CorporationId == corporationId, ct);
         if (!educatorExists)
-            throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         // Validate RoleId is a valid care_team_role ref_value
         var roleValid = await _db.RefValues
@@ -104,7 +105,7 @@ public sealed class AssignCareTeamMemberCommandHandler
             var sourceExists = await _db.StudentCareAssignments
                 .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.SourceAssignmentId.Value, ct);
             if (!sourceExists)
-                throw new KeyNotFoundException($"SourceAssignmentId {req.SourceAssignmentId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SourceAssignment"));
         }
 
         // If IsPrimary = true, check for existing active primary for this student
@@ -215,7 +216,7 @@ public sealed class UpdateCareTeamAssignmentCommandHandler
     {
         var assignment = await _db.StudentCareAssignments
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"CareTeamAssignment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CareTeamAssignment"));
 
         if (assignment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -282,7 +283,7 @@ public sealed class RemoveCareTeamAssignmentCommandHandler
     {
         var assignment = await _db.StudentCareAssignments
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"CareTeamAssignment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CareTeamAssignment"));
 
         if (assignment.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

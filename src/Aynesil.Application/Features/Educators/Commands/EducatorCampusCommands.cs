@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
@@ -41,11 +42,11 @@ public sealed class AssignEducatorToCampusCommandHandler
     public async Task<EducatorCampusDto> Handle(AssignEducatorToCampusCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.EducatorId, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         var campusExists = await _db.Campuses.AnyAsync(c => c.Id == req.CampusId, ct);
         if (!campusExists)
-            throw new KeyNotFoundException($"Campus {req.CampusId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Campus"));
 
         var existing = await _db.EducatorCampuses.AnyAsync(
             c => c.EducatorId == req.EducatorId
@@ -95,8 +96,7 @@ public sealed class EndEducatorCampusAssignmentCommandHandler
     {
         var assignment = await _db.EducatorCampuses
             .FirstOrDefaultAsync(c => c.Id == req.CampusAssignmentId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Campus assignment {req.CampusAssignmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampusAssignment"));
 
         assignment.ActiveTo = req.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
@@ -91,7 +93,7 @@ public sealed class GetRefundQueryHandler : IRequestHandler<GetRefundQuery, Refu
     {
         var r = await _db.Refunds.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Refund {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Refund"));
 
         return new RefundDto(
             r.Id, r.CorporationId, r.PaymentId,

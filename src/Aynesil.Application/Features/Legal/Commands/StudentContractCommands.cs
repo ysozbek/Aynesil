@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -54,7 +55,7 @@ public sealed class GenerateStudentContractCommandHandler
             .AnyAsync(s => s.CorporationId == corporationId && s.Id == req.StudentId && s.DeletedAt == null, ct);
 
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         int? templateVersion = null;
         if (req.TemplateId.HasValue)
@@ -62,7 +63,7 @@ public sealed class GenerateStudentContractCommandHandler
             var tpl = await _db.ContractTemplates
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.CorporationId == corporationId && t.Id == req.TemplateId.Value, ct)
-                ?? throw new KeyNotFoundException($"Contract template {req.TemplateId} not found.");
+                ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
 
             if (!tpl.IsCurrent)
                 throw new BusinessRuleViolationException(MsgKeys.Rule.ContractNeedsCurrentVersion);
@@ -145,7 +146,7 @@ public sealed class UpdateStudentContractCommandHandler : IRequestHandler<Update
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.UpdateDetails(req.GuardianId, req.StartsOn, req.EndsOn, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -171,7 +172,7 @@ public sealed class SendStudentContractCommandHandler : IRequestHandler<SendStud
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Send(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -217,7 +218,7 @@ public sealed class SignStudentContractCommandHandler : IRequestHandler<SignStud
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Sign(req.SignedByName, req.SignatureMethod, req.SignatureRef, req.SignedFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -245,7 +246,7 @@ public sealed class ActivateStudentContractCommandHandler : IRequestHandler<Acti
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Activate(req.SignedFileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -271,7 +272,7 @@ public sealed class ExpireStudentContractCommandHandler : IRequestHandler<Expire
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Expire(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -297,7 +298,7 @@ public sealed class TerminateStudentContractCommandHandler : IRequestHandler<Ter
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Terminate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -323,7 +324,7 @@ public sealed class DeleteStudentContractCommandHandler : IRequestHandler<Delete
     {
         var contract = await _db.StudentContracts
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Student contract {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
         contract.Delete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

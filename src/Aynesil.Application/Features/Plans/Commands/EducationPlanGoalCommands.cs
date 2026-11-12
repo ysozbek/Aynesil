@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -42,7 +43,7 @@ public sealed class AddGoalToPlanCommandHandler
         var plan = await _db.EducationPlans
             .Include(p => p.PlanGoals)
             .FirstOrDefaultAsync(p => p.Id == req.EducationPlanId, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.Status is not ("draft" or "in_review"))
             throw new BusinessRuleViolationException(MsgKeys.Rule.PlanAddGoalsStatus, new EnumValue("Status", plan.Status));
@@ -51,8 +52,7 @@ public sealed class AddGoalToPlanCommandHandler
             g => g.Id == req.StudentGoalId && g.StudentId == plan.StudentId, ct);
 
         if (!goalExists)
-            throw new KeyNotFoundException(
-                $"StudentGoal {req.StudentGoalId} not found for this student.");
+            throw new NotFoundException(MsgKeys.Rule.StudentGoalNotFoundForStudent, req.StudentGoalId);
 
         var alreadyLinked = plan.PlanGoals.Any(pg => pg.StudentGoalId == req.StudentGoalId);
         if (alreadyLinked)
@@ -84,7 +84,7 @@ public sealed class RemoveGoalFromPlanCommandHandler
     {
         var plan = await _db.EducationPlans
             .FirstOrDefaultAsync(p => p.Id == req.EducationPlanId, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.Status is not ("draft" or "in_review"))
             throw new BusinessRuleViolationException(MsgKeys.Rule.PlanRemoveGoalsStatus, new EnumValue("Status", plan.Status));
@@ -92,7 +92,7 @@ public sealed class RemoveGoalFromPlanCommandHandler
         var planGoal = await _db.EducationPlanGoals
             .FirstOrDefaultAsync(pg => pg.Id == req.PlanGoalId
                                     && pg.EducationPlanId == req.EducationPlanId, ct)
-            ?? throw new KeyNotFoundException($"PlanGoal {req.PlanGoalId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "PlanGoal"));
 
         _db.EducationPlanGoals.Remove(planGoal);
         await _db.SaveChangesAsync(ct);
@@ -122,7 +122,7 @@ public sealed class ReorderPlanGoalsCommandHandler
         // revised/closed, ordering is frozen along with content.
         var plan = await _db.EducationPlans
             .FirstOrDefaultAsync(p => p.Id == req.EducationPlanId, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.Status is not ("draft" or "in_review"))
             throw new BusinessRuleViolationException(MsgKeys.Rule.PlanReorderGoalsStatus, new EnumValue("Status", plan.Status));

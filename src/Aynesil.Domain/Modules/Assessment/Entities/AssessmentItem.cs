@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Assessment.Entities;
 
 /// <summary>
@@ -98,8 +99,6 @@ public class AssessmentItem : BaseEntity
                          or ResponseTypes.Text
                          or ResponseTypes.Choice)
             return;
-        throw new ArgumentException(
-            $"Invalid response type '{responseType}'. Allowed: numeric, scale, boolean, text, choice.",
-            nameof(responseType));
+        throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("ResponseType"), MsgArg.Values("ResponseType", "numeric", "scale", "boolean", "text", "choice"));
     }
 }

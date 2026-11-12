@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
@@ -51,7 +52,7 @@ public sealed class CreateEducationPlanCommandHandler
             s => s.Id == req.StudentId && s.CorporationId == corporationId, ct);
 
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var plan = EducationPlan.Create(
             corporationId, req.StudentId, req.Title,
@@ -101,7 +102,7 @@ public sealed class UpdateEducationPlanCommandHandler
     public async Task<EducationPlanDto> Handle(UpdateEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -137,7 +138,7 @@ public sealed class SubmitEducationPlanForReviewCommandHandler
         SubmitEducationPlanForReviewCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         plan.SubmitForReview(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -177,7 +178,7 @@ public sealed class ApproveEducationPlanCommandHandler
     public async Task<EducationPlanDto> Handle(ApproveEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         // Onaylayan istemciden gelmez: oturumdaki kullanıcıya bağlı eğitmen kaydı.
         var approverId = await ActingEducator.RequireIdAsync(
@@ -218,7 +219,7 @@ public sealed class RejectEducationPlanCommandHandler
     public async Task<EducationPlanDto> Handle(RejectEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         var approverId = await ActingEducator.RequireIdAsync(
             _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
@@ -253,7 +254,7 @@ public sealed class ActivateEducationPlanCommandHandler
     public async Task<EducationPlanDto> Handle(ActivateEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         plan.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -280,7 +281,7 @@ public sealed class CloseEducationPlanCommandHandler
     public async Task<EducationPlanDto> Handle(CloseEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         plan.Close(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -307,7 +308,7 @@ public sealed class SetGuardianVisibilityCommandHandler
     public async Task<EducationPlanDto> Handle(SetGuardianVisibilityCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (req.Visible)
             plan.MakeGuardianVisible(_currentUser.UserId);
@@ -337,7 +338,7 @@ public sealed class DeleteEducationPlanCommandHandler : IRequestHandler<DeleteEd
     public async Task Handle(DeleteEducationPlanCommand req, CancellationToken ct)
     {
         var plan = await _db.EducationPlans.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.Status is not "draft")
             throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyDraftPlanDeleteClose);

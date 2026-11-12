@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Users.Dtos;
@@ -16,7 +17,7 @@ public sealed class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto>
     public async Task<UserDto> Handle(GetUserQuery req, CancellationToken ct)
     {
         var user = await _db.UserAccounts.FindAsync([req.UserId], ct)
-            ?? throw new NotFoundException("User", req.UserId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         return user.ToDto();
     }

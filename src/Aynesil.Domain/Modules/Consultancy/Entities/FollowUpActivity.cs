@@ -47,10 +47,9 @@ public class FollowUpActivity : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Follow-up activity title is required.", nameof(title));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
         if (consultancyPlanId == null && schoolVisitId == null)
-            throw new ArgumentException(
-                "A follow-up activity must be linked to a consultancy plan or a school visit.");
+            throw new InvalidArgumentException(MsgKeys.Validation.AtLeastOneOf, MsgArg.Fields("ConsultancyPlanId", "SchoolVisitId"));
 
         var activity = new FollowUpActivity
         {
@@ -84,7 +83,7 @@ public class FollowUpActivity : TenantEntity
     {
         EnsureActive("update");
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Follow-up activity title is required.", nameof(title));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Title"));
 
         Title       = title.Trim();
         Description = description?.Trim();

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Commands;
 using Aynesil.Application.Features.Consultancy.Dtos;
@@ -127,7 +129,7 @@ public sealed class GetFollowUpActivityQueryHandler
     public async Task<FollowUpActivityDto> Handle(
         GetFollowUpActivityQuery req, CancellationToken ct)
         => await CreateFollowUpActivityCommandHandler.ProjectFollowUpDto(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 }
 
 // ── GetOpenFollowUpsReportQuery ───────────────────────────────────────────────

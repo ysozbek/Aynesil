@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
@@ -116,7 +117,7 @@ public sealed class UpdateCampCommandHandler : IRequestHandler<UpdateCampCommand
     {
         var camp = await _db.Camps
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         camp.Update(req.Name, req.CampTypeId, req.CampusId,
             req.Description, req.Location, req.Capacity, _currentUser.UserId);
@@ -144,7 +145,7 @@ public sealed class ActivateCampCommandHandler : IRequestHandler<ActivateCampCom
     {
         var camp = await _db.Camps
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         camp.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -170,7 +171,7 @@ public sealed class DeactivateCampCommandHandler : IRequestHandler<DeactivateCam
     {
         var camp = await _db.Camps
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         camp.Deactivate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -196,7 +197,7 @@ public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand
     {
         var camp = await _db.Camps
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Camp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         var hasActiveEnrollments = await (
             from e in _db.CampEnrollments

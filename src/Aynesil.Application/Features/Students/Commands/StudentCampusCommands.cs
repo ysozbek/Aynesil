@@ -50,7 +50,7 @@ public sealed class EnrollStudentAtCampusCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var existing = await _db.StudentCampuses
             .FirstOrDefaultAsync(sc => sc.StudentId == req.StudentId && sc.CampusId == req.CampusId, ct);
@@ -126,7 +126,7 @@ public sealed class TransferStudentCommandHandler
     {
         var student = await _db.Students
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         if (student.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -187,7 +187,7 @@ public sealed class EndCampusEnrollmentCommandHandler
     {
         var enrollment = await _db.StudentCampuses
             .FirstOrDefaultAsync(sc => sc.Id == req.EnrollmentId, ct)
-            ?? throw new KeyNotFoundException($"Campus enrollment {req.EnrollmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampusEnrollment"));
 
         if (enrollment.ActiveTo.HasValue)
             throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentAlreadyClosed);

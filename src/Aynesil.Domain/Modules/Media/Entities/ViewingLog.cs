@@ -59,7 +59,7 @@ public class ViewingLog
             throw new BusinessRuleViolationException(MsgKeys.Rule.ViewingSessionEnded);
 
         if (endedAt <= StartedAt)
-            throw new ArgumentException("EndedAt must be after StartedAt.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndedAt"), MsgArg.Field("StartedAt"));
 
         EndedAt = endedAt;
     }

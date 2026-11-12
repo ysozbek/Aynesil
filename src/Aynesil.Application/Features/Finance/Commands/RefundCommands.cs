@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -37,7 +38,7 @@ public sealed class RequestRefundCommandHandler
         var payment = await _db.Payments
             .Include(p => p.Refunds)
             .FirstOrDefaultAsync(p => p.Id == req.PaymentId, ct)
-            ?? throw new KeyNotFoundException($"Payment {req.PaymentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Payment"));
 
         if (payment.Status != "captured")
             throw new BusinessRuleViolationException(MsgKeys.Rule.RefundNeedsCaptured);
@@ -76,7 +77,7 @@ public sealed class ProcessRefundCommandHandler
     {
         var refund = await _db.Refunds
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Refund {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Refund"));
 
         refund.Process();
 
@@ -118,7 +119,7 @@ public sealed class FailRefundCommandHandler : IRequestHandler<FailRefundCommand
     {
         var refund = await _db.Refunds
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Refund {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Refund"));
 
         refund.Fail();
         await _db.SaveChangesAsync(ct);

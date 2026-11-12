@@ -43,7 +43,7 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
             ?? throw new UnauthorizedAccessException("Tenant context is required.");
 
         var item = await _db.MenuItems.FindAsync([req.Id], ct)
-            ?? throw new NotFoundException("MenuItem", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
             throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));

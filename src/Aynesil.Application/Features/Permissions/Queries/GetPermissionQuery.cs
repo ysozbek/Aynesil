@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Permissions.Dtos;
@@ -16,7 +17,7 @@ public sealed class GetPermissionQueryHandler : IRequestHandler<GetPermissionQue
     public async Task<PermissionDto> Handle(GetPermissionQuery req, CancellationToken ct)
     {
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
-            ?? throw new NotFoundException("Permission", req.PermissionId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
 
         return permission.ToDto();
     }

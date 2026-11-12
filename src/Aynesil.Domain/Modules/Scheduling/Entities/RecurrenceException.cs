@@ -36,7 +36,7 @@ public class RecurrenceException : BaseEntity
         ValidateAction(action);
 
         if (action == "reschedule" && newStartAt is null)
-            throw new ArgumentException("new_start_at is required when action is 'reschedule'.");
+            throw new InvalidArgumentException(MsgKeys.Validation.RequiredWhenEquals, MsgArg.Field("NewStartAt"), MsgArg.Field("Action"), new EnumValue("RecurrenceAction", "reschedule"));
 
         return new RecurrenceException
         {
@@ -56,7 +56,6 @@ public class RecurrenceException : BaseEntity
     private static void ValidateAction(string action)
     {
         if (!ValidActions.Contains(action))
-            throw new ArgumentException(
-                $"Invalid recurrence exception action '{action}'. Must be skip, reschedule, or cancel.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Action"), MsgArg.Values("RecurrenceAction", "skip", "reschedule", "cancel"));
     }
 }

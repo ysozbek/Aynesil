@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -132,7 +133,7 @@ public sealed class UpdateMeetingCommandHandler : IRequestHandler<UpdateMeetingC
     {
         var meeting = await _db.Meetings
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Meeting {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         meeting.Update(req.Title, req.MeetingTypeId, req.ScheduledAt, req.EndsAt,
             req.Location, req.RoomId, req.CampusId, req.OrganizerId);
@@ -155,7 +156,7 @@ public sealed class CancelMeetingCommandHandler : IRequestHandler<CancelMeetingC
     {
         var meeting = await _db.Meetings
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Meeting {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         meeting.Cancel();
         await _db.SaveChangesAsync(ct);
@@ -176,7 +177,7 @@ public sealed class CompleteMeetingCommandHandler : IRequestHandler<CompleteMeet
     {
         var meeting = await _db.Meetings
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Meeting {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         meeting.Complete();
         await _db.SaveChangesAsync(ct);
@@ -197,7 +198,7 @@ public sealed class DeleteMeetingCommandHandler : IRequestHandler<DeleteMeetingC
     {
         var meeting = await _db.Meetings
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Meeting {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         meeting.SoftDelete();
         await _db.SaveChangesAsync(ct);
@@ -261,7 +262,7 @@ public sealed class AddMeetingParticipantCommandHandler
             .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
-            throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         var participant = MeetingParticipant.Create(
             corporationId, req.MeetingId, req.ParticipantType,
@@ -306,7 +307,7 @@ public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAtten
     {
         var participant = await _db.MeetingParticipants
             .FirstOrDefaultAsync(p => p.Id == req.ParticipantId, ct)
-            ?? throw new KeyNotFoundException($"MeetingParticipant {req.ParticipantId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingParticipant"));
 
         participant.UpdateAttendance(req.Attendance);
         await _db.SaveChangesAsync(ct);
@@ -328,7 +329,7 @@ public sealed class RemoveMeetingParticipantCommandHandler
     {
         var participant = await _db.MeetingParticipants
             .FirstOrDefaultAsync(p => p.Id == req.ParticipantId, ct)
-            ?? throw new KeyNotFoundException($"MeetingParticipant {req.ParticipantId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingParticipant"));
 
         _db.MeetingParticipants.Remove(participant);
         await _db.SaveChangesAsync(ct);
@@ -381,7 +382,7 @@ public sealed class RecordMeetingOutcomeCommandHandler
             .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
-            throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         var outcome = MeetingOutcome.Create(
             corporationId, req.MeetingId,
@@ -427,7 +428,7 @@ public sealed class UpdateMeetingOutcomeCommandHandler
     {
         var outcome = await _db.MeetingOutcomes
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MeetingOutcome {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingOutcome"));
 
         outcome.Update(req.Summary, req.Decisions);
         await _db.SaveChangesAsync(ct);
@@ -477,7 +478,7 @@ public sealed class AddMeetingFollowUpCommandHandler
             .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
 
         if (!meetingExists)
-            throw new KeyNotFoundException($"Meeting {req.MeetingId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         var followUp = MeetingFollowUp.Create(
             corporationId, req.MeetingId,
@@ -521,7 +522,7 @@ public sealed class UpdateMeetingFollowUpCommandHandler
     {
         var followUp = await _db.MeetingFollowUps
             .FirstOrDefaultAsync(f => f.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MeetingFollowUp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingFollowUp"));
 
         followUp.Update(req.Action, req.AssigneeId, req.DueDate);
         await _db.SaveChangesAsync(ct);
@@ -558,7 +559,7 @@ public sealed class UpdateFollowUpStatusCommandHandler
     {
         var followUp = await _db.MeetingFollowUps
             .FirstOrDefaultAsync(f => f.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"MeetingFollowUp {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingFollowUp"));
 
         followUp.UpdateStatus(req.Status);
         await _db.SaveChangesAsync(ct);

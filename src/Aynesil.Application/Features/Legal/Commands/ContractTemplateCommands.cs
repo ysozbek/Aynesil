@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -134,7 +135,7 @@ public sealed class UpdateContractTemplateCommandHandler : IRequestHandler<Updat
         var template = await _db.ContractTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Contract template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
 
         template.Update(req.ContractTypeId, req.EffectiveFrom);
 
@@ -181,7 +182,7 @@ public sealed class NewVersionContractTemplateCommandHandler
         var current = await _db.ContractTemplates
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.CurrentTemplateId, ct)
-            ?? throw new KeyNotFoundException($"Contract template {req.CurrentTemplateId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
 
         // NewVersion() archives `current` and returns the new version entity.
         var next = current.NewVersion(req.EffectiveFrom);
@@ -231,7 +232,7 @@ public sealed class DeleteContractTemplateCommandHandler : IRequestHandler<Delet
     {
         var template = await _db.ContractTemplates
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Contract template {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ContractTemplate"));
 
         var hasContracts = await _db.StudentContracts
             .AnyAsync(c => c.TemplateId == req.Id, ct);

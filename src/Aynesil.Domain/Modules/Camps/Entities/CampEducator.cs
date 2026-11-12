@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Camps.Events;
 
 namespace Aynesil.Domain.Modules.Camps.Entities;
@@ -38,8 +39,7 @@ public class CampEducator : BaseEntity
         Guid? assignedBy = null)
     {
         if (!ValidRoles.Contains(role))
-            throw new ArgumentException(
-                $"Invalid role '{role}'. Valid: {string.Join(", ", ValidRoles)}");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Role"), MsgArg.Values("EducatorRole", ValidRoles));
 
         var assignment = new CampEducator
         {
@@ -62,8 +62,7 @@ public class CampEducator : BaseEntity
     public void UpdateRole(string role)
     {
         if (!ValidRoles.Contains(role))
-            throw new ArgumentException(
-                $"Invalid role '{role}'. Valid: {string.Join(", ", ValidRoles)}");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Role"), MsgArg.Values("EducatorRole", ValidRoles));
         Role = role;
     }
 }

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Surveys.Dtos;
 using Aynesil.Shared;
@@ -109,7 +111,7 @@ public sealed class GetSurveyQueryHandler : IRequestHandler<GetSurveyQuery, Surv
             .Include(s => s.Questions)
                 .ThenInclude(q => q.AnswerOptions)
             .FirstOrDefaultAsync(s => s.Id == req.Id && s.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"SurveyDefinition {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SurveyDefinition"));
 
         var typeCode = survey.TypeId.HasValue
             ? await _db.RefValues.AsNoTracking()

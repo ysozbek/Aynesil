@@ -25,7 +25,7 @@ public sealed class DeleteLeadCommandHandler : IRequestHandler<DeleteLeadCommand
     {
         var lead = await _db.Leads
             .FirstOrDefaultAsync(l => l.Id == req.Id, ct)
-            ?? throw new NotFoundException("Lead", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 
         if (lead.ConvertedStudentId.HasValue)
             throw new BusinessRuleViolationException(MsgKeys.Rule.LeadConvertedNoDelete);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -68,7 +69,7 @@ public class EducatorPerformanceSnapshot : TenantEntity
         string? detail = null)
     {
         if (periodEnd <= periodStart)
-            throw new ArgumentException("Period end must be after period start.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("PeriodEnd"), MsgArg.Field("PeriodStart"));
 
         return new()
         {

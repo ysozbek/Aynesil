@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Domain.Modules.Students.Entities;
@@ -44,12 +46,12 @@ public sealed class GrantPortalAccessCommandHandler
         var guardian = await _db.Guardians
             .AsNoTracking()
             .FirstOrDefaultAsync(g => g.Id == req.GuardianId, ct)
-            ?? throw new KeyNotFoundException($"Guardian {req.GuardianId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
 
         var studentExists = await _db.Students
             .AnyAsync(s => s.Id == req.StudentId, ct);
         if (!studentExists)
-            throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var access = await _db.GuardianPortalAccesses
             .FirstOrDefaultAsync(a => a.GuardianId == req.GuardianId && a.StudentId == req.StudentId, ct);
@@ -107,8 +109,7 @@ public sealed class RevokePortalAccessCommandHandler : IRequestHandler<RevokePor
     {
         var access = await _db.GuardianPortalAccesses
             .FirstOrDefaultAsync(a => a.GuardianId == req.GuardianId && a.StudentId == req.StudentId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Portal access record not found for guardian {req.GuardianId} / student {req.StudentId}.");
+            ?? throw new NotFoundException(MsgKeys.Rule.PortalAccessNotFound, req.GuardianId, req.StudentId);
 
         access.RevokedAt = DateTimeOffset.UtcNow;
 
@@ -144,8 +145,7 @@ public sealed class UpdatePortalPermissionsCommandHandler
     {
         var access = await _db.GuardianPortalAccesses
             .FirstOrDefaultAsync(a => a.GuardianId == req.GuardianId && a.StudentId == req.StudentId && a.RevokedAt == null, ct)
-            ?? throw new KeyNotFoundException(
-                $"Active portal access record not found for guardian {req.GuardianId} / student {req.StudentId}.");
+            ?? throw new NotFoundException(MsgKeys.Rule.ActivePortalAccessNotFound, req.GuardianId, req.StudentId);
 
         access.CanViewSessions   = req.CanViewSessions;
         access.CanViewAttendance = req.CanViewAttendance;

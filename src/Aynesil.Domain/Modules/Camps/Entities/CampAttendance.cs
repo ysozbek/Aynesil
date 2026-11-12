@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Camps.Events;
 
 namespace Aynesil.Domain.Modules.Camps.Entities;
@@ -70,7 +71,6 @@ public class CampAttendance : BaseEntity
     private static void ValidateStatus(string status)
     {
         if (!ValidStatuses.Contains(status))
-            throw new ArgumentException(
-                $"Invalid attendance status '{status}'. Valid: {string.Join(", ", ValidStatuses)}");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("Status", ValidStatuses));
     }
 }

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -58,8 +59,7 @@ public sealed class CreateConsultancyReportCommandHandler
             var planExists = await _db.ConsultancyPlans
                 .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value, ct);
             if (!planExists)
-                throw new KeyNotFoundException(
-                    $"Consultancy plan {req.ConsultancyPlanId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
         }
 
         if (req.SchoolVisitId.HasValue)
@@ -67,8 +67,7 @@ public sealed class CreateConsultancyReportCommandHandler
             var visitExists = await _db.SchoolVisits
                 .AnyAsync(v => v.CorporationId == corporationId && v.Id == req.SchoolVisitId.Value, ct);
             if (!visitExists)
-                throw new KeyNotFoundException(
-                    $"School visit {req.SchoolVisitId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
         }
 
         var report = ConsultancyReport.Create(
@@ -117,7 +116,7 @@ public sealed class DeleteConsultancyReportCommandHandler
     {
         var report = await _db.ConsultancyReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Consultancy report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyReport"));
 
         _db.ConsultancyReports.Remove(report);
         await _db.SaveChangesAsync(ct);

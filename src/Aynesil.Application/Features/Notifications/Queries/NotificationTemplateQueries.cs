@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Shared;
@@ -101,7 +103,7 @@ public sealed class GetNotificationTemplateQueryHandler
         var t = await _db.NotificationTemplates.AsNoTracking()
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"NotificationTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "NotificationTemplate"));
 
         var catCode = t.CategoryId.HasValue
             ? await _db.RefValues.AsNoTracking()

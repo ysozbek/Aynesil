@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -108,7 +110,7 @@ public sealed class GetPaymentQueryHandler : IRequestHandler<GetPaymentQuery, Pa
     {
         var p = await _db.Payments.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Payment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Payment"));
 
         string? studentName = null;
         if (p.StudentId.HasValue)

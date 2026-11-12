@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
@@ -102,7 +104,7 @@ public sealed class GetStudentPackageQueryHandler
 
     public async Task<StudentPackageDto> Handle(GetStudentPackageQuery req, CancellationToken ct)
         => await FinanceProjection.LoadStudentPackageAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Student package {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 }
 
 // ── GetPackageBalanceQuery ────────────────────────────────────────────────────
@@ -120,7 +122,7 @@ public sealed class GetPackageBalanceQueryHandler
     {
         var pkg = await _db.StudentPackages.AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == req.StudentPackageId, ct)
-            ?? throw new KeyNotFoundException($"Student package {req.StudentPackageId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentPackage"));
 
         var entries = await _db.CreditLedgerEntries.AsNoTracking()
             .Where(e => e.StudentPackageId == req.StudentPackageId)

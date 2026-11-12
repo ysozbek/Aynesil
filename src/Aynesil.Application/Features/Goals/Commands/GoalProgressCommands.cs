@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -54,7 +55,7 @@ public sealed class RecordGoalProgressCommandHandler
         var goal = await _db.StudentGoals
             .AsNoTracking()
             .FirstOrDefaultAsync(g => g.Id == req.StudentGoalId, ct)
-            ?? throw new KeyNotFoundException($"StudentGoal {req.StudentGoalId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 
         var progress = GoalProgress.Record(
             goal.CorporationId,

@@ -41,6 +41,7 @@
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Doğrulama hatası.</value></data>
   <data name="Rule.AcademicPeriodInUse" xml:space="preserve"><value>Eğitim planlarının atandığı bir akademik dönem silinemez.</value></data>
   <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>Bu işlem için oturumdaki kullanıcıya bağlı bir eğitmen kaydı gerekir.</value></data>
+  <data name="Rule.ActivePortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için aktif portal erişim kaydı bulunamadı.</value></data>
   <data name="Rule.ActivityActionStatus" xml:space="preserve"><value>'{1}' durumundaki bir etkinlik için '{0}' işlemi yapılamaz.</value></data>
   <data name="Rule.ActivityAlreadyActive" xml:space="preserve"><value>Etkinlik zaten aktif.</value></data>
   <data name="Rule.ActivityAlreadyInactive" xml:space="preserve"><value>Etkinlik zaten pasif.</value></data>
@@ -51,6 +52,7 @@
   <data name="Rule.AgreementCancelStatus" xml:space="preserve"><value>'{0}' durumundaki bir sözleşme iptal edilemez.</value></data>
   <data name="Rule.AgreementExpireNeedsSigned" xml:space="preserve"><value>Yalnızca imzalanmış bir sözleşmenin süresi dolabilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.AgreementForCancelledPlan" xml:space="preserve"><value>İptal edilmiş bir plan için sözleşme oluşturulamaz.</value></data>
+  <data name="Rule.AgreementNotFoundAfterSave" xml:space="preserve"><value>Sözleşme kaydedildikten sonra bulunamadı.</value></data>
   <data name="Rule.AgreementSignNeedsSent" xml:space="preserve"><value>Yalnızca gönderilmiş bir sözleşme imzalanabilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.AgreementSignedNoDelete" xml:space="preserve"><value>İmzalanmış veya süresi dolmuş bir sözleşme silinemez.</value></data>
   <data name="Rule.AssignmentAlreadyEnded" xml:space="preserve"><value>Atama zaten sonlandırılmış.</value></data>
@@ -60,11 +62,14 @@
   <data name="Rule.CameraAlreadyInSession" xml:space="preserve"><value>Kamera zaten bu seansa atanmış.</value></data>
   <data name="Rule.CameraConsentRequired" xml:space="preserve"><value>İzleme yetkisi vermeden önce geçerli bir kamera izleme onayı (KVKK) gereklidir.</value></data>
   <data name="Rule.CameraConsentWithdrawn" xml:space="preserve"><value>Kamera izleme onayı geri çekilmiş. Erişim reddedildi.</value></data>
+  <data name="Rule.CameraNotInRoom" xml:space="preserve"><value>{0} kamerası {1} odasına atanmamış.</value></data>
+  <data name="Rule.CameraNotInSession" xml:space="preserve"><value>{0} kamerası {1} seansına atanmamış.</value></data>
   <data name="Rule.CampAlreadyActive" xml:space="preserve"><value>Kamp zaten aktif.</value></data>
   <data name="Rule.CampAlreadyInactive" xml:space="preserve"><value>Kamp zaten pasif.</value></data>
   <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Aktif kayıtları olan bir kamp silinemez.</value></data>
   <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Kamp dönemi kontenjanı dolu. 'Bekleme listesi' durumunu kullanın.</value></data>
   <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Kayıtları olan bir kamp dönemi silinemez.</value></data>
+  <data name="Rule.CampPeriodNotInCamp" xml:space="preserve"><value>{0} kamp dönemi bu kamp için bulunamadı.</value></data>
   <data name="Rule.CampPeriodStillFull" xml:space="preserve"><value>Kamp dönemi kontenjanı hâlâ dolu.</value></data>
   <data name="Rule.CampusCodeExists" xml:space="preserve"><value>'{0}' kampüs kodu bu kurumda zaten mevcut.</value></data>
   <data name="Rule.CannotDeleteSelf" xml:space="preserve"><value>Kendi hesabınızı silemezsiniz.</value></data>
@@ -98,18 +103,24 @@
   <data name="Rule.EducatorAlreadyOnSchedule" xml:space="preserve"><value>Eğitimci zaten bu tekrarlayan programa atanmış.</value></data>
   <data name="Rule.EducatorBookedOverlap" xml:space="preserve"><value>{0} eğitimcisi çakışan bir seansta zaten meşgul.</value></data>
   <data name="Rule.EducatorBookedSlot" xml:space="preserve"><value>{0} eğitimcisi istenen zaman diliminde zaten meşgul.</value></data>
+  <data name="Rule.EducatorNotInSession" xml:space="preserve"><value>Eğitimci bu seansa atanmamış.</value></data>
+  <data name="Rule.EducatorsNotFoundOrInactive" xml:space="preserve"><value>Bir veya daha fazla eğitimci bulunamadı ya da pasif.</value></data>
   <data name="Rule.EmailRegistered" xml:space="preserve"><value>'{0}' e-posta adresi zaten kayıtlı.</value></data>
   <data name="Rule.EnrollmentActivityPeriodMismatch" xml:space="preserve"><value>Kayıt ve etkinlik aynı kamp dönemine ait olmalıdır.</value></data>
   <data name="Rule.EnrollmentAlreadyClosed" xml:space="preserve"><value>Bu kayıt zaten kapatılmış.</value></data>
   <data name="Rule.EnrollmentChangeStatus" xml:space="preserve"><value>'{0}' durumundaki bir kayıt değiştirilemez.</value></data>
   <data name="Rule.EnrollmentNotActive" xml:space="preserve"><value>{0} kaydı bulunamadı veya öğrenci aktif olarak kayıtlı değil.</value></data>
+  <data name="Rule.EnrollmentNotFoundForStudent" xml:space="preserve"><value>{0} kaydı {1} öğrencisi için bulunamadı.</value></data>
+  <data name="Rule.EnrollmentsNotInPeriod" xml:space="preserve"><value>Bir veya daha fazla kayıt bu kamp dönemine ait değil.</value></data>
   <data name="Rule.EvidenceNeedsGrantedConsent" xml:space="preserve"><value>Kanıt yalnızca verilmiş bir onaya eklenebilir.</value></data>
   <data name="Rule.ExceptionExistsForDate" xml:space="preserve"><value>Bu programda {0} tarihi için zaten bir istisna var.</value></data>
   <data name="Rule.FollowUpDeleteCompleted" xml:space="preserve"><value>Tamamlanmış bir takip etkinliği silinemez.</value></data>
+  <data name="Rule.FollowUpNotFoundAfterSave" xml:space="preserve"><value>Takip etkinliği kaydedildikten sonra bulunamadı.</value></data>
   <data name="Rule.FollowUpReopenCancelled" xml:space="preserve"><value>İptal edilmiş bir takip yeniden açılamaz.</value></data>
   <data name="Rule.FollowUpReopenCompleted" xml:space="preserve"><value>Tamamlanmış bir takip yeniden açılamaz.</value></data>
   <data name="Rule.FollowUpUpdateClosed" xml:space="preserve"><value>Kapatılmış bir takip güncellenemez.</value></data>
   <data name="Rule.GoalAlreadyLinked" xml:space="preserve"><value>{0} hedefi bu plana zaten bağlı.</value></data>
+  <data name="Rule.GoalNotInSession" xml:space="preserve"><value>Hedef seansta bulunamadı.</value></data>
   <data name="Rule.GrantReasonRequired" xml:space="preserve"><value>'{0}' yetki türü için gerekçe zorunludur.</value></data>
   <data name="Rule.GuardianAlreadyLinked" xml:space="preserve"><value>Bu veli zaten öğrenciye bağlı.</value></data>
   <data name="Rule.GuardianNoActiveAccess" xml:space="preserve"><value>Oturum açan velinin bu öğrenciye aktif erişimi yok.</value></data>
@@ -128,6 +139,8 @@
   <data name="Rule.InterviewRescheduleStatus" xml:space="preserve"><value>'{0}' durumundaki bir görüşme yeniden planlanamaz.</value></data>
   <data name="Rule.InvalidCareTeamRole" xml:space="preserve"><value>{0} geçerli bir bakım ekibi rolü değil.</value></data>
   <data name="Rule.InvalidGrantType" xml:space="preserve"><value>{0} geçerli bir bakım ekibi yetki türü değil.</value></data>
+  <data name="Rule.InvalidRefValue" xml:space="preserve"><value>Geçersiz {0} değeri: {1}</value></data>
+  <data name="Rule.InvalidStudentProgramStatus" xml:space="preserve"><value>Geçersiz öğrenci programı durumu: '{0}'.</value></data>
   <data name="Rule.InvoiceAlreadyVoid" xml:space="preserve"><value>Fatura zaten geçersiz kılınmış.</value></data>
   <data name="Rule.InvoiceFullyPaid" xml:space="preserve"><value>Tamamen ödenmiş bir faturanın durumu yeniden değiştirilemez.</value></data>
   <data name="Rule.InvoiceLinesAddNeedsDraft" xml:space="preserve"><value>Kalemler yalnızca taslak faturalara eklenebilir.</value></data>
@@ -137,13 +150,16 @@
   <data name="Rule.InvoiceTransitionVoid" xml:space="preserve"><value>Geçersiz kılınmış bir faturanın durumu değiştirilemez.</value></data>
   <data name="Rule.KpiAlreadyActive" xml:space="preserve"><value>KPI tanımı zaten aktif.</value></data>
   <data name="Rule.KpiAlreadyInactive" xml:space="preserve"><value>KPI tanımı zaten pasif.</value></data>
+  <data name="Rule.KpiCodeNotFound" xml:space="preserve"><value>'{0}' kodlu KPI tanımı bulunamadı.</value></data>
   <data name="Rule.LeadAlreadyConverted" xml:space="preserve"><value>Aday zaten öğrenciye dönüştürülmüş.</value></data>
   <data name="Rule.LeadConvertedNoDelete" xml:space="preserve"><value>Öğrenciye dönüştürülmüş bir aday silinemez.</value></data>
   <data name="Rule.LeaveApproveStatus" xml:space="preserve"><value>'{0}' durumundaki bir izin talebi onaylanamaz.</value></data>
   <data name="Rule.LeaveBalanceExists" xml:space="preserve"><value>{0} eğitimcisi, {1} izin türü ve {2} yılı için izin bakiyesi zaten mevcut.</value></data>
+  <data name="Rule.LeaveBalanceNotFound" xml:space="preserve"><value>{0} eğitimcisi, {1} izin türü ve {2} yılı için izin bakiyesi bulunamadı.</value></data>
   <data name="Rule.LeaveCancelStatus" xml:space="preserve"><value>'{0}' durumundaki bir izin talebi iptal edilemez.</value></data>
   <data name="Rule.LeaveOverlap" xml:space="preserve"><value>Aynı eğitimci için bu dönemde bekleyen veya onaylı bir izin talebi zaten var.</value></data>
   <data name="Rule.LeaveRejectStatus" xml:space="preserve"><value>'{0}' durumundaki bir izin talebi reddedilemez.</value></data>
+  <data name="Rule.LocaleNotSupported" xml:space="preserve"><value>'{0}' dili desteklenmiyor.</value></data>
   <data name="Rule.MakeupExpireStatus" xml:space="preserve"><value>'{0}' durumundaki telafi talebi süresi doldu olarak işaretlenemez.</value></data>
   <data name="Rule.MakeupRejectStatus" xml:space="preserve"><value>'{0}' durumundaki bir telafi talebi reddedilemez.</value></data>
   <data name="Rule.MakeupWrongStatus" xml:space="preserve"><value>Telafi talebi bu işlem için '{0}' durumunda olmalıdır. Mevcut durum: '{1}'.</value></data>
@@ -177,6 +193,8 @@
   <data name="Rule.PackageDefinitionInactive" xml:space="preserve"><value>'{0}' paket tanımı pasif olduğu için satın alınamaz.</value></data>
   <data name="Rule.PackageNotActiveForCredits" xml:space="preserve"><value>Paket '{0}' durumunda. Yalnızca aktif paketlerde kredi işlemi yapılabilir.</value></data>
   <data name="Rule.PaidInvoiceNoVoid" xml:space="preserve"><value>Ödenmiş faturalar doğrudan geçersiz kılınamaz. Önce iade işlemi yapın.</value></data>
+  <data name="Rule.ParentGoalNotFound" xml:space="preserve"><value>{0} üst uzun vadeli hedefi bu öğrenci için bulunamadı.</value></data>
+  <data name="Rule.ParticipantNotInSession" xml:space="preserve"><value>Katılımcı seansta bulunamadı.</value></data>
   <data name="Rule.ParticipationAlreadyRecorded" xml:space="preserve"><value>Bu kayıt ve etkinlik için katılım zaten kaydedilmiş.</value></data>
   <data name="Rule.PaymentFailStatus" xml:space="preserve"><value>'{0}' durumundaki bir ödeme başarısız olarak işaretlenemez.</value></data>
   <data name="Rule.PlanActivateNeedsApproved" xml:space="preserve"><value>Yalnızca onaylı bir plan etkinleştirilebilir. Mevcut durum: '{0}'.</value></data>
@@ -195,6 +213,7 @@
   <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>'{0}' durumundaki bir plan revize edilemez.</value></data>
   <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Yalnızca taslak bir plan incelemeye gönderilebilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform varsayılan menü öğeleri silinemez.</value></data>
+  <data name="Rule.PortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için portal erişim kaydı bulunamadı.</value></data>
   <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>Bu öğrenci için zaten bir birincil bakım ekibi ataması var. Yeni atama yapmadan önce mevcut birincil atamayı kaldırın.</value></data>
   <data name="Rule.ProgramHasAssignments" xml:space="preserve"><value>Aktif öğrenci atamaları olan bir program silinemez. Bunun yerine pasife alın.</value></data>
   <data name="Rule.RecurringScheduleInactive" xml:space="preserve"><value>Pasif bir tekrarlayan programdan seans oluşturulamaz.</value></data>
@@ -226,20 +245,24 @@
   <data name="Rule.StudentAlreadyAtCampus" xml:space="preserve"><value>Öğrenci bu kampüste zaten aktif kayıtlı.</value></data>
   <data name="Rule.StudentAlreadyInCampPeriod" xml:space="preserve"><value>Öğrenci bu kamp döneminde zaten kayıtlı veya bekleme listesinde.</value></data>
   <data name="Rule.StudentAlreadyInSession" xml:space="preserve"><value>Öğrenci zaten bu seansın katılımcısı.</value></data>
+  <data name="Rule.StudentGoalNotFoundForStudent" xml:space="preserve"><value>{0} hedefi bu öğrenci için bulunamadı.</value></data>
   <data name="Rule.StudentHasOriginLead" xml:space="preserve"><value>{0} öğrencisinin zaten bir kaynak adayı var (aday kimliği: {1}). Yeniden bağlanamaz.</value></data>
   <data name="Rule.StudentNumberInUse" xml:space="preserve"><value>'{0}' öğrenci numarası bu kurumda zaten kullanılıyor.</value></data>
   <data name="Rule.StudentProgramInactive" xml:space="preserve"><value>Seans oluşturulamaz: öğrencinin programı aktif değil.</value></data>
   <data name="Rule.SurveyAlreadySubmitted" xml:space="preserve"><value>Anket yanıtı zaten gönderilmiş.</value></data>
   <data name="Rule.SystemRefValueNoEdit" xml:space="preserve"><value>Sistem referans değerleri düzenlenemez. Geçersiz kılmak için etkinleştir/devre dışı bırak işlemini kullanın.</value></data>
   <data name="Rule.SystemRoleNoDelete" xml:space="preserve"><value>Sistem rolleri silinemez.</value></data>
+  <data name="Rule.UserNotInCorporation" xml:space="preserve"><value>{0}: {1} kullanıcısı bu kurumda bulunamadı.</value></data>
   <data name="Rule.UsernameTaken" xml:space="preserve"><value>'{0}' kullanıcı adı zaten alınmış.</value></data>
   <data name="Rule.ViewingAuthAlreadyRevoked" xml:space="preserve"><value>İzleme yetkisi zaten iptal edilmiş.</value></data>
   <data name="Rule.ViewingAuthInvalid" xml:space="preserve"><value>İzleme yetkisi iptal edilmiş veya geçerlilik süresi dışında.</value></data>
   <data name="Rule.ViewingAuthNotOwned" xml:space="preserve"><value>Bu izleme yetkisi oturum açan veliye ait değil.</value></data>
   <data name="Rule.ViewingAuthOtherSession" xml:space="preserve"><value>Bu izleme yetkisi farklı bir seansa bağlı.</value></data>
+  <data name="Rule.ViewingLogNotFound" xml:space="preserve"><value>{0} izleme kaydı ({1} başlangıçlı) bulunamadı.</value></data>
   <data name="Rule.ViewingSessionEnded" xml:space="preserve"><value>İzleme oturumu zaten sonlandırılmış.</value></data>
   <data name="Rule.VisitActionStatus" xml:space="preserve"><value>'{1}' durumundaki bir ziyaret için '{0}' işlemi yapılamaz. Yalnızca 'planlandı' durumundaki ziyaretler değiştirilebilir.</value></data>
   <data name="Rule.VisitHasObservations" xml:space="preserve"><value>Gözlem kaydı bulunan bir ziyaret silinemez.</value></data>
+  <data name="Rule.VisitNotFoundOrCancelled" xml:space="preserve"><value>{0} okul ziyareti bulunamadı veya iptal edilmiş.</value></data>
   <data name="Validation.AtLeastOneItem" xml:space="preserve"><value>En az bir {0} gereklidir.</value></data>
   <data name="Validation.AtLeastOneOf" xml:space="preserve"><value>{0} alanlarından en az biri verilmelidir.</value></data>
   <data name="Validation.CodeFormatLowerDotUnderscore" xml:space="preserve"><value>Kod küçük harf ve rakamlardan oluşmalı; nokta veya alt çizgi içerebilir.</value></data>

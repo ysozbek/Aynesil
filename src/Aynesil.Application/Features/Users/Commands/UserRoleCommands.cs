@@ -53,12 +53,12 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
             ?? throw new UnauthorizedAccessException("Tenant context is required.");
 
         var userExists = await _db.UserAccounts.AnyAsync(u => u.Id == req.UserId, ct);
-        if (!userExists) throw new NotFoundException("User", req.UserId);
+        if (!userExists) throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "User"));
 
         // Verify the role belongs to this tenant or is a system role
         var roleExists = await _db.Roles.AnyAsync(
             r => r.Id == req.RoleId && (r.CorporationId == null || r.CorporationId == corporationId), ct);
-        if (!roleExists) throw new NotFoundException("Role", req.RoleId);
+        if (!roleExists) throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         // Prevent duplicate grant for the same user/role/campus combination
         var duplicate = await _db.UserRoles.AnyAsync(
@@ -105,7 +105,7 @@ public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRol
     public async Task Handle(RemoveUserRoleCommand req, CancellationToken ct)
     {
         var grant = await _db.UserRoles.FindAsync([req.UserRoleId], ct)
-            ?? throw new NotFoundException("UserRole", req.UserRoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "UserRole"));
 
         _db.UserRoles.Remove(grant);
         await _db.SaveChangesAsync(ct);

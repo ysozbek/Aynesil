@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -99,7 +100,7 @@ public sealed class UpdateGuardianCommandHandler
     {
         var guardian = await _db.Guardians
             .FirstOrDefaultAsync(g => g.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Guardian {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
 
         if (guardian.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -134,7 +135,7 @@ public sealed class DeleteGuardianCommandHandler : IRequestHandler<DeleteGuardia
     {
         var guardian = await _db.Guardians
             .FirstOrDefaultAsync(g => g.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Guardian {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
 
         guardian.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

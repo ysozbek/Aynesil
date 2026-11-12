@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
@@ -117,7 +118,7 @@ public sealed class UpdateInstitutionCommandHandler : IRequestHandler<UpdateInst
     {
         var institution = await _db.Institutions
             .FirstOrDefaultAsync(i => i.Id == req.Id && i.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Institution {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
 
         institution.Update(
             req.Name, req.InstitutionTypeId,
@@ -148,7 +149,7 @@ public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInst
     {
         var institution = await _db.Institutions
             .FirstOrDefaultAsync(i => i.Id == req.Id && i.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Institution {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
 
         var hasActivePlans = await _db.ConsultancyPlans
             .AnyAsync(p => p.InstitutionId == req.Id

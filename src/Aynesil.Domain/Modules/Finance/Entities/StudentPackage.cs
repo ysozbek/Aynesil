@@ -45,10 +45,10 @@ public class StudentPackage : TenantEntity
         Guid? purchasedBy = null)
     {
         if (totalCredits <= 0)
-            throw new ArgumentException("Package must include at least one credit.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("TotalCredits"));
 
         if (price < 0)
-            throw new ArgumentException("Package price cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("Price"));
 
         var pkg = new StudentPackage
         {
@@ -100,7 +100,7 @@ public class StudentPackage : TenantEntity
     public CreditLedger GrantCredits(decimal amount, string reason, Guid? grantedBy = null)
     {
         if (amount <= 0)
-            throw new ArgumentException("Credit grant amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         return CreditLedger.Grant(CorporationId, Id, amount, reason, grantedBy);
     }
@@ -114,7 +114,7 @@ public class StudentPackage : TenantEntity
         EnsureActive();
 
         if (amount <= 0)
-            throw new ArgumentException("Credit consumption amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         return CreditLedger.Consume(CorporationId, Id, amount, sessionId, reason, consumedBy);
     }
@@ -122,7 +122,7 @@ public class StudentPackage : TenantEntity
     public CreditLedger RefundCredits(decimal amount, string reason, Guid? refundedBy = null)
     {
         if (amount <= 0)
-            throw new ArgumentException("Credit refund amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         return CreditLedger.RefundCredits(CorporationId, Id, amount, reason, refundedBy);
     }

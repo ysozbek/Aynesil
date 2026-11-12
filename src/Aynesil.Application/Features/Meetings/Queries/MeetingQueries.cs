@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Meetings.Dtos;
 using Aynesil.Shared;
@@ -128,7 +130,7 @@ public sealed class GetMeetingQueryHandler : IRequestHandler<GetMeetingQuery, Me
             .Include(m => m.Outcomes)
             .Include(m => m.FollowUps)
             .FirstOrDefaultAsync(m => m.Id == req.Id && m.DeletedAt == null, ct)
-            ?? throw new KeyNotFoundException($"Meeting {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
         var typeCode = meeting.MeetingTypeId.HasValue
             ? await _db.RefValues.AsNoTracking()

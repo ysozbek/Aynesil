@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.CareTeam;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
@@ -120,5 +122,5 @@ public sealed class GetStudentGoalQueryHandler : IRequestHandler<GetStudentGoalQ
 
     public async Task<StudentGoalDto> Handle(GetStudentGoalQuery req, CancellationToken ct)
         => await GoalProjection.LoadAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"StudentGoal {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentGoal"));
 }

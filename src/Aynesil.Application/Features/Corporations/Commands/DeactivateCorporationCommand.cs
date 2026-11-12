@@ -38,7 +38,7 @@ public sealed class DeactivateCorporationCommandHandler : IRequestHandler<Deacti
     {
         var corp = await _db.Corporations
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Corporation", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         if (corp.Status == "closed")
             throw new ValidationException([ValidationFailures.For(nameof(req.Id), MsgKeys.Rule.ClosedCorporationNoSuspend)]);

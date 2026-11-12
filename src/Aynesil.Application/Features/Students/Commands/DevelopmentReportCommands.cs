@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
@@ -44,7 +45,7 @@ public sealed class AddDevelopmentReportCommandHandler
         var student = await _db.Students
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.StudentId, ct)
-            ?? throw new KeyNotFoundException($"Student {req.StudentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         var report = new DevelopmentReport
         {
@@ -103,7 +104,7 @@ public sealed class UpdateDevelopmentReportCommandHandler
     {
         var report = await _db.DevelopmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Development report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "DevelopmentReport"));
 
         if (report.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -141,7 +142,7 @@ public sealed class DeleteDevelopmentReportCommandHandler
     {
         var report = await _db.DevelopmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Development report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "DevelopmentReport"));
 
         report.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Finance.Events;
 
 namespace Aynesil.Domain.Modules.Finance.Entities;
@@ -97,20 +98,18 @@ public class Scholarship : TenantEntity
         decimal? percentage, decimal? amount, DateOnly? validFrom, DateOnly? validTo)
     {
         if (percentage is null && amount is null)
-            throw new ArgumentException(
-                "Scholarship must specify either a percentage or a fixed amount.");
+            throw new InvalidArgumentException(MsgKeys.Validation.ScholarshipPercentOrAmount);
 
         if (percentage is not null && amount is not null)
-            throw new ArgumentException(
-                "Scholarship cannot specify both a percentage and a fixed amount.");
+            throw new InvalidArgumentException(MsgKeys.Validation.ScholarshipPercentOrAmount);
 
         if (percentage is not null && (percentage <= 0 || percentage > 100))
-            throw new ArgumentException("Scholarship percentage must be between 0 and 100.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeBetween, MsgArg.Field("Percentage"), 0, 100);
 
         if (amount is not null && amount <= 0)
-            throw new ArgumentException("Scholarship amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         if (validFrom.HasValue && validTo.HasValue && validTo < validFrom)
-            throw new ArgumentException("Scholarship valid_to must be on or after valid_from.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("ValidTo"), MsgArg.Field("ValidFrom"));
     }
 }

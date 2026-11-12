@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -47,11 +48,11 @@ public sealed class LinkHierarchyCommandHandler
     public async Task<EducatorHierarchyDto> Handle(LinkHierarchyCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.EducatorId, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         var supervisorExists = await _db.Educators.AnyAsync(e => e.Id == req.SupervisorId, ct);
         if (!supervisorExists)
-            throw new KeyNotFoundException($"Supervisor educator {req.SupervisorId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SupervisorEducator"));
 
         if (req.RelationshipId.HasValue)
         {
@@ -59,8 +60,7 @@ public sealed class LinkHierarchyCommandHandler
                 r => r.Id == req.RelationshipId.Value
                   && r.RefType!.Code == "educator_relationship", ct);
             if (!valid)
-                throw new KeyNotFoundException(
-                    $"Invalid educator_relationship ref_value: {req.RelationshipId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "educator_relationship"), req.RelationshipId);
         }
 
         var edge = new EducatorHierarchy
@@ -123,7 +123,7 @@ public sealed class UnlinkHierarchyCommandHandler : IRequestHandler<UnlinkHierar
     {
         var edge = await _db.EducatorHierarchies
             .FirstOrDefaultAsync(h => h.Id == req.HierarchyEdgeId, ct)
-            ?? throw new KeyNotFoundException($"Hierarchy edge {req.HierarchyEdgeId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "HierarchyEdge"));
 
         _db.EducatorHierarchies.Remove(edge);
         await _db.SaveChangesAsync(ct);
@@ -144,7 +144,7 @@ public sealed class EndHierarchyCommandHandler : IRequestHandler<EndHierarchyCom
     {
         var edge = await _db.EducatorHierarchies
             .FirstOrDefaultAsync(h => h.Id == req.HierarchyEdgeId, ct)
-            ?? throw new KeyNotFoundException($"Hierarchy edge {req.HierarchyEdgeId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "HierarchyEdge"));
 
         edge.ActiveTo = req.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Educators.Dtos;
@@ -36,12 +37,12 @@ public sealed class AssignSpecialtyCommandHandler : IRequestHandler<AssignSpecia
     public async Task<EducatorSpecialtyDto> Handle(AssignSpecialtyCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.EducatorId, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         var validSpecialty = await _db.RefValues.AnyAsync(
             r => r.Id == req.SpecialtyId && r.RefType!.Code == "specialty", ct);
         if (!validSpecialty)
-            throw new KeyNotFoundException($"Invalid specialty ref_value: {req.SpecialtyId}");
+            throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "specialty"), req.SpecialtyId);
 
         var alreadyAssigned = await _db.EducatorSpecialties.AnyAsync(
             s => s.EducatorId == req.EducatorId && s.SpecialtyId == req.SpecialtyId, ct);
@@ -85,8 +86,7 @@ public sealed class RemoveSpecialtyCommandHandler : IRequestHandler<RemoveSpecia
     {
         var specialty = await _db.EducatorSpecialties
             .FirstOrDefaultAsync(s => s.Id == req.SpecialtyAssignmentId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Specialty assignment {req.SpecialtyAssignmentId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SpecialtyAssignment"));
 
         _db.EducatorSpecialties.Remove(specialty);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -92,7 +93,7 @@ public sealed class AddInvoiceLineCommandHandler
             .Include(i => i.Lines)
             .Include(i => i.Discounts)
             .FirstOrDefaultAsync(i => i.Id == req.InvoiceId, ct)
-            ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 
         if (invoice.Status != "draft")
             throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceLinesAddNeedsDraft);
@@ -130,13 +131,13 @@ public sealed class RemoveInvoiceLineCommandHandler
             .Include(i => i.Lines)
             .Include(i => i.Discounts)
             .FirstOrDefaultAsync(i => i.Id == req.InvoiceId, ct)
-            ?? throw new KeyNotFoundException($"Invoice {req.InvoiceId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 
         if (invoice.Status != "draft")
             throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceLinesRemoveNeedsDraft);
 
         var line = invoice.Lines.FirstOrDefault(l => l.Id == req.LineId)
-            ?? throw new KeyNotFoundException($"Invoice line {req.LineId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "InvoiceLine"));
 
         _db.InvoiceLines.Remove(line);
         invoice.Lines.Remove(line);
@@ -166,7 +167,7 @@ public sealed class IssueInvoiceCommandHandler
             .Include(i => i.Lines)
             .Include(i => i.Discounts)
             .FirstOrDefaultAsync(i => i.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Invoice {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 
         if (invoice.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -204,7 +205,7 @@ public sealed class VoidInvoiceCommandHandler
             .Include(i => i.Payments)
             .Include(i => i.Discounts)
             .FirstOrDefaultAsync(i => i.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Invoice {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 
         if (invoice.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

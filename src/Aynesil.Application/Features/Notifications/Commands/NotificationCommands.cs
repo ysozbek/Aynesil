@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -24,7 +25,7 @@ public sealed class MarkNotificationReadCommandHandler : IRequestHandler<MarkNot
         var notification = await _db.Notifications
             .FirstOrDefaultAsync(n => n.Id == req.NotificationId
                                    && n.RecipientUserId == req.RecipientUserId, ct)
-            ?? throw new KeyNotFoundException($"Notification {req.NotificationId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Notification"));
 
         if (notification.ReadAt is null)
         {

@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Ops.Entities;
 
 /// <summary>
@@ -40,12 +41,10 @@ public class MeetingParticipant : TenantEntity
         string attendance = "invited")
     {
         if (!ValidTypes.Contains(participantType))
-            throw new ArgumentException(
-                $"Invalid participant_type '{participantType}'. Must be: user, guardian, lead, external.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("ParticipantType"), MsgArg.Values("ParticipantType", "user", "guardian", "lead", "external"));
 
         if (!ValidAttendances.Contains(attendance))
-            throw new ArgumentException(
-                $"Invalid attendance '{attendance}'. Must be: invited, attended, absent, tentative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Attendance"), MsgArg.Values("MeetingAttendance", "invited", "attended", "absent", "tentative"));
 
         return new MeetingParticipant
         {
@@ -65,8 +64,7 @@ public class MeetingParticipant : TenantEntity
     public void UpdateAttendance(string attendance)
     {
         if (!ValidAttendances.Contains(attendance))
-            throw new ArgumentException(
-                $"Invalid attendance '{attendance}'. Must be: invited, attended, absent, tentative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Attendance"), MsgArg.Values("MeetingAttendance", "invited", "attended", "absent", "tentative"));
 
         Attendance = attendance;
     }

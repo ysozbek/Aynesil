@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
@@ -50,7 +51,7 @@ public sealed class CreateProgramCommandHandler : IRequestHandler<CreateProgramC
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.ProgramTypeId.Value && r.RefType!.Code == "program_type", ct);
             if (!valid)
-                throw new KeyNotFoundException($"Invalid program_type ref_value: {req.ProgramTypeId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "program_type"), req.ProgramTypeId);
         }
 
         var program = EducationProgram.Create(
@@ -92,7 +93,7 @@ public sealed class UpdateProgramCommandHandler : IRequestHandler<UpdateProgramC
     public async Task<ProgramDto> Handle(UpdateProgramCommand req, CancellationToken ct)
     {
         var program = await _db.EducationPrograms.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Program {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
 
         if (program.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -128,7 +129,7 @@ public sealed class DeleteProgramCommandHandler : IRequestHandler<DeleteProgramC
     public async Task Handle(DeleteProgramCommand req, CancellationToken ct)
     {
         var program = await _db.EducationPrograms.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Program {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
 
         var hasActiveAssignments = await _db.StudentPrograms.AnyAsync(
             sp => sp.ProgramId == req.Id && sp.Status == "active" && sp.DeletedAt == null, ct);
@@ -169,7 +170,7 @@ public sealed class SetProgramTranslationCommandHandler
     {
         var localeExists = await _db.Locales.AnyAsync(l => l.Code == req.Locale, ct);
         if (!localeExists)
-            throw new KeyNotFoundException($"Locale '{req.Locale}' is not supported.");
+            throw new NotFoundException(MsgKeys.Rule.LocaleNotSupported, req.Locale);
 
         var existing = await _db.ProgramTranslations
             .FirstOrDefaultAsync(t => t.ProgramId == req.ProgramId && t.Locale == req.Locale, ct);
@@ -183,7 +184,7 @@ public sealed class SetProgramTranslationCommandHandler
         {
             var programExists = await _db.EducationPrograms.AnyAsync(p => p.Id == req.ProgramId, ct);
             if (!programExists)
-                throw new KeyNotFoundException($"Program {req.ProgramId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Program"));
 
             _db.ProgramTranslations.Add(new ProgramTranslation
             {

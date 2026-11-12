@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Shared;
@@ -109,5 +111,5 @@ public sealed class GetEnrollmentQueryHandler : IRequestHandler<GetEnrollmentQue
 
     public async Task<EnrollmentDto> Handle(GetEnrollmentQuery req, CancellationToken ct)
         => await ProgramProjection.LoadEnrollmentAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Enrollment {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 }

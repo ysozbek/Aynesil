@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Finance.Dtos;
 using MediatR;
@@ -107,5 +109,5 @@ public sealed class GetInvoiceQueryHandler : IRequestHandler<GetInvoiceQuery, In
 
     public async Task<InvoiceDto> Handle(GetInvoiceQuery req, CancellationToken ct)
         => await FinanceProjection.LoadInvoiceAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Invoice {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
 }

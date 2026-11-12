@@ -60,7 +60,7 @@ public sealed class UpdateCampusCommandHandler : IRequestHandler<UpdateCampusCom
         var campus = await _db.Campuses
             .Include(c => c.Corporation)
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Campus", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Campus"));
 
         if (campus.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

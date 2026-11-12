@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -57,7 +58,7 @@ public sealed class CreateFollowUpActivityCommandHandler
             var planExists = await _db.ConsultancyPlans
                 .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value, ct);
             if (!planExists)
-                throw new KeyNotFoundException($"Consultancy plan {req.ConsultancyPlanId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyPlan"));
         }
 
         if (req.SchoolVisitId.HasValue)
@@ -65,7 +66,7 @@ public sealed class CreateFollowUpActivityCommandHandler
             var visitExists = await _db.SchoolVisits
                 .AnyAsync(v => v.CorporationId == corporationId && v.Id == req.SchoolVisitId.Value, ct);
             if (!visitExists)
-                throw new KeyNotFoundException($"School visit {req.SchoolVisitId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
         }
 
         var activity = FollowUpActivity.Create(
@@ -81,7 +82,7 @@ public sealed class CreateFollowUpActivityCommandHandler
 
     internal async Task<FollowUpActivityDto> BuildDto(Guid id, CancellationToken ct)
         => await ProjectFollowUpDto(_db, id, ct)
-           ?? throw new KeyNotFoundException($"Follow-up activity {id} not found after save.");
+           ?? throw new NotFoundException(MsgKeys.Rule.FollowUpNotFoundAfterSave);
 
     internal static async Task<FollowUpActivityDto?> ProjectFollowUpDto(
         IAppDbContext db, Guid id, CancellationToken ct)
@@ -143,7 +144,7 @@ public sealed class UpdateFollowUpActivityCommandHandler
     {
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 
         activity.Update(req.Title, req.Description, req.DueDate,
             req.AssignedTo, req.Notes, _currentUser.UserId);
@@ -172,7 +173,7 @@ public sealed class StartFollowUpActivityCommandHandler
     {
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 
         activity.StartProgress(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -201,7 +202,7 @@ public sealed class CompleteFollowUpActivityCommandHandler
     {
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 
         activity.Complete(req.Notes, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -228,7 +229,7 @@ public sealed class CancelFollowUpActivityCommandHandler
     {
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 
         activity.Cancel(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -250,7 +251,7 @@ public sealed class DeleteFollowUpActivityCommandHandler
     {
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Follow-up activity {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
 
         if (activity.Status is "completed")
             throw new BusinessRuleViolationException(MsgKeys.Rule.FollowUpDeleteCompleted);

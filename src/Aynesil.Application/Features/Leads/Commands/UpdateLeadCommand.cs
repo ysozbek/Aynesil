@@ -61,7 +61,7 @@ public sealed class UpdateLeadCommandHandler : IRequestHandler<UpdateLeadCommand
     {
         var lead = await _db.Leads
             .FirstOrDefaultAsync(l => l.Id == req.Id, ct)
-            ?? throw new NotFoundException("Lead", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 
         if (lead.RowVersion != req.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

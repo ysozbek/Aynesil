@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -112,7 +113,7 @@ public sealed class UpdatePromotionCommandHandler
     {
         var promotion = await _db.Promotions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Promotion {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Promotion"));
 
         promotion.UpdateDetails(
             req.Code, req.Name, req.Value, req.IsPercentage,
@@ -139,7 +140,7 @@ public sealed class ActivatePromotionCommandHandler
     {
         var promotion = await _db.Promotions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Promotion {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Promotion"));
 
         promotion.Activate();
         await _db.SaveChangesAsync(ct);
@@ -161,7 +162,7 @@ public sealed class DeactivatePromotionCommandHandler
     {
         var promotion = await _db.Promotions
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Promotion {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Promotion"));
 
         promotion.Deactivate();
         await _db.SaveChangesAsync(ct);

@@ -46,11 +46,11 @@ public class CampActivity : TenantEntity
         Guid? createdBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Activity name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (endsAt.HasValue && startsAt.HasValue && endsAt <= startsAt)
-            throw new ArgumentException("Activity ends_at must be after starts_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         var activity = new CampActivity
         {
@@ -86,11 +86,11 @@ public class CampActivity : TenantEntity
         Guid? updatedBy = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Activity name is required.", nameof(name));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Name"));
         if (endsAt.HasValue && startsAt.HasValue && endsAt <= startsAt)
-            throw new ArgumentException("Activity ends_at must be after starts_at.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeAfter, MsgArg.Field("EndsAt"), MsgArg.Field("StartsAt"));
         if (capacity is <= 0)
-            throw new ArgumentException("Capacity must be a positive integer.", nameof(capacity));
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Capacity"));
 
         Name           = name.Trim();
         ActivityTypeId = activityTypeId;

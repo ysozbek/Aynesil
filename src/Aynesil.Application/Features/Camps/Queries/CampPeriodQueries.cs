@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using MediatR;
@@ -51,7 +53,7 @@ public sealed class GetCampPeriodQueryHandler : IRequestHandler<GetCampPeriodQue
         var period = await _db.CampPeriods.AsNoTracking()
             .Include(p => p.Enrollments)
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camp period {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         return new CampPeriodDto(
             period.Id, period.CampId, period.CorporationId,

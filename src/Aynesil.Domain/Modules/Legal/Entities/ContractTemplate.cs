@@ -41,7 +41,7 @@ public class ContractTemplate : TenantEntity
         DateOnly? effectiveFrom = null)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Contract template code is required.", nameof(code));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Code"));
 
         var template = new ContractTemplate
         {

@@ -51,7 +51,7 @@ public static class PortalGuardian
             var exists = await db.Guardians.AsNoTracking()
                 .AnyAsync(g => g.CorporationId == corporationId && g.Id == requestedGuardianId.Value, ct);
             if (!exists)
-                throw new KeyNotFoundException($"Guardian {requestedGuardianId} not found.");
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
         }
 
         return (requestedGuardianId, false);

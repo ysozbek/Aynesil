@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -42,7 +43,7 @@ public sealed class AddPlanReviewCommandHandler
     {
         var plan = await _db.EducationPlans
             .FirstOrDefaultAsync(p => p.Id == req.EducationPlanId, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.EducationPlanId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         if (plan.Status is "draft" or "closed")
             throw new BusinessRuleViolationException(MsgKeys.Rule.PlanAddReviewStatus, new EnumValue("Status", plan.Status));
@@ -93,7 +94,7 @@ public sealed class ReviseEducationPlanCommandHandler
         var plan = await _db.EducationPlans
             .Include(p => p.PlanGoals)
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"EducationPlan {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "EducationPlan"));
 
         var snapshot = new
         {

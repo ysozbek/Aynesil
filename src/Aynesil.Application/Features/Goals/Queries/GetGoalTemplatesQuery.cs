@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Shared;
@@ -104,7 +106,7 @@ public sealed class GetGoalTemplateQueryHandler : IRequestHandler<GetGoalTemplat
             .AsNoTracking()
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"GoalTemplate {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "GoalTemplate"));
 
         var catLabel = t.CategoryId.HasValue
             ? await _db.RefValues.AsNoTracking()

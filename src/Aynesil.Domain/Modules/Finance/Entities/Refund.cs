@@ -35,7 +35,7 @@ public class Refund : BaseEntity
         string? reason = null)
     {
         if (amount <= 0)
-            throw new ArgumentException("Refund amount must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Amount"));
 
         return new Refund
         {

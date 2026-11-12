@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Menus.Dtos;
@@ -31,7 +32,7 @@ public sealed class GetMenuItemQueryHandler : IRequestHandler<GetMenuItemQuery, 
             .FirstOrDefaultAsync(
                 m => m.Id == req.Id &&
                      (m.CorporationId == null || m.CorporationId == corporationId), ct)
-            ?? throw new NotFoundException("MenuItem", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
         return item.ToDto();
     }

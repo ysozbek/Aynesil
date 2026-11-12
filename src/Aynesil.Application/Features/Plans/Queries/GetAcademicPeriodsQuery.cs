@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Shared;
@@ -97,7 +99,7 @@ public sealed class GetAcademicPeriodQueryHandler
     {
         var p = await _db.AcademicPeriods.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"AcademicPeriod {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AcademicPeriod"));
 
         var termLabel = p.TermId.HasValue
             ? await _db.RefValues.AsNoTracking()

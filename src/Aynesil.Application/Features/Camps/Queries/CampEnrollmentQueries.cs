@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using MediatR;
@@ -73,7 +75,7 @@ public sealed class GetCampEnrollmentQueryHandler
         var enrollment = await _db.CampEnrollments.AsNoTracking()
             .Include(e => e.Attendances)
             .FirstOrDefaultAsync(e => e.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Enrollment {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
         return new CampEnrollmentDto(
             enrollment.Id,

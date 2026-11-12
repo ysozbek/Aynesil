@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Finance.Dtos;
@@ -103,7 +105,7 @@ public sealed class GetScholarshipQueryHandler : IRequestHandler<GetScholarshipQ
     {
         var sch = await _db.Scholarships.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Scholarship {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Scholarship"));
 
         var student = await _db.Students.AsNoTracking()
             .Where(s => s.Id == sch.StudentId)

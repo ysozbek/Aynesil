@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -57,7 +58,7 @@ public sealed class RegisterParticipationCommandHandler
             .FirstOrDefaultAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId
                                    && a.DeletedAt == null
                                    && a.IsActive, ct)
-            ?? throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
         var enrollment = await _db.CampEnrollments
             .FirstOrDefaultAsync(e => e.CorporationId == corporationId && e.Id == req.CampEnrollmentId
@@ -133,7 +134,7 @@ public sealed class UpdateParticipationCommandHandler : IRequestHandler<UpdatePa
     {
         var participation = await _db.CampActivityParticipations
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Participation {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Participation"));
 
         participation.UpdateStatus(req.Status, req.Notes, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -189,7 +190,7 @@ public sealed class BulkRegisterParticipationCommandHandler
         var activityExists = await _db.CampActivities
             .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId && a.DeletedAt == null, ct);
         if (!activityExists)
-            throw new KeyNotFoundException($"Camp activity {req.CampActivityId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
         var enrollmentIds = req.Records.Select(r => r.EnrollmentId).ToList();
         var existing = await _db.CampActivityParticipations

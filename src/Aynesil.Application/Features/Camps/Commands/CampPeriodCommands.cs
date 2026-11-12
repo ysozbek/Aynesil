@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -55,7 +56,7 @@ public sealed class CreateCampPeriodCommandHandler
                         && c.DeletedAt == null, ct);
 
         if (!campExists)
-            throw new KeyNotFoundException($"Camp {req.CampId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
         var period = CampPeriod.Create(
             corporationId, req.CampId,
@@ -103,7 +104,7 @@ public sealed class UpdateCampPeriodCommandHandler : IRequestHandler<UpdateCampP
     {
         var period = await _db.CampPeriods
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camp period {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         period.Update(req.Name, req.StartDate, req.EndDate, req.Capacity);
         await _db.SaveChangesAsync(ct);
@@ -124,7 +125,7 @@ public sealed class DeleteCampPeriodCommandHandler : IRequestHandler<DeleteCampP
     {
         var period = await _db.CampPeriods
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Camp period {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
         var hasEnrollments = await _db.CampEnrollments
             .AnyAsync(e => e.CampPeriodId == req.Id, ct);

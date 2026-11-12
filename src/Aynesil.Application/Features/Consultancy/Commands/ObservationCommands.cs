@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
@@ -58,8 +60,7 @@ public sealed class CreateObservationCommandHandler
                         && v.Status != "cancelled", ct);
 
         if (!visitExists)
-            throw new KeyNotFoundException(
-                $"School visit {req.SchoolVisitId} not found or has been cancelled.");
+            throw new NotFoundException(MsgKeys.Rule.VisitNotFoundOrCancelled, req.SchoolVisitId);
 
         var record = ObservationRecord.Record(
             corporationId, req.SchoolVisitId,
@@ -116,7 +117,7 @@ public sealed class UpdateObservationCommandHandler : IRequestHandler<UpdateObse
     {
         var record = await _db.ObservationRecords
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Observation {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Observation"));
 
         record.Update(req.Observation, req.ObservationTypeId, req.Subject, req.Recommendations);
         await _db.SaveChangesAsync(ct);
@@ -137,7 +138,7 @@ public sealed class DeleteObservationCommandHandler : IRequestHandler<DeleteObse
     {
         var record = await _db.ObservationRecords
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Observation {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Observation"));
 
         _db.ObservationRecords.Remove(record);
         await _db.SaveChangesAsync(ct);

@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Commands;
 using Aynesil.Application.Features.Consultancy.Dtos;
@@ -101,7 +103,7 @@ public sealed class GetConsultancyAgreementQueryHandler
     public async Task<ConsultancyAgreementDto> Handle(
         GetConsultancyAgreementQuery req, CancellationToken ct)
         => await CreateConsultancyAgreementCommandHandler.ProjectAgreementDto(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Agreement {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
 }
 
 // ── GetAgreementSummaryQuery ──────────────────────────────────────────────────

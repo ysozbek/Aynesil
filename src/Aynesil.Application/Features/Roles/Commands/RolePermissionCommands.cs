@@ -39,14 +39,14 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
             ?? throw new UnauthorizedAccessException("Tenant context is required.");
 
         var role = await _db.Roles.FindAsync([req.RoleId], ct)
-            ?? throw new NotFoundException("Role", req.RoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Role"));
 
         // Tenants may only modify their own roles, not system-level templates
         if (role.CorporationId.HasValue && role.CorporationId != corporationId)
             throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "Role"));
 
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
-            ?? throw new NotFoundException("Permission", req.PermissionId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
 
         var alreadyAssigned = await _db.RolePermissions.AnyAsync(
             rp => rp.RoleId == req.RoleId && rp.PermissionId == req.PermissionId, ct);
@@ -86,7 +86,7 @@ public sealed class RemoveRolePermissionCommandHandler : IRequestHandler<RemoveR
     public async Task Handle(RemoveRolePermissionCommand req, CancellationToken ct)
     {
         var grant = await _db.RolePermissions.FindAsync([req.RoleId, req.PermissionId], ct)
-            ?? throw new NotFoundException("RolePermission", req.RoleId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RolePermission"));
 
         _db.RolePermissions.Remove(grant);
         await _db.SaveChangesAsync(ct);

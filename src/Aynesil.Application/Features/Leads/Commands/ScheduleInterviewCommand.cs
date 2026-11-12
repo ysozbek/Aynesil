@@ -42,7 +42,7 @@ public sealed class ScheduleInterviewCommandHandler : IRequestHandler<ScheduleIn
         var lead = await _db.Leads
             .AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == req.LeadId, ct)
-            ?? throw new NotFoundException("Lead", req.LeadId);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Lead"));
 
         var interview = Interview.Schedule(
             lead.CorporationId,

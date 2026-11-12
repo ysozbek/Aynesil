@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using MediatR;
@@ -121,7 +123,7 @@ public sealed class GetConsultancyReportQueryHandler
                 r.SchoolVisitId, v != null ? v.VisitDate : (DateOnly?)null,
                 r.Title, r.Summary, r.FileId, r.AuthoredBy, r.CreatedAt)
         ).FirstOrDefaultAsync(ct)
-            ?? throw new KeyNotFoundException($"Consultancy report {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsultancyReport"));
     }
 }
 

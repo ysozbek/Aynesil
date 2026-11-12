@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -56,7 +57,7 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
 
         var session = await _db.Sessions.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         var existing = await _db.Attendances
             .FirstOrDefaultAsync(
@@ -153,7 +154,7 @@ public sealed class BulkRecordAttendanceCommandHandler
 
         var session = await _db.Sessions.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         var studentIds = req.Entries.Select(e => e.StudentId).ToList();
 

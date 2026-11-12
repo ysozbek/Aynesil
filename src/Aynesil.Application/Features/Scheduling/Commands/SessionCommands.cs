@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -138,7 +139,7 @@ public sealed class RescheduleSessionCommandHandler : IRequestHandler<Reschedule
     public async Task<SessionDto> Handle(RescheduleSessionCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -178,7 +179,7 @@ public sealed class CompleteSessionCommandHandler : IRequestHandler<CompleteSess
     public async Task<SessionDto> Handle(CompleteSessionCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -211,7 +212,7 @@ public sealed class CancelSessionCommandHandler : IRequestHandler<CancelSessionC
     public async Task<SessionDto> Handle(CancelSessionCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -242,7 +243,7 @@ public sealed class MarkSessionNoShowCommandHandler : IRequestHandler<MarkSessio
     public async Task<SessionDto> Handle(MarkSessionNoShowCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -273,7 +274,7 @@ public sealed class AddSessionParticipantCommandHandler
         var session = await _db.Sessions
             .Include(s => s.Participants)
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.Participants.Any(p => p.StudentId == req.StudentId))
             throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyInSession);
@@ -312,7 +313,7 @@ public sealed class RemoveSessionParticipantCommandHandler
         var participant = await _db.SessionParticipants
             .FirstOrDefaultAsync(
                 p => p.SessionId == req.SessionId && p.StudentId == req.StudentId, ct)
-            ?? throw new KeyNotFoundException("Participant not found in session.");
+            ?? throw new NotFoundException(MsgKeys.Rule.ParticipantNotInSession);
 
         _db.SessionParticipants.Remove(participant);
         await _db.SaveChangesAsync(ct);
@@ -343,7 +344,7 @@ public sealed class AssignSessionEducatorCommandHandler
         var session = await _db.Sessions
             .Include(s => s.Educators)
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         if (session.Educators.Any(e => e.EducatorId == req.EducatorId))
             throw new BusinessRuleViolationException(MsgKeys.Rule.EducatorAlreadyInSession);
@@ -386,7 +387,7 @@ public sealed class RemoveSessionEducatorCommandHandler : IRequestHandler<Remove
         var assignment = await _db.SessionEducators
             .FirstOrDefaultAsync(
                 e => e.SessionId == req.SessionId && e.EducatorId == req.EducatorId, ct)
-            ?? throw new KeyNotFoundException("Educator not assigned to this session.");
+            ?? throw new NotFoundException(MsgKeys.Rule.EducatorNotInSession);
 
         _db.SessionEducators.Remove(assignment);
         await _db.SaveChangesAsync(ct);
@@ -413,7 +414,7 @@ public sealed class UpsertSessionGoalCommandHandler
     {
         var session = await _db.Sessions.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
-            ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         var existing = await _db.SessionGoals
             .FirstOrDefaultAsync(
@@ -459,7 +460,7 @@ public sealed class RemoveSessionGoalCommandHandler : IRequestHandler<RemoveSess
         var goal = await _db.SessionGoals
             .FirstOrDefaultAsync(
                 g => g.SessionId == req.SessionId && g.StudentGoalId == req.StudentGoalId, ct)
-            ?? throw new KeyNotFoundException("Goal not found in session.");
+            ?? throw new NotFoundException(MsgKeys.Rule.GoalNotInSession);
 
         _db.SessionGoals.Remove(goal);
         await _db.SaveChangesAsync(ct);
@@ -484,7 +485,7 @@ public sealed class DeleteSessionCommandHandler : IRequestHandler<DeleteSessionC
     public async Task Handle(DeleteSessionCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.FirstOrDefaultAsync(s => s.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"Session {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         session.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

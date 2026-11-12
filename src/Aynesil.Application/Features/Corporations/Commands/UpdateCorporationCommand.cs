@@ -56,7 +56,7 @@ public sealed class UpdateCorporationCommandHandler : IRequestHandler<UpdateCorp
         var corp = await _db.Corporations
             .Include(c => c.Campuses)
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
-            ?? throw new NotFoundException("Corporation", req.Id);
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         // Optimistic concurrency guard
         if (corp.RowVersion != req.RowVersion)

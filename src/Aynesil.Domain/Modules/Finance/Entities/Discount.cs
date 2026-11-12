@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Finance.Entities;
 
 /// <summary>
@@ -40,10 +41,10 @@ public class Discount : BaseEntity
         string? reason = null)
     {
         if (value <= 0)
-            throw new ArgumentException("Discount value must be positive.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("Value"));
 
         if (isPercentage && value > 100)
-            throw new ArgumentException("Percentage discount cannot exceed 100%.");
+            throw new InvalidArgumentException(MsgKeys.Validation.PercentageMax100, MsgArg.Field("DiscountPercentage"));
 
         return new Discount
         {

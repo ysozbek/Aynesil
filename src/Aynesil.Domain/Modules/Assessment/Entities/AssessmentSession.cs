@@ -75,8 +75,7 @@ public class AssessmentSession : TenantEntity
         Guid? createdBy = null)
     {
         if (leadId is null && studentId is null)
-            throw new ArgumentException(
-                "An assessment session must have either a lead or a student as its subject.");
+            throw new InvalidArgumentException(MsgKeys.Validation.AtLeastOneOf, MsgArg.Fields("LeadId", "StudentId"));
 
         var session = new AssessmentSession
         {

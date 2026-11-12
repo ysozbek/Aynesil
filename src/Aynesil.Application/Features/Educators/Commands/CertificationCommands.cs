@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
@@ -44,15 +45,14 @@ public sealed class AddCertificationCommandHandler
     public async Task<EducatorCertificationDto> Handle(AddCertificationCommand req, CancellationToken ct)
     {
         var educator = await _db.Educators.FirstOrDefaultAsync(e => e.Id == req.EducatorId, ct)
-            ?? throw new KeyNotFoundException($"Educator {req.EducatorId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Educator"));
 
         if (req.CertificationTypeId.HasValue)
         {
             var valid = await _db.RefValues.AnyAsync(
                 r => r.Id == req.CertificationTypeId.Value && r.RefType!.Code == "certification_type", ct);
             if (!valid)
-                throw new KeyNotFoundException(
-                    $"Invalid certification_type ref_value: {req.CertificationTypeId}");
+                throw new NotFoundException(MsgKeys.Rule.InvalidRefValue, new EnumValue("RefType", "certification_type"), req.CertificationTypeId);
         }
 
         var cert = EducatorCertification.Create(
@@ -102,7 +102,7 @@ public sealed class UpdateCertificationCommandHandler
     {
         var cert = await _db.EducatorCertifications
             .FirstOrDefaultAsync(c => c.Id == req.CertificationId, ct)
-            ?? throw new KeyNotFoundException($"Certification {req.CertificationId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Certification"));
 
         if (cert.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
@@ -134,7 +134,7 @@ public sealed class DeleteCertificationCommandHandler : IRequestHandler<DeleteCe
     {
         var cert = await _db.EducatorCertifications
             .FirstOrDefaultAsync(c => c.Id == req.CertificationId, ct)
-            ?? throw new KeyNotFoundException($"Certification {req.CertificationId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Certification"));
 
         cert.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);

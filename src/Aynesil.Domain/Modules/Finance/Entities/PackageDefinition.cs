@@ -1,3 +1,4 @@
+using Aynesil.Domain.Common;
 namespace Aynesil.Domain.Modules.Finance.Entities;
 
 /// <summary>
@@ -48,13 +49,13 @@ public class PackageDefinition : TenantEntity
         string currency = "TRY")
     {
         if (listPrice < 0)
-            throw new ArgumentException("List price cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("ListPrice"));
 
         if (totalCredits is not null && totalCredits <= 0)
-            throw new ArgumentException("Total credits must be positive when specified.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("TotalCredits"));
 
         if (validityDays is not null && validityDays <= 0)
-            throw new ArgumentException("Validity days must be positive when specified.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("ValidityDays"));
 
         return new PackageDefinition
         {
@@ -86,10 +87,10 @@ public class PackageDefinition : TenantEntity
         string currency)
     {
         if (listPrice < 0)
-            throw new ArgumentException("List price cannot be negative.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeNegative, MsgArg.Field("ListPrice"));
 
         if (totalCredits is not null && totalCredits <= 0)
-            throw new ArgumentException("Total credits must be positive when specified.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBePositive, MsgArg.Field("TotalCredits"));
 
         Code          = code;
         Name          = name;

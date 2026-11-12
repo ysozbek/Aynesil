@@ -48,6 +48,10 @@
   <data name="CampParticipationStatus.attended" xml:space="preserve"><value>katıldı</value></data>
   <data name="CampParticipationStatus.excused" xml:space="preserve"><value>mazeretli</value></data>
   <data name="CampParticipationStatus.registered" xml:space="preserve"><value>kayıtlı</value></data>
+  <data name="Decision.approved" xml:space="preserve"><value>onaylandı</value></data>
+  <data name="Decision.changes_requested" xml:space="preserve"><value>değişiklik istendi</value></data>
+  <data name="Decision.pending" xml:space="preserve"><value>bekliyor</value></data>
+  <data name="Decision.rejected" xml:space="preserve"><value>reddedildi</value></data>
   <data name="Direction.inbound" xml:space="preserve"><value>gelen</value></data>
   <data name="Direction.outbound" xml:space="preserve"><value>giden</value></data>
   <data name="EducatorRole.assistant" xml:space="preserve"><value>yardımcı</value></data>
@@ -57,19 +61,101 @@
   <data name="EmploymentType.contractor" xml:space="preserve"><value>sözleşmeli</value></data>
   <data name="EmploymentType.full_time" xml:space="preserve"><value>tam zamanlı</value></data>
   <data name="EmploymentType.part_time" xml:space="preserve"><value>yarı zamanlı</value></data>
+  <data name="Entity.AcademicPeriod" xml:space="preserve"><value>akademik dönem</value></data>
+  <data name="Entity.ActiveAssessmentTemplate" xml:space="preserve"><value>aktif değerlendirme şablonu</value></data>
+  <data name="Entity.ActiveProgram" xml:space="preserve"><value>aktif program</value></data>
+  <data name="Entity.ActiveSurveyDefinition" xml:space="preserve"><value>aktif anket tanımı</value></data>
+  <data name="Entity.Agreement" xml:space="preserve"><value>sözleşme</value></data>
+  <data name="Entity.AssessmentItem" xml:space="preserve"><value>değerlendirme maddesi</value></data>
+  <data name="Entity.AssessmentReport" xml:space="preserve"><value>değerlendirme raporu</value></data>
+  <data name="Entity.AssessmentSection" xml:space="preserve"><value>değerlendirme bölümü</value></data>
+  <data name="Entity.AssessmentSession" xml:space="preserve"><value>değerlendirme oturumu</value></data>
+  <data name="Entity.AssessmentTemplate" xml:space="preserve"><value>değerlendirme şablonu</value></data>
+  <data name="Entity.AttendanceRecord" xml:space="preserve"><value>yoklama kaydı</value></data>
+  <data name="Entity.CalendarEntry" xml:space="preserve"><value>takvim kaydı</value></data>
   <data name="Entity.Camera" xml:space="preserve"><value>kamera</value></data>
   <data name="Entity.Camp" xml:space="preserve"><value>kamp</value></data>
+  <data name="Entity.CampActivity" xml:space="preserve"><value>kamp etkinliği</value></data>
+  <data name="Entity.CampEducatorAssignment" xml:space="preserve"><value>kamp eğitimci ataması</value></data>
+  <data name="Entity.CampPeriod" xml:space="preserve"><value>kamp dönemi</value></data>
+  <data name="Entity.Campus" xml:space="preserve"><value>kampüs</value></data>
+  <data name="Entity.CampusAssignment" xml:space="preserve"><value>kampüs ataması</value></data>
+  <data name="Entity.CampusEnrollment" xml:space="preserve"><value>kampüs kaydı</value></data>
+  <data name="Entity.CareTeamAssignment" xml:space="preserve"><value>bakım ekibi ataması</value></data>
+  <data name="Entity.CaseNote" xml:space="preserve"><value>vaka notu</value></data>
+  <data name="Entity.Certification" xml:space="preserve"><value>sertifika</value></data>
   <data name="Entity.ConsentTemplate" xml:space="preserve"><value>onay şablonu</value></data>
+  <data name="Entity.ConsultancyPlan" xml:space="preserve"><value>danışmanlık planı</value></data>
+  <data name="Entity.ConsultancyReport" xml:space="preserve"><value>danışmanlık raporu</value></data>
   <data name="Entity.ContractTemplate" xml:space="preserve"><value>sözleşme şablonu</value></data>
+  <data name="Entity.Corporation" xml:space="preserve"><value>kurum</value></data>
+  <data name="Entity.DevelopmentReport" xml:space="preserve"><value>gelişim raporu</value></data>
+  <data name="Entity.Diagnosis" xml:space="preserve"><value>tanı</value></data>
+  <data name="Entity.EducationPlan" xml:space="preserve"><value>eğitim planı</value></data>
+  <data name="Entity.Educator" xml:space="preserve"><value>eğitimci</value></data>
+  <data name="Entity.Enrollment" xml:space="preserve"><value>kayıt</value></data>
+  <data name="Entity.ExternalInstitutionReport" xml:space="preserve"><value>dış kurum raporu</value></data>
+  <data name="Entity.File" xml:space="preserve"><value>dosya</value></data>
+  <data name="Entity.FollowUpActivity" xml:space="preserve"><value>takip etkinliği</value></data>
+  <data name="Entity.GoalLibrary" xml:space="preserve"><value>hedef kütüphanesi</value></data>
+  <data name="Entity.GoalTemplate" xml:space="preserve"><value>hedef şablonu</value></data>
+  <data name="Entity.Guardian" xml:space="preserve"><value>veli</value></data>
+  <data name="Entity.GuardianLink" xml:space="preserve"><value>veli bağlantısı</value></data>
+  <data name="Entity.HierarchyEdge" xml:space="preserve"><value>hiyerarşi bağlantısı</value></data>
+  <data name="Entity.Institution" xml:space="preserve"><value>kuruluş</value></data>
+  <data name="Entity.Interview" xml:space="preserve"><value>görüşme</value></data>
+  <data name="Entity.Invoice" xml:space="preserve"><value>fatura</value></data>
+  <data name="Entity.InvoiceLine" xml:space="preserve"><value>fatura kalemi</value></data>
   <data name="Entity.KpiDefinition" xml:space="preserve"><value>KPI tanımı</value></data>
+  <data name="Entity.Lead" xml:space="preserve"><value>aday</value></data>
+  <data name="Entity.LeaveBalance" xml:space="preserve"><value>izin bakiyesi</value></data>
+  <data name="Entity.LeaveRequest" xml:space="preserve"><value>izin talebi</value></data>
+  <data name="Entity.MakeupRequest" xml:space="preserve"><value>telafi talebi</value></data>
+  <data name="Entity.MedicalReport" xml:space="preserve"><value>tıbbi rapor</value></data>
+  <data name="Entity.Meeting" xml:space="preserve"><value>toplantı</value></data>
+  <data name="Entity.MeetingFollowUp" xml:space="preserve"><value>toplantı takibi</value></data>
+  <data name="Entity.MeetingOutcome" xml:space="preserve"><value>toplantı sonucu</value></data>
+  <data name="Entity.MeetingParticipant" xml:space="preserve"><value>toplantı katılımcısı</value></data>
   <data name="Entity.MenuItem" xml:space="preserve"><value>menü öğesi</value></data>
+  <data name="Entity.Notification" xml:space="preserve"><value>bildirim</value></data>
   <data name="Entity.NotificationTemplate" xml:space="preserve"><value>bildirim şablonu</value></data>
+  <data name="Entity.NotificationTriggerConfig" xml:space="preserve"><value>bildirim tetikleyici ayarı</value></data>
+  <data name="Entity.Observation" xml:space="preserve"><value>gözlem</value></data>
   <data name="Entity.PackageDefinition" xml:space="preserve"><value>paket tanımı</value></data>
+  <data name="Entity.Participation" xml:space="preserve"><value>katılım</value></data>
+  <data name="Entity.Payment" xml:space="preserve"><value>ödeme</value></data>
+  <data name="Entity.Permission" xml:space="preserve"><value>yetki</value></data>
+  <data name="Entity.PlanGoal" xml:space="preserve"><value>plan hedefi</value></data>
   <data name="Entity.Program" xml:space="preserve"><value>program</value></data>
+  <data name="Entity.ProgramRecommendation" xml:space="preserve"><value>program önerisi</value></data>
+  <data name="Entity.ProgramService" xml:space="preserve"><value>program hizmeti</value></data>
   <data name="Entity.Promotion" xml:space="preserve"><value>promosyon</value></data>
+  <data name="Entity.Record" xml:space="preserve"><value>kayıt</value></data>
+  <data name="Entity.RecurringSchedule" xml:space="preserve"><value>tekrarlayan program</value></data>
+  <data name="Entity.RefType" xml:space="preserve"><value>referans türü</value></data>
   <data name="Entity.RefValue" xml:space="preserve"><value>referans değeri</value></data>
+  <data name="Entity.Refund" xml:space="preserve"><value>iade</value></data>
   <data name="Entity.Role" xml:space="preserve"><value>rol</value></data>
+  <data name="Entity.RolePermission" xml:space="preserve"><value>rol yetkisi</value></data>
   <data name="Entity.Room" xml:space="preserve"><value>oda</value></data>
+  <data name="Entity.Scholarship" xml:space="preserve"><value>burs</value></data>
+  <data name="Entity.SchoolVisit" xml:space="preserve"><value>okul ziyareti</value></data>
+  <data name="Entity.Session" xml:space="preserve"><value>seans</value></data>
+  <data name="Entity.SessionNote" xml:space="preserve"><value>seans notu</value></data>
+  <data name="Entity.SourceAssignment" xml:space="preserve"><value>kaynak atama</value></data>
+  <data name="Entity.SpecialtyAssignment" xml:space="preserve"><value>uzmanlık ataması</value></data>
+  <data name="Entity.Student" xml:space="preserve"><value>öğrenci</value></data>
+  <data name="Entity.StudentConsent" xml:space="preserve"><value>öğrenci onayı</value></data>
+  <data name="Entity.StudentContract" xml:space="preserve"><value>öğrenci sözleşmesi</value></data>
+  <data name="Entity.StudentGoal" xml:space="preserve"><value>öğrenci hedefi</value></data>
+  <data name="Entity.StudentPackage" xml:space="preserve"><value>öğrenci paketi</value></data>
+  <data name="Entity.StudentProgram" xml:space="preserve"><value>öğrenci programı</value></data>
+  <data name="Entity.SupervisorEducator" xml:space="preserve"><value>süpervizör eğitimci</value></data>
+  <data name="Entity.SurveyDefinition" xml:space="preserve"><value>anket tanımı</value></data>
+  <data name="Entity.User" xml:space="preserve"><value>kullanıcı</value></data>
+  <data name="Entity.UserAccount" xml:space="preserve"><value>kullanıcı hesabı</value></data>
+  <data name="Entity.UserRole" xml:space="preserve"><value>kullanıcı rolü</value></data>
+  <data name="Entity.ViewingAuthorization" xml:space="preserve"><value>izleme yetkisi</value></data>
   <data name="EntryType.closure" xml:space="preserve"><value>kapanış</value></data>
   <data name="EntryType.event" xml:space="preserve"><value>etkinlik</value></data>
   <data name="EntryType.holiday" xml:space="preserve"><value>tatil</value></data>
@@ -103,6 +189,16 @@
   <data name="RecurrenceAction.cancel" xml:space="preserve"><value>iptal et</value></data>
   <data name="RecurrenceAction.reschedule" xml:space="preserve"><value>yeniden planla</value></data>
   <data name="RecurrenceAction.skip" xml:space="preserve"><value>atla</value></data>
+  <data name="RefType.certification_type" xml:space="preserve"><value>sertifika türü</value></data>
+  <data name="RefType.development_area" xml:space="preserve"><value>gelişim alanı</value></data>
+  <data name="RefType.educator_relationship" xml:space="preserve"><value>eğitimci ilişkisi</value></data>
+  <data name="RefType.educator_title" xml:space="preserve"><value>eğitimci unvanı</value></data>
+  <data name="RefType.enrollment_status" xml:space="preserve"><value>kayıt durumu</value></data>
+  <data name="RefType.goal_category" xml:space="preserve"><value>hedef kategorisi</value></data>
+  <data name="RefType.program_type" xml:space="preserve"><value>program türü</value></data>
+  <data name="RefType.service_type" xml:space="preserve"><value>hizmet türü</value></data>
+  <data name="RefType.specialty" xml:space="preserve"><value>uzmanlık alanı</value></data>
+  <data name="RefType.student_status" xml:space="preserve"><value>öğrenci durumu</value></data>
   <data name="ResponseType.boolean" xml:space="preserve"><value>evet/hayır</value></data>
   <data name="ResponseType.choice" xml:space="preserve"><value>seçim</value></data>
   <data name="ResponseType.numeric" xml:space="preserve"><value>sayısal</value></data>
@@ -119,6 +215,7 @@
   <data name="Status.achieved" xml:space="preserve"><value>ulaşıldı</value></data>
   <data name="Status.active" xml:space="preserve"><value>aktif</value></data>
   <data name="Status.approved" xml:space="preserve"><value>onaylandı</value></data>
+  <data name="Status.attended" xml:space="preserve"><value>katıldı</value></data>
   <data name="Status.authorized" xml:space="preserve"><value>yetkilendirildi</value></data>
   <data name="Status.bounced" xml:space="preserve"><value>geri döndü</value></data>
   <data name="Status.cancelled" xml:space="preserve"><value>iptal edildi</value></data>
@@ -159,6 +256,7 @@
   <data name="Status.queued" xml:space="preserve"><value>kuyrukta</value></data>
   <data name="Status.read" xml:space="preserve"><value>okundu</value></data>
   <data name="Status.refunded" xml:space="preserve"><value>iade edildi</value></data>
+  <data name="Status.registered" xml:space="preserve"><value>kayıtlı</value></data>
   <data name="Status.rejected" xml:space="preserve"><value>reddedildi</value></data>
   <data name="Status.requested" xml:space="preserve"><value>talep edildi</value></data>
   <data name="Status.rescheduled" xml:space="preserve"><value>yeniden planlandı</value></data>

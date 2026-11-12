@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Dtos;
 using MediatR;
@@ -108,7 +110,7 @@ public sealed class GetStudentQueryHandler : IRequestHandler<GetStudentQuery, St
 
     public async Task<StudentDto> Handle(GetStudentQuery req, CancellationToken ct)
         => await StudentProjection.LoadStudentAsync(_db, req.Id, ct)
-           ?? throw new KeyNotFoundException($"Student {req.Id} not found.");
+           ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 }
 
 // ── GetStudentSummaryQuery ────────────────────────────────────────────────────
@@ -140,7 +142,7 @@ public sealed class GetStudentSummaryQueryHandler
                 s.StatusId, status != null ? status.Code : null,
                 campus != null ? campus.Name : null)
         ).FirstOrDefaultAsync(ct)
-         ?? throw new KeyNotFoundException($"Student {req.Id} not found.");
+         ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Student"));
 
         return dto;
     }

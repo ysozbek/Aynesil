@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Leaves.Dtos;
 using Aynesil.Shared;
@@ -122,7 +124,7 @@ public sealed class GetLeaveRequestQueryHandler : IRequestHandler<GetLeaveReques
         var leave = await _db.LeaveRequests.AsNoTracking()
             .Include(lr => lr.Approvals)
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.Id} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         var educator = await _db.Educators.AsNoTracking()
             .Where(e => e.Id == leave.EducatorId)
@@ -317,7 +319,7 @@ public sealed class GetLeaveSessionImpactQueryHandler
     {
         var leave = await _db.LeaveRequests.AsNoTracking()
             .FirstOrDefaultAsync(lr => lr.Id == req.LeaveRequestId, ct)
-            ?? throw new KeyNotFoundException($"LeaveRequest {req.LeaveRequestId} not found.");
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
 
         var impactedSessionIds = _db.SessionEducators.AsNoTracking()
             .Where(se => se.EducatorId == leave.EducatorId)

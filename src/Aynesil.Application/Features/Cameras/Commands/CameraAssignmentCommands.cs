@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Media.Entities;
@@ -40,12 +41,12 @@ public sealed class AssignCameraToRoomCommandHandler : IRequestHandler<AssignCam
         var cameraExists = await _db.Cameras
             .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == corporationId, ct);
         if (!cameraExists)
-            throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         var roomExists = await _db.Rooms
             .AnyAsync(r => r.Id == req.RoomId && r.CorporationId == corporationId, ct);
         if (!roomExists)
-            throw new KeyNotFoundException($"Room {req.RoomId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
 
         var duplicate = await _db.RoomCameras
             .AnyAsync(rc => rc.RoomId == req.RoomId && rc.CameraId == req.CameraId, ct);
@@ -82,8 +83,7 @@ public sealed class UnassignCameraFromRoomCommandHandler : IRequestHandler<Unass
     {
         var assignment = await _db.RoomCameras
             .FirstOrDefaultAsync(rc => rc.CameraId == req.CameraId && rc.RoomId == req.RoomId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Camera {req.CameraId} is not assigned to room {req.RoomId}.");
+            ?? throw new NotFoundException(MsgKeys.Rule.CameraNotInRoom, req.CameraId, req.RoomId);
 
         _db.RoomCameras.Remove(assignment);
         await _db.SaveChangesAsync(ct);
@@ -123,12 +123,12 @@ public sealed class AssignCameraToSessionCommandHandler : IRequestHandler<Assign
         var cameraExists = await _db.Cameras
             .AnyAsync(c => c.Id == req.CameraId && c.CorporationId == corporationId, ct);
         if (!cameraExists)
-            throw new KeyNotFoundException($"Camera {req.CameraId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
 
         var sessionExists = await _db.Sessions
             .AnyAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct);
         if (!sessionExists)
-            throw new KeyNotFoundException($"Session {req.SessionId} not found.");
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
         var duplicate = await _db.SessionCameras
             .AnyAsync(sc => sc.SessionId == req.SessionId && sc.CameraId == req.CameraId, ct);
@@ -165,8 +165,7 @@ public sealed class UnassignCameraFromSessionCommandHandler : IRequestHandler<Un
     {
         var assignment = await _db.SessionCameras
             .FirstOrDefaultAsync(sc => sc.CameraId == req.CameraId && sc.SessionId == req.SessionId, ct)
-            ?? throw new KeyNotFoundException(
-                $"Camera {req.CameraId} is not assigned to session {req.SessionId}.");
+            ?? throw new NotFoundException(MsgKeys.Rule.CameraNotInSession, req.CameraId, req.SessionId);
 
         _db.SessionCameras.Remove(assignment);
         await _db.SaveChangesAsync(ct);

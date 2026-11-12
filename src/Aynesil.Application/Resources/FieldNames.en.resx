@@ -33,26 +33,33 @@
   <data name="Attendance" xml:space="preserve"><value>Attendance</value></data>
   <data name="AttendanceRecord" xml:space="preserve"><value>Attendance record</value></data>
   <data name="BirthDate" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="Body" xml:space="preserve"><value>Body</value></data>
   <data name="BodyOverride" xml:space="preserve"><value>Body override</value></data>
   <data name="CampPeriodId" xml:space="preserve"><value>Camp period</value></data>
   <data name="CampusId" xml:space="preserve"><value>Campus</value></data>
+  <data name="Capacity" xml:space="preserve"><value>Capacity</value></data>
+  <data name="CarryForward" xml:space="preserve"><value>Carry-forward amount</value></data>
   <data name="Code" xml:space="preserve"><value>Code</value></data>
   <data name="Comment" xml:space="preserve"><value>Comment</value></data>
   <data name="ConsentTypeId" xml:space="preserve"><value>Consent type</value></data>
   <data name="ConsultancyPlanId" xml:space="preserve"><value>Consultancy plan</value></data>
   <data name="CorporationId" xml:space="preserve"><value>Organization</value></data>
+  <data name="Decision" xml:space="preserve"><value>Decision</value></data>
   <data name="Decisions" xml:space="preserve"><value>Decisions</value></data>
   <data name="Delta" xml:space="preserve"><value>Adjustment delta</value></data>
   <data name="Description" xml:space="preserve"><value>Description</value></data>
   <data name="Direction" xml:space="preserve"><value>Direction</value></data>
   <data name="DiscountPercentage" xml:space="preserve"><value>Discount percentage</value></data>
   <data name="DueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="Duration" xml:space="preserve"><value>Duration</value></data>
   <data name="EducatorId" xml:space="preserve"><value>Educator</value></data>
   <data name="Email" xml:space="preserve"><value>Email</value></data>
   <data name="EmploymentType" xml:space="preserve"><value>Employment type</value></data>
   <data name="EndDate" xml:space="preserve"><value>End date</value></data>
   <data name="EndTime" xml:space="preserve"><value>End time</value></data>
+  <data name="EndedAt" xml:space="preserve"><value>Ended at</value></data>
   <data name="EndsAt" xml:space="preserve"><value>Ends at</value></data>
+  <data name="EntitledLeave" xml:space="preserve"><value>Entitled leave</value></data>
   <data name="EntryType" xml:space="preserve"><value>Entry type</value></data>
   <data name="ExpiresOn" xml:space="preserve"><value>Expiry date</value></data>
   <data name="ExternalName" xml:space="preserve"><value>External name</value></data>
@@ -72,6 +79,8 @@
   <data name="KpiCode" xml:space="preserve"><value>KPI code</value></data>
   <data name="LastName" xml:space="preserve"><value>Last name</value></data>
   <data name="LeadId" xml:space="preserve"><value>Lead</value></data>
+  <data name="ListPrice" xml:space="preserve"><value>List price</value></data>
+  <data name="Locale" xml:space="preserve"><value>Locale</value></data>
   <data name="MaxCarryForward" xml:space="preserve"><value>Max carry-forward</value></data>
   <data name="MaxPeriods" xml:space="preserve"><value>Max periods</value></data>
   <data name="Name" xml:space="preserve"><value>Name</value></data>
@@ -79,6 +88,7 @@
   <data name="NewStartAt" xml:space="preserve"><value>New start time</value></data>
   <data name="Note" xml:space="preserve"><value>Note</value></data>
   <data name="Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Observation" xml:space="preserve"><value>Observation</value></data>
   <data name="Outcome" xml:space="preserve"><value>Outcome</value></data>
   <data name="PackageDefinitionId" xml:space="preserve"><value>Package definition</value></data>
   <data name="Page" xml:space="preserve"><value>Page</value></data>
@@ -92,6 +102,7 @@
   <data name="PeriodEnd" xml:space="preserve"><value>Period end</value></data>
   <data name="PeriodStart" xml:space="preserve"><value>Period start</value></data>
   <data name="Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="Price" xml:space="preserve"><value>Price</value></data>
   <data name="PromotionPercentage" xml:space="preserve"><value>Promotion percentage</value></data>
   <data name="Quantity" xml:space="preserve"><value>Quantity</value></data>
   <data name="Question" xml:space="preserve"><value>Question</value></data>
@@ -108,8 +119,10 @@
   <data name="SessionId" xml:space="preserve"><value>Session</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="SignatureMethod" xml:space="preserve"><value>Signature method</value></data>
+  <data name="SignedByName" xml:space="preserve"><value>Signed-by name</value></data>
   <data name="StartDate" xml:space="preserve"><value>Start date</value></data>
   <data name="StartTime" xml:space="preserve"><value>Start time</value></data>
+  <data name="StartedAt" xml:space="preserve"><value>Started at</value></data>
   <data name="StartsAt" xml:space="preserve"><value>Starts at</value></data>
   <data name="Status" xml:space="preserve"><value>Status</value></data>
   <data name="StudentId" xml:space="preserve"><value>Student</value></data>
@@ -119,14 +132,18 @@
   <data name="Title" xml:space="preserve"><value>Title</value></data>
   <data name="To" xml:space="preserve"><value>End</value></data>
   <data name="ToYear" xml:space="preserve"><value>End year</value></data>
+  <data name="TotalCredits" xml:space="preserve"><value>Total credits</value></data>
   <data name="Translation" xml:space="preserve"><value>Translation</value></data>
   <data name="Trend" xml:space="preserve"><value>Trend</value></data>
   <data name="TriggerCode" xml:space="preserve"><value>Trigger code</value></data>
   <data name="Unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="UnitPrice" xml:space="preserve"><value>Unit price</value></data>
   <data name="UserId" xml:space="preserve"><value>User</value></data>
   <data name="Username" xml:space="preserve"><value>Username</value></data>
   <data name="ValidFrom" xml:space="preserve"><value>Valid from</value></data>
   <data name="ValidTo" xml:space="preserve"><value>Valid to</value></data>
+  <data name="ValidityDays" xml:space="preserve"><value>Validity days</value></data>
+  <data name="Value" xml:space="preserve"><value>Value</value></data>
   <data name="WindowEnd" xml:space="preserve"><value>Window end</value></data>
   <data name="WindowStart" xml:space="preserve"><value>Window start</value></data>
   <data name="Word.Address" xml:space="preserve"><value>Address</value></data>

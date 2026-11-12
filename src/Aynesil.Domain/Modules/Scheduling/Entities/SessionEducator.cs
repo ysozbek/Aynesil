@@ -49,7 +49,6 @@ public class SessionEducator : BaseEntity
     private static void ValidateRole(string role)
     {
         if (!ValidRoles.Contains(role))
-            throw new ArgumentException(
-                $"Invalid educator role '{role}'. Must be lead, assistant, observer, or supervisor.");
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Role"), MsgArg.Values("EducatorRole", "lead", "assistant", "observer", "supervisor"));
     }
 }
