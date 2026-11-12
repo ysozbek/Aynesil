@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Resources;
 using System.Text;
 using System.Text.RegularExpressions;
+using Aynesil.Domain.Common;
 
 namespace Aynesil.Application.Common.Localization;
 
@@ -30,9 +31,15 @@ public static partial class Msg
     private static partial Regex IndexPlaceholder();
 
     /// <summary>Anahtarı geçerli dilde çözer; <c>{0}</c>, <c>{1}</c> yer tutucularını args ile doldurur.</summary>
-    public static string Get(string key, params object?[] args) => Get(key, CultureInfo.CurrentUICulture, args);
+    public static string Get(MsgKey key, params object?[] args) => Get(key.Value, CultureInfo.CurrentUICulture, args);
 
-    public static string Get(string key, CultureInfo culture, params object?[] args)
+    public static string Get(MsgKey key, CultureInfo culture, params object?[] args) => Get(key.Value, culture, args);
+
+    /// <summary>Kodlu istisnanın (<see cref="ILocalizableException"/>) metnini çözer.</summary>
+    public static string Get(MsgKey key, IReadOnlyList<object?> args, CultureInfo? culture = null) =>
+        Get(key.Value, culture ?? CultureInfo.CurrentUICulture, args.ToArray());
+
+    internal static string Get(string key, CultureInfo culture, params object?[] args)
     {
         var template = Lookup(MessagesRm, key, culture) ?? key;
         if (args.Length == 0) return template;

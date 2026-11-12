@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Resources;
 using System.Text.RegularExpressions;
 using Aynesil.Application.Common.Localization;
+using Aynesil.Domain.Common;
 using FluentAssertions;
 
 namespace Aynesil.Tests.Localization;
@@ -72,8 +73,8 @@ public class ResourceParityTests
 
     internal static IEnumerable<string> AllKeys(Type type) =>
         type.GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.IsLiteral && f.FieldType == typeof(string))
-            .Select(f => (string)f.GetRawConstantValue()!)
+            .Where(f => f.FieldType == typeof(MsgKey))
+            .Select(f => ((MsgKey)f.GetValue(null)!).Value)
             .Concat(type.GetNestedTypes(BindingFlags.Public).SelectMany(AllKeys));
 
     [Fact]

@@ -3,6 +3,7 @@ using Aynesil.Api.Middleware;
 using Aynesil.Api.Services;
 using Aynesil.Application;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Localization;
 using Aynesil.Infrastructure;
 using Aynesil.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -84,18 +85,24 @@ try
             // { success:false, message, errors } zarfına çevir.
             opts.InvalidModelStateResponseFactory = ctx =>
             {
-                var errors = Aynesil.Shared.ErrorKeyFormatter.Normalize(
-                    ctx.ModelState
-                        .Where(kv => kv.Value is { Errors.Count: > 0 })
-                        .Select(kv => new KeyValuePair<string, string[]>(
-                            kv.Key,
-                            kv.Value!.Errors
-                                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
-                                    ? "Geçersiz değer."
-                                    : e.ErrorMessage)
-                                .ToArray())));
+                // Kültür RequestCultureMiddleware'den gelir. Model bağlama hatalarının kodu yoktur → Error.InvalidValue.
+                var invalidValue = Msg.Get(MsgKeys.Error.InvalidValue);
+                var pairs = ctx.ModelState
+                    .Where(kv => kv.Value is { Errors.Count: > 0 })
+                    .Select(kv => new KeyValuePair<string, string[]>(
+                        kv.Key,
+                        kv.Value!.Errors
+                            .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? invalidValue : e.ErrorMessage)
+                            .ToArray()))
+                    .ToList();
+                var errors = Aynesil.Shared.ErrorKeyFormatter.Normalize(pairs);
+                var details = Aynesil.Shared.ErrorKeyFormatter.Normalize(pairs.Select(kv =>
+                    new KeyValuePair<string, Aynesil.Shared.ErrorDetail[]>(
+                        kv.Key,
+                        kv.Value.Select(m => new Aynesil.Shared.ErrorDetail(MsgKeys.Error.InvalidValue.Value, m)).ToArray())));
 
-                var body = Aynesil.Shared.ApiResponse.Fail("Gönderilen veri geçersiz.", errors)
+                var body = Aynesil.Shared.ApiResponse.Fail(
+                        Msg.Get(MsgKeys.Error.InvalidRequest), MsgKeys.Error.InvalidRequest.Value, errors, details)
                     with { TraceId = ctx.HttpContext.TraceIdentifier };
 
                 return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(body);

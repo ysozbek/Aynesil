@@ -15,4 +15,6 @@ public class ConflictException : BusinessRuleViolationException
 
     public ConflictException(string message, Exception innerException)
         : base(message, innerException) { }
+
+    public ConflictException(MsgKey code, params object?[] args) : base(code, args) { }
 }

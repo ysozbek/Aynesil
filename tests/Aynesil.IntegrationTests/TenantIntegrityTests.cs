@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Localization;
 using System.Text;
 using Aynesil.Api.Middleware;
 using FluentAssertions;
@@ -33,7 +34,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
 
         ex.SqlState.Should().Be(PostgresErrorCodes.ForeignKeyViolation);
         ex.ConstraintName.Should().Be("fk_makeup_request_student_id_tnt");
-        (await MapAsync(ex)).Should().Be((422, "İlişkili kayıt bulunamadı veya bu kuruma ait değil."));
+        (await MapAsync(ex)).Should().Be((422, MsgKeys.Error.ReferenceMissing.Value));
     }
 
     [Fact]
@@ -91,7 +92,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
 
         ex.SqlState.Should().Be(PostgresErrorCodes.ForeignKeyViolation);
         ex.ColumnName.Should().Be("status_id");
-        (await MapAsync(ex)).Should().Be((422, "İlişkili kayıt bulunamadı veya bu kuruma ait değil."));
+        (await MapAsync(ex)).Should().Be((422, MsgKeys.Error.ReferenceMissing.Value));
     }
 
     // ── Delete of a record that is still in use ───────────────────────────────
@@ -110,7 +111,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
             "delete from students.student where id = @s", ("s", student)));
 
         ex.SqlState.Should().Be(PostgresErrorCodes.ForeignKeyViolation);
-        (await MapAsync(ex)).Should().Be((409, "Bu kayıt başka kayıtlarda kullanıldığı için silinemez."));
+        (await MapAsync(ex)).Should().Be((409, MsgKeys.Error.ReferenceInUse.Value));
         // Same mapping when the error arrives wrapped by EF Core SaveChanges.
         (await MapAsync(new DbUpdateException("wrapped", ex))).Item1.Should().Be(409);
     }
@@ -267,7 +268,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
         return ex.Should().BeOfType<PostgresException>().Subject;
     }
 
-    /// <summary>Runs the exception through the real ExceptionMiddleware; returns (status, message).</summary>
+    /// <summary>Runs the exception through the real ExceptionMiddleware; returns (status, error code). The text is locale-dependent, so the stable code is asserted.</summary>
     private static async Task<(int, string)> MapAsync(Exception ex)
     {
         var middleware = new ExceptionMiddleware(_ => throw ex,
@@ -278,7 +279,7 @@ public sealed class TenantIntegrityTests(MigratedDatabaseFixture db)
 
         context.Response.Body.Position = 0;
         var body = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
-        var message = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("message").GetString()!;
-        return (context.Response.StatusCode, message);
+        var code = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("code").GetString()!;
+        return (context.Response.StatusCode, code);
     }
 }

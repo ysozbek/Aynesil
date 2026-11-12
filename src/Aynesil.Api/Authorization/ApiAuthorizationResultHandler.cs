@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aynesil.Application.Common.Localization;
 using Aynesil.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
@@ -12,8 +13,6 @@ namespace Aynesil.Api.Authorization;
 /// </summary>
 public sealed class ApiAuthorizationResultHandler : IAuthorizationMiddlewareResultHandler
 {
-    private const string ForbiddenMessage = "Bu işlem için yetkiniz yok.";
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -29,7 +28,7 @@ public sealed class ApiAuthorizationResultHandler : IAuthorizationMiddlewareResu
     {
         if (authorizeResult.Forbidden && !context.Response.HasStarted)
         {
-            var payload = ApiResponse.Fail(ForbiddenMessage) with { TraceId = context.TraceIdentifier };
+            var payload = ApiResponse.Fail(Msg.Get(MsgKeys.Error.Forbidden), MsgKeys.Error.Forbidden.Value) with { TraceId = context.TraceIdentifier };
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));

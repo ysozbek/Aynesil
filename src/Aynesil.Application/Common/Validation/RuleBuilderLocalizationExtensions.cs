@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Localization;
+using Aynesil.Domain.Common;
 using FluentValidation;
 
 namespace Aynesil.Application.Common.Validation;
@@ -12,6 +13,6 @@ public static class RuleBuilderLocalizationExtensions
     /// {PropertyName} gibi FluentValidation yer tutucuları mesajda kullanılabilir.
     /// </summary>
     public static IRuleBuilderOptions<T, TProperty> WithKey<T, TProperty>(
-        this IRuleBuilderOptions<T, TProperty> rule, string key, params object?[] args) =>
-        rule.WithErrorCode(key).WithMessage(_ => Msg.Get(key, args));
+        this IRuleBuilderOptions<T, TProperty> rule, MsgKey key, params object?[] args) =>
+        rule.WithErrorCode(key.Value).WithMessage(_ => Msg.Get(key, args));
 }

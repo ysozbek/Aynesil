@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aynesil.Application.Common.Exceptions;
+using Aynesil.Application.Common.Localization;
 using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace Aynesil.Api.Middleware;
 /// Global exception handler middleware.
 /// Catches all unhandled exceptions and transforms them into consistent ApiResponse envelopes.
 /// Never leaks exception text, EF queries or stack traces to clients, in any environment:
-/// unrecognised exceptions become a generic 500 carrying only a Turkish message and the TraceId,
+/// unrecognised exceptions become a generic 500 carrying only a localized (tr/en) message, a code and the TraceId,
 /// and the details go to the structured log (Serilog) under that same TraceId.
 /// </summary>
 public class ExceptionMiddleware
@@ -45,27 +46,35 @@ public class ExceptionMiddleware
     {
         var traceId = context.TraceIdentifier;
 
+        // İç middleware'lerin AsyncLocal değişiklikleri buraya yansımaz; metni istek dilinde üretmek için
+        // kültür (Accept-Language → JWT locale → tr) bu noktada yeniden uygulanır.
+        RequestCultureMiddleware.Apply(context);
+
         var (statusCode, response) = exception switch
         {
             ValidationException ve => (
                 StatusCodes.Status422UnprocessableEntity,
-                ApiResponse.Fail("Doğrulama hatası.", ErrorKeyFormatter.Normalize(ve.Errors))),
+                ApiResponse.Fail(
+                    Msg.Get(MsgKeys.Error.ValidationFailed), MsgKeys.Error.ValidationFailed.Value,
+                    ErrorKeyFormatter.Normalize(ve.Errors),
+                    ErrorKeyFormatter.Normalize(ve.ErrorDetails))),
 
+            // Kodlu istisnalar metnini kod + parametrelerden alır; kodsuz (geçiş dönemi) olanlar kendi metnini döner.
             NotFoundException nfe => (
                 StatusCodes.Status404NotFound,
-                ApiResponse.Fail(nfe.Message)),
+                Localized(nfe, MsgKeys.Error.NotFound, nfe.Message)),
 
             KeyNotFoundException knf => (
                 StatusCodes.Status404NotFound,
-                ApiResponse.Fail(knf.Message)),
+                Fail(MsgKeys.Error.NotFound, knf.Message)),
 
-            ForbiddenAccessException => (
+            ForbiddenAccessException fae => (
                 StatusCodes.Status403Forbidden,
-                ApiResponse.Fail("Bu işlem için yetkiniz yok.")),
+                Localized(fae, MsgKeys.Error.Forbidden, null)),
 
             UnauthorizedAccessException => (
                 StatusCodes.Status401Unauthorized,
-                ApiResponse.Fail("Oturum açmanız gerekiyor.")),
+                Fail(MsgKeys.Error.Unauthorized)),
 
             // The application's own conflict exceptions: ConflictException (derives from it) and the
             // BusinessRuleViolationException thrown by domain entities / handlers for invalid
@@ -74,36 +83,49 @@ public class ExceptionMiddleware
             // (including EF query-translation failures) must fall through to the generic 500 below.
             BusinessRuleViolationException bre => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail(bre.Message)),
+                Localized(bre, MsgKeys.Error.BusinessRule, bre.Message)),
 
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail("Kayıt başka bir kullanıcı tarafından değiştirildi. Lütfen sayfayı yenileyip tekrar deneyin.")),
+                Fail(MsgKeys.Error.Concurrency)),
 
             DbUpdateException dbe when IsUniqueViolation(dbe) => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail("Aynı anahtara sahip bir kayıt zaten mevcut.")),
+                Fail(MsgKeys.Error.DuplicateKey)),
 
             // 23503 from a composite tenant FK or the global-or-tenant reference trigger (#86).
             // Raw SQL (ExecuteSqlRaw) surfaces the PostgresException without a DbUpdateException.
             _ when PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out _)
                    == PostgresErrorClassifier.ForeignKeyViolation.MissingOrForeignReference => (
                 StatusCodes.Status422UnprocessableEntity,
-                ApiResponse.Fail("İlişkili kayıt bulunamadı veya bu kuruma ait değil.")),
+                Fail(MsgKeys.Error.ReferenceMissing)),
 
             _ when PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out _)
                    == PostgresErrorClassifier.ForeignKeyViolation.StillReferenced => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail("Bu kayıt başka kayıtlarda kullanıldığı için silinemez.")),
+                Fail(MsgKeys.Error.ReferenceInUse)),
+
+            // Domain guard'ları (tarih sırası, tutar vb.) ArgumentException atar; istemciye yalnızca genel mesaj
+            // gider (istisna metni sızmaz), ayrıntı log'da. ArgumentNullException programcı hatasıdır → 500.
+            ArgumentException and not ArgumentNullException => (
+                StatusCodes.Status422UnprocessableEntity,
+                Fail(MsgKeys.Error.InvalidArgument)),
 
             OperationCanceledException => (
                 StatusCodes.Status499ClientClosedRequest,
-                ApiResponse.Fail("İstek iptal edildi.")),
+                Fail(MsgKeys.Error.RequestCancelled)),
 
             _ => (
                 StatusCodes.Status500InternalServerError,
-                ApiResponse.Fail("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
+                Fail(MsgKeys.Error.Unexpected))
         };
+
+        if (exception is ArgumentException and not ArgumentNullException)
+        {
+            _logger.LogWarning(exception,
+                "Domain argument guard rejected input. TraceId={TraceId} Path={Path}",
+                traceId, context.Request.Path);
+        }
 
         if (PostgresErrorClassifier.ClassifyForeignKeyViolation(exception, out var fkConstraint)
             != PostgresErrorClassifier.ForeignKeyViolation.None)
@@ -125,6 +147,17 @@ public class ExceptionMiddleware
 
         var payload = response with { TraceId = traceId };
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload, _jsonOptions));
+    }
+
+    private static ApiResponse Fail(MsgKey key, string? overrideMessage = null) =>
+        ApiResponse.Fail(overrideMessage ?? Msg.Get(key), key.Value);
+
+    /// <summary>Kodlu istisna → kod + çözülmüş metin; kodsuz → varsayılan kod ve (varsa) istisnanın kendi metni.</summary>
+    private static ApiResponse Localized(ILocalizableException ex, MsgKey fallbackCode, string? legacyMessage)
+    {
+        if (ex.Code is { } code)
+            return ApiResponse.Fail(Msg.Get(code, ex.Args), code.Value);
+        return Fail(fallbackCode, legacyMessage);
     }
 
     /// <summary>Postgres unique_violation (23505) surfaced through EF SaveChanges.</summary>

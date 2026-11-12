@@ -10,7 +10,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLocaleStore } from '@/stores/locale.store'
-import type { ApiResponse } from '@/types/api.types'
+import type { ApiResponse, ErrorDetail } from '@/types/api.types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
@@ -125,6 +125,10 @@ api.interceptors.response.use(
 /** Error carrying backend field errors (`{ success:false, message, errors }`). */
 export interface ApiError extends Error {
   fieldErrors?: Record<string, string[]>
+  /** alan → { code, message } (backend `errorDetails`). */
+  errorDetails?: Record<string, ErrorDetail[]>
+  /** Backend hata kodu (`code`, ör. 'Error.NotFound'). */
+  code?: string
   status?: number
 }
 
@@ -180,6 +184,9 @@ api.interceptors.response.use(
     const apiError = error as unknown as ApiError
     apiError.status = status
     if (errors) apiError.fieldErrors = errors
+    const body = (data && typeof data === 'object' ? data : {}) as Partial<ApiResponse>
+    if (typeof body.code === 'string') apiError.code = body.code
+    if (body.errorDetails && typeof body.errorDetails === 'object') apiError.errorDetails = body.errorDetails
     return Promise.reject(error)
   }
 )

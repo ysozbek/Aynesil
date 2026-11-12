@@ -15,4 +15,10 @@ public static class ErrorKeyFormatter
         errors
             .GroupBy(kv => ToCamelCase(kv.Key))
             .ToDictionary(g => g.Key, g => g.SelectMany(kv => kv.Value).Distinct().ToArray());
+
+    /// <summary>Kodlu hata ayrıntıları için <see cref="Normalize(IEnumerable{KeyValuePair{string, string[]}})"/> karşılığı.</summary>
+    public static Dictionary<string, ErrorDetail[]> Normalize(IEnumerable<KeyValuePair<string, ErrorDetail[]>> errors) =>
+        errors
+            .GroupBy(kv => ToCamelCase(kv.Key))
+            .ToDictionary(g => g.Key, g => g.SelectMany(kv => kv.Value).Distinct().ToArray());
 }

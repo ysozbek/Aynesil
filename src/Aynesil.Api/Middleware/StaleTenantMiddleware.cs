@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Localization;
 using Aynesil.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -51,7 +52,7 @@ public sealed class StaleTenantMiddleware
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsJsonAsync(
-                    ApiResponse.Fail("Tenant session is no longer valid. Please sign in again.")
+                    ApiResponse.Fail(Msg.Get(MsgKeys.Error.TenantSessionInvalid), MsgKeys.Error.TenantSessionInvalid.Value)
                         with { TraceId = context.TraceIdentifier });
                 return;
             }
