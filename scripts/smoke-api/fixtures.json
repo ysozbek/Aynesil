@@ -1,15 +1,14 @@
 {
-  "_comment": "Duman testi sabitleri. Şifre yalnızca yerel/geliştirme veritabanındaki 'smoke' test kurumuna aittir (setup-tenant.sh oluşturur). Gerçek ortamda KULLANMAYIN.",
+  "_comment": "Duman testi sabitleri. Kurum ve kullanıcılar scripts/demo-seed ile oluşturulur (demo_a); şifre yalnızca yerel/geliştirme DB'sindeki demo kurumlara aittir. Gerçek ortamda KULLANMAYIN.",
   "apiBase": "http://localhost:5001/api",
   "tenant": {
-    "code": "smoke",
-    "name": "Smoke Test Kurumu",
-    "campus": "Smoke Kampüs:İstanbul"
+    "code": "demo_a",
+    "name": "Demo Gökkuşağı Merkezi"
   },
   "admin": {
-    "username": "smoke-admin@aynesil.test",
-    "fullName": "Smoke Admin",
-    "password": "SmokeTest!2026pw"
+    "username": "admin@demo-a.test",
+    "fullName": "Selin Aksoy",
+    "password": "DemoSifre!2026"
   },
   "pathParamDefaults": {
     "typeCode": "session_type",
@@ -56,10 +55,16 @@
     "scheduling.getEducatorCalendar": "from={{today-30}}&to={{today}}",
     "scheduling.getStudentCalendar": "from={{today-30}}&to={{today}}"
   },
-  "expectedStatus": {
-    "portal.": {
-      "status": 401,
-      "reason": "Yönetici kullanıcının veli portalı erişimi yok (guardian_portal_access); veli kullanıcısı olmadan test edilemez"
-    }
+  "guardian": {
+    "username": "veli1@demo-a.test",
+    "password": "DemoSifre!2026"
+  },
+  "isolation": {
+    "otherTenantAdmin": {
+      "username": "admin@demo-b.test",
+      "password": "DemoSifre!2026"
+    },
+    "foreignChildStudentNo": "GK-2603",
+    "otherTenantCode": "demo_b"
   }
 }

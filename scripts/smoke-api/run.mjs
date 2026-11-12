@@ -110,14 +110,16 @@ async function firstId(listPath) {
     const res = await http('GET', `${listPath}${sep}page=1&pageSize=20`)
     const d = res.json?.data
     const arr = Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []
-    listCache.set(listPath, { status: res.status, id: arr.find(x => x?.id)?.id, empty: !arr.length })
+    listCache.set(listPath, { status: res.status, id: arr.map(x => x?.id ?? x?.studentId).find(Boolean), empty: !arr.length })
   }
   const c = listCache.get(listPath)
   if (!c.id) throw new Skip(c.status >= 400 ? `kaynak liste ${listPath} → HTTP ${c.status}` : `kaynak liste ${listPath} boş (veri yok)`)
   return c.id
 }
+let paramOverride = {}
 async function resolveParam(ep, expr) {
   const name = expr.split('.').pop()
+  if (paramOverride[name]) return firstId(paramOverride[name])
   if (fx.pathParamDefaults[name] !== undefined) return fx.pathParamDefaults[name]
   if (known[name]) return known[name]
   const fileBase = ep.file.split('/').pop().split(':')[0].replace(/\.ts$/, '')
@@ -143,18 +145,19 @@ async function buildUrl(ep) {
 }
 
 // ── Fazlar ──────────────────────────────────────────────────────────────────
-async function login() {
-  const res = await http('POST', '/auth/login', { username: fx.admin.username, password: fx.admin.password })
+async function login(username = fx.admin.username, password = fx.admin.password, phase = 'giriş') {
+  const res = await http('POST', '/auth/login', { username, password })
   const ep = byId['post:auth.login'] // auth.service yoksa frontend tipi store'dadır; zarf kontrolü yeterli
   const { mismatches } = checkAgainst(ep, res)
   const d = res.json?.data
   for (const k of ['accessToken', 'refreshToken', 'expiresAt', 'fullName', 'userId', 'corporationId'])
     if (typeof d?.[k] !== 'string') mismatches.push(`data.${k}: string bekleniyor (LoginResult)`)
-  record({ phase: 'giriş', id: 'auth.login', verb: 'POST', url: '/auth/login', status: res.status,
+  record({ phase, id: `auth.login (${username})`, verb: 'POST', url: '/auth/login', status: res.status,
     outcome: res.status >= 400 || res.status === 0 ? classify(res.status) : mismatches.length ? 'type' : 'ok',
     note: res.status >= 400 || res.status === 0 ? errNote(res) : '', mismatches })
   if (!d?.accessToken) { console.error('Giriş başarısız:', res.status, errNote(res)); await finish(true) }
   token = d.accessToken
+  return d
 }
 
 /** Yazma çağrısı: durum + frontend'in tanımladığı yanıt tipi. */
@@ -282,12 +285,12 @@ function expected(ep, res) {
   return null
 }
 
-async function sweep() {
-  const gets = endpoints.filter(e => e.verb === 'get' && (!only || e.id.startsWith(only)))
+async function sweep(filter = (e) => !e.id.startsWith('portal.'), phase = 'GET') {
+  const gets = endpoints.filter(e => e.verb === 'get' && filter(e) && (!only || e.id.startsWith(only)))
   for (const ep of gets) {
     let url
     try { url = await buildUrl(ep) } catch (e) {
-      if (e instanceof Skip) { record(await probeRoute(ep, e.message)); continue }
+      if (e instanceof Skip) { record({ ...(await probeRoute(ep, e.message)), phase }); continue }
       throw e
     }
     const res = await http('GET', url)
@@ -298,8 +301,57 @@ async function sweep() {
       const exp = expected(ep, res)
       if (exp) { outcome = 'skip'; note = `beklenen HTTP ${res.status}: ${exp}` }
     }
-    record({ phase: 'GET', id: ep.id, verb: 'GET', url, status: res.status, outcome, note, mismatches, file: ep.file, ms: res.ms })
+    record({ phase, id: ep.id, verb: 'GET', url, status: res.status, outcome, note, mismatches, file: ep.file, ms: res.ms })
   }
+}
+
+
+// ── İzolasyon kontrolleri ───────────────────────────────────────────────────
+const isoRec = (id, url, res, okStatuses, what) => {
+  const ok = okStatuses.includes(res.status)
+  record({ phase: 'izolasyon', id, verb: 'GET', url, status: res.status, outcome: ok ? 'ok' : (res.status >= 200 && res.status < 300 ? 'leak' : res.status >= 500 ? '5xx' : '4xx'),
+    note: ok ? `beklenen ${okStatuses.join('/')} — ${what}` : `${what}: beklenen ${okStatuses.join('/')}, gelen ${res.status}${res.status < 300 ? ' (VERİ SIZDI)' : res.status === 401 ? ' (veri sızmadı; ancak 401 dönüyor — 403/404 olmalı, frontend 401\'de oturumu düşürebilir)' : ''}`, mismatches: [] })
+}
+async function isolation() {
+  const iso = fx.isolation, mainToken = token
+  // diğer kurumun kayıt id'lerini kendi yöneticisiyle topla
+  await login(iso.otherTenantAdmin.username, iso.otherTenantAdmin.password, 'izolasyon-hazırlık')
+  const first = async (p) => { const r = await http('GET', p + '?page=1&pageSize=5'); const d = r.json?.data; return (Array.isArray(d) ? d : d?.items ?? [])[0]?.id }
+  const foreign = { student: await first('/students'), session: await first('/scheduling/sessions'), invoice: await first('/payments/invoices'), meeting: await first('/meetings') }
+  token = mainToken
+  const probes = [['student', '/students'], ['session', '/scheduling/sessions'], ['invoice', '/payments/invoices'], ['meeting', '/meetings']]
+  for (const [k, base] of probes) {
+    if (!foreign[k]) { record({ phase: 'izolasyon', id: `isolation.${k}`, verb: 'GET', url: base, status: null, outcome: 'skip', note: `${iso.otherTenantCode} kurumunda ${k} bulunamadı (demo-seed çalıştırılmamış olabilir)`, mismatches: [] }); continue }
+    const r = await http('GET', `${base}/${foreign[k]}`)
+    isoRec(`isolation.${k} (demo_a yöneticisi → demo_b ${k})`, `${base}/{demo_b ${k}}`, r, [404], 'başka kurumun kaydı')
+  }
+  // yazma yönü: başka kurumun öğrencisini güncellemeyi dene (PUT) → 404 beklenir
+  if (foreign.student) {
+    const r = await http('PUT', `/students/${foreign.student}`, { firstName: 'X', lastName: 'Y', rowVersion: 1 })
+    record({ phase: 'izolasyon', id: 'isolation.student.PUT (demo_a yöneticisi → demo_b öğrenci)', verb: 'PUT', url: '/students/{demo_b student}', status: r.status,
+      outcome: r.status === 404 ? 'ok' : r.status < 300 ? 'leak' : '4xx', note: r.status === 404 ? 'beklenen 404' : `beklenen 404, gelen ${r.status}`, mismatches: [] })
+  }
+}
+async function guardianRound() {
+  const adminToken = token
+  // yabancı çocuklar: aynı kurumda başka velinin çocuğu + diğer kurumun öğrencisi
+  const stu = await http('GET', '/students?page=1&pageSize=100')
+  const own = (stu.json?.data?.items ?? []).find(s => s.studentNo === fx.isolation.foreignChildStudentNo)?.id
+  await login(fx.isolation.otherTenantAdmin.username, fx.isolation.otherTenantAdmin.password, 'izolasyon-hazırlık')
+  const otherStu = await http('GET', '/students?page=1&pageSize=5'); const other = otherStu.json?.data?.items?.[0]?.id
+  const g = await login(fx.guardian.username, fx.guardian.password, 'giriş (veli)')
+  listCache.clear(); paramOverride = { studentId: '/portal/my-students' }
+  await sweep((e) => e.id.startsWith('portal.'), 'GET (veli)')
+  paramOverride = {}
+  const checks = [['aynı kurumda başka velinin çocuğu', own], ['başka kurumun öğrencisi', other]]
+  for (const [what, sid] of checks) {
+    if (!sid) { record({ phase: 'izolasyon', id: `isolation.portal (${what})`, verb: 'GET', url: '/portal/students/{id}', status: null, outcome: 'skip', note: 'kayıt bulunamadı', mismatches: [] }); continue }
+    for (const sub of ['', '/dashboard', '/sessions', '/bep', '/packages']) {
+      const r = await http('GET', `/portal/students/${sid}${sub}`)
+      isoRec(`isolation.portal${sub || '/student'} (veli1 → ${what})`, `/portal/students/{id}${sub}`, r, [403, 404], what)
+    }
+  }
+  token = adminToken
 }
 
 // ── Rapor ───────────────────────────────────────────────────────────────────
@@ -307,19 +359,19 @@ async function finish(abort = false) {
   fs.mkdirSync(path.join(here, 'out'), { recursive: true })
   const cnt = (list, o) => list.filter(r => r.outcome === o).length
   const groups = {}
-  for (const r of results) { const g = r.phase === 'GET' ? r.id.split('.')[0] : `(${r.phase})`; (groups[g] ||= []).push(r) }
-  const rows = Object.entries(groups).sort().map(([g, l]) => ({ grup: g, toplam: l.length, basarili: cnt(l, 'ok'), '4xx': cnt(l, '4xx'), '5xx': cnt(l, '5xx'), tipUyusmazligi: cnt(l, 'type'), atlandi: cnt(l, 'skip') }))
-  const total = { grup: 'TOPLAM', toplam: results.length, basarili: cnt(results, 'ok'), '4xx': cnt(results, '4xx'), '5xx': cnt(results, '5xx'), tipUyusmazligi: cnt(results, 'type'), atlandi: cnt(results, 'skip') }
+  for (const r of results) { const g = (r.phase === 'GET' || r.phase === 'GET (veli)') ? (r.phase === 'GET' ? '' : 'veli:') + r.id.split('.')[0] : `(${r.phase})`; (groups[g] ||= []).push(r) }
+  const rows = Object.entries(groups).sort().map(([g, l]) => ({ grup: g, toplam: l.length, basarili: cnt(l, 'ok'), '4xx': cnt(l, '4xx'), '5xx': cnt(l, '5xx'), tipUyusmazligi: cnt(l, 'type'), sizinti: cnt(l, 'leak'), atlandi: cnt(l, 'skip') }))
+  const total = { grup: 'TOPLAM', toplam: results.length, basarili: cnt(results, 'ok'), '4xx': cnt(results, '4xx'), '5xx': cnt(results, '5xx'), tipUyusmazligi: cnt(results, 'type'), sizinti: cnt(results, 'leak'), atlandi: cnt(results, 'skip') }
   console.table([...rows, total])
   const unvalidated = results.filter(r => r.outcome === 'ok' && /boş dizi/.test(r.note || '')).length
   console.log(`Not: 'başarılı' sayısının ${unvalidated} tanesinde liste boştu; öğe alanları doğrulanamadı.`)
   const bad = results.filter(r => r.outcome !== 'ok')
-  let md = `# Duman testi raporu\n\n- Tarih: ${new Date().toISOString()}\n- API: ${API}\n- Kurum: ${fx.tenant.code}\n\n`
-  md += `| Grup | Toplam | Başarılı | 4xx | 5xx | Tip uyuşmazlığı | Atlandı |\n|---|---|---|---|---|---|---|\n`
-  for (const r of [...rows, total]) md += `| ${r.grup} | ${r.toplam} | ${r.basarili} | ${r['4xx']} | ${r['5xx']} | ${r.tipUyusmazligi} | ${r.atlandi} |\n`
+  let md = `# Duman testi raporu\n\n- Tarih: ${new Date().toISOString()}\n- API: ${API}\n- Kurum: ${fx.tenant.code} (yönetici turu) · veli turu: ${fx.guardian.username}\n\n`
+  md += `| Grup | Toplam | Başarılı | 4xx | 5xx | Tip uyuşmazlığı | İzolasyon ihlali | Atlandı |\n|---|---|---|---|---|---|---|---|\n`
+  for (const r of [...rows, total]) md += `| ${r.grup} | ${r.toplam} | ${r.basarili} | ${r['4xx']} | ${r['5xx']} | ${r.tipUyusmazligi} | ${r.sizinti} | ${r.atlandi} |\n`
   md += `\n> 'Başarılı' çağrıların ${unvalidated} tanesinde liste boş döndü; o çağrılarda öğe alanları doğrulanamadı.\n`
   md += `\n## Başarısız / uyuşmayan / atlanan çağrılar\n\n| Sonuç | HTTP | Çağrı | Ayrıntı |\n|---|---|---|---|\n`
-  const order = { '5xx': 0, '4xx': 1, type: 2, neterr: 3, skip: 4 }
+  const order = { leak: -1, '5xx': 0, '4xx': 1, type: 2, neterr: 3, skip: 4 }
   for (const r of bad.sort((a, b) => (order[a.outcome] ?? 9) - (order[b.outcome] ?? 9))) {
     const detail = [r.note, ...(r.mismatches || [])].filter(Boolean).join(' · ').replace(/\|/g, '\\|')
     md += `| ${r.outcome} | ${r.status ?? '-'} | ${r.verb} ${r.id} \`${r.url}\` | ${detail} |\n`
@@ -334,4 +386,6 @@ await login()
 await setup()
 await writeFlows()
 await sweep()
+await isolation()
+await guardianRound()
 await finish()

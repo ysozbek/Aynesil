@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AyNesil API duman testi — tek komutla: DB + migration + API → test kurumu → endpoint çıkarımı → test.
+# AyNesil API duman testi — tek komutla: DB + migration + API → demo kurumlar (demo-seed) → endpoint çıkarımı → test.
 #   scripts/smoke-api/run.sh            # tam akış
 #   scripts/smoke-api/run.sh --only camp   # yalnızca 'camp' ile başlayan GET'ler (ek argümanlar run.mjs'e gider)
 # Gereksinim: docker, node ≥ 20, python3, frontend/aynesil-web/node_modules (typescript).
@@ -18,14 +18,8 @@ docker compose up -d --build --force-recreate aynesil-api >/dev/null
 for i in $(seq 1 40); do curl -sf "${SMOKE_API%/api}/health" >/dev/null && break; sleep 3; done
 curl -sf "${SMOKE_API%/api}/health" >/dev/null || { echo "API ayağa kalkmadı"; docker logs aynesil-api --tail 20; exit 1; }
 
-CODE=$(jq "d['tenant']['code']")
-EXISTS=$(docker exec aynesil-db psql -U aynesil_owner -d aynesil -Atc "select count(*) from core.corporation where code='$CODE'")
-if [ "$EXISTS" = "0" ]; then
-  echo "▶ Test kurumu oluşturuluyor ($CODE)"
-  python3 devops/new_tenant.py --code "$CODE" --name "$(jq "d['tenant']['name']")" --campus "$(jq "d['tenant']['campus']")" \
-    --admin-username "$(jq "d['admin']['username']")" --admin-name "$(jq "d['admin']['fullName']")" \
-    --admin-password "$(jq "d['admin']['password']")" >/dev/null
-else echo "▶ Test kurumu zaten var ($CODE)"; fi
+echo "▶ Demo kurumlar (scripts/demo-seed; var olanı atlar)"
+DEMO_API="$SMOKE_API" node scripts/demo-seed/seed.mjs >/dev/null || { echo "demo-seed hata verdi — ayrıntı: node scripts/demo-seed/seed.mjs"; exit 1; }
 
 echo "▶ Frontend servislerinden uç noktalar çıkarılıyor"; node scripts/smoke-api/extract-endpoints.mjs
 echo "▶ Duman testi"; node scripts/smoke-api/run.mjs "$@"

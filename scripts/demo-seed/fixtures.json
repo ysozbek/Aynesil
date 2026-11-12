@@ -1,0 +1,29 @@
+{
+  "_comment": "Demo veri seti sabitleri. Şifre YALNIZCA yerel/geliştirme veritabanındaki demo kurumlar içindir; gerçek ortamda KULLANMAYIN.",
+  "apiBase": "http://localhost:5001/api",
+  "password": "DemoSifre!2026",
+  "tenants": {
+    "demo_a": {
+      "name": "Demo Gökkuşağı Merkezi",
+      "studentPrefix": "GK",
+      "city": "İstanbul",
+      "campuses": ["Gökkuşağı Moda:İstanbul", "Gökkuşağı Ataşehir:İstanbul"],
+      "domain": "demo-a.test"
+    },
+    "demo_b": {
+      "name": "Demo Papatya Merkezi",
+      "studentPrefix": "PP",
+      "city": "Ankara",
+      "campuses": ["Papatya Çankaya:Ankara", "Papatya Yenimahalle:Ankara"],
+      "domain": "demo-b.test"
+    }
+  },
+  "users": {
+    "admin":       { "local": "admin",       "role": "admin",       "fullName": { "demo_a": "Selin Aksoy",    "demo_b": "Kemal Ersoy" } },
+    "coordinator": { "local": "koordinator", "role": "coordinator", "fullName": { "demo_a": "Burcu Taşkın",   "demo_b": "Onur Yaman" } },
+    "educator":    { "local": "egitmen",     "role": "educator",    "fullName": { "demo_a": "Merve Çalışkan", "demo_b": "Tolga Bayram" } },
+    "finance":     { "local": "muhasebe",    "role": "finance",     "fullName": { "demo_a": "Hakan Doğru",    "demo_b": "Esra Karaca" } },
+    "guardian1":   { "local": "veli1",       "role": "guardian",    "fullName": { "demo_a": "Gülay Sezer",    "demo_b": "Nurcan Aydemir" } },
+    "guardian2":   { "local": "veli2",       "role": "guardian",    "fullName": { "demo_a": "Fikret Uysal",   "demo_b": "Cengiz Polat" } }
+  }
+}
