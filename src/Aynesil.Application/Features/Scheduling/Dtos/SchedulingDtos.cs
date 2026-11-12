@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Common.RefData;
 using Microsoft.EntityFrameworkCore;
@@ -271,11 +272,15 @@ internal static class SchedulingProjection
                 .Select(c => c.Name)
                 .FirstOrDefaultAsync(ct);
 
-        // Note authors + attendance recorders (iam.user_account) — missing user → null name
-        var userIds = session.Notes.Where(n => n.AuthoredBy.HasValue).Select(n => n.AuthoredBy!.Value)
-            .Concat(session.Attendances.Where(a => a.RecordedBy.HasValue).Select(a => a.RecordedBy!.Value))
+        // Attendance recorders (iam.user_account) — missing user → null name
+        var userIds = session.Attendances.Where(a => a.RecordedBy.HasValue).Select(a => a.RecordedBy!.Value)
             .Distinct().ToList();
         var userMap = await LoadUserNamesAsync(db, userIds, ct);
+
+        // Note authors are educators (session_note.authored_by → educators.educator)
+        var authorIds = session.Notes.Where(n => n.AuthoredBy.HasValue).Select(n => n.AuthoredBy!.Value)
+            .Distinct().ToList();
+        var authorMap = await ActingEducator.LoadNamesAsync(db, authorIds, ct);
 
         // ref_value labels: session type + attendance reasons (inactive values included)
         var refIds = session.Attendances.Where(a => a.ReasonId.HasValue).Select(a => a.ReasonId!.Value)
@@ -320,7 +325,7 @@ internal static class SchedulingProjection
 
         var creditMap = await SessionCreditConsumer.LoadConsumedBySessionAsync(db, sessionId, ct);
 
-        return ToSessionDto(session, studentMap, educatorMap, goalMap, creditMap, campusName, userMap, refMap);
+        return ToSessionDto(session, studentMap, educatorMap, goalMap, creditMap, campusName, userMap, refMap, authorMap);
     }
 
     public static SessionDto ToSessionDto(
@@ -331,7 +336,8 @@ internal static class SchedulingProjection
         Dictionary<Guid, decimal>? creditMap = null,
         string? campusName = null,
         Dictionary<Guid, string>? userMap = null,
-        Dictionary<Guid, string>? refMap = null)
+        Dictionary<Guid, string>? refMap = null,
+        Dictionary<Guid, string>? authorMap = null)
         => new(
             s.Id, s.CorporationId, s.CampusId, s.SessionTypeId,
             s.RoomId, s.Room?.Name,
@@ -354,7 +360,7 @@ internal static class SchedulingProjection
             s.Notes.Select(n => new SessionNoteDto(
                 n.Id, n.SessionId, n.AuthoredBy, n.Body, n.ParentVisible,
                 n.CreatedAt, n.UpdatedAt, n.RowVersion,
-                n.AuthoredBy.HasValue ? userMap?.GetValueOrDefault(n.AuthoredBy.Value) : null)).ToList(),
+                n.AuthoredBy.HasValue ? authorMap?.GetValueOrDefault(n.AuthoredBy.Value) : null)).ToList(),
             s.Attendances.Select(a => new AttendanceDto(
                 a.Id, a.SessionId, a.StudentId,
                 studentMap.GetValueOrDefault(a.StudentId, ""),

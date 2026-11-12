@@ -67,7 +67,7 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
 
         // Tenants may update their own items and platform defaults (e.g. reorder)
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException("You do not have access to this menu item.");
 
         if (req.RowVersion != item.RowVersion)
             throw new ValidationException([new FluentValidation.Results.ValidationFailure(

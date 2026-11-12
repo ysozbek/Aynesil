@@ -1,5 +1,5 @@
 // BEP: dönem, hedefler, ilerleme kayıtları, planlar (taslak→onaylı→aktif), gözden geçirme; değerlendirme şablonu + oturumlar + raporlar.
-import { step, knownBug, info, idOf, dayStr, count, rng } from '../lib.mjs'
+import { step, info, idOf, dayStr, count, rng } from '../lib.mjs'
 import { BEP_GOALS } from '../data.mjs'
 
 export async function setupLearning(ctx) {
@@ -87,8 +87,7 @@ async function assessments(ctx) {
       await c.post(`/assessment-sessions/${id}/responses`, { responses: tpl.itemIds.map((itemId, i) => ({ itemId, numericValue: 2 + (i % 3), textValue: null, choiceValue: null, note: null })) })
       sdto = await c.post(`/assessment-sessions/${id}/complete`, { rowVersion: rv }); rv = sdto.rowVersion
       const rep = await c.post(`/assessment-sessions/${id}/report`, { summary: 'Dil alanında yaş düzeyinin altında, sosyal alanda yaşıtlarına yakın performans.', findings: 'İfade edici dilde 2 sözcüklü cümle; yönerge alma 1 basamak.', fileId: null })
-      // BİLİNEN HATA: finalize → HTTP 500 (EF modelinde 'AssessmentReport.CreatedBy' yok); rapor taslak kalır, rapora yazılır.
-      if (flow >= 3) await knownBug('rapor kesinleştir (bilinen 500)', () => c.post(`/assessment-sessions/${id}/report/finalize`, { reportId: rep.id, rowVersion: rep.rowVersion }))
+      if (flow >= 3) await step('rapor kesinleştir', () => c.post(`/assessment-sessions/${id}/report/finalize`, { reportId: rep.id, rowVersion: rep.rowVersion }))
       await c.post(`/assessment-sessions/${id}/recommendations`, { leadId: null, studentId: student.id, recommendedProgramId: ids.programs[1].id, recommendedIntensity: 'haftada 2 seans', rationale: 'Dil ve konuşma terapisi önerilir.', recommendedBy: assessor })
     }
     return id

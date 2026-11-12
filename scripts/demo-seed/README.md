@@ -50,19 +50,14 @@ Her şey mümkün olduğunca **gerçek API** üzerinden oluşturulur (iş kurall
 |---|---|
 | `educators.educator.user_id`, `students.guardian.user_id` | Eğitmen/veli kaydı ↔ kullanıcı bağını kuran API yok (veli portalı girişi için şart) |
 | `crm.interview.scheduled_at` (geçmişe çekme) | API geçmiş tarihli görüşme planlamayı reddediyor; sonra normal `complete`/`no-show` API'si ile kapatılır |
-| `scheduling.session_note` (8 not) | **Backend hatası:** not API'si `authored_by`'a kullanıcı id'si yazıyor, FK `educators.educator`'a bakıyor → HTTP 422 |
-| `finance.invoice_line` + `finance.invoice` (toplam/durum/no) | **Backend hatası:** satır ekleme/kesme/iptal HTTP 500 (`Invoice.CreatedBy` EF modelinde yok) |
-| `finance.payment.status = captured` | **Backend hatası:** `capture` HTTP 500 (`Payment.CreatedBy`) |
-| `consultancy.consultancy_plan.status = active` | **Backend hatası:** `activate` HTTP 500 (`ConsultancyPlan.CreatedBy`) |
 | `core.notification` (7 örnek) | Bildirimi yalnızca sistem olayları üretiyor, oluşturma ucu yok |
 
 Geçmiş seanslar, yoklamalar, toplantılar, BEP ölçümleri ve KPI değerleri API ile üretilir (API geçmiş tarihi kabul ediyor); KPI `compute/bulk` ile hesaplanır.
 
-## Bilinen backend hataları (seed atlar, düzeltilmedi)
-- `POST /assessment-sessions/{id}/report/finalize` → 500 (`AssessmentReport.CreatedBy`); rapor taslak kalır.
-- `POST /payments/discounts` (faturaya indirim) → 500 (`Invoice.CreatedBy`).
-- Aynı kök neden: salt-ekleme (CreatedBy sütunu olmayan) varlıkların **güncelleme** yolu EF modelinde `CreatedBy` arıyor (Invoice, Payment, AssessmentReport, ConsultancyPlan).
+## Bilinen sınırlar
 - Sanal derslik kampüse bağlanamıyor (API kuralı) → kampüs başına sanal oda `campusId = null` ile oluşturulur.
+- Seans notları eğitmen kullanıcısı (`egitmen@…`, `educators[0]` ile bağlı) adına API ile yazılır: not yazarı oturumdaki kullanıcıya bağlı eğitmen kaydıdır.
+- Fatura satırı/kesme/iptal/indirim, ödeme onayı, rapor kesinleştirme ve danışmanlık planı aktifleştirme artık API ile yapılır (eski `CreatedBy` EF eşleme hatası giderildi).
 
 ## Dosyalar
 `run.sh` (tek komut) · `seed.mjs` (orkestrasyon, `--reset`, `--phase a,b`) · `lib.mjs` (istemci, SQL, yardımcılar) · `data.mjs` (isim havuzları) · `fixtures.json` · `phases/*.mjs` (identity, people, sessions, learning, crm, finance, legal, ops, camp, extras).

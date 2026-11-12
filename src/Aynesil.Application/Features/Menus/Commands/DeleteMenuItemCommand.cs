@@ -45,7 +45,7 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException("You do not have access to this menu item.");
 
         item.EnsureCanBeDeleted();
 

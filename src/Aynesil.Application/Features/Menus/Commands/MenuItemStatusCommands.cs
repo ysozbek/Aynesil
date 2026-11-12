@@ -40,7 +40,7 @@ public sealed class ActivateMenuItemCommandHandler : IRequestHandler<ActivateMen
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException("You do not have access to this menu item.");
 
         if (item.IsActive) return; // idempotent
 
@@ -84,7 +84,7 @@ public sealed class DeactivateMenuItemCommandHandler : IRequestHandler<Deactivat
             ?? throw new NotFoundException("MenuItem", req.Id);
 
         if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this menu item.");
+            throw new ForbiddenAccessException("You do not have access to this menu item.");
 
         if (!item.IsActive) return; // idempotent
 

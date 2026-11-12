@@ -196,7 +196,7 @@ public sealed class UpdateRefValueCommandHandler : IRequestHandler<UpdateRefValu
 
         // Other tenants' rows are never editable.
         if (!isTenantOwned && !isSharedGlobal)
-            throw new UnauthorizedAccessException("You do not have access to this reference value.");
+            throw new ForbiddenAccessException("You do not have access to this reference value.");
 
         // Platform-owned system vocabulary is immutable; use activate/deactivate override instead.
         if (value.IsSystem)
@@ -297,7 +297,7 @@ public sealed class SetRefValueActiveCommandHandler : IRequestHandler<SetRefValu
 
         // Tenant may only touch own rows or shared (corporation_id null) rows visible to them.
         if (value.CorporationId is not null && value.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this reference value.");
+            throw new ForbiddenAccessException("You do not have access to this reference value.");
 
         if (value.CorporationId == corporationId)
         {

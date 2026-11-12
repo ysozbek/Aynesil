@@ -1,5 +1,5 @@
 // Programlar, kayıtlar, seanslar (son ~8 hafta + 2 hafta ileri), yoklama, notlar, ertelenen/iptal/gelmedi, tekrarlayan program, telafi.
-import { step, info, idOf, at, weekdayOf, dayStr, rng, count, sqlStep, q } from '../lib.mjs'
+import { Client, fx, step, info, idOf, at, weekdayOf, dayStr, rng, count } from '../lib.mjs'
 
 const PROGRAMS = [
   ['ABA', 'Bireysel ABA Terapisi', 'therapy', 'Birebir davranış analizi temelli terapi.'],
@@ -82,15 +82,15 @@ export async function setupSessions(ctx) {
   const NOTES = ['Bugün göz teması süresi belirgin arttı; pekiştireç olarak oyun kullanıldı.', 'İki sözcüklü isteklerde yardımsız 6/10 deneme başarı.',
     'Geçişlerde zorlandı; görsel program kartı ile desteklendi.', 'Akranıyla sıra bekleme çalışması olumlu geçti.', 'Ev ödevi: günde 10 dk kartlarla adlandırma.',
     'Seans başında huzursuzdu, 5 dk duyusal mola sonrası uyum sağladı.', 'Kalem tutuşu çalışmasında ilerleme var; çizgi çizme tekrarı yapıldı.', 'Velisiyle görüşüldü; evde rutin önerileri paylaşıldı.']
-  // BİLİNEN HATA: POST /scheduling/sessions/{id}/notes, authored_by'a kullanıcı id'sini yazıyor ama FK educators.educator(id)'e
-  // bakıyor → API ile not eklenemiyor (HTTP 422). Bu yüzden notlar SQL ile, yazar = eğitmen kaydı olarak eklenir.
+  // Not yazarı = oturumdaki kullanıcıya bağlı eğitmen kaydı (authored_by → educators.educator); bu yüzden notlar
+  // eğitmen kullanıcısı (educators[0] ile bağlı) olarak yazılır.
   const attended = pastSessions.filter((p) => p.status !== 'absent' && p.status !== 'excused' && p.educatorId === ids.educators[0].id)
+  const ec = new Client(`${code}-egitmen`)
+  await ec.login(`${fx.users.educator.local}@${ctx.t.domain}`, fx.password)
   for (let i = 0; i < 8 && i < attended.length; i++) {
     const p = attended[Math.floor((i + 0.5) * attended.length / 8)]
-    await step('seans notu (SQL)', async () => sqlStep('scheduling.session_note (seans notları; API yazar FK hatası nedeniyle — bkz. rapor)',
-      `insert into scheduling.session_note(corporation_id, session_id, authored_by, body, parent_visible, created_at)
-       select s.corporation_id, s.id, ${q(ids.educators[0].id)}, ${q(NOTES[i])}, ${i % 2 === 0}, s.starts_at + interval '1 hour' from scheduling.session s where s.id=${q(p.id)}`))
-    made.notes++
+    const note = await step('seans notu', () => ec.post(`/scheduling/sessions/${p.id}/notes`, { body: NOTES[i], parentVisible: i % 2 === 0 }))
+    if (note?.id) made.notes++
   }
   // ── Ertelenen seans: gelecekteki iki seansı ertele ──
   const future = (await c.list('/scheduling/sessions?from=' + dayStr(1) + '&to=' + dayStr(13))).filter((x) => x.status === 'scheduled' || !x.status).slice(0, 2)

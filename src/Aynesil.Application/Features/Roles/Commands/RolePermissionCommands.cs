@@ -42,7 +42,7 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
 
         // Tenants may only modify their own roles, not system-level templates
         if (role.CorporationId.HasValue && role.CorporationId != corporationId)
-            throw new UnauthorizedAccessException("You do not have access to this role.");
+            throw new ForbiddenAccessException("You do not have access to this role.");
 
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
             ?? throw new NotFoundException("Permission", req.PermissionId);

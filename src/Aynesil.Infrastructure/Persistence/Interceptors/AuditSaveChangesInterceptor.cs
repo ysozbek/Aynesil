@@ -68,9 +68,14 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = now;
                     entry.Entity.UpdatedBy = userId;
-                    // Preserve original CreatedAt/CreatedBy
-                    entry.Property(nameof(AuditableEntity.CreatedAt)).IsModified = false;
-                    entry.Property(nameof(AuditableEntity.CreatedBy)).IsModified = false;
+                    // Preserve original CreatedAt/CreatedBy. Some tables have no created_by/updated_by
+                    // columns (the configuration then Ignore()s the CLR property); entry.Property()
+                    // throws for an unmapped property, so only touch the ones in the EF model.
+                    foreach (var name in new[] { nameof(AuditableEntity.CreatedAt), nameof(AuditableEntity.CreatedBy) })
+                    {
+                        if (entry.Metadata.FindProperty(name) is not null)
+                            entry.Property(name).IsModified = false;
+                    }
                     break;
             }
         }

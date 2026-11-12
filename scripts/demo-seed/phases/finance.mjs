@@ -1,5 +1,5 @@
 // Finans: paket tanımları, öğrenci paketleri, kredi hareketleri, faturalar, ödemeler (farklı yöntem, biri bekleyen), burs, promosyon, indirim, iade.
-import { step, knownBug, info, idOf, dayStr, count, sqlStep, q } from '../lib.mjs'
+import { step, knownBug, info, dayStr, count } from '../lib.mjs'
 
 export async function setupFinance(ctx) {
   const { c, code, ids } = ctx
@@ -34,14 +34,12 @@ export async function setupFinance(ctx) {
     const inv = await step(`fatura ${s.no}`, () => c.post('/payments/invoices', { issueDate: dayStr(-40 + s.idx * 3), currency: 'TRY', studentId: s.id, guardianId: guardian, dueDate: dayStr(-25 + s.idx * 3) }))
     if (!inv?.id) continue
     made.inv++
-    // BİLİNEN HATA: fatura satırı ekleme/kesme/iptal ve ödeme onayı (capture) EF modelinde 'Invoice.CreatedBy' / 'Payment.CreatedBy'
-    // bulunamadığı için HTTP 500 veriyor (güncelleme yolu). Bu yüzden satır, toplam, durum ve ödeme durumu SQL ile yazılır.
+    // Satır → (taslak değilse) kes → (iptal ise) iptal; tümü API ile. Toplam/durum/numara backend'de hesaplanır.
     const invNo = s.idx === 7 ? null : `${pk}F-2026-${String(++n).padStart(4, '0')}`
-    const status = s.idx === 7 ? 'draft' : s.idx === 6 ? 'void' : s.idx <= 2 ? 'paid' : s.idx <= 4 ? 'partial' : 'issued'
-    sqlStep('finance.invoice_line + finance.invoice toplam/durum/no (API 500: Invoice.CreatedBy — bkz. rapor)',
-      `insert into finance.invoice_line(corporation_id, invoice_id, description, student_package_id, quantity, unit_price, line_total, sort_order)
-         select corporation_id, id, ${q(def.name)}, ${q(sp.id)}, 1, ${def.price}, ${def.price}, 1 from finance.invoice where id=${q(inv.id)};
-       update finance.invoice set subtotal=${def.price}, grand_total=${def.price}, status=${q(status)}, invoice_no=${invNo ? q(invNo) : 'null'} where id=${q(inv.id)};`)
+    let invDto = await step(`fatura satırı ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/lines`, { description: def.name, unitPrice: def.price, quantity: 1, studentPackageId: sp.id, sortOrder: 1 }))
+    if (!invDto) continue
+    if (s.idx !== 7) invDto = await step(`fatura kes ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/issue`, { invoiceNo: invNo, rowVersion: invDto.rowVersion }))
+    if (s.idx === 6 && invDto) await step(`fatura iptal ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/void`, { rowVersion: invDto.rowVersion }))
     if (s.idx === 7 || s.idx === 6) continue
     // ödemeler: idx 0-2 tam, 3-4 kısmi, 5 bekleyen (pending kalır)
     const amount = s.idx <= 2 ? def.price : s.idx <= 4 ? Math.round(def.price / 2) : def.price
@@ -49,8 +47,8 @@ export async function setupFinance(ctx) {
       gatewayProviderId: null, gatewayReference: `DEMO-${pk}-${s.idx}`, idempotencyKey: `demo-${code}-pay-${s.idx}`, paidAt: new Date(Date.now() - (30 - s.idx * 2) * 864e5).toISOString() }))
     if (pay?.id) { made.pay++; payments.push({ ...pay, idx: s.idx }) }
   }
-  // ödeme onayı (capture) bilinen hata nedeniyle SQL: bekleyen (idx 5) hariç hepsi 'captured'
-  for (const p of payments) if (p.idx !== 5) sqlStep('finance.payment.status=captured (API capture 500: Payment.CreatedBy — bkz. rapor)', `update finance.payment set status='captured' where id=${q(p.id)}`)
+  // ödeme onayı (capture): bekleyen (idx 5) hariç hepsi; fatura durumu (kısmi/ödenmiş) capture ile backend'de güncellenir
+  for (const p of payments) if (p.idx !== 5) await step(`ödeme onayı #${p.idx}`, () => c.post(`/payments/transactions/${p.id}/capture`, { gatewayReference: null, paidAt: null, rowVersion: p.rowVersion }))
   const p1 = payments.find((p) => p.idx === 1)
   if (p1) await knownBug('iade talebi/işleme', async () => { const r = await c.post('/payments/refunds', { paymentId: p1.id, amount: 500, reason: 'Hizmet bedeli düzeltmesi (demo)' }); await c.post(`/payments/refunds/${r.id}/process`, {}) })
   // ── burs, promosyon, indirim ──
@@ -58,6 +56,6 @@ export async function setupFinance(ctx) {
   const promo = await step('promosyon', () => c.post('/payments/promotions', { code: `DEMO-YAZ-${pk}`, name: 'Demo Erken Kayıt İndirimi', value: 10, isPercentage: true, validFrom: dayStr(-30), validTo: dayStr(60), maxRedemptions: 50 }))
   if (promo?.id) await step('promosyon aktif', () => c.post(`/payments/promotions/${promo.id}/activate`, {}))
   const draftInv = (await c.list('/payments/invoices')).find((i) => i.status === 'draft')
-  if (draftInv) await knownBug('indirim (taslak faturaya)', async () => c.post('/payments/discounts', { value: 10, isPercentage: true, invoiceId: draftInv.id, studentPackageId: null, discountTypeId: await ctx.ref('discount_type', 'early_bird'), reason: 'Erken kayıt indirimi (demo)' }))
+  if (draftInv) await step('indirim (taslak faturaya)', async () => c.post('/payments/discounts', { value: 10, isPercentage: true, invoiceId: draftInv.id, studentPackageId: null, discountTypeId: await ctx.ref('discount_type', 'early_bird'), reason: 'Erken kayıt indirimi (demo)' }))
   info(`finans: ${made.defs} paket tanımı, ${made.pkgs} öğrenci paketi, ${made.inv} fatura, ${made.pay} ödeme, ${made.ledger} kredi hareketi`)
 }

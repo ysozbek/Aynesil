@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
@@ -27,11 +28,13 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public WriteSessionNoteCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public WriteSessionNoteCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<SessionNoteDto> Handle(WriteSessionNoteCommand req, CancellationToken ct)
@@ -40,10 +43,15 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
             .FirstOrDefaultAsync(s => s.Id == req.SessionId, ct)
             ?? throw new KeyNotFoundException($"Session {req.SessionId} not found.");
 
+        // authored_by FK → educators.educator: the author is the educator linked to the signed-in user.
+        var educatorId = await ActingEducator.RequireIdAsync(
+            _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
+        var educators = await ActingEducator.LoadNamesAsync(_db, [educatorId], ct);
+
         var note = SessionNote.Write(
             session.CorporationId, req.SessionId,
             req.Body, req.ParentVisible,
-            _currentUser.UserId);
+            educatorId);
 
         _db.SessionNotes.Add(note);
         await _db.SaveChangesAsync(ct);
@@ -52,7 +60,7 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
             note.Id, req.SessionId, note.AuthoredBy,
             note.Body, note.ParentVisible,
             note.CreatedAt, note.UpdatedAt, note.RowVersion,
-            _currentUser.UserName);
+            educators.GetValueOrDefault(educatorId));
     }
 }
 
@@ -90,8 +98,8 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
         note.Edit(req.Body, req.ParentVisible);
         await _db.SaveChangesAsync(ct);
 
-        // Düzenleyen değil, notu yazan kullanıcının adı.
-        var authors = await SchedulingProjection.LoadUserNamesAsync(
+        // Düzenleyen değil, notu yazan eğitmenin adı (authored_by → educators.educator).
+        var authors = await ActingEducator.LoadNamesAsync(
             _db, note.AuthoredBy.HasValue ? [note.AuthoredBy.Value] : [], ct);
 
         return new SessionNoteDto(

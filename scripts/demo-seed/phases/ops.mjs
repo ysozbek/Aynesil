@@ -1,5 +1,5 @@
 // Toplantılar + takip görevleri, izinler, danışmanlık, kamera, KPI.
-import { step, knownBug, info, idOf, at, dayStr, count, sqlStep, q } from '../lib.mjs'
+import { step, info, idOf, at, dayStr, count } from '../lib.mjs'
 import { POOLS } from '../data.mjs'
 
 export async function setupOps(ctx) {
@@ -58,9 +58,7 @@ async function consultancy(ctx) {
   const inst = await step('okul', async () => c.post('/consultancy/institutions', { name: P.school, institutionTypeId: await ctx.ref('institution_type', 'primary_school'), city: ctx.t.city, district: 'Merkez', contactName: 'Okul Rehber Öğretmeni', contactPhone: null, contactEmail: `rehberlik@okul.${ctx.t.domain}` }))
   if (!inst?.id) return
   const plan = await step('danışmanlık planı', async () => c.post('/consultancy/plans', { institutionId: inst.id, name: 'Kaynaştırma Sınıfı Destek Programı (Demo)', consultancyTypeId: await ctx.ref('consultancy_type', 'observation'), periodStart: dayStr(-30), periodEnd: dayStr(90), scope: 'Sınıf içi gözlem, öğretmen eğitimi ve takip.', leadEducatorId: ids.educators[3].id }))
-  // BİLİNEN HATA: plan aktifleştirme HTTP 500 (EF modelinde 'ConsultancyPlan.CreatedBy' yok) → durum SQL ile 'active' yapılır.
-  if (plan?.id) { await knownBug('danışmanlık planı aktifleştir (bilinen 500)', () => c.post(`/consultancy/plans/${plan.id}/activate`, {}))
-    sqlStep('consultancy.consultancy_plan.status=active (API activate 500: ConsultancyPlan.CreatedBy — bkz. rapor)', `update consultancy.consultancy_plan set status='active' where id=${q(plan.id)}`) }
+  if (plan?.id) await step('danışmanlık planı aktifleştir', () => c.post(`/consultancy/plans/${plan.id}/activate`, {}))
   const visit = await step('ziyaret', () => c.post('/consultancy/visits', { institutionId: inst.id, visitDate: dayStr(-5), consultancyPlanId: plan?.id ?? null, visitorId: ids.educators[3].id, purpose: 'İlk sınıf gözlemi' }))
   let obs
   if (visit?.id) {

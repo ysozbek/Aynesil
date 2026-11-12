@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Application.Features.Portal.Dtos;
@@ -8,7 +9,7 @@ namespace Aynesil.Application.Features.Portal.Queries;
 
 // ── VerifyPortalAccessHelper ──────────────────────────────────────────────────
 // Shared helper — verifies guardian has active portal access to the student
-// and returns the access flags. Throws UnauthorizedAccessException if not.
+// and returns the access flags. Throws ForbiddenAccessException if not.
 
 internal static class PortalAccessHelper
 {
@@ -30,7 +31,7 @@ internal static class PortalAccessHelper
         ).FirstOrDefaultAsync(ct);
 
         if (access is null)
-            throw new UnauthorizedAccessException(
+            throw new ForbiddenAccessException(
                 $"Guardian does not have active portal access to student {studentId}.");
 
         return (access.GuardianId, access.CanViewSessions, access.CanViewAttendance,
