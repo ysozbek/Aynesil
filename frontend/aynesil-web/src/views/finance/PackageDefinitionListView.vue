@@ -12,6 +12,8 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { PackageDefinitionListItemDto } from '@/types/finance.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -87,7 +89,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('finance.package.title')" :description="t('finance.package.description')">
       <button
-        v-if="can('package_definition:create')"
+        v-if="can(Permissions.PackageDefinitions.Create)"
         @click="router.push({ name: 'package-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -137,14 +139,12 @@ async function doDelete() {
         <span class="font-mono font-medium">{{ formatCurrency(row.listPrice, row.currency) }}</span>
       </template>
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.passive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('package_definition:update')"
+            v-if="can(Permissions.PackageDefinitions.Update)"
             @click="router.push({ name: 'package-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"
@@ -154,7 +154,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('package_definition:update') && row.isActive"
+            v-if="can(Permissions.PackageDefinitions.Update) && row.isActive"
             @click="store.deactivateDefinition(row.id).then(() => loadList())"
             class="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600"
             :title="t('common.deactivate')"
@@ -164,7 +164,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('package_definition:update') && !row.isActive"
+            v-if="can(Permissions.PackageDefinitions.Update) && !row.isActive"
             @click="store.activateDefinition(row.id).then(() => loadList())"
             class="p-1.5 rounded-lg hover:bg-green-50 text-muted-foreground hover:text-green-600"
             :title="t('common.activate')"
@@ -174,7 +174,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('package_definition:delete')"
+            v-if="can(Permissions.PackageDefinitions.Delete)"
             @click="deleteTarget = row"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('common.delete')"

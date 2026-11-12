@@ -9,7 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { ContractListQuery, StudentContractListItemDto } from '@/types/legal.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -36,22 +38,6 @@ function formatDate(dt: unknown) {
   return new Date(String(dt)).toLocaleDateString('tr-TR')
 }
 
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
-    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
-    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
-    [ContractStatus.Active]: 'bg-green-100 text-green-700',
-    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
-    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  return t(`legal.contract.status.${s.toLowerCase()}`, s)
-}
-
 function doFetch() {
   filters.page = 1
   contractStore.fetchContracts(filters)
@@ -75,7 +61,7 @@ onMounted(() => contractStore.fetchContracts(filters))
   <div>
     <PageHeader :title="t('legal.contract.list.title')" :description="t('legal.contract.list.subtitle')">
       <button
-        v-if="can('student_contract:generate')"
+        v-if="can(Permissions.StudentContracts.Generate)"
         @click="router.push({ name: 'contract-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -95,12 +81,12 @@ onMounted(() => contractStore.fetchContracts(filters))
           @change="doFetch"
         >
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="ContractStatus.Draft">{{ t('legal.contract.status.draft') }}</option>
-          <option :value="ContractStatus.Sent">{{ t('legal.contract.status.sent') }}</option>
-          <option :value="ContractStatus.Signed">{{ t('legal.contract.status.signed') }}</option>
-          <option :value="ContractStatus.Active">{{ t('legal.contract.status.active') }}</option>
-          <option :value="ContractStatus.Expired">{{ t('legal.contract.status.expired') }}</option>
-          <option :value="ContractStatus.Terminated">{{ t('legal.contract.status.terminated') }}</option>
+          <option :value="ContractStatus.Draft">{{ t('statusBadge.contract.draft') }}</option>
+          <option :value="ContractStatus.Sent">{{ t('statusBadge.contract.sent') }}</option>
+          <option :value="ContractStatus.Signed">{{ t('statusBadge.contract.signed') }}</option>
+          <option :value="ContractStatus.Active">{{ t('statusBadge.contract.active') }}</option>
+          <option :value="ContractStatus.Expired">{{ t('statusBadge.contract.expired') }}</option>
+          <option :value="ContractStatus.Terminated">{{ t('statusBadge.contract.terminated') }}</option>
         </select>
       </div>
       <button
@@ -130,9 +116,7 @@ onMounted(() => contractStore.fetchContracts(filters))
       <template #cell-endsOn="{ value }">{{ value ?? '—' }}</template>
       <template #cell-signedAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ statusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="contract" :status="String(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>

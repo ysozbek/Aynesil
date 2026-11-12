@@ -38,9 +38,9 @@ const trendColumns: Column<LeaveTrendItemDto>[] = [
   { key: 'year', label: t('leave.reports.year'), width: '80px' },
   { key: 'month', label: t('leave.reports.month'), width: '100px' },
   { key: 'requestCount', label: t('leave.reports.requestCount'), width: '100px', align: 'right' },
-  { key: 'approvedCount', label: t('leave.status.approved'), width: '100px', align: 'right' },
-  { key: 'rejectedCount', label: t('leave.status.rejected'), width: '100px', align: 'right' },
-  { key: 'cancelledCount', label: t('leave.status.cancelled'), width: '100px', align: 'right' },
+  { key: 'approvedCount', label: t('statusBadge.leave.approved'), width: '100px', align: 'right' },
+  { key: 'rejectedCount', label: t('statusBadge.leave.rejected'), width: '100px', align: 'right' },
+  { key: 'cancelledCount', label: t('statusBadge.leave.cancelled'), width: '100px', align: 'right' },
   { key: 'totalDaysApproved', label: t('leave.reports.totalDaysApproved'), width: '120px', align: 'right' },
 ]
 

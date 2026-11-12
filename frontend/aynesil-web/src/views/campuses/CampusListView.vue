@@ -12,6 +12,7 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { CampusListItemDto } from '@/types/campus.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -176,7 +177,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('campus.title')" :description="t('campus.description')">
       <button
-        v-if="can('campus:create')"
+        v-if="can(Permissions.Campus.Create)"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -216,20 +217,20 @@ async function doDelete() {
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
-          <button v-if="can('campus:update')" @click="(e) => openEdit(row, e)"
+          <button v-if="can(Permissions.Campus.Update)" @click="(e) => openEdit(row, e)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" :title="t('common.edit')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
-          <button v-if="can('campus:update')" @click="(e) => toggleStatus(row, e)"
+          <button v-if="can(Permissions.Campus.Update)" @click="(e) => toggleStatus(row, e)"
             :class="['p-1.5 rounded-lg hover:bg-accent transition-colors', row.isActive ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700']"
             :title="row.isActive ? t('common.deactivate') : t('common.activate')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 5.636a9 9 0 1012.728 12.728M9 9l6 6" />
             </svg>
           </button>
-          <button v-if="can('campus:delete')" @click="(e) => confirmDelete(row, e)"
+          <button v-if="can(Permissions.Campus.Delete)" @click="(e) => confirmDelete(row, e)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors" :title="t('common.delete')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

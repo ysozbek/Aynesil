@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { leadService } from '@/services/lead.service'
 import EntityPicker from './EntityPicker.vue'
 import type { PickerOption } from './types'
@@ -22,8 +20,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const crm = useCrmLabels()
-onMounted(() => crm.load('lead_status'))
 
 function label(contactName: string, childName: string | null): string {
   return childName ? `${childName} (${contactName})` : contactName
@@ -40,7 +36,7 @@ async function search(term: string): Promise<PickerOption[]> {
   return res.data.items.map((l) => ({
     id: l.id,
     label: label(l.contactName, l.childName),
-    sublabel: crm.label('lead_status', l.statusCode) ?? undefined,
+    sublabel: l.statusName ?? undefined,
   }))
 }
 

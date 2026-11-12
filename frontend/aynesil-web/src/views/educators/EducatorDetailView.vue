@@ -17,6 +17,8 @@ import type {
   UpdateCertificationPayload,
   LinkHierarchyPayload,
 } from '@/types/educator.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -317,12 +319,10 @@ async function doUnlinkHierarchy() {
             <span v-if="educator.titleLabel" class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
               {{ educator.titleLabel }}
             </span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', educator.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-              {{ educator.isActive ? t('common.active') : t('common.inactive') }}
-            </span>
+            <StatusBadge :value="Boolean(educator.isActive)" :false-label="t('common.inactive')" />
           </div>
         </div>
-        <div v-if="can('educator:update')" class="flex items-center gap-2 flex-wrap">
+        <div v-if="can(Permissions.Educators.Update)" class="flex items-center gap-2 flex-wrap">
           <button
             @click="toggleActive"
             :disabled="toggleLoading"
@@ -395,9 +395,7 @@ async function doUnlinkHierarchy() {
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('educator.isActive') }}</dt>
               <dd>
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', educator.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-                  {{ educator.isActive ? t('common.active') : t('common.inactive') }}
-                </span>
+                <StatusBadge :value="Boolean(educator.isActive)" :false-label="t('common.inactive')" />
               </dd>
             </div>
           </dl>
@@ -408,7 +406,7 @@ async function doUnlinkHierarchy() {
       <div v-else-if="activeTab === 'specialties'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('educator:manage_specialties')"
+            v-if="can(Permissions.Educators.ManageSpecialties)"
             @click="openSpecialtyModal"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -429,7 +427,7 @@ async function doUnlinkHierarchy() {
           >
             <p class="text-sm font-medium text-foreground">{{ spec.specialtyLabel ?? '—' }}</p>
             <button
-              v-if="can('educator:manage_specialties')"
+              v-if="can(Permissions.Educators.ManageSpecialties)"
               @click="removeSpecialtyTarget = spec.id"
               class="px-2 py-1 text-xs rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
             >
@@ -443,7 +441,7 @@ async function doUnlinkHierarchy() {
       <div v-else-if="activeTab === 'certifications'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('educator:manage_certifications')"
+            v-if="can(Permissions.Educators.ManageCertifications)"
             @click="openAddCert"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -477,7 +475,7 @@ async function doUnlinkHierarchy() {
                   <span v-if="cert.expiresOn">{{ t('educator.certification.expiresOn') }}: {{ formatDate(cert.expiresOn) }}</span>
                 </div>
               </div>
-              <div v-if="can('educator:manage_certifications')" class="flex gap-2">
+              <div v-if="can(Permissions.Educators.ManageCertifications)" class="flex gap-2">
                 <button @click="openEditCert(cert)"
                   class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
                   {{ t('educator.certification.edit') }}
@@ -496,7 +494,7 @@ async function doUnlinkHierarchy() {
       <div v-else-if="activeTab === 'campuses'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('educator:manage_campuses')"
+            v-if="can(Permissions.Educators.ManageCampuses)"
             @click="openCampusModal"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -521,16 +519,14 @@ async function doUnlinkHierarchy() {
                 <span v-if="campus.isPrimary" class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                   {{ t('common.primary') }}
                 </span>
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', campus.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-                  {{ campus.isActive ? t('common.active') : t('common.inactive') }}
-                </span>
+                <StatusBadge :value="Boolean(campus.isActive)" :false-label="t('common.inactive')" />
               </div>
               <p class="text-xs text-muted-foreground">
                 {{ formatDate(campus.activeFrom) }}{{ campus.activeTo ? ` — ${formatDate(campus.activeTo)}` : '' }}
               </p>
             </div>
             <button
-              v-if="can('educator:manage_campuses') && campus.isActive"
+              v-if="can(Permissions.Educators.ManageCampuses) && campus.isActive"
               @click="endCampusTarget = campus.id"
               class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
             >
@@ -544,7 +540,7 @@ async function doUnlinkHierarchy() {
       <div v-else-if="activeTab === 'hierarchy'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('educator:manage_hierarchy')"
+            v-if="can(Permissions.Educators.ManageHierarchy)"
             @click="openHierarchyModal"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -573,7 +569,7 @@ async function doUnlinkHierarchy() {
                   <p class="text-xs text-muted-foreground">{{ edge.relationshipLabel ?? '—' }}</p>
                 </div>
                 <button
-                  v-if="can('educator:manage_hierarchy') && edge.isActive"
+                  v-if="can(Permissions.Educators.ManageHierarchy) && edge.isActive"
                   @click="unlinkHierarchyTarget = edge.id"
                   class="px-2 py-1 text-xs rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
                 >

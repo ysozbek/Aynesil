@@ -83,6 +83,6 @@ public sealed class CreateLeadCommandHandler : IRequestHandler<CreateLeadCommand
         }
 
         await _db.SaveChangesAsync(ct);
-        return (await LeadProjection.LoadAsync(_db, lead.Id, ct))!;
+        return (await LeadProjection.LoadAsync(_db, lead.Id, _tenant.Locale, ct))!;
     }
 }

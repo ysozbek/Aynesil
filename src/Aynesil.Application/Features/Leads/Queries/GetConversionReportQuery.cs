@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.RefData;
 using Aynesil.Application.Features.Leads.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -48,12 +49,19 @@ public sealed class GetConversionReportQueryHandler
             select new ConversionBySourceDto(
                 g.Key.SourceId,
                 g.Key.SourceCode,
+                null,
                 g.Count(),
                 g.Count(x => x.l.ConvertedStudentId != null),
                 g.Count() > 0
                     ? Math.Round((decimal)g.Count(x => x.l.ConvertedStudentId != null) / g.Count() * 100, 1)
                     : 0m)
         ).ToListAsync(ct);
+
+        var sourceIds = bySource.Where(s => s.SourceId.HasValue).Select(s => s.SourceId!.Value).Distinct().ToList();
+        var sourceNames = await RefLabelLoader.LoadAsync(_db, sourceIds, _tenant.Locale, ct);
+        bySource = bySource
+            .Select(s => s.SourceId.HasValue ? s with { SourceName = sourceNames.GetValueOrDefault(s.SourceId.Value) } : s)
+            .ToList();
 
         var totalLeads = bySource.Sum(s => s.TotalLeads);
         var totalConverted = bySource.Sum(s => s.Converted);

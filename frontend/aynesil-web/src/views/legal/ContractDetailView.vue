@@ -9,6 +9,8 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -28,22 +30,6 @@ function formatDate(dt: string) {
 
 function formatDatetime(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
-}
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
-    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
-    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
-    [ContractStatus.Active]: 'bg-green-100 text-green-700',
-    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
-    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  return t(`legal.contract.status.${s.toLowerCase()}`, s)
 }
 
 async function doSend() {
@@ -82,11 +68,9 @@ onMounted(() => {
     <template v-else>
       <PageHeader :title="t('legal.contract.detail.title')" :description="contract.studentFullName">
         <div class="flex flex-wrap items-center gap-2">
-          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(contract.status)]">
-            {{ statusLabel(contract.status) }}
-          </span>
+          <StatusBadge entity="contract" :status="contract.status" />
           <button
-            v-if="contract.status === ContractStatus.Draft && can('student_contract:send')"
+            v-if="contract.status === ContractStatus.Draft && can(Permissions.StudentContracts.Send)"
             :disabled="contractStore.saving"
             @click="doSend"
             class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
@@ -94,7 +78,7 @@ onMounted(() => {
             {{ t('legal.contract.actions.send') }}
           </button>
           <button
-            v-if="contract.status === ContractStatus.Sent && can('student_contract:sign')"
+            v-if="contract.status === ContractStatus.Sent && can(Permissions.StudentContracts.Sign)"
             :disabled="contractStore.saving"
             @click="showSignModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -102,7 +86,7 @@ onMounted(() => {
             {{ t('legal.contract.actions.sign') }}
           </button>
           <button
-            v-if="contract.status === ContractStatus.Active && can('student_contract:terminate')"
+            v-if="contract.status === ContractStatus.Active && can(Permissions.StudentContracts.Terminate)"
             :disabled="contractStore.saving"
             @click="showTerminateConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"

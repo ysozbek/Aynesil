@@ -9,7 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -35,24 +37,6 @@ const columns: Column<SchoolVisitListItemDto>[] = [
   { key: 'status', label: t('common.status'), width: '110px' },
 ]
 
-function visitStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [SchoolVisitStatus.Planned]: 'bg-blue-100 text-blue-700',
-    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
-    [SchoolVisitStatus.Cancelled]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function visitStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    [SchoolVisitStatus.Planned]: t('consultancy.visit.status.planned'),
-    [SchoolVisitStatus.Completed]: t('consultancy.visit.status.completed'),
-    [SchoolVisitStatus.Cancelled]: t('consultancy.visit.status.cancelled'),
-  }
-  return map[s] ?? s
-}
-
 async function doFetch() {
   filters.page = 1
   await consultancyStore.fetchVisits(filters)
@@ -75,7 +59,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('consultancy.visit.list.title')" :description="t('consultancy.visit.list.subtitle')">
       <button
-        v-if="can('school_visit:create')"
+        v-if="can(Permissions.SchoolVisits.Create)"
         @click="showCreateModal = true"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -91,9 +75,9 @@ onMounted(doFetch)
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="SchoolVisitStatus.Planned">{{ t('consultancy.visit.status.planned') }}</option>
-          <option :value="SchoolVisitStatus.Completed">{{ t('consultancy.visit.status.completed') }}</option>
-          <option :value="SchoolVisitStatus.Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
+          <option :value="SchoolVisitStatus.Planned">{{ t('statusBadge.schoolVisit.planned') }}</option>
+          <option :value="SchoolVisitStatus.Completed">{{ t('statusBadge.schoolVisit.completed') }}</option>
+          <option :value="SchoolVisitStatus.Cancelled">{{ t('statusBadge.schoolVisit.cancelled') }}</option>
         </select>
       </div>
       <div>
@@ -129,9 +113,7 @@ onMounted(doFetch)
         <span class="text-center block">{{ value }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', visitStatusClass(String(value))]">
-          {{ visitStatusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="schoolVisit" :status="String(value)" />
       </template>
     </DataTable>
 

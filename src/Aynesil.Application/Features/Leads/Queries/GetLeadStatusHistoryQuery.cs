@@ -14,7 +14,13 @@ public sealed class GetLeadStatusHistoryQueryHandler
 {
     private readonly IAppDbContext _db;
 
-    public GetLeadStatusHistoryQueryHandler(IAppDbContext db) => _db = db;
+    private readonly ITenantContext _tenant;
+
+    public GetLeadStatusHistoryQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<IReadOnlyList<LeadStatusHistoryDto>> Handle(
         GetLeadStatusHistoryQuery req, CancellationToken ct)
@@ -28,11 +34,11 @@ public sealed class GetLeadStatusHistoryQueryHandler
             orderby h.ChangedAt descending
             select new LeadStatusHistoryDto(
                 h.Id,
-                h.StatusId, stat == null ? null : stat.Code,
-                h.PipelineStageId, stg == null ? null : stg.Code,
+                h.StatusId, stat == null ? null : stat.Code, null,
+                h.PipelineStageId, stg == null ? null : stg.Code, null,
                 h.ChangedAt, h.ChangedBy, usr == null ? null : usr.FullName)
         ).ToListAsync(ct);
 
-        return rows;
+        return await LeadLabels.ApplyAsync(_db, rows, _tenant.Locale, ct);
     }
 }

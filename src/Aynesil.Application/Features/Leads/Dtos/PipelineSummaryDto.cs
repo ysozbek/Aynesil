@@ -15,5 +15,6 @@ public record PipelineSummaryDto(
 public record PipelineStageCountDto(
     Guid StageId,
     string StageCode,
+    string? StageName,
     int Count
 );

@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { GoalLibraryListItemDto } from '@/types/goal.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -145,7 +146,7 @@ async function submitForm() {
   <div>
     <PageHeader :title="t('goal.library.title')" :description="t('goal.description')">
       <button
-        v-if="can('goal_library:create')"
+        v-if="can(Permissions.GoalLibraries.Create)"
         @click="openCreateModal"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -192,7 +193,7 @@ async function submitForm() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('goal_library:update')"
+            v-if="can(Permissions.GoalLibraries.Update)"
             @click="openEditModal(row, $event)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -202,7 +203,7 @@ async function submitForm() {
             </svg>
           </button>
           <button
-            v-if="can('goal_library:delete')"
+            v-if="can(Permissions.GoalLibraries.Delete)"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

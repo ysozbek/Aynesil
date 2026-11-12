@@ -9,6 +9,7 @@ import { financeService } from '@/services/finance.service'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { RevenueReportDto, PackageReportDto } from '@/types/finance.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -71,7 +72,7 @@ function formatDate(val: string): string {
     <PageHeader :title="t('finance.dashboard.title')" :description="t('finance.dashboard.description')">
       <div class="flex items-center gap-2">
         <button
-          v-if="can('finance_payment:record')"
+          v-if="can(Permissions.FinancePayments.Record)"
           @click="router.push({ name: 'payment-new' })"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >

@@ -304,7 +304,7 @@ function openEvent(event: CalendarEventDto) {
             <p v-if="event.roomName" class="text-xs text-muted-foreground">{{ event.roomName }}</p>
           </div>
           <span :class="['px-2 py-0.5 rounded-full text-xs font-medium border', eventColor(event)]">
-            {{ event.status ? t(`scheduling.session.status.${event.status}`) : event.type }}
+            {{ event.status ? t(`statusBadge.session.${event.status}`) : event.type }}
           </span>
         </div>
       </div>

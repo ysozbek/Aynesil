@@ -6,6 +6,7 @@ public record LeadActivityDto(
     Guid LeadId,
     Guid? ActivityTypeId,
     string? ActivityTypeCode,
+    string? ActivityTypeName,
     string? Subject,
     string? Body,
     string? Direction,

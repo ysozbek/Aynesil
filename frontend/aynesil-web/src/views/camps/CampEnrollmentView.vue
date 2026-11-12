@@ -12,7 +12,7 @@
         <p class="text-muted mb-0">{{ $t('camp.enrollment.subtitle') }}</p>
       </div>
       <button
-        v-if="hasPermission('camp_enrollment:enroll')"
+        v-if="hasPermission(Permissions.CampEnrollments.Enroll)"
         class="btn btn-primary"
         @click="showEnrollModal = true"
       >
@@ -26,7 +26,7 @@
         <div class="card card-flush h-100">
           <div class="card-body text-center py-5">
             <div class="fs-2 fw-bold text-primary">{{ campStore.enrollmentSummary.totalEnrolled }}</div>
-            <div class="text-muted fs-7">{{ $t('camp.enrollment.enrolled') }}</div>
+            <div class="text-muted fs-7">{{ $t('statusBadge.campEnrollment.enrolled') }}</div>
           </div>
         </div>
       </div>
@@ -34,7 +34,7 @@
         <div class="card card-flush h-100">
           <div class="card-body text-center py-5">
             <div class="fs-2 fw-bold text-warning">{{ campStore.enrollmentSummary.totalWaitlist }}</div>
-            <div class="text-muted fs-7">{{ $t('camp.enrollment.waitlist') }}</div>
+            <div class="text-muted fs-7">{{ $t('statusBadge.campEnrollment.waitlist') }}</div>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
         <div class="card card-flush h-100">
           <div class="card-body text-center py-5">
             <div class="fs-2 fw-bold text-success">{{ campStore.enrollmentSummary.totalCompleted }}</div>
-            <div class="text-muted fs-7">{{ $t('camp.enrollment.completed') }}</div>
+            <div class="text-muted fs-7">{{ $t('statusBadge.campEnrollment.completed') }}</div>
           </div>
         </div>
       </div>
@@ -50,7 +50,7 @@
         <div class="card card-flush h-100">
           <div class="card-body text-center py-5">
             <div class="fs-2 fw-bold text-danger">{{ campStore.enrollmentSummary.totalWithdrawn }}</div>
-            <div class="text-muted fs-7">{{ $t('camp.enrollment.withdrawn') }}</div>
+            <div class="text-muted fs-7">{{ $t('statusBadge.campEnrollment.withdrawn') }}</div>
           </div>
         </div>
       </div>
@@ -79,17 +79,17 @@
               <tr v-for="e in campStore.enrollments.items" :key="e.id">
                 <td class="ps-4 fw-semibold">{{ e.studentId }}</td>
                 <td>
-                  <span :class="enrollmentStatusBadge(e.status)">{{ $t(`camp.enrollment.${e.status}`, e.status) }}</span>
+                  <StatusBadge entity="campEnrollment" :status="e.status" />
                 </td>
                 <td class="text-muted fs-7">{{ formatDate(e.enrolledAt) }}</td>
                 <td class="text-end pe-4">
                   <button
-                    v-if="e.status === CampEnrollmentStatus.Waitlist && hasPermission('camp_enrollment:manage')"
+                    v-if="e.status === CampEnrollmentStatus.Waitlist && hasPermission(Permissions.CampEnrollments.Manage)"
                     class="btn btn-sm btn-light-success me-2"
                     @click="campStore.promoteFromWaitlist(e.id, periodId)"
                   >{{ $t('camp.enrollment.promote') }}</button>
                   <button
-                    v-if="e.status === CampEnrollmentStatus.Enrolled && hasPermission('camp_enrollment:withdraw')"
+                    v-if="e.status === CampEnrollmentStatus.Enrolled && hasPermission(Permissions.CampEnrollments.Withdraw)"
                     class="btn btn-sm btn-light-danger"
                     @click="campStore.withdraw(e.id, periodId)"
                   >{{ $t('camp.enrollment.withdraw') }}</button>
@@ -128,10 +128,12 @@
 
 <script setup lang="ts">
 import { CampEnrollmentStatus } from '@/constants/statuses'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,16 +145,6 @@ const enrollStudentId = ref('')
 
 function hasPermission(p: string) { return authStore.hasPermission(p) }
 function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
-
-function enrollmentStatusBadge(status: string) {
-  const map: Record<string, string> = {
-    [CampEnrollmentStatus.Enrolled]: 'badge badge-light-success',
-    [CampEnrollmentStatus.Waitlist]: 'badge badge-light-warning',
-    [CampEnrollmentStatus.Completed]: 'badge badge-light-primary',
-    [CampEnrollmentStatus.Withdrawn]: 'badge badge-light-danger',
-  }
-  return map[status] ?? 'badge badge-light'
-}
 
 async function doEnroll() {
   await campStore.enrollStudent(periodId, { studentId: enrollStudentId.value })

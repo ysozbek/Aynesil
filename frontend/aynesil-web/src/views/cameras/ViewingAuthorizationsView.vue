@@ -3,7 +3,9 @@ import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
 import { usePermission } from '@/composables/usePermission'
+import { ViewingAuthorizationState } from '@/constants/statuses'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
@@ -11,6 +13,7 @@ import GuardianPicker from '@/components/pickers/GuardianPicker.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { ViewingAuthorizationDto } from '@/types/camera.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const cameraStore = useCameraStore()
@@ -40,16 +43,10 @@ function formatDate(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
 }
 
-function authStatusClass(a: ViewingAuthorizationDto) {
-  if (a.isRevoked) return 'bg-red-100 text-red-700'
-  if (a.isCurrentlyValid) return 'bg-green-100 text-green-700'
-  return 'bg-amber-100 text-amber-700'
-}
-
-function authStatusLabel(a: ViewingAuthorizationDto) {
-  if (a.isRevoked) return t('camera.auth.revoked')
-  if (a.isCurrentlyValid) return t('camera.auth.active')
-  return t('camera.auth.expired')
+function authState(a: ViewingAuthorizationDto): ViewingAuthorizationState {
+  if (a.isRevoked) return ViewingAuthorizationState.Revoked
+  if (a.isCurrentlyValid) return ViewingAuthorizationState.Active
+  return ViewingAuthorizationState.Expired
 }
 
 async function doFetch() {
@@ -91,7 +88,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('camera.auth.title')" :description="t('camera.auth.subtitle')">
       <button
-        v-if="can('viewing_authorization:grant')"
+        v-if="can(Permissions.ViewingAuthorization.Grant)"
         @click="showCreateModal = true"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -138,14 +135,12 @@ onMounted(doFetch)
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', authStatusClass(row)]">
-          {{ authStatusLabel(row) }}
-        </span>
+        <StatusBadge entity="viewingAuthorization" :status="authState(row)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="!row.isRevoked && row.isCurrentlyValid && can('viewing_authorization:revoke')"
+            v-if="!row.isRevoked && row.isCurrentlyValid && can(Permissions.ViewingAuthorization.Revoke)"
             @click="promptRevoke(row.id)"
             class="px-2.5 py-1 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >

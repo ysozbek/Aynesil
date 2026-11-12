@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useGoalStore } from '@/stores/goal.store'
 import { usePermission } from '@/composables/usePermission'
 import FormModal from '@/components/shared/FormModal.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -104,7 +105,7 @@ async function submitTranslation() {
           </div>
         </div>
         <button
-          v-if="can('goal_template:update')"
+          v-if="can(Permissions.GoalTemplates.Update)"
           @click="router.push({ name: 'goal-template-edit', params: { id: template.id } })"
           class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
         >
@@ -166,7 +167,7 @@ async function submitTranslation() {
       <div v-else-if="activeTab === 'translations'" class="space-y-4">
         <div class="flex justify-end">
           <button
-            v-if="can('goal_template:translate')"
+            v-if="can(Permissions.GoalTemplates.Translate)"
             @click="openAddTranslation"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
@@ -194,7 +195,7 @@ async function submitTranslation() {
                 <p v-if="tr.defaultCriteria" class="text-xs text-muted-foreground mt-1">{{ tr.defaultCriteria }}</p>
               </div>
               <button
-                v-if="can('goal_template:translate')"
+                v-if="can(Permissions.GoalTemplates.Translate)"
                 @click="openEditTranslation(tr.locale, tr.statement, tr.defaultCriteria)"
                 class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors ml-2"
                 :title="t('common.edit')"

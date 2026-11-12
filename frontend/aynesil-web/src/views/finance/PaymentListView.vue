@@ -8,8 +8,10 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { PaymentListItemDto } from '@/types/finance.types'
 import { dateRangeToIso } from '@/utils/datetime'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -59,22 +61,13 @@ function formatCurrency(val: number, currency = 'TRY'): string {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(val)
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    captured: 'bg-green-100 text-green-700',
-    failed: 'bg-red-100 text-red-700',
-    refunded: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
 </script>
 
 <template>
   <div>
     <PageHeader :title="t('finance.payment.title')" :description="t('finance.payment.description')">
       <button
-        v-if="can('finance_payment:record')"
+        v-if="can(Permissions.FinancePayments.Record)"
         @click="router.push({ name: 'payment-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -95,10 +88,10 @@ function statusColor(status: string): string {
       />
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="pending">{{ t('finance.payment.status.pending') }}</option>
-        <option value="captured">{{ t('finance.payment.status.captured') }}</option>
-        <option value="failed">{{ t('finance.payment.status.failed') }}</option>
-        <option value="refunded">{{ t('finance.payment.status.refunded') }}</option>
+        <option value="pending">{{ t('statusBadge.payment.pending') }}</option>
+        <option value="captured">{{ t('statusBadge.payment.captured') }}</option>
+        <option value="failed">{{ t('statusBadge.payment.failed') }}</option>
+        <option value="refunded">{{ t('statusBadge.payment.refunded') }}</option>
       </select>
       <input v-model="query.from" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
       <input v-model="query.to" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -120,9 +113,7 @@ function statusColor(status: string): string {
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ t(`finance.payment.status.${row.status}`) }}
-        </span>
+        <StatusBadge entity="payment" :status="row.status" />
       </template>
       <template #cell-paidAt="{ value }">{{ formatDate(value) }}</template>
       <template #actions="{ row }">

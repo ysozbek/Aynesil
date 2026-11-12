@@ -7,6 +7,8 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -40,26 +42,6 @@ const headerDescription = computed(() => {
   if (f.visitDate) parts.push(f.visitDate)
   return parts.join(' · ')
 })
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    in_progress: 'bg-sky-100 text-sky-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    pending: t('followUp.pending'),
-    in_progress: t('followUp.inProgress'),
-    completed: t('followUp.completed'),
-    cancelled: t('followUp.cancelled'),
-  }
-  return map[s] ?? s
-}
 
 async function doStart() {
   await store.startFollowUp(id)
@@ -104,18 +86,16 @@ onMounted(() => {
 
       <PageHeader :title="followUp.title" :description="headerDescription">
         <div class="flex flex-wrap items-center gap-2">
-          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(followUp.status)]">
-            {{ statusLabel(followUp.status) }}
-          </span>
+          <StatusBadge entity="consultancyFollowUp" :status="followUp.status" />
           <button
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can('follow_up:update')"
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can(Permissions.FollowUps.Update)"
             @click="router.push(`/consultancy/follow-ups/${followUp.id}/edit`)"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="followUp.status === 'pending' && can('follow_up:start')"
+            v-if="followUp.status === 'pending' && can(Permissions.FollowUps.Start)"
             :disabled="store.saving"
             @click="doStart"
             class="px-3 py-1.5 text-sm rounded-lg bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
@@ -123,14 +103,14 @@ onMounted(() => {
             {{ t('followUp.start') }}
           </button>
           <button
-            v-if="followUp.status === 'in_progress' && can('follow_up:complete')"
+            v-if="followUp.status === 'in_progress' && can(Permissions.FollowUps.Complete)"
             @click="showCompleteModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('followUp.markCompleted') }}
           </button>
           <button
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can('follow_up:cancel')"
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can(Permissions.FollowUps.Cancel)"
             :disabled="store.saving"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"

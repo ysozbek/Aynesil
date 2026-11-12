@@ -8,6 +8,7 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { EducatorPerformanceSnapshotListItemDto, SnapshotListQuery } from '@/types/kpi.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const kpiStore = useKpiStore()
@@ -59,7 +60,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('kpi.snapshots.title')" :description="t('kpi.snapshots.subtitle')">
       <button
-        v-if="can('kpi:manage')"
+        v-if="can(Permissions.Kpi.Manage)"
         :disabled="kpiStore.saving"
         @click="doBulkCompute"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"

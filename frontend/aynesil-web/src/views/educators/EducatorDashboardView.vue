@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useEducatorStore } from '@/stores/educator.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -67,9 +68,7 @@ function utilizationColor(pct: number): string {
             <span v-if="educator.titleLabel" class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
               {{ educator.titleLabel }}
             </span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', educator.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-              {{ educator.isActive ? t('common.active') : t('common.inactive') }}
-            </span>
+            <StatusBadge :value="Boolean(educator.isActive)" :false-label="t('common.inactive')" />
           </div>
         </div>
       </div>

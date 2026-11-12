@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ContractStatus } from '@/constants/statuses'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
@@ -7,6 +6,7 @@ import { useConsentStore } from '@/stores/consent.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type {
   ContractReportItemDto,
   ConsentReportItemDto,
@@ -30,17 +30,17 @@ const consentReportRows = computed<ConsentReportRow[]>(() =>
 const contractReportColumns: Column<ContractReportItemDto>[] = [
   { key: 'studentFullName', label: t('legal.contract.fields.student') },
   { key: 'totalContracts', label: t('legal.reports.total'), width: '90px', align: 'center' },
-  { key: 'draftContracts', label: t('legal.contract.status.draft'), width: '90px', align: 'center' },
-  { key: 'activeContracts', label: t('legal.contract.status.active'), width: '90px', align: 'center' },
-  { key: 'expiredContracts', label: t('legal.contract.status.expired'), width: '90px', align: 'center' },
-  { key: 'terminatedContracts', label: t('legal.contract.status.terminated'), width: '90px', align: 'center' },
+  { key: 'draftContracts', label: t('statusBadge.contract.draft'), width: '90px', align: 'center' },
+  { key: 'activeContracts', label: t('statusBadge.contract.active'), width: '90px', align: 'center' },
+  { key: 'expiredContracts', label: t('statusBadge.contract.expired'), width: '90px', align: 'center' },
+  { key: 'terminatedContracts', label: t('statusBadge.contract.terminated'), width: '90px', align: 'center' },
 ]
 
 const consentReportColumns: Column<ConsentReportRow>[] = [
   { key: 'studentFullName', label: t('legal.consent.fields.student') },
   { key: 'consentTypeCode', label: t('legal.consent.fields.consentType') },
   { key: 'isMandatory', label: t('legal.consent.fields.mandatory'), width: '110px' },
-  { key: 'hasGrantedConsent', label: t('legal.consent.state.granted'), width: '100px', align: 'center' },
+  { key: 'hasGrantedConsent', label: t('statusBadge.consent.granted'), width: '100px', align: 'center' },
   { key: 'grantedAt', label: t('legal.consent.fields.grantedAt'), width: '120px' },
   { key: 'validUntil', label: t('legal.consent.fields.validUntil'), width: '110px', align: 'right' },
 ]
@@ -57,22 +57,6 @@ const signatureReportColumns: Column<SignatureReportItemDto>[] = [
 function formatDate(dt: unknown) {
   if (!dt) return '—'
   return new Date(String(dt)).toLocaleDateString('tr-TR')
-}
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
-    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
-    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
-    [ContractStatus.Active]: 'bg-green-100 text-green-700',
-    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
-    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  return t(`legal.contract.status.${s.toLowerCase()}`, s)
 }
 
 onMounted(async () => {
@@ -210,9 +194,7 @@ onMounted(async () => {
         <span class="font-medium text-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ statusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="contract" :status="String(value)" />
       </template>
       <template #cell-signatureMethod="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>

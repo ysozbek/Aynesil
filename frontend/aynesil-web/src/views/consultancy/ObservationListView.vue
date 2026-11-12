@@ -12,6 +12,7 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy.types'
 
 const { t } = useI18n()
@@ -36,15 +37,6 @@ const columns: Column<SchoolVisitListItemDto>[] = [
 function formatDate(val: unknown) {
   if (!val) return '—'
   return new Date(String(val)).toLocaleDateString('tr-TR')
-}
-
-function statusClass(status: string) {
-  const map: Record<string, string> = {
-    [SchoolVisitStatus.Planned]: 'bg-amber-100 text-amber-700',
-    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
-    [SchoolVisitStatus.Cancelled]: 'bg-gray-100 text-gray-600',
-  }
-  return map[status?.toLowerCase()] ?? 'bg-gray-100 text-gray-600'
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -82,9 +74,9 @@ onMounted(() => store.fetchVisits(filters))
           @change="() => { filters.page = 1; store.fetchVisits(filters) }"
         >
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="SchoolVisitStatus.Planned">{{ t('consultancy.visit.status.planned') }}</option>
-          <option :value="SchoolVisitStatus.Completed">{{ t('consultancy.visit.status.completed') }}</option>
-          <option :value="SchoolVisitStatus.Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
+          <option :value="SchoolVisitStatus.Planned">{{ t('statusBadge.schoolVisit.planned') }}</option>
+          <option :value="SchoolVisitStatus.Completed">{{ t('statusBadge.schoolVisit.completed') }}</option>
+          <option :value="SchoolVisitStatus.Cancelled">{{ t('statusBadge.schoolVisit.cancelled') }}</option>
         </select>
       </div>
     </div>
@@ -102,9 +94,7 @@ onMounted(() => store.fetchVisits(filters))
         <span class="font-medium">{{ value ?? 0 }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ t(`consultancy.visit.status.${String(value).toLowerCase()}`, String(value)) }}
-        </span>
+        <StatusBadge entity="schoolVisit" :status="String(value)" />
       </template>
     </DataTable>
 

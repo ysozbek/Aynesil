@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -33,7 +35,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('camera.dashboard.title')" :description="t('camera.dashboard.subtitle')">
       <button
-        v-if="can('camera:create')"
+        v-if="can(Permissions.Camera.Create)"
         @click="router.push({ name: 'camera-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -92,14 +94,7 @@ onMounted(async () => {
               <p class="text-sm font-medium text-foreground truncate">{{ c.name }}</p>
               <p class="text-xs text-muted-foreground">{{ c.code }} · {{ c.campusName ?? '—' }}</p>
             </div>
-            <span
-              :class="[
-                'px-2 py-0.5 rounded-full text-xs font-medium shrink-0',
-                c.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700',
-              ]"
-            >
-              {{ c.isActive ? t('common.active') : t('common.passive') }}
-            </span>
+            <StatusBadge :value="Boolean(c.isActive)" class="shrink-0" />
           </div>
         </div>
       </div>

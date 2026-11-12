@@ -7,6 +7,8 @@ import { useContractStore } from '@/stores/contract.store'
 import { useConsentStore } from '@/stores/consent.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -30,37 +32,6 @@ const expiringContracts = computed(() => {
   ).length
 })
 
-function contractStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
-    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
-    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
-    [ContractStatus.Active]: 'bg-green-100 text-green-700',
-    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
-    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function consentStateClass(s: string) {
-  const map: Record<string, string> = {
-    [ConsentState.Granted]: 'bg-green-100 text-green-700',
-    [ConsentState.Withdrawn]: 'bg-red-100 text-red-700',
-    [ConsentState.Expired]: 'bg-amber-100 text-amber-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function contractStatusLabel(s: string) {
-  const key = s.toLowerCase()
-  return t(`legal.contract.status.${key}`, s)
-}
-
-function consentStateLabel(s: string) {
-  const key = s.toLowerCase()
-  return t(`legal.consent.state.${key}`, s)
-}
-
 onMounted(async () => {
   await Promise.all([
     contractStore.fetchContracts({ pageSize: 20 }),
@@ -73,7 +44,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('legal.dashboard.title')" :description="t('legal.dashboard.subtitle')">
       <button
-        v-if="can('student_contract:generate')"
+        v-if="can(Permissions.StudentContracts.Generate)"
         @click="router.push({ name: 'contract-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -134,9 +105,7 @@ onMounted(async () => {
                 {{ c.templateCode ?? '—' }}<template v-if="c.templateVersion"> v{{ c.templateVersion }}</template>
               </p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', contractStatusClass(c.status)]">
-              {{ contractStatusLabel(c.status) }}
-            </span>
+            <StatusBadge entity="contract" :status="c.status" class="shrink-0" />
           </div>
         </div>
       </div>
@@ -169,9 +138,7 @@ onMounted(async () => {
               <p class="text-sm font-medium text-foreground truncate">{{ c.studentFullName ?? '—' }}</p>
               <p class="text-xs text-muted-foreground">{{ c.consentTypeCode ?? '—' }}</p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', consentStateClass(c.state)]">
-              {{ consentStateLabel(c.state) }}
-            </span>
+            <StatusBadge entity="consent" :status="c.state" class="shrink-0" />
           </div>
         </div>
       </div>

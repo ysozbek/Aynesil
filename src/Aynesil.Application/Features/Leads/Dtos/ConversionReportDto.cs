@@ -17,6 +17,7 @@ public record ConversionReportDto(
 public record ConversionBySourceDto(
     Guid? SourceId,
     string? SourceCode,
+    string? SourceName,
     int TotalLeads,
     int Converted,
     decimal ConversionRate

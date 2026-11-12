@@ -11,6 +11,8 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { RecurringScheduleListItemDto } from '@/types/scheduling.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 /** Default window = today → +30 days, in ISO YYYY-MM-DD. */
 function defaultWindow() {
@@ -142,7 +144,7 @@ async function doGenerate() {
   <div>
     <PageHeader :title="t('scheduling.recurring.title')" :description="t('scheduling.recurring.description')">
       <button
-        v-if="can('session:create')"
+        v-if="can(Permissions.Sessions.Create)"
         @click="router.push({ name: 'recurring-schedule-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -195,14 +197,12 @@ async function doGenerate() {
         {{ formatDate(row.rangeStart) }} – {{ row.rangeEnd ? formatDate(row.rangeEnd) : t('scheduling.recurring.openEnded') }}
       </template>
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.passive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('session:bulk_generate') && row.isActive"
+            v-if="can(Permissions.Sessions.BulkGenerate) && row.isActive"
             @click="openGenerate(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary"
             :title="t('scheduling.recurring.generate')"
@@ -212,7 +212,7 @@ async function doGenerate() {
             </svg>
           </button>
           <button
-            v-if="can('session:update') && row.isActive"
+            v-if="can(Permissions.Sessions.Update) && row.isActive"
             @click="deactivateTarget = row"
             class="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600"
             :title="t('common.deactivate')"

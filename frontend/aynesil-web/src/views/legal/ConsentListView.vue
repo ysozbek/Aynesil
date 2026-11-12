@@ -8,6 +8,7 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { ConsentListQuery, StudentConsentListItemDto } from '@/types/legal.types'
 
 const { t } = useI18n()
@@ -32,19 +33,6 @@ const columns: Column<StudentConsentListItemDto>[] = [
 function formatDate(dt: unknown) {
   if (!dt) return '—'
   return new Date(String(dt)).toLocaleDateString('tr-TR')
-}
-
-function stateClass(s: string) {
-  const map: Record<string, string> = {
-    [ConsentState.Granted]: 'bg-green-100 text-green-700',
-    [ConsentState.Withdrawn]: 'bg-red-100 text-red-700',
-    [ConsentState.Expired]: 'bg-amber-100 text-amber-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function stateLabel(s: string) {
-  return t(`legal.consent.state.${s.toLowerCase()}`, s)
 }
 
 function doFetch() {
@@ -79,9 +67,9 @@ onMounted(() => consentStore.fetchConsents(filters))
           @change="doFetch"
         >
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="ConsentState.Granted">{{ t('legal.consent.state.granted') }}</option>
-          <option :value="ConsentState.Withdrawn">{{ t('legal.consent.state.withdrawn') }}</option>
-          <option :value="ConsentState.Expired">{{ t('legal.consent.state.expired') }}</option>
+          <option :value="ConsentState.Granted">{{ t('statusBadge.consent.granted') }}</option>
+          <option :value="ConsentState.Withdrawn">{{ t('statusBadge.consent.withdrawn') }}</option>
+          <option :value="ConsentState.Expired">{{ t('statusBadge.consent.expired') }}</option>
         </select>
       </div>
       <button
@@ -113,9 +101,7 @@ onMounted(() => consentStore.fetchConsents(filters))
       <template #cell-grantedAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-validUntil="{ value }">{{ value ?? '—' }}</template>
       <template #cell-state="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', stateClass(String(value))]">
-          {{ stateLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="consent" :status="String(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>

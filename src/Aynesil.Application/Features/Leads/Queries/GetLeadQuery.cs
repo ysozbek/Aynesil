@@ -13,9 +13,15 @@ public sealed class GetLeadQueryHandler : IRequestHandler<GetLeadQuery, LeadDto>
 {
     private readonly IAppDbContext _db;
 
-    public GetLeadQueryHandler(IAppDbContext db) => _db = db;
+    private readonly ITenantContext _tenant;
+
+    public GetLeadQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<LeadDto> Handle(GetLeadQuery req, CancellationToken ct)
-        => await LeadProjection.LoadAsync(_db, req.Id, ct)
+        => await LeadProjection.LoadAsync(_db, req.Id, _tenant.Locale, ct)
             ?? throw new NotFoundException("Lead", req.Id);
 }

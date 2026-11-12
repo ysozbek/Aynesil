@@ -25,7 +25,7 @@
           <tr v-for="m in store.meetingHistory" :key="m.id">
             <td>{{ m.title }}</td>
             <td>{{ m.scheduledAt ? formatDateTime(m.scheduledAt) : '-' }}</td>
-            <td><span :class="['badge badge-sm', meetingStatusClass(m.status)]">{{ m.status }}</span></td>
+            <td><StatusBadge entity="meeting" :status="m.status" /></td>
             <td>{{ m.guardianAttendance ?? '-' }}</td>
           </tr>
         </tbody>
@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useParentPortalStore } from '@/stores/parentPortal.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const props = defineProps<{ studentId: string }>()
 const store = useParentPortalStore()
@@ -44,13 +45,5 @@ const store = useParentPortalStore()
 function formatDateTime(d: string): string {
   return new Date(d).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
 }
-function meetingStatusClass(s: string): string {
-  const map: Record<string, string> = {
-    scheduled: 'badge-info', completed: 'badge-success',
-    cancelled: 'badge-error', draft: 'badge-ghost',
-  }
-  return map[s] ?? 'badge-ghost'
-}
-
 onMounted(() => store.fetchMeetings(props.studentId))
 </script>

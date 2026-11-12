@@ -12,7 +12,9 @@ import { usePermission } from '@/composables/usePermission'
 import { useAuthStore } from '@/stores/auth.store'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { AssessmentItemDto, ResponseItemPayload } from '@/types/assessment.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -31,8 +33,8 @@ onMounted(async () => {
   if (session.value) {
     await templateStore.fetchOne(session.value.templateId)
     await Promise.all([
-      can('assessment_report:read') ? store.fetchReport(id.value) : Promise.resolve(),
-      can('program_recommendation:read') ? store.fetchRecommendations(id.value) : Promise.resolve(),
+      can(Permissions.AssessmentReports.Read) ? store.fetchReport(id.value) : Promise.resolve(),
+      can(Permissions.ProgramRecommendations.Read) ? store.fetchRecommendations(id.value) : Promise.resolve(),
     ])
     // Hydrate saved responses so reopening an in-progress session shows the
     // existing values on the Scoring tab (previously only `startSession()`
@@ -197,16 +199,6 @@ async function submitRecommendation() {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const statusColor = (status: string): string => {
-  const map: Record<string, string> = {
-    planned: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    completed: 'bg-emerald-100 text-emerald-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
 function formatDate(val: string | null): string {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('tr-TR')
@@ -247,9 +239,7 @@ function getChoices(item: AssessmentItemDto): string[] {
           </button>
           <h1 class="text-2xl font-bold text-foreground">{{ session.templateName }}</h1>
           <div class="flex items-center gap-2 mt-1 flex-wrap">
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(session.status)]">
-              {{ t(`assessment.session.status.${session.status}`) }}
-            </span>
+            <StatusBadge entity="assessmentSession" :status="session.status" />
             <!-- Backend session DTO exposes IDs only; show a kind badge until a projection enriches names. -->
             <span v-if="session.leadId" class="text-sm text-muted-foreground">{{ t('assessment.session.leadSubject') }}</span>
             <span v-else-if="session.studentId" class="text-sm text-muted-foreground">{{ t('assessment.session.studentSubject') }}</span>
@@ -261,25 +251,25 @@ function getChoices(item: AssessmentItemDto): string[] {
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
-            v-if="can('assessment_session:start') && session.status === 'planned'"
+            v-if="can(Permissions.AssessmentSessions.Start) && session.status === 'planned'"
             @click="startSession" :disabled="workflowLoading"
             class="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60">
             {{ t('assessment.session.start') }}
           </button>
           <button
-            v-if="can('assessment_session:complete') && session.status === 'in_progress'"
+            v-if="can(Permissions.AssessmentSessions.Complete) && session.status === 'in_progress'"
             @click="completeSession" :disabled="workflowLoading"
             class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60">
             {{ t('assessment.session.complete') }}
           </button>
           <button
-            v-if="can('assessment_session:cancel') && (session.status === 'planned' || session.status === 'in_progress')"
+            v-if="can(Permissions.AssessmentSessions.Cancel) && (session.status === 'planned' || session.status === 'in_progress')"
             @click="cancelConfirm = true"
             class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
             {{ t('assessment.session.cancel') }}
           </button>
           <button
-            v-if="can('assessment_session:update') && (session.status === 'planned' || session.status === 'in_progress')"
+            v-if="can(Permissions.AssessmentSessions.Update) && (session.status === 'planned' || session.status === 'in_progress')"
             @click="router.push({ name: 'assessment-session-edit', params: { id: session.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
             {{ t('common.edit') }}
@@ -337,7 +327,7 @@ function getChoices(item: AssessmentItemDto): string[] {
         <div class="mb-4 flex items-center justify-between">
           <p class="text-sm text-muted-foreground">{{ session.responses.length }} {{ t('assessment.scoring.responsesLogged') }}</p>
           <button
-            v-if="can('assessment_session:submit_responses') && session.status === 'in_progress'"
+            v-if="can(Permissions.AssessmentSessions.SubmitResponses) && session.status === 'in_progress'"
             @click="saveResponses" :disabled="savingResponses"
             class="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60">
             <svg v-if="savingResponses" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -406,22 +396,22 @@ function getChoices(item: AssessmentItemDto): string[] {
 
       <!-- Report Tab -->
       <div v-else-if="activeTab === 'report'">
-        <div v-if="!can('assessment_report:read')" class="text-center py-12 text-muted-foreground">{{ t('errors.forbidden') }}</div>
+        <div v-if="!can(Permissions.AssessmentReports.Read)" class="text-center py-12 text-muted-foreground">{{ t('errors.forbidden') }}</div>
         <template v-else>
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold text-foreground">{{ t('assessment.report.title') }}</h3>
             <div class="flex items-center gap-2">
-              <button v-if="can('assessment_report:create') && !store.currentReport && session.status === 'completed'"
+              <button v-if="can(Permissions.AssessmentReports.Create) && !store.currentReport && session.status === 'completed'"
                 @click="openReportForm"
                 class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
                 {{ t('assessment.report.create') }}
               </button>
-              <button v-if="can('assessment_report:update') && store.currentReport && !store.currentReport.isFinalized"
+              <button v-if="can(Permissions.AssessmentReports.Update) && store.currentReport && !store.currentReport.isFinalized"
                 @click="openReportForm"
                 class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent transition-colors">
                 {{ t('common.edit') }}
               </button>
-              <button v-if="can('assessment_report:finalize') && store.currentReport && !store.currentReport.isFinalized"
+              <button v-if="can(Permissions.AssessmentReports.Finalize) && store.currentReport && !store.currentReport.isFinalized"
                 @click="finalizeReport" :disabled="workflowLoading"
                 class="px-3 py-1.5 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60">
                 {{ t('assessment.report.finalize') }}
@@ -455,11 +445,11 @@ function getChoices(item: AssessmentItemDto): string[] {
 
       <!-- Recommendations Tab -->
       <div v-else-if="activeTab === 'recommendations'">
-        <div v-if="!can('program_recommendation:read')" class="text-center py-12 text-muted-foreground">{{ t('errors.forbidden') }}</div>
+        <div v-if="!can(Permissions.ProgramRecommendations.Read)" class="text-center py-12 text-muted-foreground">{{ t('errors.forbidden') }}</div>
         <template v-else>
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold text-foreground">{{ t('assessment.recommendation.title') }}</h3>
-            <button v-if="can('program_recommendation:create') && session.status === 'completed'"
+            <button v-if="can(Permissions.ProgramRecommendations.Create) && session.status === 'completed'"
               @click="showRecommendationForm = true"
               class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
               + {{ t('assessment.recommendation.add') }}

@@ -13,6 +13,8 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { EducatorListItemDto } from '@/types/educator.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -136,7 +138,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('educator.title')" :description="t('educator.description')">
       <button
-        v-if="can('educator:create')"
+        v-if="can(Permissions.Educators.Create)"
         @click="router.push({ name: 'educator-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -210,9 +212,7 @@ async function doDelete() {
         {{ value ?? '—' }}
       </template>
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.inactive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" :false-label="t('common.inactive')" />
       </template>
       <template #cell-primaryCampusName="{ value }">
         {{ value ?? '—' }}
@@ -226,7 +226,7 @@ async function doDelete() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('educator:read')"
+            v-if="can(Permissions.Educators.Read)"
             @click="goDetail(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -236,7 +236,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('educator:update')"
+            v-if="can(Permissions.Educators.Update)"
             @click.stop="router.push({ name: 'educator-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -246,7 +246,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('educator:update')"
+            v-if="can(Permissions.Educators.Update)"
             @click="toggleActive(row, $event)"
             :disabled="actionLoading"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
@@ -260,7 +260,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('educator:delete')"
+            v-if="can(Permissions.Educators.Delete)"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

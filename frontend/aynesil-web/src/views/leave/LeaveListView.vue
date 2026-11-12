@@ -9,7 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { LeaveRequestListItemDto, LeaveRequestListQuery } from '@/types/leave.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -39,16 +41,6 @@ const columns: Column<LeaveRequestListItemDto>[] = [
 function formatDate(dt: unknown) {
   if (!dt) return '—'
   return new Date(String(dt)).toLocaleDateString('tr-TR')
-}
-
-function statusClass(status: string) {
-  const map: Record<string, string> = {
-    [LeaveStatus.Pending]: 'bg-amber-100 text-amber-700',
-    [LeaveStatus.Approved]: 'bg-green-100 text-green-700',
-    [LeaveStatus.Rejected]: 'bg-red-100 text-red-700',
-    [LeaveStatus.Cancelled]: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -87,7 +79,7 @@ onMounted(() => leaveStore.fetchLeaves(filters))
   <div>
     <PageHeader :title="t('leave.list.title')" :description="t('leave.list.subtitle')">
       <button
-        v-if="can('leave_request:submit')"
+        v-if="can(Permissions.LeaveRequests.Submit)"
         @click="router.push({ name: 'leave-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -113,10 +105,10 @@ onMounted(() => leaveStore.fetchLeaves(filters))
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="LeaveStatus.Pending">{{ t('leave.status.pending') }}</option>
-          <option :value="LeaveStatus.Approved">{{ t('leave.status.approved') }}</option>
-          <option :value="LeaveStatus.Rejected">{{ t('leave.status.rejected') }}</option>
-          <option :value="LeaveStatus.Cancelled">{{ t('leave.status.cancelled') }}</option>
+          <option :value="LeaveStatus.Pending">{{ t('statusBadge.leave.pending') }}</option>
+          <option :value="LeaveStatus.Approved">{{ t('statusBadge.leave.approved') }}</option>
+          <option :value="LeaveStatus.Rejected">{{ t('statusBadge.leave.rejected') }}</option>
+          <option :value="LeaveStatus.Cancelled">{{ t('statusBadge.leave.cancelled') }}</option>
         </select>
       </div>
       <div>
@@ -162,14 +154,12 @@ onMounted(() => leaveStore.fetchLeaves(filters))
       <template #cell-startsAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-endsAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ t(`leave.status.${String(value).toLowerCase()}`) }}
-        </span>
+        <StatusBadge entity="leave" :status="String(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="row.status === 'pending' && can('leave_request:update')"
+            v-if="row.status === 'pending' && can(Permissions.LeaveRequests.Update)"
             @click="router.push({ name: 'leave-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"

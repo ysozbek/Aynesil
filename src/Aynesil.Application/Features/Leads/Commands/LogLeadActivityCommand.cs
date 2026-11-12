@@ -94,6 +94,7 @@ public sealed class LogLeadActivityCommandHandler : IRequestHandler<LogLeadActiv
                 .FirstOrDefaultAsync(ct)
             : null;
 
-        return activity.ToDto(activityTypeCode, performedByName);
+        var dto = activity.ToDto(activityTypeCode, performedByName);
+        return (await LeadLabels.ApplyAsync(_db, [dto], _tenant.Locale, ct))[0];
     }
 }

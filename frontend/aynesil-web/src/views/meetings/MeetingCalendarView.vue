@@ -5,7 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { useMeetingCalendarStore } from '@/stores/meetingCalendar.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { MeetingCalendarItemDto } from '@/types/meeting.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -136,20 +138,6 @@ function meetingColorClass(s: string): string {
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
-function meetingStatusClass(s: string): string {
-  return meetingColorClass(s)
-}
-
-function meetingStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    draft: 'Taslak',
-    scheduled: 'Planlandı',
-    completed: 'Tamamlandı',
-    cancelled: 'İptal Edildi',
-  }
-  return map[s] ?? s
-}
-
 async function loadCalendar() {
   await calendarStore.fetchCalendar({
     from: rangeFrom.value,
@@ -195,7 +183,7 @@ onMounted(loadCalendar)
           </button>
         </div>
         <button
-          v-if="can('meeting:create')"
+          v-if="can(Permissions.Meetings.Create)"
           @click="router.push({ name: 'meeting-new' })"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >
@@ -284,9 +272,7 @@ onMounted(loadCalendar)
             <p class="text-sm font-medium text-foreground truncate">{{ m.title }}</p>
             <p v-if="m.location" class="text-xs text-muted-foreground">{{ m.location }}</p>
           </div>
-          <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', meetingStatusClass(m.status)]">
-            {{ meetingStatusLabel(m.status) }}
-          </span>
+          <StatusBadge entity="meeting" :status="m.status" class="shrink-0" />
           <span class="text-xs text-muted-foreground shrink-0">
             {{ m.participantCount }} {{ t('meeting.fields.participants') }}
           </span>

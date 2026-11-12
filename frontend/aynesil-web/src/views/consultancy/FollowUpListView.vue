@@ -9,7 +9,9 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { FollowUpActivityListItemDto, FollowUpListQuery } from '@/types/consultancy.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -50,26 +52,6 @@ const columns: Column<FollowUpActivityListItemDto>[] = [
 function isOverdue(f: FollowUpActivityListItemDto): boolean {
   if (!f.dueDate || f.status === 'completed' || f.status === 'cancelled') return false
   return new Date(f.dueDate) < new Date()
-}
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    in_progress: 'bg-sky-100 text-sky-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    pending: t('followUp.pending'),
-    in_progress: t('followUp.inProgress'),
-    completed: t('followUp.completed'),
-    cancelled: t('followUp.cancelled'),
-  }
-  return map[s] ?? s
 }
 
 async function quickStart(id: string) {
@@ -151,7 +133,7 @@ onMounted(doFetch)
           {{ t('followUp.openReportLabel') }}
         </button>
         <button
-          v-if="can('follow_up:create')"
+          v-if="can(Permissions.FollowUps.Create)"
           @click="showCreateModal = true"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >
@@ -218,14 +200,12 @@ onMounted(doFetch)
         <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ statusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="consultancyFollowUp" :status="String(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="row.status === 'pending' && can('follow_up:start')"
+            v-if="row.status === 'pending' && can(Permissions.FollowUps.Start)"
             :disabled="store.saving"
             @click="quickStart(row.id)"
             class="p-1.5 rounded-lg hover:bg-accent text-sky-600 hover:text-sky-700"
@@ -236,7 +216,7 @@ onMounted(doFetch)
             </svg>
           </button>
           <button
-            v-if="row.status === 'in_progress' && can('follow_up:complete')"
+            v-if="row.status === 'in_progress' && can(Permissions.FollowUps.Complete)"
             @click="openCompleteModal(row.id, rowVersionOf(row))"
             class="p-1.5 rounded-lg hover:bg-accent text-green-600 hover:text-green-700"
             :title="t('followUp.markCompleted')"

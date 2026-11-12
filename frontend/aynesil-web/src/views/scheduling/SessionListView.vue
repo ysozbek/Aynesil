@@ -11,9 +11,11 @@ import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { SessionListItemDto } from '@/types/scheduling.types'
 import { dateRangeToIso } from '@/utils/datetime'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -88,28 +90,6 @@ function formatDateTime(val: unknown): string {
   return new Date(String(val)).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    [SessionStatus.Scheduled]: 'bg-blue-100 text-blue-700',
-    [SessionStatus.Rescheduled]: 'bg-amber-100 text-amber-700',
-    [SessionStatus.Completed]: 'bg-green-100 text-green-700',
-    [SessionStatus.Cancelled]: 'bg-red-100 text-red-700',
-    [SessionStatus.NoShow]: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    [SessionStatus.Scheduled]: t('scheduling.session.status.scheduled'),
-    [SessionStatus.Rescheduled]: t('scheduling.session.status.rescheduled'),
-    [SessionStatus.Completed]: t('scheduling.session.status.completed'),
-    [SessionStatus.Cancelled]: t('scheduling.session.status.cancelled'),
-    [SessionStatus.NoShow]: t('scheduling.session.status.no_show'),
-  }
-  return map[status] ?? status
-}
-
 const deleteTarget = ref<SessionListItemDto | null>(null)
 const deleteLoading = ref(false)
 
@@ -135,7 +115,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('scheduling.session.title')" :description="t('scheduling.session.description')">
       <button
-        v-if="can('session:create')"
+        v-if="can(Permissions.Sessions.Create)"
         @click="router.push({ name: 'session-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -162,11 +142,11 @@ async function doDelete() {
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option :value="SessionStatus.Scheduled">{{ t('scheduling.session.status.scheduled') }}</option>
-        <option :value="SessionStatus.Rescheduled">{{ t('scheduling.session.status.rescheduled') }}</option>
-        <option :value="SessionStatus.Completed">{{ t('scheduling.session.status.completed') }}</option>
-        <option :value="SessionStatus.Cancelled">{{ t('scheduling.session.status.cancelled') }}</option>
-        <option :value="SessionStatus.NoShow">{{ t('scheduling.session.status.no_show') }}</option>
+        <option :value="SessionStatus.Scheduled">{{ t('statusBadge.session.scheduled') }}</option>
+        <option :value="SessionStatus.Rescheduled">{{ t('statusBadge.session.rescheduled') }}</option>
+        <option :value="SessionStatus.Completed">{{ t('statusBadge.session.completed') }}</option>
+        <option :value="SessionStatus.Cancelled">{{ t('statusBadge.session.cancelled') }}</option>
+        <option :value="SessionStatus.NoShow">{{ t('statusBadge.session.no_show') }}</option>
       </select>
 
       <select v-model="query.sessionTypeId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
@@ -206,9 +186,7 @@ async function doDelete() {
         </span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ statusLabel(row.status) }}
-        </span>
+        <StatusBadge entity="session" :status="row.status" />
       </template>
       <template #cell-sessionTypeName="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
@@ -223,7 +201,7 @@ async function doDelete() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('session:read')"
+            v-if="can(Permissions.Sessions.Read)"
             @click="router.push({ name: 'session-detail', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.view')"
@@ -233,7 +211,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('session:delete') && row.status === SessionStatus.Scheduled"
+            v-if="can(Permissions.Sessions.Delete) && row.status === SessionStatus.Scheduled"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('common.delete')"

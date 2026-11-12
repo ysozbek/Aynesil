@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useRouter } from 'vue-router'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { usePermission } from '@/composables/usePermission'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
-const crm = useCrmLabels()
 const router = useRouter()
 const pipelineStore = useLeadPipelineStore()
 const activityStore = useLeadActivityStore()
@@ -20,7 +19,6 @@ onMounted(async () => {
   statsLoading.value = true
   try {
     await Promise.all([
-      crm.load('pipeline_stage', 'activity_type'),
       pipelineStore.fetchSummary(),
       activityStore.fetchFollowUps({ pageSize: 5 }),
     ])
@@ -48,7 +46,7 @@ function formatDateTime(date: string | null): string {
         <p class="text-sm text-muted-foreground mt-1">{{ t('crm.dashboard.description') }}</p>
       </div>
       <button
-        v-if="can('lead:create')"
+        v-if="can(Permissions.Leads.Create)"
         @click="router.push({ name: 'leads-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -104,7 +102,7 @@ function formatDateTime(date: string | null): string {
         <div v-else class="space-y-3">
           <div v-for="stage in stages" :key="stage.stageId">
             <div class="flex items-center justify-between text-sm mb-1">
-              <span class="text-foreground font-medium">{{ crm.label('pipeline_stage', stage.stageCode) }}</span>
+              <span class="text-foreground font-medium">{{ stage.stageName ?? stage.stageCode }}</span>
               <span class="text-muted-foreground">{{ stage.count }}</span>
             </div>
             <div class="h-2 rounded-full bg-accent overflow-hidden">
@@ -136,7 +134,7 @@ function formatDateTime(date: string | null): string {
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-sm font-medium text-foreground">{{ item.subject ?? t('crm.activity.noSubject') }}</p>
-                <p class="text-xs text-muted-foreground">{{ crm.label('activity_type', item.activityTypeCode) }}</p>
+                <p class="text-xs text-muted-foreground">{{ item.activityTypeName }}</p>
               </div>
               <span class="text-xs text-amber-600 font-medium whitespace-nowrap ml-3">
                 {{ formatDateTime(item.followUpAt) }}
@@ -155,7 +153,7 @@ function formatDateTime(date: string | null): string {
     <!-- Quick Nav -->
     <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
       <button
-        v-if="can('lead:read')"
+        v-if="can(Permissions.Leads.Read)"
         @click="router.push({ name: 'leads' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground"
       >
@@ -165,7 +163,7 @@ function formatDateTime(date: string | null): string {
         {{ t('crm.nav.leads') }}
       </button>
       <button
-        v-if="can('lead:read')"
+        v-if="can(Permissions.Leads.Read)"
         @click="router.push({ name: 'crm-pipeline' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground"
       >
@@ -175,7 +173,7 @@ function formatDateTime(date: string | null): string {
         {{ t('crm.nav.pipeline') }}
       </button>
       <button
-        v-if="can('lead_activity:read')"
+        v-if="can(Permissions.LeadActivities.Read)"
         @click="router.push({ name: 'crm-activities' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground"
       >
@@ -185,7 +183,7 @@ function formatDateTime(date: string | null): string {
         {{ t('crm.nav.activities') }}
       </button>
       <button
-        v-if="can('lead:read')"
+        v-if="can(Permissions.Leads.Read)"
         @click="router.push({ name: 'crm-reports' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground"
       >

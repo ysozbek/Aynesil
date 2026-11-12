@@ -20,7 +20,7 @@
         <div class="card-body p-5">
           <div class="flex items-center justify-between">
             <div>
-              <span :class="['badge', packageStatusClass(pkg.status)]">{{ pkg.status }}</span>
+              <StatusBadge entity="studentPackage" :status="pkg.status" />
               <p v-if="pkg.expiresOn" class="text-sm text-gray-500 mt-1">
                 {{ $t('portal.packages.expiresOn') }}: {{ formatDate(pkg.expiresOn) }}
               </p>
@@ -52,17 +52,13 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useParentPortalStore } from '@/stores/parentPortal.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const props = defineProps<{ studentId: string }>()
 const store = useParentPortalStore()
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('tr-TR')
-}
-
-function packageStatusClass(s: string): string {
-  const map: Record<string, string> = { active: 'badge-success', expired: 'badge-error', depleted: 'badge-warning' }
-  return map[s] ?? 'badge-ghost'
 }
 
 onMounted(() => store.fetchPackages(props.studentId))

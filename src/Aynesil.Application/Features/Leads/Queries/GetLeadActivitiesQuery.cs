@@ -18,7 +18,13 @@ public sealed class GetLeadActivitiesQueryHandler
 {
     private readonly IAppDbContext _db;
 
-    public GetLeadActivitiesQueryHandler(IAppDbContext db) => _db = db;
+    private readonly ITenantContext _tenant;
+
+    public GetLeadActivitiesQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<LeadActivityDto>> Handle(
         GetLeadActivitiesQuery req, CancellationToken ct)
@@ -52,6 +58,7 @@ public sealed class GetLeadActivitiesQueryHandler
                     r.LeadId,
                     r.ActivityTypeId,
                     r.ActivityTypeCode,
+                    null,
                     r.Subject,
                     r.Body,
                     r.Direction,
@@ -67,6 +74,8 @@ public sealed class GetLeadActivitiesQueryHandler
             .Skip(req.Skip)
             .Take(req.PageSize)
             .ToListAsync(ct);
+
+        items = await LeadLabels.ApplyAsync(_db, items, _tenant.Locale, ct);
 
         return PaginatedResult<LeadActivityDto>.Create(items, totalCount, req.Page, req.PageSize);
     }

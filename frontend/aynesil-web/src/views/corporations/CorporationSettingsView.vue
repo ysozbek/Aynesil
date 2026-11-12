@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCorporationStore } from '@/stores/corporation.store'
 import { usePermission } from '@/composables/usePermission'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -140,7 +141,7 @@ async function save() {
 
       <div class="flex justify-end">
         <button
-          v-if="can('corporation:update')"
+          v-if="can(Permissions.Corporation.Update)"
           @click="save"
           :disabled="store.saving"
           class="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"

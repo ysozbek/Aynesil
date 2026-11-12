@@ -46,6 +46,20 @@ const tones: { [E in StatusEntity]: Record<StatusOf<E>, Tone> } = {
   },
   leave: { pending: 'warning', approved: 'success', rejected: 'danger', cancelled: 'neutral' },
   creditEntry: { grant: 'success', consume: 'danger', refund: 'info', adjustment: 'warning', expire: 'neutral' },
+  studentProgram: { active: 'success', paused: 'warning', completed: 'info', cancelled: 'neutral' },
+  studentGoal: { active: 'success', achieved: 'info', discontinued: 'danger', on_hold: 'warning' },
+  educationPlan: { draft: 'neutral', in_review: 'warning', approved: 'success', active: 'info', revised: 'warning', closed: 'neutral' },
+  assessmentSession: { planned: 'info', in_progress: 'warning', completed: 'success', cancelled: 'danger' },
+  attendance: { present: 'success', absent: 'danger', late: 'warning', excused: 'info', left_early: 'warning' },
+  makeupRequest: { requested: 'warning', approved: 'info', scheduled: 'info', completed: 'success', rejected: 'danger', expired: 'neutral' },
+  consultancyAgreement: { draft: 'neutral', sent: 'info', signed: 'success', expired: 'neutral', cancelled: 'danger' },
+  studentPackage: { active: 'success', exhausted: 'warning', expired: 'neutral', cancelled: 'danger' },
+  invoice: { draft: 'neutral', issued: 'info', paid: 'success', partial: 'warning', overdue: 'danger', void: 'neutral' },
+  payment: { pending: 'warning', authorized: 'info', captured: 'success', failed: 'danger', refunded: 'neutral' },
+  leadInterview: { scheduled: 'info', completed: 'success', no_show: 'warning', cancelled: 'danger' },
+  viewingAuthorization: { active: 'success', expired: 'warning', revoked: 'danger' },
+  meetingAttendance: { invited: 'neutral', attended: 'success', absent: 'danger', tentative: 'warning' },
+  educationPlanDecision: { approved: 'success', rejected: 'danger', changes_requested: 'warning' },
 }
 
 const warned = new Set<string>()
@@ -54,7 +68,7 @@ const resolved = computed<{ label: string; classes: string }>(() => {
   if (typeof props.value === 'boolean') {
     return props.value
       ? { label: props.trueLabel ?? t('common.active'), classes: toneClasses.success }
-      : { label: props.falseLabel ?? t('common.passive'), classes: toneClasses.danger }
+      : { label: props.falseLabel ?? t('common.passive'), classes: toneClasses.neutral }
   }
   const { entity, status } = props
   const known =

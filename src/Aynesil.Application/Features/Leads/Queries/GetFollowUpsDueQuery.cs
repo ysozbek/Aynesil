@@ -59,12 +59,14 @@ public sealed class GetFollowUpsDueQueryHandler
             .Take(req.PageSize)
             .Select(x => new LeadActivityDto(
                 x.a.Id, x.a.LeadId,
-                x.a.ActivityTypeId, x.act == null ? null : x.act.Code,
+                x.a.ActivityTypeId, x.act == null ? null : x.act.Code, null,
                 x.a.Subject, x.a.Body, x.a.Direction,
                 x.a.OccurredAt, x.a.FollowUpAt,
                 x.a.PerformedBy, x.usr == null ? null : x.usr.FullName,
                 x.a.CreatedAt))
             .ToListAsync(ct);
+
+        items = await LeadLabels.ApplyAsync(_db, items, _tenant.Locale, ct);
 
         return PaginatedResult<LeadActivityDto>.Create(items, totalCount, req.Page, req.PageSize);
     }

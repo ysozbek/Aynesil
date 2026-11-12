@@ -9,6 +9,7 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { CampusListItemDto } from '@/types/campus.types'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,7 +61,7 @@ function formatDate(val: string | undefined) {
 
       <div class="flex items-center gap-2">
         <button
-          v-if="can('corporation:update')"
+          v-if="can(Permissions.Corporation.Update)"
           @click="router.push({ name: 'corporation-settings', params: { id } })"
           class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
         >
@@ -117,7 +118,7 @@ function formatDate(val: string | undefined) {
           <span class="ml-2 text-xs font-normal text-muted-foreground">({{ branchStore.list.totalCount }})</span>
         </h2>
         <button
-          v-if="can('campus:read')"
+          v-if="can(Permissions.Campus.Read)"
           @click="router.push({ name: 'campuses' })"
           class="text-xs text-primary hover:underline"
         >

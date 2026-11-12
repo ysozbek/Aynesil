@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { useGoalStore } from '@/stores/goal.store'
 import { usePermission } from '@/composables/usePermission'
 import FormModal from '@/components/shared/FormModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -28,26 +30,6 @@ onUnmounted(() => {
 function formatDate(val: string | null): string {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('tr-TR')
-}
-
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    achieved: 'bg-teal-100 text-teal-700',
-    discontinued: 'bg-red-100 text-red-700',
-    on_hold: 'bg-orange-100 text-orange-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    active: t('goal.studentGoal.statusOptions.active'),
-    achieved: t('goal.studentGoal.statusOptions.achieved'),
-    discontinued: t('goal.studentGoal.statusOptions.discontinued'),
-    on_hold: t('goal.studentGoal.statusOptions.on_hold'),
-  }
-  return map[status] ?? status
 }
 
 function horizonColor(horizon: string): string {
@@ -156,23 +138,21 @@ async function submitProgress() {
             <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', horizonColor(goal.horizon)]">
               {{ horizonLabel(goal.horizon) }}
             </span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(goal.status)]">
-              {{ statusLabel(goal.status) }}
-            </span>
+            <StatusBadge entity="studentGoal" :status="goal.status" />
             <span v-if="goal.categoryLabel" class="text-xs text-muted-foreground">{{ goal.categoryLabel }}</span>
             <span v-if="goal.developmentAreaLabel" class="text-xs text-muted-foreground">{{ goal.developmentAreaLabel }}</span>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <button
-            v-if="can('student_goal:change_status')"
+            v-if="can(Permissions.StudentGoals.ChangeStatus)"
             @click="openStatusModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >
             {{ t('goal.studentGoal.changeStatus') }}
           </button>
           <button
-            v-if="can('student_goal:update')"
+            v-if="can(Permissions.StudentGoals.Update)"
             @click="router.push({ name: 'student-goal-edit', params: { id: goal.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -209,7 +189,7 @@ async function submitProgress() {
             </div>
             <div>
               <dt class="text-muted-foreground text-xs uppercase mb-1">{{ t('goal.studentGoal.status') }}</dt>
-              <dd><span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(goal.status)]">{{ statusLabel(goal.status) }}</span></dd>
+              <dd><StatusBadge entity="studentGoal" :status="goal.status" /></dd>
             </div>
             <div>
               <dt class="text-muted-foreground text-xs uppercase mb-1">{{ t('goal.studentGoal.category') }}</dt>
@@ -251,7 +231,7 @@ async function submitProgress() {
       <div v-else-if="activeTab === 'progress'" class="space-y-4">
         <div class="flex justify-end">
           <button
-            v-if="can('goal_progress:record')"
+            v-if="can(Permissions.GoalProgress.Record)"
             @click="openProgressModal"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
@@ -370,10 +350,10 @@ async function submitProgress() {
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('goal.studentGoal.status') }} *</label>
           <select v-model="statusForm.newStatus" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
             <option value="">{{ t('common.select') }}</option>
-            <option value="active">{{ t('goal.studentGoal.statusOptions.active') }}</option>
-            <option value="achieved">{{ t('goal.studentGoal.statusOptions.achieved') }}</option>
-            <option value="discontinued">{{ t('goal.studentGoal.statusOptions.discontinued') }}</option>
-            <option value="on_hold">{{ t('goal.studentGoal.statusOptions.on_hold') }}</option>
+            <option value="active">{{ t('statusBadge.studentGoal.active') }}</option>
+            <option value="achieved">{{ t('statusBadge.studentGoal.achieved') }}</option>
+            <option value="discontinued">{{ t('statusBadge.studentGoal.discontinued') }}</option>
+            <option value="on_hold">{{ t('statusBadge.studentGoal.on_hold') }}</option>
           </select>
         </div>
         <div>

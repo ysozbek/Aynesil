@@ -136,11 +136,11 @@ onMounted(fetchCalendar)
     <div class="flex gap-4 mt-4 text-xs text-muted-foreground">
       <span class="flex items-center gap-1.5">
         <span class="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
-        {{ t('leave.status.pending') }}
+        {{ t('statusBadge.leave.pending') }}
       </span>
       <span class="flex items-center gap-1.5">
         <span class="w-3 h-3 rounded bg-green-100 border border-green-200" />
-        {{ t('leave.status.approved') }}
+        {{ t('statusBadge.leave.approved') }}
       </span>
     </div>
   </div>

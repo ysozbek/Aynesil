@@ -7,6 +7,8 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -23,28 +25,6 @@ const signForm = reactive({ signedByName: '', signedDate: '' })
 
 function formatDate(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
-}
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    sent: 'bg-blue-100 text-blue-700',
-    signed: 'bg-green-100 text-green-700',
-    expired: 'bg-gray-100 text-gray-800',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    draft: t('consultancyContract.draft'),
-    sent: t('consultancyContract.sent'),
-    signed: t('consultancyContract.signed'),
-    expired: t('consultancyContract.expired'),
-    cancelled: t('consultancyContract.cancelled'),
-  }
-  return map[s] ?? s
 }
 
 async function doSend() {
@@ -108,18 +88,16 @@ onMounted(() => {
 
       <PageHeader :title="agreement.title" :description="`${agreement.institutionName} · ${agreement.planName}`">
         <div class="flex flex-wrap items-center gap-2">
-          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(agreement.status)]">
-            {{ statusLabel(agreement.status) }}
-          </span>
+          <StatusBadge entity="consultancyAgreement" :status="agreement.status" />
           <button
-            v-if="agreement.status === 'draft' && can('consultancy_agreement:update')"
+            v-if="agreement.status === 'draft' && can(Permissions.ConsultancyAgreements.Update)"
             @click="router.push(`/consultancy/agreements/${agreement.id}/edit`)"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="agreement.status === 'draft' && can('consultancy_agreement:send')"
+            v-if="agreement.status === 'draft' && can(Permissions.ConsultancyAgreements.Send)"
             :disabled="store.saving"
             @click="doSend"
             class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
@@ -127,7 +105,7 @@ onMounted(() => {
             {{ t('consultancyContract.send') }}
           </button>
           <button
-            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can('consultancy_agreement:cancel')"
+            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can(Permissions.ConsultancyAgreements.Cancel)"
             :disabled="store.saving"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
@@ -135,14 +113,14 @@ onMounted(() => {
             {{ t('common.cancel') }}
           </button>
           <button
-            v-if="agreement.status === 'sent' && can('consultancy_agreement:sign')"
+            v-if="agreement.status === 'sent' && can(Permissions.ConsultancyAgreements.Sign)"
             @click="showSignModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('consultancyContract.markSigned') }}
           </button>
           <button
-            v-if="agreement.status === 'signed' && can('consultancy_agreement:expire')"
+            v-if="agreement.status === 'signed' && can(Permissions.ConsultancyAgreements.Expire)"
             :disabled="store.saving"
             @click="showExpireConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50"
@@ -150,7 +128,7 @@ onMounted(() => {
             {{ t('consultancyContract.markExpired') }}
           </button>
           <button
-            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can('consultancy_agreement:delete')"
+            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can(Permissions.ConsultancyAgreements.Delete)"
             :disabled="store.saving"
             @click="showDeleteConfirm = true"
             class="p-1.5 rounded-lg hover:bg-red-50 text-red-600"
@@ -216,7 +194,7 @@ onMounted(() => {
                 </p>
               </div>
               <a
-                v-if="can('consultancy_agreement:read')"
+                v-if="can(Permissions.ConsultancyAgreements.Read)"
                 :href="`/api/files/${agreement.fileId}`"
                 target="_blank"
                 class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent shrink-0"

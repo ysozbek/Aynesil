@@ -8,8 +8,10 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import type { ProgramListItemDto, StudentProgramDto } from '@/types/program.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -40,16 +42,6 @@ onUnmounted(() => {
 function formatDate(val: string | null | undefined): string {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('tr-TR')
-}
-
-function spStatusClass(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    paused: 'bg-amber-100 text-amber-700',
-    completed: 'bg-blue-100 text-blue-700',
-    cancelled: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
 // ── Change status ─────────────────────────────────────────────────────────────
@@ -226,7 +218,7 @@ async function submitEditSp() {
         {{ t('enrollment.backToList') }}
       </button>
       <button
-        v-if="can('enrollment:update') && enrollment && !enrollment.endedOn"
+        v-if="can(Permissions.Enrollments.Update) && enrollment && !enrollment.endedOn"
         type="button"
         class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
         @click="openStatus"
@@ -234,7 +226,7 @@ async function submitEditSp() {
         {{ t('enrollment.changeStatus') }}
       </button>
       <button
-        v-if="can('enrollment:update') && enrollment && !enrollment.endedOn"
+        v-if="can(Permissions.Enrollments.Update) && enrollment && !enrollment.endedOn"
         type="button"
         class="px-3 py-2 text-sm rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
         @click="openEnd"
@@ -242,7 +234,7 @@ async function submitEditSp() {
         {{ t('enrollment.end') }}
       </button>
       <button
-        v-if="can('enrollment:manage_programs') && enrollment && !enrollment.endedOn"
+        v-if="can(Permissions.Enrollments.ManagePrograms) && enrollment && !enrollment.endedOn"
         type="button"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         @click="openAssign"
@@ -306,10 +298,8 @@ async function submitEditSp() {
                 <span v-if="sp.endDate"> → {{ formatDate(sp.endDate) }}</span>
               </p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', spStatusClass(sp.status)]">
-              {{ t(`enrollment.spStatus.${sp.status}`, sp.status) }}
-            </span>
-            <div v-if="can('enrollment:manage_programs')" class="flex items-center gap-1 shrink-0">
+            <StatusBadge entity="studentProgram" :status="sp.status" />
+            <div v-if="can(Permissions.Enrollments.ManagePrograms)" class="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -429,7 +419,7 @@ async function submitEditSp() {
             class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option v-for="s in SP_STATUSES" :key="s" :value="s">
-              {{ t(`enrollment.spStatus.${s}`, s) }}
+              {{ t(`statusBadge.studentProgram.${s}`, s) }}
             </option>
           </select>
         </div>

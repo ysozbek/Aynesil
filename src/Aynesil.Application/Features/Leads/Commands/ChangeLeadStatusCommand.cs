@@ -32,11 +32,13 @@ public sealed class ChangeLeadStatusCommandHandler : IRequestHandler<ChangeLeadS
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public ChangeLeadStatusCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public ChangeLeadStatusCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<LeadDto> Handle(ChangeLeadStatusCommand req, CancellationToken ct)
@@ -57,6 +59,6 @@ public sealed class ChangeLeadStatusCommandHandler : IRequestHandler<ChangeLeadS
             _currentUser.UserId));
 
         await _db.SaveChangesAsync(ct);
-        return (await LeadProjection.LoadAsync(_db, lead.Id, ct))!;
+        return (await LeadProjection.LoadAsync(_db, lead.Id, _tenant.Locale, ct))!;
     }
 }

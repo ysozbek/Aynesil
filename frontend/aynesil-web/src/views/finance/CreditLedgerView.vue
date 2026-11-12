@@ -12,6 +12,8 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { CreditLedgerEntryDto, StudentPackageListItemDto } from '@/types/finance.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -90,17 +92,6 @@ function formatDate(val: unknown): string {
   return new Date(String(val)).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-function entryTypeColor(type: string): string {
-  const map: Record<string, string> = {
-    [CreditEntryType.Consume]: 'bg-red-100 text-red-700',
-    [CreditEntryType.Grant]: 'bg-green-100 text-green-700',
-    [CreditEntryType.Refund]: 'bg-blue-100 text-blue-700',
-    [CreditEntryType.Adjustment]: 'bg-violet-100 text-violet-700',
-    [CreditEntryType.Expire]: 'bg-gray-100 text-gray-600',
-  }
-  return map[type] ?? 'bg-gray-100 text-gray-600'
-}
-
 function deltaColor(delta: number): string {
   return delta > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'
 }
@@ -135,14 +126,14 @@ function openAdjust() {
     <PageHeader :title="t('finance.credit.title')" :description="t('finance.credit.description')">
       <div class="flex gap-2">
         <button
-          v-if="can('credit_ledger:grant')"
+          v-if="can(Permissions.CreditLedger.Grant)"
           @click="openGrant"
           :disabled="!loadedStudentId"
           :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"
           class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
         >{{ t('finance.credit.grant') }}</button>
         <button
-          v-if="can('credit_ledger:adjust')"
+          v-if="can(Permissions.CreditLedger.Adjust)"
           @click="openAdjust"
           :disabled="!loadedStudentId"
           :title="!loadedStudentId ? t('pickers.selectStudentFirst') : undefined"
@@ -189,11 +180,11 @@ function openAdjust() {
       <div class="mb-4 flex items-center gap-3">
         <select v-model="query.entryType" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
           <option value="">{{ t('finance.credit.allTypes') }}</option>
-          <option :value="CreditEntryType.Grant">{{ t('finance.credit.type.grant') }}</option>
-          <option :value="CreditEntryType.Consume">{{ t('finance.credit.type.consume') }}</option>
-          <option :value="CreditEntryType.Refund">{{ t('finance.credit.type.refund') }}</option>
-          <option :value="CreditEntryType.Adjustment">{{ t('finance.credit.type.adjustment') }}</option>
-          <option :value="CreditEntryType.Expire">{{ t('finance.credit.type.expire') }}</option>
+          <option :value="CreditEntryType.Grant">{{ t('statusBadge.creditEntry.grant') }}</option>
+          <option :value="CreditEntryType.Consume">{{ t('statusBadge.creditEntry.consume') }}</option>
+          <option :value="CreditEntryType.Refund">{{ t('statusBadge.creditEntry.refund') }}</option>
+          <option :value="CreditEntryType.Adjustment">{{ t('statusBadge.creditEntry.adjustment') }}</option>
+          <option :value="CreditEntryType.Expire">{{ t('statusBadge.creditEntry.expire') }}</option>
         </select>
         <input v-model="query.from" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
         <input v-model="query.to" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -206,9 +197,7 @@ function openAdjust() {
       >
         <template #cell-occurredAt="{ value }">{{ formatDate(value) }}</template>
         <template #cell-entryType="{ value }">
-          <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', entryTypeColor(String(value))]">
-            {{ t(`finance.credit.type.${value}`) }}
-          </span>
+          <StatusBadge entity="creditEntry" :status="String(value)" />
         </template>
         <template #cell-delta="{ value }">
           <span :class="deltaColor(Number(value))">{{ Number(value) > 0 ? '+' : '' }}{{ value }}</span>

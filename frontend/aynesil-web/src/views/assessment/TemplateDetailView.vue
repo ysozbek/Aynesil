@@ -8,6 +8,8 @@ import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -194,21 +196,19 @@ const responseTypeLabel = (type: string): string => {
           <div class="flex items-center gap-2 mt-1">
             <span class="text-sm text-muted-foreground font-mono">{{ tpl.code }}</span>
             <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">v{{ tpl.version }}</span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', tpl.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-              {{ tpl.isActive ? t('common.active') : t('common.passive') }}
-            </span>
+            <StatusBadge :value="Boolean(tpl.isActive)" />
           </div>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <button v-if="can('assessment_template:publish')" @click="toggleActive"
+          <button v-if="can(Permissions.AssessmentTemplates.Publish)" @click="toggleActive"
             :class="['px-3 py-2 text-sm rounded-lg border transition-colors', tpl.isActive ? 'border-border hover:bg-accent' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50']">
             {{ tpl.isActive ? t('common.deactivate') : t('common.activate') }}
           </button>
-          <button v-if="can('assessment_template:version')" @click="createVersion"
+          <button v-if="can(Permissions.AssessmentTemplates.Version)" @click="createVersion"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">
             {{ t('assessment.template.createVersion') }}
           </button>
-          <button v-if="can('assessment_template:update')"
+          <button v-if="can(Permissions.AssessmentTemplates.Update)"
             @click="router.push({ name: 'assessment-template-edit', params: { id: tpl.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
             {{ t('common.edit') }}
@@ -258,7 +258,7 @@ const responseTypeLabel = (type: string): string => {
       <div v-else-if="activeTab === 'sections'">
         <div class="mb-4 flex items-center justify-between">
           <p class="text-sm text-muted-foreground">{{ tpl.sections.length }} {{ t('assessment.template.sections') }}</p>
-          <button v-if="can('assessment_template:update')" @click="openAddSection"
+          <button v-if="can(Permissions.AssessmentTemplates.Update)" @click="openAddSection"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -280,11 +280,11 @@ const responseTypeLabel = (type: string): string => {
                 <span v-if="section.developmentAreaCode" class="ml-2 text-xs text-muted-foreground">· {{ section.developmentAreaCode }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <button v-if="can('assessment_template:update')" @click="openAddItem(section.id, section.items.length + 1)"
+                <button v-if="can(Permissions.AssessmentTemplates.Update)" @click="openAddItem(section.id, section.items.length + 1)"
                   class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
                   + {{ t('assessment.item.add') }}
                 </button>
-                <button v-if="can('assessment_template:delete')" @click="deleteSectionTarget = section.id"
+                <button v-if="can(Permissions.AssessmentTemplates.Delete)" @click="deleteSectionTarget = section.id"
                   class="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -307,7 +307,7 @@ const responseTypeLabel = (type: string): string => {
                     · {{ t('assessment.item.weight') }}: {{ item.weight }}
                   </p>
                 </div>
-                <div v-if="can('assessment_template:delete')" class="flex-none">
+                <div v-if="can(Permissions.AssessmentTemplates.Delete)" class="flex-none">
                   <button @click="deleteItemTarget = item.id"
                     class="p-1 rounded hover:bg-red-50 text-red-400 transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,7 +325,7 @@ const responseTypeLabel = (type: string): string => {
       <div v-else-if="activeTab === 'translations'">
         <div class="mb-4 flex items-center justify-between">
           <p class="text-sm text-muted-foreground">{{ tpl.translations.length }} {{ t('assessment.template.translationsCount') }}</p>
-          <button v-if="can('assessment_template:update')" @click="openTranslation()"
+          <button v-if="can(Permissions.AssessmentTemplates.Update)" @click="openTranslation()"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
             + {{ t('assessment.translation.add') }}
           </button>
@@ -339,7 +339,7 @@ const responseTypeLabel = (type: string): string => {
               <p class="text-sm text-foreground mt-0.5">{{ tr.name }}</p>
               <p v-if="tr.description" class="text-xs text-muted-foreground">{{ tr.description }}</p>
             </div>
-            <button v-if="can('assessment_template:update')" @click="openTranslation(tr.locale)"
+            <button v-if="can(Permissions.AssessmentTemplates.Update)" @click="openTranslation(tr.locale)"
               class="p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

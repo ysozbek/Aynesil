@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useAttendanceStore } from '@/stores/attendance.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import Pagination from '@/components/shared/Pagination.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 
 const { t } = useI18n()
@@ -37,16 +38,6 @@ function formatPct(val: number): string {
   return `${Math.round(val * 100) / 100}%`
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    present: 'bg-green-100 text-green-700',
-    absent: 'bg-red-100 text-red-700',
-    late: 'bg-amber-100 text-amber-700',
-    excused: 'bg-blue-100 text-blue-700',
-    left_early: 'bg-orange-100 text-orange-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
 </script>
 
 <template>
@@ -71,15 +62,15 @@ function statusColor(status: string): string {
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-green-600">{{ store.summary.presentCount }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.present') }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ t('statusBadge.attendance.present') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-red-600">{{ store.summary.absentCount }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.absent') }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ t('statusBadge.attendance.absent') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-amber-600">{{ store.summary.lateCount }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ t('scheduling.attendance.status.late') }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ t('statusBadge.attendance.late') }}</p>
         </div>
         <div class="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
           <p class="text-3xl font-bold text-blue-600">{{ formatPct(store.summary.attendanceRate) }}</p>
@@ -113,9 +104,7 @@ function statusColor(status: string): string {
             >
               <td class="px-4 py-3">{{ record.studentFullName }}</td>
               <td class="px-4 py-3">
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(record.status)]">
-                  {{ t(`scheduling.attendance.status.${record.status}`) }}
-                </span>
+                <StatusBadge entity="attendance" :status="record.status" />
               </td>
               <td class="px-4 py-3 text-muted-foreground">{{ record.reasonLabel ?? '—' }}</td>
               <td class="px-4 py-3 text-muted-foreground">{{ formatDate(record.recordedAt) }}</td>

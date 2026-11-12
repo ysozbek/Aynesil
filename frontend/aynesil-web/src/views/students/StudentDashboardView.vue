@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useStudentStore } from '@/stores/student.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useProgramStore } from '@/stores/program.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -39,25 +40,6 @@ function formatDate(val: string | null): string {
   return new Date(val).toLocaleDateString('tr-TR')
 }
 
-function goalStatusClass(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    achieved: 'bg-blue-100 text-blue-700',
-    discontinued: 'bg-red-100 text-red-700',
-    on_hold: 'bg-amber-100 text-amber-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
-function programStatusClass(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    completed: 'bg-blue-100 text-blue-700',
-    cancelled: 'bg-red-100 text-red-700',
-    pending: 'bg-amber-100 text-amber-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
 </script>
 
 <template>
@@ -164,9 +146,7 @@ function programStatusClass(status: string): string {
                   <p class="text-xs text-muted-foreground">{{ sp.programCode }} · {{ sp.programTypeLabel ?? '—' }}</p>
                   <p v-if="sp.startDate" class="text-xs text-muted-foreground">{{ formatDate(sp.startDate) }}</p>
                 </div>
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', programStatusClass(sp.status)]">
-                  {{ sp.status }}
-                </span>
+                <StatusBadge entity="studentProgram" :status="sp.status" class="shrink-0" />
               </li>
             </ul>
           </div>
@@ -207,9 +187,7 @@ function programStatusClass(status: string): string {
                       </div>
                     </div>
                   </div>
-                  <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', goalStatusClass(goal.status)]">
-                    {{ goal.status }}
-                  </span>
+                  <StatusBadge entity="studentGoal" :status="goal.status" class="shrink-0" />
                 </div>
               </li>
             </ul>

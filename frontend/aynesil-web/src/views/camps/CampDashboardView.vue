@@ -5,7 +5,7 @@
         <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camp.dashboard.title') }}</h1>
         <p class="text-muted mb-0">{{ $t('camp.dashboard.subtitle') }}</p>
       </div>
-      <RouterLink v-if="hasPermission('camp:create')" to="/camps/new" class="btn btn-primary">
+      <RouterLink v-if="hasPermission(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
         <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
       </RouterLink>
     </div>
@@ -126,6 +126,7 @@
 import { computed, onMounted } from 'vue'
 import { useCampStore } from '@/stores/camp.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { Permissions } from '@/constants/permissions'
 
 const campStore = useCampStore()
 const authStore = useAuthStore()

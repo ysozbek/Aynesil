@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { useAssessmentStore } from '@/stores/assessment.store'
 import { useAssessmentTemplateStore } from '@/stores/assessmentTemplate.store'
 import { usePermission } from '@/composables/usePermission'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -18,16 +20,6 @@ onMounted(async () => {
     templateStore.fetchList({ isActive: true, page: 1, pageSize: 5 }),
   ])
 })
-
-const statusColor = (status: string): string => {
-  const map: Record<string, string> = {
-    planned: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    completed: 'bg-emerald-100 text-emerald-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
 
 function formatDate(val: string | null): string {
   if (!val) return '—'
@@ -46,7 +38,7 @@ const pendingCount = computed(() => sessionStore.list.items.filter(s => s.status
         <p class="text-sm text-muted-foreground mt-1">{{ t('assessment.dashboard.description') }}</p>
       </div>
       <button
-        v-if="can('assessment_session:create')"
+        v-if="can(Permissions.AssessmentSessions.Create)"
         @click="router.push({ name: 'assessment-sessions-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -110,9 +102,7 @@ const pendingCount = computed(() => sessionStore.list.items.filter(s => s.status
                 </p>
                 <p class="text-xs text-muted-foreground">{{ s.templateName }}</p>
               </div>
-              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(s.status)]">
-                {{ t(`assessment.session.status.${s.status}`) }}
-              </span>
+              <StatusBadge entity="assessmentSession" :status="s.status" />
             </div>
           </div>
         </div>
@@ -157,7 +147,7 @@ const pendingCount = computed(() => sessionStore.list.items.filter(s => s.status
 
     <!-- Quick Nav -->
     <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-      <button v-if="can('assessment_session:read')"
+      <button v-if="can(Permissions.AssessmentSessions.Read)"
         @click="router.push({ name: 'assessment-sessions' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground">
         <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +155,7 @@ const pendingCount = computed(() => sessionStore.list.items.filter(s => s.status
         </svg>
         {{ t('assessment.nav.sessions') }}
       </button>
-      <button v-if="can('assessment_template:read')"
+      <button v-if="can(Permissions.AssessmentTemplates.Read)"
         @click="router.push({ name: 'assessment-templates' })"
         class="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/30 transition-colors text-sm font-medium text-foreground">
         <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

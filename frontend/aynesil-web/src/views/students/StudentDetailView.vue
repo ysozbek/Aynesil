@@ -11,6 +11,7 @@ import { useBranchStore } from '@/stores/branch.store'
 import Pagination from '@/components/shared/Pagination.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import GuardianPicker from '@/components/pickers/GuardianPicker.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import type {
@@ -23,6 +24,7 @@ import type {
   StudentCampusDto,
   EmergencyContactInput,
 } from '@/types/student.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -224,7 +226,7 @@ watch(() => noteQuery.page, () => {
     pageSize: noteQuery.pageSize,
     // Only requested when the caller holds the extra permission — the API
     // additionally enforces it (`StudentsController.GetCaseNotes`).
-    includeConfidential: can('case_note:read_confidential') ? true : undefined,
+    includeConfidential: can(Permissions.CaseNotes.ReadConfidential) ? true : undefined,
   })
 })
 
@@ -668,7 +670,7 @@ watch(activeTab, async (tab) => {
         studentId: id.value,
         page: 1,
         pageSize: noteQuery.pageSize,
-        includeConfidential: can('case_note:read_confidential') ? true : undefined,
+        includeConfidential: can(Permissions.CaseNotes.ReadConfidential) ? true : undefined,
       }),
       caseStore.fetchMedicalReports(id.value),
       caseStore.fetchDevelopmentReports(id.value),
@@ -691,15 +693,6 @@ function formatDateTime(val: string | null): string {
   return new Date(val).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function spStatusClass(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    paused: 'bg-amber-100 text-amber-700',
-    completed: 'bg-blue-100 text-blue-700',
-    cancelled: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
 </script>
 
 <template>
@@ -739,14 +732,14 @@ function spStatusClass(status: string): string {
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
-            v-if="can('student:change_status')"
+            v-if="can(Permissions.Students.ChangeStatus)"
             @click="openStatusModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >
             {{ t('student.changeStatus') }}
           </button>
           <button
-            v-if="can('student:update')"
+            v-if="can(Permissions.Students.Update)"
             @click="router.push({ name: 'student-edit', params: { id: student.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -820,7 +813,7 @@ function spStatusClass(status: string): string {
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold text-foreground">{{ t('student.emergencyContact.title') }}</h3>
               <button
-                v-if="can('student:update')"
+                v-if="can(Permissions.Students.Update)"
                 @click="openContactsModal"
                 class="text-xs text-primary hover:underline"
               >
@@ -851,7 +844,7 @@ function spStatusClass(status: string): string {
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.diagnosis.title') }}</h3>
             <button
-              v-if="can('student:write')"
+              v-if="can(Permissions.Students.Write)"
               @click="openAddDiagnosis"
               class="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
             >
@@ -875,7 +868,7 @@ function spStatusClass(status: string): string {
                   <span v-if="d.diagnosedBy"> · {{ d.diagnosedBy }}</span>
                 </p>
               </div>
-              <div v-if="can('student:write')" class="flex gap-1 shrink-0">
+              <div v-if="can(Permissions.Students.Write)" class="flex gap-1 shrink-0">
                 <button @click="openEditDiagnosis(d)" class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -892,12 +885,12 @@ function spStatusClass(status: string): string {
         </div>
 
         <!-- Developmental Profiles -->
-        <!-- Backend `PUT /students/{id}/developmental-profiles` enforces `student:update`. -->
+        <!-- Backend `PUT /students/{id}/developmental-profiles` enforces Permissions.Students.Update. -->
         <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="flex items-center justify-between px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('student.developmentalProfile.title') }}</h3>
             <button
-              v-if="can('student:update')"
+              v-if="can(Permissions.Students.Update)"
               @click="openUpsertProfile()"
               class="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
             >
@@ -918,7 +911,7 @@ function spStatusClass(status: string): string {
             >
               <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-foreground">{{ profile.developmentAreaLabel ?? t('student.developmentalProfile.area') }}</p>
-                <button v-if="can('student:update')" @click="openUpsertProfile(profile)" class="text-xs text-primary hover:underline">
+                <button v-if="can(Permissions.Students.Update)" @click="openUpsertProfile(profile)" class="text-xs text-primary hover:underline">
                   {{ t('common.edit') }}
                 </button>
               </div>
@@ -940,14 +933,14 @@ function spStatusClass(status: string): string {
             <h3 class="font-semibold text-foreground">{{ t('student.campus.title') }}</h3>
             <div class="flex gap-2">
               <button
-                v-if="can('student:update')"
+                v-if="can(Permissions.Students.Update)"
                 @click="openEnrollModal"
                 class="text-xs px-2.5 py-1.5 rounded-lg border border-border hover:bg-accent transition-colors"
               >
                 {{ t('student.campus.enroll') }}
               </button>
               <button
-                v-if="can('student:update')"
+                v-if="can(Permissions.Students.Update)"
                 @click="openTransferModal"
                 class="text-xs px-2.5 py-1.5 rounded-lg border border-border hover:bg-accent transition-colors"
               >
@@ -968,12 +961,10 @@ function spStatusClass(status: string): string {
                   <span v-if="c.isPrimary" class="ml-2 text-primary">●</span>
                 </p>
               </div>
-              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', c.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700']">
-                {{ c.isActive ? t('common.active') : t('common.passive') }}
-              </span>
+              <StatusBadge :value="Boolean(c.isActive)" class="shrink-0" />
               <!-- End the enrollment via PATCH /students/{id}/campuses/{enrollmentId}/end. -->
               <button
-                v-if="c.isActive && can('student:update')"
+                v-if="c.isActive && can(Permissions.Students.Update)"
                 @click="openEndCampusModal(c)"
                 class="shrink-0 text-xs text-amber-600 hover:text-amber-700 hover:underline"
               >
@@ -989,7 +980,7 @@ function spStatusClass(status: string): string {
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm text-muted-foreground">{{ t('student.guardian.link') }}</p>
           <button
-            v-if="can('guardian:create')"
+            v-if="can(Permissions.Guardians.Create)"
             @click="openLinkModal"
             class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -1026,7 +1017,7 @@ function spStatusClass(status: string): string {
               </div>
               <div class="flex gap-1 shrink-0">
                 <button
-                  v-if="can('guardian:update')"
+                  v-if="can(Permissions.Guardians.Update)"
                   @click="openEditLink(g)"
                   class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                   :title="t('student.guardian.edit')"
@@ -1036,7 +1027,7 @@ function spStatusClass(status: string): string {
                   </svg>
                 </button>
                 <button
-                  v-if="can('guardian:update')"
+                  v-if="can(Permissions.Guardians.Update)"
                   @click="unlinkTarget = g.linkId"
                   class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
                   :title="t('student.guardian.unlink')"
@@ -1098,9 +1089,7 @@ function spStatusClass(status: string): string {
                   <span v-if="sp.startDate"> · {{ formatDate(sp.startDate) }}</span>
                 </p>
               </div>
-              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', spStatusClass(sp.status)]">
-                {{ t(`enrollment.spStatus.${sp.status}`, sp.status) }}
-              </span>
+              <StatusBadge entity="studentProgram" :status="sp.status" class="shrink-0" />
             </li>
           </ul>
         </div>
@@ -1131,7 +1120,7 @@ function spStatusClass(status: string): string {
           <div class="flex justify-between items-center mb-3">
             <p class="text-sm text-muted-foreground">{{ caseStore.caseNotes.totalCount }} {{ t('student.caseNote.title') }}</p>
             <button
-              v-if="can('case_note:create')"
+              v-if="can(Permissions.CaseNotes.Create)"
               @click="openAddNote"
               class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
@@ -1165,11 +1154,11 @@ function spStatusClass(status: string): string {
                   <p v-if="note.authoredBy" class="text-xs text-muted-foreground mt-1">{{ note.authoredBy }}</p>
                 </div>
                 <div
-                  v-if="can('case_note:update') || can('case_note:delete')"
+                  v-if="can(Permissions.CaseNotes.Update) || can(Permissions.CaseNotes.Delete)"
                   class="flex gap-1 shrink-0"
                 >
                   <button
-                    v-if="can('case_note:update')"
+                    v-if="can(Permissions.CaseNotes.Update)"
                     @click="openEditNote(note)"
                     class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                   >
@@ -1178,7 +1167,7 @@ function spStatusClass(status: string): string {
                     </svg>
                   </button>
                   <button
-                    v-if="can('case_note:delete')"
+                    v-if="can(Permissions.CaseNotes.Delete)"
                     @click="deleteNoteTarget = note.id"
                     class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
                   >
@@ -1209,7 +1198,7 @@ function spStatusClass(status: string): string {
           <div class="flex justify-between items-center mb-3">
             <p class="text-sm text-muted-foreground">{{ caseStore.medicalReports.length }} {{ t('student.medicalReport.title') }}</p>
             <button
-              v-if="can('student:write')"
+              v-if="can(Permissions.Students.Write)"
               @click="openAddMedical"
               class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
@@ -1240,7 +1229,7 @@ function spStatusClass(status: string): string {
                   </p>
                   <p v-if="r.summary" class="text-xs text-foreground mt-1">{{ r.summary }}</p>
                 </div>
-                <div v-if="can('student:write')" class="flex gap-1 shrink-0">
+                <div v-if="can(Permissions.Students.Write)" class="flex gap-1 shrink-0">
                   <button @click="openEditMedical(r)" class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1262,7 +1251,7 @@ function spStatusClass(status: string): string {
           <div class="flex justify-between items-center mb-3">
             <p class="text-sm text-muted-foreground">{{ caseStore.developmentReports.length }} {{ t('student.developmentReport.title') }}</p>
             <button
-              v-if="can('student:write')"
+              v-if="can(Permissions.Students.Write)"
               @click="openAddDevReport"
               class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
@@ -1293,7 +1282,7 @@ function spStatusClass(status: string): string {
                   </p>
                   <p v-if="r.content" class="text-xs text-foreground mt-1 line-clamp-2">{{ r.content }}</p>
                 </div>
-                <div v-if="can('student:write')" class="flex gap-1 shrink-0">
+                <div v-if="can(Permissions.Students.Write)" class="flex gap-1 shrink-0">
                   <!-- Edit uses `PUT /students/{id}/development-reports/{reportId}` (student:write). -->
                   <button
                     @click="openEditDevReport(r)"
@@ -1322,7 +1311,7 @@ function spStatusClass(status: string): string {
           <div class="flex justify-between items-center mb-3">
             <p class="text-sm text-muted-foreground">{{ caseStore.externalReports.length }} {{ t('student.externalReport.title') }}</p>
             <button
-              v-if="can('student:write')"
+              v-if="can(Permissions.Students.Write)"
               @click="openAddExtReport"
               class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
@@ -1354,7 +1343,7 @@ function spStatusClass(status: string): string {
                   <p v-if="r.summary" class="text-xs text-foreground mt-1">{{ r.summary }}</p>
                 </div>
                 <button
-                  v-if="can('student:write')"
+                  v-if="can(Permissions.Students.Write)"
                   @click="deleteExtReportTarget = r.id"
                   class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors shrink-0"
                 >
@@ -1373,7 +1362,7 @@ function spStatusClass(status: string): string {
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-foreground">{{ t('student.statusHistory') }}</h3>
           <button
-            v-if="can('student:change_status')"
+            v-if="can(Permissions.Students.ChangeStatus)"
             @click="openStatusModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >

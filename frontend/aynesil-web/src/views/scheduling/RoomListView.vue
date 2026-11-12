@@ -12,6 +12,8 @@ import { campusService } from '@/services/campus.service'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { RoomListItemDto } from '@/types/scheduling.types'
 import type { CampusListItemDto } from '@/types/campus.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const store = useSchedulingStore()
@@ -130,7 +132,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('scheduling.room.title')" :description="t('scheduling.room.description')">
       <button
-        v-if="can('room:create')"
+        v-if="can(Permissions.Rooms.Create)"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -163,14 +165,12 @@ async function doDelete() {
         <span v-else class="text-muted-foreground">—</span>
       </template>
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.passive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('room:update')"
+            v-if="can(Permissions.Rooms.Update)"
             @click="store.fetchRoom(row.id).then(() => { editTarget = row; Object.assign(formData, { code: row.code, name: row.name, campusId: row.campusId, capacity: row.capacity, isVirtual: row.isVirtual }); showForm = true })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"
@@ -180,7 +180,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('room:update') && row.isActive"
+            v-if="can(Permissions.Rooms.Update) && row.isActive"
             @click="store.deactivateRoom(row.id).then(() => loadList())"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-amber-600"
             :title="t('common.deactivate')"
@@ -190,7 +190,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('room:delete')"
+            v-if="can(Permissions.Rooms.Delete)"
             @click="deleteTarget = row"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('common.delete')"

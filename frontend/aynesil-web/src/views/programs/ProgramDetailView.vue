@@ -13,6 +13,8 @@ import type {
   AddProgramServicePayload,
   SetTranslationPayload,
 } from '@/types/program.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -181,13 +183,11 @@ async function submitTranslation() {
             <span v-if="program.programTypeLabel" class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
               {{ program.programTypeLabel }}
             </span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', program.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-              {{ program.isActive ? t('common.active') : t('common.inactive') }}
-            </span>
+            <StatusBadge :value="Boolean(program.isActive)" :false-label="t('common.inactive')" />
           </div>
         </div>
         <button
-          v-if="can('program:update')"
+          v-if="can(Permissions.Programs.Update)"
           @click="router.push({ name: 'program-edit', params: { id: program.id } })"
           class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
         >
@@ -229,9 +229,7 @@ async function submitTranslation() {
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('program.isActive') }}</dt>
               <dd>
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', program.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-                  {{ program.isActive ? t('common.active') : t('common.inactive') }}
-                </span>
+                <StatusBadge :value="Boolean(program.isActive)" :false-label="t('common.inactive')" />
               </dd>
             </div>
           </dl>
@@ -246,7 +244,7 @@ async function submitTranslation() {
       <div v-else-if="activeTab === 'services'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('program:update')"
+            v-if="can(Permissions.Programs.Update)"
             @click="openAddService"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -275,7 +273,7 @@ async function submitTranslation() {
                   <span>{{ t('program.service.sortOrder') }}: {{ svc.sortOrder }}</span>
                 </div>
               </div>
-              <div v-if="can('program:update')" class="flex gap-2">
+              <div v-if="can(Permissions.Programs.Update)" class="flex gap-2">
                 <button @click="openEditService(svc)"
                   class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
                   {{ t('program.service.edit') }}
@@ -294,7 +292,7 @@ async function submitTranslation() {
       <div v-else-if="activeTab === 'translations'">
         <div class="flex justify-end mb-3">
           <button
-            v-if="can('program:update')"
+            v-if="can(Permissions.Programs.Update)"
             @click="openTranslationModal()"
             class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
@@ -321,7 +319,7 @@ async function submitTranslation() {
               <p v-if="tr.description" class="text-xs text-muted-foreground">{{ tr.description }}</p>
             </div>
             <button
-              v-if="can('program:update')"
+              v-if="can(Permissions.Programs.Update)"
               @click="openTranslationModal(tr.locale, tr.name, tr.description)"
               class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors"
             >

@@ -44,8 +44,11 @@ public sealed class GetPipelineSummaryQueryHandler
             select new PipelineStageCountDto(
                 g.Key.PipelineStageId!.Value,
                 g.Key.Code,
+                null,
                 g.Count())
         ).ToListAsync(ct);
+
+        stageCounts = await LeadLabels.ApplyAsync(_db, stageCounts, _tenant.Locale, ct);
 
         var totalLeads = await leadsQuery.CountAsync(ct);
         var totalConverted = await leadsQuery.CountAsync(l => l.ConvertedStudentId != null, ct);

@@ -10,8 +10,10 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { ConsultancyPlanListItemDto, PlanListQuery, InstitutionListItemDto } from '@/types/consultancy.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -42,16 +44,6 @@ const institutions = ref<InstitutionListItemDto[]>([])
 function formatDate(val: unknown) {
   if (!val) return '—'
   return new Date(String(val)).toLocaleDateString('tr-TR')
-}
-
-function statusClass(status: string) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    active: 'bg-green-100 text-green-700',
-    completed: 'bg-blue-100 text-blue-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[status?.toLowerCase()] ?? 'bg-gray-100 text-gray-600'
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -123,7 +115,7 @@ async function submitCreate() {
   <div>
     <PageHeader :title="t('consultancy.plan.list.title')" :description="t('consultancy.plan.list.subtitle')">
       <button
-        v-if="can('consultancy_plan:create')"
+        v-if="can(Permissions.ConsultancyPlans.Create)"
         type="button"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
@@ -149,10 +141,10 @@ async function submitCreate() {
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="draft">{{ t('consultancy.plan.status.draft') }}</option>
-          <option value="active">{{ t('consultancy.plan.status.active') }}</option>
-          <option value="completed">{{ t('consultancy.plan.status.completed') }}</option>
-          <option value="cancelled">{{ t('consultancy.plan.status.cancelled') }}</option>
+          <option value="draft">{{ t('statusBadge.consultancyPlan.draft') }}</option>
+          <option value="active">{{ t('statusBadge.consultancyPlan.active') }}</option>
+          <option value="completed">{{ t('statusBadge.consultancyPlan.completed') }}</option>
+          <option value="cancelled">{{ t('statusBadge.consultancyPlan.cancelled') }}</option>
         </select>
       </div>
     </div>
@@ -168,9 +160,7 @@ async function submitCreate() {
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ t(`consultancy.plan.status.${String(value).toLowerCase()}`, String(value)) }}
-        </span>
+        <StatusBadge entity="consultancyPlan" :status="String(value)" />
       </template>
       <template #cell-periodStart="{ value }">{{ formatDate(value) }}</template>
       <template #cell-periodEnd="{ value }">{{ formatDate(value) }}</template>

@@ -11,7 +11,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { MakeupRequestListItemDto } from '@/types/scheduling.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -60,18 +62,6 @@ function formatDate(val: unknown): string {
 
 // Backend status values: `requested`, `approved`, `scheduled`, `completed`,
 // `rejected`, `expired` (MakeupRequest domain + db/layer2_sped/06_scheduling.sql).
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    requested: 'bg-amber-100 text-amber-700',
-    approved: 'bg-blue-100 text-blue-700',
-    rejected: 'bg-red-100 text-red-700',
-    scheduled: 'bg-violet-100 text-violet-700',
-    completed: 'bg-green-100 text-green-700',
-    expired: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
-
 // ── Create ────────────────────────────────────────────────────────────────────
 // The audit found no `/scheduling/makeup-requests/new` route; create inline.
 const showCreate = ref(false)
@@ -160,7 +150,7 @@ async function doReject() {
   <div>
     <PageHeader :title="t('scheduling.makeup.title')" :description="t('scheduling.makeup.description')">
       <button
-        v-if="can('makeup_request:request')"
+        v-if="can(Permissions.MakeupRequests.Request)"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -174,12 +164,12 @@ async function doReject() {
     <div class="mb-4 flex items-center gap-3 flex-wrap">
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="requested">{{ t('scheduling.makeup.status.requested') }}</option>
-        <option value="approved">{{ t('scheduling.makeup.status.approved') }}</option>
-        <option value="rejected">{{ t('scheduling.makeup.status.rejected') }}</option>
-        <option value="scheduled">{{ t('scheduling.makeup.status.scheduled') }}</option>
-        <option value="completed">{{ t('scheduling.makeup.status.completed') }}</option>
-        <option value="expired">{{ t('scheduling.makeup.status.expired') }}</option>
+        <option value="requested">{{ t('statusBadge.makeupRequest.requested') }}</option>
+        <option value="approved">{{ t('statusBadge.makeupRequest.approved') }}</option>
+        <option value="rejected">{{ t('statusBadge.makeupRequest.rejected') }}</option>
+        <option value="scheduled">{{ t('statusBadge.makeupRequest.scheduled') }}</option>
+        <option value="completed">{{ t('statusBadge.makeupRequest.completed') }}</option>
+        <option value="expired">{{ t('statusBadge.makeupRequest.expired') }}</option>
       </select>
     </div>
 
@@ -195,14 +185,12 @@ async function doReject() {
       <template #cell-expiresOn="{ value }">{{ formatDate(value) }}</template>
       <template #cell-requestedAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ t(`scheduling.makeup.status.${row.status}`, row.status) }}
-        </span>
+        <StatusBadge entity="makeupRequest" :status="row.status" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('makeup_request:manage') && row.status === 'requested'"
+            v-if="can(Permissions.MakeupRequests.Manage) && row.status === 'requested'"
             @click="approveTarget = row"
             class="p-1.5 rounded-lg hover:bg-green-50 text-muted-foreground hover:text-green-600"
             :title="t('scheduling.makeup.approve')"
@@ -212,7 +200,7 @@ async function doReject() {
             </svg>
           </button>
           <button
-            v-if="can('makeup_request:manage') && row.status === 'requested'"
+            v-if="can(Permissions.MakeupRequests.Manage) && row.status === 'requested'"
             @click="rejectTarget = row; rejectModal = true"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('scheduling.makeup.reject')"

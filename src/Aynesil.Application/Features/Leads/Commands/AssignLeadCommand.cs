@@ -30,11 +30,13 @@ public sealed class AssignLeadCommandHandler : IRequestHandler<AssignLeadCommand
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public AssignLeadCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public AssignLeadCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<LeadDto> Handle(AssignLeadCommand req, CancellationToken ct)
@@ -53,6 +55,6 @@ public sealed class AssignLeadCommandHandler : IRequestHandler<AssignLeadCommand
 
         lead.Assign(req.UserId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
-        return (await LeadProjection.LoadAsync(_db, lead.Id, ct))!;
+        return (await LeadProjection.LoadAsync(_db, lead.Id, _tenant.Locale, ct))!;
     }
 }

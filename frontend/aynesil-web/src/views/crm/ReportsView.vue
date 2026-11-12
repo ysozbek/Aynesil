@@ -4,14 +4,12 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useBranchStore } from '@/stores/branch.store'
 import { leadService } from '@/services/lead.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { ConversionReportDto } from '@/types/crm.types'
 
 const { t } = useI18n()
-const crm = useCrmLabels()
 const branchStore = useBranchStore()
 
 const filters = reactive({
@@ -26,7 +24,7 @@ const error = ref('')
 
 onMounted(async () => {
   if (branchStore.list.items.length === 0) await branchStore.fetchList({ pageSize: 200 })
-  await Promise.all([crm.load('lead_source'), loadReport()])
+  await loadReport()
 })
 
 async function loadReport() {
@@ -125,7 +123,7 @@ function barWidth(rate: number): string {
         <div v-else class="space-y-4">
           <div v-for="src in report.bySource" :key="src.sourceId ?? 'none'">
             <div class="flex items-center justify-between text-sm mb-1">
-              <span class="font-medium text-foreground">{{ crm.label('lead_source', src.sourceCode) ?? t('crm.reports.unknownSource') }}</span>
+              <span class="font-medium text-foreground">{{ src.sourceName ?? t('crm.reports.unknownSource') }}</span>
               <span class="text-muted-foreground">
                 {{ src.converted }}/{{ src.totalLeads }} · <strong class="text-primary">{{ pct(src.conversionRate) }}</strong>
               </span>

@@ -17,6 +17,7 @@ import type { EnrollmentListItemDto, ProgramListItemDto } from '@/types/program.
 import type { RefValueItem } from '@/stores/refdata.store'
 import type { CampusListItemDto } from '@/types/campus.types'
 import type { StudentListItemDto } from '@/types/student.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -222,7 +223,7 @@ async function submitCreate() {
   <div>
     <PageHeader :title="t('enrollment.title')" :description="t('enrollment.description')">
       <button
-        v-if="can('enrollment:create')"
+        v-if="can(Permissions.Enrollments.Create)"
         type="button"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
         @click="openCreate"

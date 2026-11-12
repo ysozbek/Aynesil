@@ -38,7 +38,7 @@
                 </div>
               </div>
               <div class="flex flex-col items-end gap-1">
-                <span :class="['badge badge-sm', goalStatusClass(goal.status)]">{{ goal.status }}</span>
+                <StatusBadge entity="studentGoal" :status="goal.status" />
                 <span v-if="goal.trend" class="text-xs" :class="trendClass(goal.trend)">
                   {{ trendIcon(goal.trend) }} {{ goal.trend }}
                 </span>
@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useParentPortalStore } from '@/stores/parentPortal.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const props = defineProps<{ studentId: string }>()
 const store = useParentPortalStore()
@@ -84,10 +85,6 @@ const achievedGoals = computed(() => store.goalProgress.filter(g => g.status ===
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('tr-TR')
-}
-function goalStatusClass(s: string): string {
-  const map: Record<string, string> = { active: 'badge-primary', achieved: 'badge-success', on_hold: 'badge-warning', abandoned: 'badge-error' }
-  return map[s] ?? 'badge-ghost'
 }
 function trendClass(t: string): string {
   return t === 'improving' ? 'text-success' : t === 'declining' ? 'text-error' : 'text-warning'

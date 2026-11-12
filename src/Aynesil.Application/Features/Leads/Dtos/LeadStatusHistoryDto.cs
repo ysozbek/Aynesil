@@ -5,8 +5,10 @@ public record LeadStatusHistoryDto(
     Guid Id,
     Guid? StatusId,
     string? StatusCode,
+    string? StatusName,
     Guid? PipelineStageId,
     string? PipelineStageCode,
+    string? PipelineStageName,
     DateTimeOffset ChangedAt,
     Guid? ChangedBy,
     string? ChangedByName

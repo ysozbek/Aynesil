@@ -35,11 +35,13 @@ public sealed class ConvertLeadToStudentCommandHandler : IRequestHandler<Convert
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public ConvertLeadToStudentCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public ConvertLeadToStudentCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<LeadDto> Handle(ConvertLeadToStudentCommand req, CancellationToken ct)
@@ -54,6 +56,6 @@ public sealed class ConvertLeadToStudentCommandHandler : IRequestHandler<Convert
 
         lead.ConvertToStudent(req.StudentId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
-        return (await LeadProjection.LoadAsync(_db, lead.Id, ct))!;
+        return (await LeadProjection.LoadAsync(_db, lead.Id, _tenant.Locale, ct))!;
     }
 }

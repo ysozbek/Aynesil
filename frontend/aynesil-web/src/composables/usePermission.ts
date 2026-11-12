@@ -3,12 +3,13 @@
  * Usage: const { can, canAny } = usePermission()
  */
 import { usePermissionStore } from '@/stores/permission.store'
+import type { PermissionCode } from '@/constants/permissions'
 
 export function usePermission() {
   const store = usePermissionStore()
   return {
-    can: (code: string) => store.can(code),
-    canAny: (...codes: string[]) => store.canAny(...codes),
-    canAll: (...codes: string[]) => store.canAll(...codes),
+    can: (code: PermissionCode) => store.can(code),
+    canAny: (...codes: PermissionCode[]) => store.canAny(...codes),
+    canAll: (...codes: PermissionCode[]) => store.canAll(...codes),
   }
 }

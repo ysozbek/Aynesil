@@ -9,6 +9,7 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { InstitutionListItemDto, InstitutionListQuery } from '@/types/consultancy.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -60,7 +61,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('consultancy.institution.list.title')" :description="t('consultancy.institution.list.subtitle')">
       <button
-        v-if="can('institution:create')"
+        v-if="can(Permissions.Institutions.Create)"
         @click="router.push('/consultancy/institutions/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -120,7 +121,7 @@ onMounted(doFetch)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('institution:update')"
+            v-if="can(Permissions.Institutions.Update)"
             @click="router.push(`/consultancy/institutions/${row.id}/edit`)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"

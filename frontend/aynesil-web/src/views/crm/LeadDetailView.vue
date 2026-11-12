@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useLeadActivityStore } from '@/stores/leadActivity.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -10,7 +9,9 @@ import { usePermission } from '@/composables/usePermission'
 import { useBranchStore } from '@/stores/branch.store'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -18,7 +19,6 @@ const router = useRouter()
 const store = useLeadStore()
 const activityStore = useLeadActivityStore()
 const refData = useRefDataStore()
-const crm = useCrmLabels()
 const branchStore = useBranchStore()
 const { can } = usePermission()
 
@@ -35,7 +35,7 @@ const historyRows = computed(() => {
   return asc
     .map((h, i) => ({
       ...h,
-      previousStatusCode: i > 0 ? asc[i - 1].statusCode : null,
+      previousStatusName: i > 0 ? asc[i - 1].statusName : null,
       hasPrevious: i > 0,
     }))
     .reverse()
@@ -53,7 +53,6 @@ onMounted(async () => {
     activityStore.fetchHistory(id.value),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
     refData.getValues('pipeline_stage').then(v => { stages.value = v }),
-    crm.load('lead_source', 'lead_status', 'pipeline_stage', 'activity_type'),
     refData.getValues('ACTIVITY_TYPE').then(v => { activityTypes.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])
@@ -190,15 +189,6 @@ async function submitCompleteInterview() {
   }
 }
 
-function interviewStatusBadge(status: string): string {
-  const map: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    completed: 'bg-emerald-100 text-emerald-700',
-    cancelled: 'bg-red-100 text-red-700',
-    no_show: 'bg-amber-100 text-amber-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
 </script>
 
 <template>
@@ -230,10 +220,10 @@ function interviewStatusBadge(status: string): string {
           <h1 class="text-2xl font-bold text-foreground">{{ lead.contactName }}</h1>
           <div class="flex items-center gap-2 mt-1 flex-wrap">
             <span v-if="lead.pipelineStageCode" class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-              {{ crm.label('pipeline_stage', lead.pipelineStageCode) }}
+              {{ lead.pipelineStageName }}
             </span>
             <span v-if="lead.statusCode" class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-              {{ crm.label('lead_status', lead.statusCode) }}
+              {{ lead.statusName }}
             </span>
             <span v-if="lead.isConverted" class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
               {{ t('crm.lead.converted') }}
@@ -242,42 +232,42 @@ function interviewStatusBadge(status: string): string {
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
-            v-if="can('lead:update') && !lead.isConverted"
+            v-if="can(Permissions.Leads.Update) && !lead.isConverted"
             @click="openStatusModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >
             {{ t('crm.lead.changeStatus') }}
           </button>
           <button
-            v-if="can('lead_activity:create')"
+            v-if="can(Permissions.LeadActivities.Create)"
             @click="openActivityModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >
             {{ t('crm.activity.log') }}
           </button>
           <button
-            v-if="can('interview:create')"
+            v-if="can(Permissions.Interviews.Create)"
             @click="openInterviewModal"
             class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
           >
             {{ t('crm.interview.schedule') }}
           </button>
           <button
-            v-if="can('lead:update')"
+            v-if="can(Permissions.Leads.Update)"
             @click="router.push({ name: 'lead-edit', params: { id: lead.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="can('lead:convert') && !lead.isConverted"
+            v-if="can(Permissions.Leads.Convert) && !lead.isConverted"
             @click="router.push({ name: 'lead-convert', params: { id: lead.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
           >
             {{ t('crm.lead.convert') }}
           </button>
           <button
-            v-if="can('lead:delete') && !lead.isConverted"
+            v-if="can(Permissions.Leads.Delete) && !lead.isConverted"
             @click="showDelete = true"
             class="px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
           >
@@ -334,7 +324,7 @@ function interviewStatusBadge(status: string): string {
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('crm.lead.source') }}</dt>
-              <dd class="font-medium text-foreground">{{ crm.label('lead_source', lead.sourceCode) ?? '—' }}</dd>
+              <dd class="font-medium text-foreground">{{ lead.sourceName ?? '—' }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('crm.lead.assignedTo') }}</dt>
@@ -375,7 +365,7 @@ function interviewStatusBadge(status: string): string {
               <div>
                 <p class="text-sm font-medium text-foreground">{{ act.subject ?? t('crm.activity.noSubject') }}</p>
                 <p class="text-xs text-muted-foreground mt-0.5">
-                  {{ crm.label('activity_type', act.activityTypeCode) ?? '—' }} · {{ act.direction === 'inbound' ? t('crm.activity.inbound') : t('crm.activity.outbound') }} · {{ formatDateTime(act.occurredAt) }}
+                  {{ act.activityTypeName ?? '—' }} · {{ act.direction === 'inbound' ? t('crm.activity.inbound') : t('crm.activity.outbound') }} · {{ formatDateTime(act.occurredAt) }}
                 </p>
               </div>
               <span v-if="act.followUpAt" class="text-xs text-amber-600 font-medium">
@@ -400,15 +390,13 @@ function interviewStatusBadge(status: string): string {
             class="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div class="flex items-start justify-between">
               <div>
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', interviewStatusBadge(iv.status)]">
-                  {{ t(`crm.interview.status.${iv.status}`) }}
-                </span>
+                <StatusBadge entity="leadInterview" :status="iv.status" />
                 <p class="mt-2 text-sm text-foreground">{{ t('crm.interview.scheduledAt') }}: {{ formatDateTime(iv.scheduledAt) }}</p>
                 <p v-if="iv.conductedAt" class="text-sm text-foreground">{{ t('crm.interview.conductedAt') }}: {{ formatDateTime(iv.conductedAt) }}</p>
                 <p v-if="iv.campusName" class="text-xs text-muted-foreground">{{ iv.campusName }}</p>
                 <p v-if="iv.conductedByName" class="text-xs text-muted-foreground">{{ t('crm.interview.conductedBy') }}: {{ iv.conductedByName }}</p>
               </div>
-              <div v-if="can('interview:manage') && iv.status === 'scheduled'" class="flex gap-2">
+              <div v-if="can(Permissions.Interviews.Manage) && iv.status === 'scheduled'" class="flex gap-2">
                 <button @click="openCompleteInterview(iv.id, iv.rowVersion)"
                   class="px-2 py-1 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
                   {{ t('crm.interview.complete') }}
@@ -441,13 +429,13 @@ function interviewStatusBadge(status: string): string {
               <p class="text-xs text-muted-foreground mb-1">{{ formatDateTime(h.changedAt) }}<template v-if="h.changedByName"> · {{ h.changedByName }}</template></p>
               <p class="text-sm text-foreground">
                 <template v-if="h.hasPrevious">
-                  <span class="font-medium">{{ crm.label('lead_status', h.previousStatusCode) ?? '—' }}</span>
+                  <span class="font-medium">{{ h.previousStatusName ?? '—' }}</span>
                   →
                 </template>
-                <span class="font-medium">{{ crm.label('lead_status', h.statusCode) ?? '—' }}</span>
+                <span class="font-medium">{{ h.statusName ?? '—' }}</span>
               </p>
               <p v-if="h.pipelineStageCode" class="text-xs text-muted-foreground">
-                {{ t('crm.lead.pipelineStage') }}: {{ crm.label('pipeline_stage', h.pipelineStageCode) }}
+                {{ t('crm.lead.pipelineStage') }}: {{ h.pipelineStageName }}
               </p>
             </div>
           </div>

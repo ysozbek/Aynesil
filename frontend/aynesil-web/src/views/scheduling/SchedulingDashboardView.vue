@@ -6,7 +6,9 @@ import { useSessionStore } from '@/stores/session.store'
 import { useMakeupSessionStore } from '@/stores/makeupSession.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { toLocalDateString, startOfDayIso, endOfDayIso } from '@/utils/datetime'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -47,20 +49,6 @@ function formatDate(val: string): string {
   return new Date(val).toLocaleDateString('tr-TR')
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-    no_show: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(status: string): string {
-  return t(`scheduling.session.status.${status}`) || status
-}
 </script>
 
 <template>
@@ -71,7 +59,7 @@ function statusLabel(status: string): string {
     >
       <div class="flex items-center gap-2">
         <button
-          v-if="can('session:create')"
+          v-if="can(Permissions.Sessions.Create)"
           @click="router.push({ name: 'session-new' })"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
         >
@@ -184,9 +172,7 @@ function statusLabel(status: string): string {
                 {{ session.participantCount }} {{ t('scheduling.session.participants') }}
               </p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', statusColor(session.status)]">
-              {{ statusLabel(session.status) }}
-            </span>
+            <StatusBadge entity="session" :status="session.status" class="shrink-0" />
           </div>
         </div>
       </div>

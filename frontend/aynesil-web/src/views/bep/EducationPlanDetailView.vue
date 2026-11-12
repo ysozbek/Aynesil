@@ -6,10 +6,12 @@ import { useBepStore } from '@/stores/bep.store'
 import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import { goalService } from '@/services/goal.service'
 import type { EducationPlanGoalDto } from '@/types/bep.types'
 import type { StudentGoalListItemDto } from '@/types/goal.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -40,40 +42,6 @@ function formatDate(val: string | null): string {
 // Status tokens mirror the backend domain:
 //   draft, in_review, approved, active, revised, closed
 // (`EducationPlan.cs` + `db/layer2_sped/05_education.sql`).
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    in_review: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    active: 'bg-blue-100 text-blue-700',
-    revised: 'bg-amber-100 text-amber-700',
-    closed: 'bg-slate-100 text-slate-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    draft: t('bep.status.draft'),
-    in_review: t('bep.status.in_review'),
-    approved: t('bep.status.approved'),
-    active: t('bep.status.active'),
-    revised: t('bep.status.revised'),
-    closed: t('bep.status.closed'),
-  }
-  return map[status] ?? status
-}
-
-function goalStatusColor(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    achieved: 'bg-teal-100 text-teal-700',
-    discontinued: 'bg-red-100 text-red-700',
-    on_hold: 'bg-orange-100 text-orange-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
 function trendIcon(trend: string | null): string {
   if (trend === 'improving') return '↑'
   if (trend === 'declining') return '↓'
@@ -84,12 +52,6 @@ function trendColor(trend: string | null): string {
   if (trend === 'improving') return 'text-emerald-600'
   if (trend === 'declining') return 'text-red-600'
   return 'text-gray-500'
-}
-
-function decisionColor(decision: string): string {
-  if (decision === 'approved') return 'bg-green-100 text-green-700'
-  if (decision === 'rejected') return 'bg-red-100 text-red-700'
-  return 'bg-gray-100 text-gray-700'
 }
 
 // ── Workflow actions ──────────────────────────────────────────────────────────
@@ -309,9 +271,7 @@ async function doAddReview() {
           <div class="flex items-center gap-2 mt-1 flex-wrap">
             <span class="text-sm text-muted-foreground">{{ plan.studentName }}</span>
             <span class="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-accent text-foreground">v{{ plan.version }}</span>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(plan.status)]">
-              {{ statusLabel(plan.status) }}
-            </span>
+            <StatusBadge entity="educationPlan" :status="plan.status" />
           </div>
         </div>
 
@@ -321,7 +281,7 @@ async function doAddReview() {
           <!-- Draft actions -->
           <template v-if="plan.status === 'draft'">
             <button
-              v-if="can('education_plan:submit')"
+              v-if="can(Permissions.EducationPlans.Submit)"
               @click="doSubmit"
               :disabled="store.saving"
               class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
@@ -329,7 +289,7 @@ async function doAddReview() {
               {{ t('bep.submit') }}
             </button>
             <button
-              v-if="can('education_plan:update')"
+              v-if="can(Permissions.EducationPlans.Update)"
               @click="router.push({ name: 'bep-edit', params: { id: plan.id } })"
               class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
             >
@@ -340,14 +300,14 @@ async function doAddReview() {
           <!-- In review actions -->
           <template v-else-if="plan.status === 'in_review'">
             <button
-              v-if="can('education_plan:approve')"
+              v-if="can(Permissions.EducationPlans.Approve)"
               @click="openApproveModal"
               class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
             >
               {{ t('bep.approve') }}
             </button>
             <button
-              v-if="can('education_plan:approve')"
+              v-if="can(Permissions.EducationPlans.Approve)"
               @click="openRejectModal"
               class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
             >
@@ -358,7 +318,7 @@ async function doAddReview() {
           <!-- Approved actions -->
           <template v-else-if="plan.status === 'approved'">
             <button
-              v-if="can('education_plan:approve')"
+              v-if="can(Permissions.EducationPlans.Approve)"
               @click="doActivate"
               :disabled="store.saving"
               class="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
@@ -370,7 +330,7 @@ async function doAddReview() {
           <!-- Active actions -->
           <template v-else-if="plan.status === 'active'">
             <button
-              v-if="can('education_plan:update')"
+              v-if="can(Permissions.EducationPlans.Update)"
               @click="doClose"
               :disabled="store.saving"
               class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-60"
@@ -378,16 +338,16 @@ async function doAddReview() {
               {{ t('bep.close') }}
             </button>
             <button
-              v-if="can('education_plan:revise')"
+              v-if="can(Permissions.EducationPlans.Revise)"
               @click="showReviseModal = true"
               class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
             >
               {{ t('bep.revise') }}
             </button>
             <!-- Backend `PATCH /education-plans/{id}/guardian-visibility` enforces
-                 `education_plan:approve` (EducationPlansController.cs). -->
+                 Permissions.EducationPlans.Approve (EducationPlansController.cs). -->
             <button
-              v-if="can('education_plan:approve')"
+              v-if="can(Permissions.EducationPlans.Approve)"
               @click="toggleGuardianVisibility"
               :disabled="store.saving"
               :class="['px-3 py-2 text-sm rounded-lg border transition-colors disabled:opacity-60', plan.guardianVisible ? 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'border-border hover:bg-accent']"
@@ -468,7 +428,7 @@ async function doAddReview() {
       <!-- Goals Tab -->
       <div v-else-if="activeTab === 'goals'" class="space-y-6">
         <div
-          v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+          v-if="can(Permissions.EducationPlans.ManageGoals) && canEditPlanStructure"
           class="flex justify-end"
         >
           <button
@@ -498,9 +458,7 @@ async function doAddReview() {
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-foreground">{{ goal.statement }}</p>
                   <div class="flex flex-wrap items-center gap-2 mt-2">
-                    <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', goalStatusColor(goal.goalStatus)]">
-                      {{ goal.goalStatus }}
-                    </span>
+                    <StatusBadge entity="studentGoal" :status="goal.goalStatus" />
                     <span v-if="goal.categoryLabel" class="text-xs text-muted-foreground">{{ goal.categoryLabel }}</span>
                     <span v-if="goal.targetDate" class="text-xs text-muted-foreground">{{ formatDate(goal.targetDate) }}</span>
                     <span v-if="goal.latestTrend" :class="['text-sm font-bold', trendColor(goal.latestTrend)]">
@@ -520,7 +478,7 @@ async function doAddReview() {
                   </div>
                 </div>
                 <div
-                  v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+                  v-if="can(Permissions.EducationPlans.ManageGoals) && canEditPlanStructure"
                   class="flex items-center gap-1 shrink-0"
                 >
                   <button
@@ -574,9 +532,7 @@ async function doAddReview() {
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-foreground">{{ goal.statement }}</p>
                   <div class="flex flex-wrap items-center gap-2 mt-2">
-                    <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', goalStatusColor(goal.goalStatus)]">
-                      {{ goal.goalStatus }}
-                    </span>
+                    <StatusBadge entity="studentGoal" :status="goal.goalStatus" />
                     <span v-if="goal.categoryLabel" class="text-xs text-muted-foreground">{{ goal.categoryLabel }}</span>
                     <span v-if="goal.targetDate" class="text-xs text-muted-foreground">{{ formatDate(goal.targetDate) }}</span>
                     <span v-if="goal.latestTrend" :class="['text-sm font-bold', trendColor(goal.latestTrend)]">
@@ -596,7 +552,7 @@ async function doAddReview() {
                   </div>
                 </div>
                 <div
-                  v-if="can('education_plan:manage_goals') && canEditPlanStructure"
+                  v-if="can(Permissions.EducationPlans.ManageGoals) && canEditPlanStructure"
                   class="flex items-center gap-1 shrink-0"
                 >
                   <button
@@ -639,7 +595,7 @@ async function doAddReview() {
       <div v-else-if="activeTab === 'reviews'" class="space-y-4">
         <div class="flex justify-end">
           <button
-            v-if="can('education_plan:add_review')"
+            v-if="can(Permissions.EducationPlans.AddReview)"
             @click="openReviewModal"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
@@ -687,9 +643,7 @@ async function doAddReview() {
               <p class="text-sm font-medium text-foreground">{{ approval.approverName ?? '—' }}</p>
               <p class="text-xs text-muted-foreground mt-0.5">{{ formatDate(approval.decidedAt) }}</p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', decisionColor(approval.decision)]">
-              {{ approval.decision }}
-            </span>
+            <StatusBadge entity="educationPlanDecision" :status="approval.decision" />
           </div>
           <p v-if="approval.comment" class="mt-2 text-sm text-muted-foreground">{{ approval.comment }}</p>
         </div>

@@ -9,7 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { ConsultancyAgreementListItemDto, AgreementListQuery } from '@/types/consultancy.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -36,28 +38,6 @@ const columns: Column<ConsultancyAgreementListItemDto>[] = [
   { key: 'signedDate', label: t('consultancyContract.fields.signedDate'), width: '100px' },
   { key: 'status', label: t('common.status'), width: '100px' },
 ]
-
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    sent: 'bg-blue-100 text-blue-700',
-    signed: 'bg-green-100 text-green-700',
-    expired: 'bg-gray-100 text-gray-800',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    draft: t('consultancyContract.draft'),
-    sent: t('consultancyContract.sent'),
-    signed: t('consultancyContract.signed'),
-    expired: t('consultancyContract.expired'),
-    cancelled: t('consultancyContract.cancelled'),
-  }
-  return map[s] ?? s
-}
 
 async function doFetch() {
   filters.page = 1
@@ -86,7 +66,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('consultancyContract.title')" :description="t('consultancyContract.subtitle')">
       <button
-        v-if="can('consultancy_agreement:create')"
+        v-if="can(Permissions.ConsultancyAgreements.Create)"
         @click="router.push('/consultancy/agreements/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -102,11 +82,11 @@ onMounted(async () => {
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="draft">{{ t('consultancyContract.draft') }}</option>
-          <option value="sent">{{ t('consultancyContract.sent') }}</option>
-          <option value="signed">{{ t('consultancyContract.signed') }}</option>
-          <option value="expired">{{ t('consultancyContract.expired') }}</option>
-          <option value="cancelled">{{ t('consultancyContract.cancelled') }}</option>
+          <option value="draft">{{ t('statusBadge.consultancyAgreement.draft') }}</option>
+          <option value="sent">{{ t('statusBadge.consultancyAgreement.sent') }}</option>
+          <option value="signed">{{ t('statusBadge.consultancyAgreement.signed') }}</option>
+          <option value="expired">{{ t('statusBadge.consultancyAgreement.expired') }}</option>
+          <option value="cancelled">{{ t('statusBadge.consultancyAgreement.cancelled') }}</option>
         </select>
       </div>
       <div>
@@ -148,9 +128,7 @@ onMounted(async () => {
         <span class="text-muted-foreground text-xs">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(String(value))]">
-          {{ statusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="consultancyAgreement" :status="String(value)" />
       </template>
     </DataTable>
 

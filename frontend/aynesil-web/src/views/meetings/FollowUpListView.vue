@@ -10,7 +10,9 @@ import { meetingService } from '@/services/meeting.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { MeetingFollowUpDto } from '@/types/meeting.types'
+import { Permissions } from '@/constants/permissions'
 
 type FollowUpRow = MeetingFollowUpDto & { meetingTitle?: string }
 
@@ -38,26 +40,6 @@ const filteredFollowUps = computed(() => {
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('tr-TR')
-}
-
-function followUpStatusClass(s: string): string {
-  const map: Record<string, string> = {
-    [MeetingFollowUpStatus.Open]: 'bg-amber-100 text-amber-700',
-    [MeetingFollowUpStatus.InProgress]: 'bg-blue-100 text-blue-700',
-    [MeetingFollowUpStatus.Done]: 'bg-green-100 text-green-700',
-    [MeetingFollowUpStatus.Cancelled]: 'bg-gray-100 text-gray-600',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function followUpStatusLabel(s: string): string {
-  const map: Record<string, string> = {
-    [MeetingFollowUpStatus.Open]: t('followUp.open'),
-    [MeetingFollowUpStatus.InProgress]: t('followUp.inProgress'),
-    [MeetingFollowUpStatus.Done]: t('followUp.done'),
-    [MeetingFollowUpStatus.Cancelled]: t('followUp.cancelled'),
-  }
-  return map[s] ?? s
 }
 
 function isOverdue(dueDate?: string, status?: string): boolean {
@@ -126,13 +108,11 @@ onMounted(loadFollowUps)
           :key="fu.id"
           class="flex items-center gap-3 px-4 py-3"
         >
-          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-            {{ followUpStatusLabel(fu.status) }}
-          </span>
+          <StatusBadge entity="meetingFollowUp" :status="fu.status" />
           <span class="flex-1 text-sm text-foreground">{{ fu.action }}</span>
           <span v-if="fu.dueDate" class="text-xs text-red-600 font-medium">{{ formatDate(fu.dueDate) }}</span>
           <button
-            v-if="can('meeting:manage_follow_ups') && fu.status !== MeetingFollowUpStatus.Done && fu.status !== MeetingFollowUpStatus.Cancelled"
+            v-if="can(Permissions.Meetings.ManageFollowUps) && fu.status !== MeetingFollowUpStatus.Done && fu.status !== MeetingFollowUpStatus.Cancelled"
             @click="completeFollowUp(fu)"
             :disabled="followUpStore.saving"
             class="px-2 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -154,9 +134,7 @@ onMounted(loadFollowUps)
         <span class="font-medium text-foreground">{{ value }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', followUpStatusClass(String(value))]">
-          {{ followUpStatusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="meetingFollowUp" :status="String(value)" />
       </template>
       <template #cell-dueDate="{ row, value }">
         <span :class="isOverdue(String(value), row.status) ? 'text-red-600 font-medium' : 'text-muted-foreground'">
@@ -169,7 +147,7 @@ onMounted(loadFollowUps)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('meeting:manage_follow_ups') && row.status !== MeetingFollowUpStatus.Done && row.status !== MeetingFollowUpStatus.Cancelled"
+            v-if="can(Permissions.Meetings.ManageFollowUps) && row.status !== MeetingFollowUpStatus.Done && row.status !== MeetingFollowUpStatus.Cancelled"
             @click="completeFollowUp(row)"
             :disabled="followUpStore.saving"
             class="px-2 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"

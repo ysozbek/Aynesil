@@ -11,6 +11,7 @@ import FormModal from '@/components/shared/FormModal.vue'
 import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { LeaveBalanceDto } from '@/types/leave.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const leaveStore = useLeaveStore()
@@ -78,7 +79,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('leave.balance.title')" :description="t('leave.balance.subtitle')">
       <button
-        v-if="can('leave_balance:manage') || can('leave_request:approve')"
+        v-if="can(Permissions.LeaveBalances.Manage) || can(Permissions.LeaveRequests.Approve)"
         @click="showCarryForwardModal = true"
         class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent font-medium"
       >
@@ -130,7 +131,7 @@ onMounted(async () => {
       <template #actions="{ row }">
         <div class="flex justify-end" @click.stop>
           <button
-            v-if="can('leave_balance:manage') || can('leave_request:approve')"
+            v-if="can(Permissions.LeaveBalances.Manage) || can(Permissions.LeaveRequests.Approve)"
             @click="openEntitlement(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('leave.balance.setEntitlement')"

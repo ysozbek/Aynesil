@@ -6,12 +6,13 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const refDataStore = useRefDataStore()
 const { can } = usePermission()
 
-const canManage = computed(() => can('ref_data:manage'))
+const canManage = computed(() => can(Permissions.RefData.Manage))
 
 const REF_TYPES = [
   { code: 'session_type', labelKey: 'refData.types.session_type' },

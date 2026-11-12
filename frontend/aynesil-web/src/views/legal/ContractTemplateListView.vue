@@ -7,6 +7,7 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { ContractTemplateListItemDto } from '@/types/legal.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -49,15 +50,7 @@ onMounted(() => {
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-isCurrent="{ value }">
-        <span
-          v-if="value"
-          class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
-        >
-          {{ t('legal.template.current') }}
-        </span>
-        <span v-else class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-          {{ t('legal.template.historical') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" :true-label="t('legal.template.current')" :false-label="t('legal.template.historical')" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>

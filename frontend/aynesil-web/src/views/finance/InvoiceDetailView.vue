@@ -6,7 +6,9 @@ import { useInvoiceStore } from '@/stores/invoice.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { AddInvoiceLinePayload } from '@/types/finance.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -33,18 +35,6 @@ function formatDate(val: string | undefined | null): string {
 
 function formatCurrency(val: number, currency = 'TRY'): string {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(val)
-}
-
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    issued: 'bg-blue-100 text-blue-700',
-    paid: 'bg-green-100 text-green-700',
-    partial: 'bg-amber-100 text-amber-700',
-    overdue: 'bg-red-100 text-red-700',
-    void: 'bg-gray-100 text-gray-500',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
 async function doAddLine() {
@@ -83,16 +73,14 @@ function printInvoice() {
       :description="invoice ? (invoice.studentFullName ?? '') : ''"
     >
       <div v-if="invoice" class="flex items-center gap-2">
-        <span :class="['px-3 py-1 rounded-full text-sm font-medium', statusColor(invoice.status)]">
-          {{ t(`finance.invoice.status.${invoice.status}`) }}
-        </span>
+        <StatusBadge entity="invoice" :status="invoice.status" />
         <button
-          v-if="can('invoice:update') && invoice.status === 'draft'"
+          v-if="can(Permissions.Invoices.Update) && invoice.status === 'draft'"
           @click="issueModal = true"
           class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
         >{{ t('finance.invoice.issue') }}</button>
         <button
-          v-if="can('invoice:update') && (invoice.status === 'issued' || invoice.status === 'overdue')"
+          v-if="can(Permissions.Invoices.Update) && (invoice.status === 'issued' || invoice.status === 'overdue')"
           @click="voidModal = true"
           class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm hover:bg-red-100"
         >{{ t('finance.invoice.void') }}</button>
@@ -139,7 +127,7 @@ function printInvoice() {
             <div class="flex items-center justify-between p-3 border-b border-border bg-accent/50">
               <h4 class="text-sm font-medium">{{ t('finance.invoice.lines') }}</h4>
               <button
-                v-if="can('invoice:update') && invoice.status === 'draft'"
+                v-if="can(Permissions.Invoices.Update) && invoice.status === 'draft'"
                 @click="addLineModal = true"
                 class="text-xs text-primary hover:underline"
               >+ {{ t('finance.invoice.addLine') }}</button>
@@ -154,7 +142,7 @@ function printInvoice() {
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.qty') }}</th>
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.unitPrice') }}</th>
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.lineTotal') }}</th>
-                  <th v-if="can('invoice:update') && invoice.status === 'draft'" class="px-3 py-2" />
+                  <th v-if="can(Permissions.Invoices.Update) && invoice.status === 'draft'" class="px-3 py-2" />
                 </tr>
               </thead>
               <tbody>
@@ -163,7 +151,7 @@ function printInvoice() {
                   <td class="px-3 py-2 text-right font-mono">{{ line.quantity }}</td>
                   <td class="px-3 py-2 text-right font-mono">{{ formatCurrency(line.unitPrice, invoice.currency) }}</td>
                   <td class="px-3 py-2 text-right font-mono font-medium">{{ formatCurrency(line.lineTotal, invoice.currency) }}</td>
-                  <td v-if="can('invoice:update') && invoice.status === 'draft'" class="px-3 py-2">
+                  <td v-if="can(Permissions.Invoices.Update) && invoice.status === 'draft'" class="px-3 py-2">
                     <button @click="removeLine(line.id)" class="text-xs text-red-500 hover:underline">{{ t('common.delete') }}</button>
                   </td>
                 </tr>

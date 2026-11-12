@@ -11,6 +11,7 @@ import type { Column } from '@/components/shared/DataTable.vue'
 import type { ScholarshipListItemDto } from '@/types/finance.types'
 import type { PaginatedResult as PR } from '@/types/api.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const refData = useRefDataStore()
@@ -95,7 +96,7 @@ function formatDate(val: unknown): string {
   <div>
     <PageHeader :title="t('finance.scholarship.title')" :description="t('finance.scholarship.description')">
       <button
-        v-if="can('scholarship:grant')"
+        v-if="can(Permissions.Scholarships.Grant)"
         @click="showForm = true"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >

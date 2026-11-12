@@ -7,6 +7,8 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -30,16 +32,6 @@ function formatDatetime(dt: string) {
 
 // Backend status tokens are lowercase (`LeaveRequest.cs`):
 //   pending | approved | rejected | cancelled
-function statusClass(status: string) {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    cancelled: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
-
 async function doApprove() {
   if (!leave.value) return
   await leaveStore.approveLeave(id, { comment: actionComment.value, rowVersion: leave.value.rowVersion })
@@ -81,33 +73,31 @@ onMounted(async () => {
     <template v-else>
       <PageHeader :title="t('leave.detail.title')" :description="leave.educatorFullName">
         <div class="flex flex-wrap items-center gap-2">
-          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', statusClass(leave.status)]">
-            {{ t(`leave.status.${leave.status}`, leave.status) }}
-          </span>
+          <StatusBadge entity="leave" :status="leave.status" />
           <button
-            v-if="leave.status === 'pending' && can('leave_request:update')"
+            v-if="leave.status === 'pending' && can(Permissions.LeaveRequests.Update)"
             @click="router.push({ name: 'leave-edit', params: { id: leave.id } })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="leave.status === 'pending' && can('leave_request:approve')"
+            v-if="leave.status === 'pending' && can(Permissions.LeaveRequests.Approve)"
             @click="showApproveModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('leave.actions.approve') }}
           </button>
-          <!-- Reject uses `leave_request:reject` on the backend. -->
+          <!-- Reject uses Permissions.LeaveRequests.Reject on the backend. -->
           <button
-            v-if="leave.status === 'pending' && can('leave_request:reject')"
+            v-if="leave.status === 'pending' && can(Permissions.LeaveRequests.Reject)"
             @click="showRejectModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
           >
             {{ t('leave.actions.reject') }}
           </button>
           <button
-            v-if="(leave.status === 'pending' || leave.status === 'approved') && can('leave_request:cancel')"
+            v-if="(leave.status === 'pending' || leave.status === 'approved') && can(Permissions.LeaveRequests.Cancel)"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >

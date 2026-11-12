@@ -8,7 +8,9 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { InvoiceListItemDto } from '@/types/finance.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -61,24 +63,13 @@ function formatCurrency(val: number, currency = 'TRY'): string {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(val)
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    issued: 'bg-blue-100 text-blue-700',
-    paid: 'bg-green-100 text-green-700',
-    partial: 'bg-amber-100 text-amber-700',
-    overdue: 'bg-red-100 text-red-700',
-    void: 'bg-gray-100 text-gray-500',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
-}
 </script>
 
 <template>
   <div>
     <PageHeader :title="t('finance.invoice.title')" :description="t('finance.invoice.description')">
       <button
-        v-if="can('invoice:create')"
+        v-if="can(Permissions.Invoices.Create)"
         @click="router.push({ name: 'invoice-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -99,12 +90,12 @@ function statusColor(status: string): string {
       />
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="draft">{{ t('finance.invoice.status.draft') }}</option>
-        <option value="issued">{{ t('finance.invoice.status.issued') }}</option>
-        <option value="paid">{{ t('finance.invoice.status.paid') }}</option>
-        <option value="partial">{{ t('finance.invoice.status.partial') }}</option>
-        <option value="overdue">{{ t('finance.invoice.status.overdue') }}</option>
-        <option value="void">{{ t('finance.invoice.status.void') }}</option>
+        <option value="draft">{{ t('statusBadge.invoice.draft') }}</option>
+        <option value="issued">{{ t('statusBadge.invoice.issued') }}</option>
+        <option value="paid">{{ t('statusBadge.invoice.paid') }}</option>
+        <option value="partial">{{ t('statusBadge.invoice.partial') }}</option>
+        <option value="overdue">{{ t('statusBadge.invoice.overdue') }}</option>
+        <option value="void">{{ t('statusBadge.invoice.void') }}</option>
       </select>
       <input v-model="query.from" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
       <input v-model="query.to" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -133,9 +124,7 @@ function statusColor(status: string): string {
         </span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ t(`finance.invoice.status.${row.status}`) }}
-        </span>
+        <StatusBadge entity="invoice" :status="row.status" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>

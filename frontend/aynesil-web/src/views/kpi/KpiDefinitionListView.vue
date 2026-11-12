@@ -9,6 +9,8 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { KpiDefinitionListItemDto, KpiDefinitionListQuery } from '@/types/kpi.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -111,14 +113,7 @@ onMounted(async () => {
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-isActive="{ value }">
-        <span
-          :class="[
-            'px-2 py-0.5 rounded-full text-xs font-medium',
-            value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700',
-          ]"
-        >
-          {{ value ? t('common.active') : t('common.passive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" />
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
@@ -132,7 +127,7 @@ onMounted(async () => {
             </svg>
           </button>
           <button
-            v-if="can('kpi:manage')"
+            v-if="can(Permissions.Kpi.Manage)"
             @click="kpiStore.toggleDefinition(row.id, !row.isActive)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="row.isActive ? t('common.passive') : t('common.active')"

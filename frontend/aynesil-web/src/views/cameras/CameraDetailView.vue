@@ -7,6 +7,8 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import RoomPicker from '@/components/pickers/RoomPicker.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -47,14 +49,7 @@ onMounted(() => {
     <template v-else>
       <PageHeader :title="cam.name" :description="cam.code">
         <div class="flex flex-wrap items-center gap-2">
-          <span
-            :class="[
-              'px-2.5 py-1 rounded-full text-xs font-medium',
-              cam.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700',
-            ]"
-          >
-            {{ cam.isActive ? t('common.active') : t('common.passive') }}
-          </span>
+          <StatusBadge :value="Boolean(cam.isActive)" />
           <button
             @click="router.push({ name: 'cameras' })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
@@ -62,7 +57,7 @@ onMounted(() => {
             {{ t('common.back') }}
           </button>
           <button
-            v-if="can('camera:update')"
+            v-if="can(Permissions.Camera.Update)"
             @click="router.push({ name: 'camera-edit', params: { id: cam.id } })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
@@ -98,7 +93,7 @@ onMounted(() => {
           <div class="flex items-center justify-between p-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('camera.detail.roomAssignments') }}</h3>
             <button
-              v-if="can('camera:update')"
+              v-if="can(Permissions.Camera.Update)"
               @click="showRoomModal = true"
               class="p-1.5 rounded-lg hover:bg-accent text-primary"
               :title="t('camera.detail.assignRoom')"
@@ -122,7 +117,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">{{ r.roomCode }}</p>
               </div>
               <button
-                v-if="can('camera:update')"
+                v-if="can(Permissions.Camera.Update)"
                 @click="cameraStore.removeRoom(cam.id, r.roomId)"
                 class="p-1.5 rounded-lg hover:bg-red-50 text-red-600 shrink-0"
                 :title="t('common.delete')"
@@ -153,7 +148,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">{{ formatDate(s.sessionEndsAt) }}</p>
               </div>
               <button
-                v-if="can('camera:update')"
+                v-if="can(Permissions.Camera.Update)"
                 @click="cameraStore.removeSession(cam.id, s.sessionId)"
                 class="p-1.5 rounded-lg hover:bg-red-50 text-red-600 shrink-0"
                 :title="t('common.delete')"

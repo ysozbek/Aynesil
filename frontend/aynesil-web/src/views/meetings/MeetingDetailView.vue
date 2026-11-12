@@ -8,7 +8,9 @@ import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { MeetingParticipantDto } from '@/types/meeting.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -29,20 +31,20 @@ const followUpForm = ref({ action: '', dueDate: '' })
 
 const canEditMeeting = computed(() => {
   const s = meeting.value?.status
-  return s !== 'cancelled' && s !== 'completed' && can('meeting:update')
+  return s !== 'cancelled' && s !== 'completed' && can(Permissions.Meetings.Update)
 })
 
 const canManageOutcomes = computed(() =>
-  canEditMeeting.value && can('meeting:record_outcome')
+  canEditMeeting.value && can(Permissions.Meetings.RecordOutcome)
 )
 const canManageFollowUps = computed(() =>
-  canEditMeeting.value && can('meeting:manage_follow_ups')
+  canEditMeeting.value && can(Permissions.Meetings.ManageFollowUps)
 )
 const canManageParticipants = computed(() =>
-  canEditMeeting.value && can('meeting:manage_participants')
+  canEditMeeting.value && can(Permissions.Meetings.ManageParticipants)
 )
 const canRecordAttendance = computed(() =>
-  canEditMeeting.value && can('meeting:record_attendance')
+  canEditMeeting.value && can(Permissions.Meetings.RecordAttendance)
 )
 
 function formatDateTime(d: string) {
@@ -50,50 +52,6 @@ function formatDateTime(d: string) {
 }
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('tr-TR')
-}
-
-function meetingStatusClass(s: string) {
-  const map: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function meetingStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    scheduled: 'Planlandı',
-    completed: 'Tamamlandı',
-    cancelled: 'İptal Edildi',
-  }
-  return map[s] ?? s
-}
-
-function followUpStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [MeetingFollowUpStatus.Open]: 'bg-amber-100 text-amber-700',
-    [MeetingFollowUpStatus.InProgress]: 'bg-blue-100 text-blue-700',
-    [MeetingFollowUpStatus.Done]: 'bg-green-100 text-green-700',
-    [MeetingFollowUpStatus.Cancelled]: 'bg-gray-100 text-gray-600',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function followUpStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    [MeetingFollowUpStatus.Open]: t('followUp.open'),
-    [MeetingFollowUpStatus.InProgress]: t('followUp.inProgress'),
-    [MeetingFollowUpStatus.Done]: t('followUp.done'),
-    [MeetingFollowUpStatus.Cancelled]: t('followUp.cancelled'),
-  }
-  return map[s] ?? s
-}
-
-function attendanceClass(s: string) {
-  if (s === 'attended') return 'bg-green-100 text-green-700'
-  if (s === 'absent') return 'bg-red-100 text-red-700'
-  return 'bg-gray-100 text-gray-600'
 }
 
 function participantLabel(p: MeetingParticipantDto) {
@@ -163,18 +121,16 @@ onMounted(async () => {
     <template v-else>
       <PageHeader :title="meeting.title" :description="t('meeting.fields.scheduledAt')">
         <div class="flex flex-wrap items-center gap-2">
-          <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', meetingStatusClass(meeting.status)]">
-            {{ meetingStatusLabel(meeting.status) }}
-          </span>
+          <StatusBadge entity="meeting" :status="meeting.status" />
           <button
-            v-if="meeting.status === MeetingStatus.Scheduled && can('meeting:update')"
+            v-if="meeting.status === MeetingStatus.Scheduled && can(Permissions.Meetings.Update)"
             @click="router.push({ name: 'meeting-edit', params: { id: meeting.id } })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="meeting.status === MeetingStatus.Scheduled && can('meeting:complete')"
+            v-if="meeting.status === MeetingStatus.Scheduled && can(Permissions.Meetings.Complete)"
             :disabled="store.saving"
             @click="complete"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -182,7 +138,7 @@ onMounted(async () => {
             {{ t('meeting.actions.complete') }}
           </button>
           <button
-            v-if="meeting.status !== MeetingStatus.Completed && meeting.status !== MeetingStatus.Cancelled && can('meeting:cancel')"
+            v-if="meeting.status !== MeetingStatus.Completed && meeting.status !== MeetingStatus.Cancelled && can(Permissions.Meetings.Cancel)"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >
@@ -258,9 +214,7 @@ onMounted(async () => {
                 :key="fu.id"
                 class="flex items-center gap-3 px-4 py-3"
               >
-                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', followUpStatusClass(fu.status)]">
-                  {{ followUpStatusLabel(fu.status) }}
-                </span>
+                <StatusBadge entity="meetingFollowUp" :status="fu.status" class="shrink-0" />
                 <span class="flex-1 text-sm text-foreground">{{ fu.action }}</span>
                 <span v-if="fu.dueDate" class="text-xs text-muted-foreground shrink-0">{{ formatDate(fu.dueDate) }}</span>
                 <button
@@ -297,12 +251,7 @@ onMounted(async () => {
                 <p class="text-sm font-medium text-foreground truncate">{{ participantLabel(p) }}</p>
                 <p class="text-xs text-muted-foreground">{{ p.participantType }}</p>
               </div>
-              <span
-                v-if="p.attendance"
-                :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', attendanceClass(p.attendance)]"
-              >
-                {{ p.attendance === 'attended' ? t('meeting.participants.attended') : t('meeting.participants.absent') }}
-              </span>
+              <StatusBadge v-if="p.attendance" entity="meetingAttendance" :status="p.attendance" class="shrink-0" />
               <div v-if="canManageParticipants || canRecordAttendance" class="relative shrink-0">
                 <button
                   @click="toggleParticipantMenu(p.id)"

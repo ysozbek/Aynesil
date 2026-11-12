@@ -13,6 +13,7 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { StudentListItemDto } from '@/types/student.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -114,7 +115,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('student.title')" :description="t('student.description')">
       <button
-        v-if="can('student:create')"
+        v-if="can(Permissions.Students.Create)"
         @click="router.push({ name: 'student-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -202,7 +203,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('student:update')"
+            v-if="can(Permissions.Students.Update)"
             @click.stop="router.push({ name: 'student-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -212,7 +213,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('student:delete')"
+            v-if="can(Permissions.Students.Delete)"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

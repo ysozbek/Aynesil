@@ -6,6 +6,8 @@ import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -18,25 +20,6 @@ const upcomingVisits = computed(() =>
 const pendingFollowUps = computed(() =>
   consultancyStore.followUps.items.filter(f => f.status === ConsultancyFollowUpStatus.Pending || f.status === ConsultancyFollowUpStatus.InProgress).length
 )
-
-function visitStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [SchoolVisitStatus.Planned]: 'bg-blue-100 text-blue-700',
-    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
-    [SchoolVisitStatus.Cancelled]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function followUpStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [ConsultancyFollowUpStatus.Pending]: 'bg-amber-100 text-amber-700',
-    [ConsultancyFollowUpStatus.InProgress]: 'bg-sky-100 text-sky-700',
-    [ConsultancyFollowUpStatus.Completed]: 'bg-green-100 text-green-700',
-    [ConsultancyFollowUpStatus.Cancelled]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
 
 onMounted(async () => {
   await Promise.all([
@@ -52,7 +35,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('consultancy.dashboard.title')" :description="t('consultancy.dashboard.subtitle')">
       <button
-        v-if="can('institution:create')"
+        v-if="can(Permissions.Institutions.Create)"
         @click="router.push('/consultancy/institutions/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -140,9 +123,7 @@ onMounted(async () => {
               <p class="text-sm font-medium text-foreground truncate">{{ v.institutionName }}</p>
               <p class="text-xs text-muted-foreground">{{ v.planName ?? '—' }} · {{ v.visitDate }}</p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', visitStatusClass(v.status)]">
-              {{ v.status }}
-            </span>
+            <StatusBadge entity="schoolVisit" :status="v.status" class="shrink-0" />
           </div>
         </div>
       </div>
@@ -171,9 +152,7 @@ onMounted(async () => {
               <p class="text-sm font-medium text-foreground truncate">{{ f.title }}</p>
               <p class="text-xs text-muted-foreground">{{ f.planName ?? '—' }} · {{ f.dueDate ?? '—' }}</p>
             </div>
-            <span :class="['px-2 py-0.5 rounded-full text-xs font-medium shrink-0', followUpStatusClass(f.status)]">
-              {{ f.status }}
-            </span>
+            <StatusBadge entity="consultancyFollowUp" :status="f.status" class="shrink-0" />
           </div>
         </div>
       </div>

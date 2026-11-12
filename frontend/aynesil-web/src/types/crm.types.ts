@@ -7,8 +7,11 @@ export interface LeadListItemDto {
   contactPhone: string | null
   contactEmail: string | null
   sourceCode: string | null
+  sourceName: string | null
   statusCode: string | null
+  statusName: string | null
   pipelineStageCode: string | null
+  pipelineStageName: string | null
   campusName: string | null
   assignedToName: string | null
   score: number | null
@@ -37,6 +40,7 @@ export interface LeadActivityDto {
   leadId: string
   activityTypeId: string | null
   activityTypeCode: string | null
+  activityTypeName: string | null
   subject: string | null
   body: string | null
   direction: string | null
@@ -50,8 +54,10 @@ export interface LeadStatusHistoryDto {
   id: string
   statusId: string | null
   statusCode: string | null
+  statusName: string | null
   pipelineStageId: string | null
   pipelineStageCode: string | null
+  pipelineStageName: string | null
   changedAt: string
   changedBy: string | null
   changedByName: string | null
@@ -82,6 +88,7 @@ export interface PipelineSummaryDto {
 export interface PipelineStageCountDto {
   stageId: string
   stageCode: string
+  stageName: string | null
   count: number
 }
 
@@ -99,6 +106,7 @@ export interface ConversionReportDto {
 export interface ConversionBySourceDto {
   sourceId: string | null
   sourceCode: string | null
+  sourceName: string | null
   totalLeads: number
   converted: number
   /** Yüzde olarak (0–100). */

@@ -2,7 +2,6 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useBranchStore } from '@/stores/branch.store'
 import { useRefDataStore } from '@/stores/refdata.store'
@@ -14,13 +13,13 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { LeadListItemDto } from '@/types/crm.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
 const store = useLeadStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
-const crm = useCrmLabels()
 const { can } = usePermission()
 
 const statuses = ref<RefValueItem[]>([])
@@ -55,7 +54,6 @@ watch(
 onMounted(async () => {
   await Promise.all([
     loadList(),
-    crm.load('lead_source', 'lead_status', 'pipeline_stage'),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
     refData.getValues('LEAD_STATUS').then(v => { statuses.value = v }),
     refData.getValues('LEAD_SOURCE').then(v => { sources.value = v }),
@@ -144,7 +142,7 @@ function stageColor(code: string | null): string {
   <div>
     <PageHeader :title="t('crm.lead.title')" :description="t('crm.lead.description')">
       <button
-        v-if="can('lead:create')"
+        v-if="can(Permissions.Leads.Create)"
         @click="router.push({ name: 'leads-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -214,20 +212,20 @@ function stageColor(code: string | null): string {
         {{ value ?? '—' }}
       </template>
       <template #cell-sourceCode="{ row }">
-        {{ crm.label('lead_source', row.sourceCode) ?? '—' }}
+        {{ row.sourceName ?? '—' }}
       </template>
       <template #cell-pipelineStageCode="{ row }">
         <span
           v-if="row.pipelineStageCode"
           :class="['px-2 py-0.5 rounded-full text-xs font-medium', stageColor(row.pipelineStageCode)]"
-        >{{ crm.label('pipeline_stage', row.pipelineStageCode) }}</span>
+        >{{ row.pipelineStageName }}</span>
         <span v-else class="text-muted-foreground">—</span>
       </template>
       <template #cell-statusCode="{ row }">
         <span
           v-if="row.statusCode"
           :class="['px-2 py-0.5 rounded-full text-xs font-medium', row.isConverted ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700']"
-        >{{ crm.label('lead_status', row.statusCode) }}</span>
+        >{{ row.statusName }}</span>
       </template>
       <template #cell-score="{ value }">
         <span v-if="value !== null && value !== undefined" class="font-mono text-xs">{{ value }}</span>
@@ -239,7 +237,7 @@ function stageColor(code: string | null): string {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('lead:read')"
+            v-if="can(Permissions.Leads.Read)"
             @click="goDetail(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -249,7 +247,7 @@ function stageColor(code: string | null): string {
             </svg>
           </button>
           <button
-            v-if="can('lead:update')"
+            v-if="can(Permissions.Leads.Update)"
             @click.stop="router.push({ name: 'lead-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -259,7 +257,7 @@ function stageColor(code: string | null): string {
             </svg>
           </button>
           <button
-            v-if="can('lead:delete') && !row.isConverted"
+            v-if="can(Permissions.Leads.Delete) && !row.isConverted"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

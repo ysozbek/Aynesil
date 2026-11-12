@@ -12,6 +12,8 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { AssessmentTemplateListItemDto } from '@/types/assessment.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -87,7 +89,7 @@ function goDetail(row: AssessmentTemplateListItemDto) {
   <div>
     <PageHeader :title="t('assessment.template.title')" :description="t('assessment.template.description')">
       <button
-        v-if="can('assessment_template:create')"
+        v-if="can(Permissions.AssessmentTemplates.Create)"
         @click="router.push({ name: 'assessment-template-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -140,22 +142,20 @@ function goDetail(row: AssessmentTemplateListItemDto) {
       @row-click="goDetail"
     >
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.passive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" />
       </template>
       <template #cell-scoringModel="{ value }">
         <span class="text-xs font-mono text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
-          <button v-if="can('assessment_template:read')" @click="goDetail(row)"
+          <button v-if="can(Permissions.AssessmentTemplates.Read)" @click="goDetail(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" :title="t('common.view')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </button>
-          <button v-if="can('assessment_template:update')"
+          <button v-if="can(Permissions.AssessmentTemplates.Update)"
             @click.stop="router.push({ name: 'assessment-template-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" :title="t('common.edit')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

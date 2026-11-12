@@ -8,7 +8,6 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useCrmLabels } from '@/composables/useCrmLabels'
 import { useLeadStore } from '@/stores/lead.store'
 import { useLeadPipelineStore } from '@/stores/leadPipeline.store'
 import { useBranchStore } from '@/stores/branch.store'
@@ -16,6 +15,7 @@ import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import type { LeadListItemDto } from '@/types/crm.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -23,7 +23,6 @@ const leadStore = useLeadStore()
 const pipelineStore = useLeadPipelineStore()
 const branchStore = useBranchStore()
 const refData = useRefDataStore()
-const crm = useCrmLabels()
 const { can } = usePermission()
 
 const stages = ref<RefValueItem[]>([])
@@ -35,7 +34,6 @@ const loadingStages = ref(true)
 
 onMounted(async () => {
   await Promise.all([
-    crm.load('lead_source'),
     refData.getValues('pipeline_stage').then(v => { stages.value = v }),
     branchStore.list.items.length === 0 ? branchStore.fetchList({ pageSize: 200 }) : Promise.resolve(),
   ])
@@ -99,7 +97,7 @@ async function onDrop(e: DragEvent, toStageId: string) {
     dragging.value = null
     return
   }
-  if (!can('lead:update')) { dragging.value = null; return }
+  if (!can(Permissions.Leads.Update)) { dragging.value = null; return }
 
   const { lead, fromStageId } = dragging.value
   dragging.value = null
@@ -203,7 +201,7 @@ function stageCardColor(idx: number): string {
             <p class="text-sm font-medium text-foreground truncate">{{ lead.contactName }}</p>
             <p v-if="lead.childName" class="text-xs text-muted-foreground truncate">{{ lead.childName }}</p>
             <div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span v-if="lead.sourceCode" class="bg-accent rounded px-1.5 py-0.5">{{ crm.label('lead_source', lead.sourceCode) }}</span>
+              <span v-if="lead.sourceCode" class="bg-accent rounded px-1.5 py-0.5">{{ lead.sourceName }}</span>
               <span v-if="lead.score !== null && lead.score !== undefined" class="ml-auto font-mono">{{ lead.score }}</span>
             </div>
             <p v-if="lead.assignedToName" class="mt-1 text-xs text-muted-foreground">{{ lead.assignedToName }}</p>
@@ -216,7 +214,7 @@ function stageCardColor(idx: number): string {
       </div>
 
       <!-- Add new lead shortcut -->
-      <div v-if="can('lead:create')" class="flex-none w-64">
+      <div v-if="can(Permissions.Leads.Create)" class="flex-none w-64">
         <button
           @click="router.push({ name: 'leads-new' })"
           class="w-full rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors p-6 text-muted-foreground hover:text-primary text-sm font-medium flex flex-col items-center gap-2"

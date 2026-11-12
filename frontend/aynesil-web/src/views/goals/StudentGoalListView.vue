@@ -10,8 +10,10 @@ import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { StudentGoalListItemDto } from '@/types/goal.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -104,26 +106,6 @@ function horizonLabel(horizon: string): string {
   return horizon === 'long_term' ? t('goal.studentGoal.horizonOptions.long_term') : t('goal.studentGoal.horizonOptions.short_term')
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    achieved: 'bg-teal-100 text-teal-700',
-    discontinued: 'bg-red-100 text-red-700',
-    on_hold: 'bg-orange-100 text-orange-700',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    active: t('goal.studentGoal.statusOptions.active'),
-    achieved: t('goal.studentGoal.statusOptions.achieved'),
-    discontinued: t('goal.studentGoal.statusOptions.discontinued'),
-    on_hold: t('goal.studentGoal.statusOptions.on_hold'),
-  }
-  return map[status] ?? status
-}
-
 function trendDisplay(trend: string | null): string {
   if (trend === 'improving') return '↑'
   if (trend === 'declining') return '↓'
@@ -163,7 +145,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('goal.studentGoal.title')" :description="t('goal.description')">
       <button
-        v-if="can('student_goal:create')"
+        v-if="can(Permissions.StudentGoals.Create)"
         @click="router.push({ name: 'student-goal-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -204,10 +186,10 @@ async function doDelete() {
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('goal.studentGoal.status') }}</option>
-        <option value="active">{{ t('goal.studentGoal.statusOptions.active') }}</option>
-        <option value="achieved">{{ t('goal.studentGoal.statusOptions.achieved') }}</option>
-        <option value="discontinued">{{ t('goal.studentGoal.statusOptions.discontinued') }}</option>
-        <option value="on_hold">{{ t('goal.studentGoal.statusOptions.on_hold') }}</option>
+        <option value="active">{{ t('statusBadge.studentGoal.active') }}</option>
+        <option value="achieved">{{ t('statusBadge.studentGoal.achieved') }}</option>
+        <option value="discontinued">{{ t('statusBadge.studentGoal.discontinued') }}</option>
+        <option value="on_hold">{{ t('statusBadge.studentGoal.on_hold') }}</option>
       </select>
 
       <select v-model="query.categoryId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
@@ -240,9 +222,7 @@ async function doDelete() {
         </span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ statusLabel(row.status) }}
-        </span>
+        <StatusBadge entity="studentGoal" :status="row.status" />
       </template>
       <template #cell-categoryLabel="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
@@ -273,7 +253,7 @@ async function doDelete() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('student_goal:read')"
+            v-if="can(Permissions.StudentGoals.Read)"
             @click="router.push({ name: 'student-goal-detail', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -283,7 +263,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('student_goal:update')"
+            v-if="can(Permissions.StudentGoals.Update)"
             @click.stop="router.push({ name: 'student-goal-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -293,7 +273,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('student_goal:delete')"
+            v-if="can(Permissions.StudentGoals.Delete)"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

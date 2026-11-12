@@ -109,15 +109,17 @@ public sealed class GetLeadsQueryHandler : IRequestHandler<GetLeadsQuery, Pagina
             .Select(x => new LeadListItemDto(
                 x.l.Id, x.l.CorporationId,
                 x.l.CampusId, x.camp != null ? x.camp.Name : null,
-                x.l.SourceId, x.src != null ? x.src.Code : null,
-                x.l.StatusId, x.stat != null ? x.stat.Code : null,
-                x.l.PipelineStageId, x.stg != null ? x.stg.Code : null,
+                x.l.SourceId, x.src != null ? x.src.Code : null, null,
+                x.l.StatusId, x.stat != null ? x.stat.Code : null, null,
+                x.l.PipelineStageId, x.stg != null ? x.stg.Code : null, null,
                 x.l.ChildName,
                 x.l.ContactName, x.l.ContactPhone, x.l.ContactEmail,
                 x.l.AssignedToId, x.usr != null ? x.usr.FullName : null,
                 x.l.Score, x.l.ConvertedStudentId != null,
                 x.l.CreatedAt))
             .ToListAsync(ct);
+
+        items = await LeadLabels.ApplyAsync(_db, items, _tenant.Locale, ct);
 
         return PaginatedResult<LeadListItemDto>.Create(items, totalCount, req.Page, req.PageSize);
     }

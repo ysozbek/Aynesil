@@ -12,6 +12,8 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { ProgramListItemDto } from '@/types/program.types'
 import type { RefValueItem } from '@/stores/refdata.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -106,7 +108,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('program.title')" :description="t('program.description')">
       <button
-        v-if="can('program:create')"
+        v-if="can(Permissions.Programs.Create)"
         @click="router.push({ name: 'program-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -159,9 +161,7 @@ async function doDelete() {
         {{ value ?? '—' }}
       </template>
       <template #cell-isActive="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', value ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']">
-          {{ value ? t('common.active') : t('common.inactive') }}
-        </span>
+        <StatusBadge :value="Boolean(value)" :false-label="t('common.inactive')" />
       </template>
       <template #cell-serviceCount="{ value }">
         <span class="font-mono text-xs">{{ value }}</span>
@@ -172,7 +172,7 @@ async function doDelete() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('program:read')"
+            v-if="can(Permissions.Programs.Read)"
             @click="goDetail(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -182,7 +182,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('program:update')"
+            v-if="can(Permissions.Programs.Update)"
             @click.stop="router.push({ name: 'program-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -192,7 +192,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('program:delete')"
+            v-if="can(Permissions.Programs.Delete)"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

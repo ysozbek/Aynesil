@@ -53,9 +53,7 @@
               <td>{{ tpl.categoryCode ?? '-' }}</td>
               <td>{{ tpl.typeCode ?? '-' }}</td>
               <td>
-                <span :class="['badge badge-sm', tpl.isActive ? 'badge-success' : 'badge-ghost']">
-                  {{ tpl.isActive ? $t('common.active') : $t('common.passive') }}
-                </span>
+                <StatusBadge :value="tpl.isActive" />
               </td>
               <td>{{ formatDate(tpl.updatedAt) }}</td>
               <td>
@@ -98,6 +96,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useNotificationTemplateStore } from '@/stores/notificationTemplate.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const store = useNotificationTemplateStore()
 const deleteModal = ref<HTMLDialogElement | null>(null)

@@ -11,6 +11,7 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { UserRoleDto } from '@/types/user.types'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -150,7 +151,7 @@ function getBranchName(campusId?: string) {
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-2" v-if="store.current && can('user:update')">
+      <div class="flex items-center gap-2" v-if="store.current && can(Permissions.Users.Update)">
         <button @click="openEdit" class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">
           {{ t('common.edit') }}
         </button>
@@ -212,7 +213,7 @@ function getBranchName(campusId?: string) {
     <div v-if="activeTab === 'roles'">
       <div class="mb-3 flex items-center justify-between">
         <h2 class="text-sm font-semibold text-foreground">{{ t('user.assignedRoles') }}</h2>
-        <button v-if="can('user:update')" @click="openAssignRole"
+        <button v-if="can(Permissions.Users.Update)" @click="openAssignRole"
           class="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -236,7 +237,7 @@ function getBranchName(campusId?: string) {
               <span v-if="ur.validFrom"> · {{ formatDate(ur.validFrom) }} → {{ formatDate(ur.validTo) }}</span>
             </p>
           </div>
-          <button v-if="can('user:update')" @click="removeRoleTarget = ur"
+          <button v-if="can(Permissions.Users.Update)" @click="removeRoleTarget = ur"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors" :title="t('user.removeRole')">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

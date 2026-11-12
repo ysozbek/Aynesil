@@ -19,10 +19,8 @@
           <p class="text-muted mb-0">{{ camp.code }} · {{ camp.location ?? '—' }}</p>
         </div>
         <div class="d-flex gap-2">
-          <span :class="camp.isActive ? 'badge badge-light-success fs-7' : 'badge badge-light-danger fs-7'">
-            {{ camp.isActive ? $t('common.active') : $t('common.passive') }}
-          </span>
-          <RouterLink v-if="hasPermission('camp:update')" :to="`/camps/${camp.id}/edit`" class="btn btn-sm btn-light">
+          <StatusBadge :value="camp.isActive" />
+          <RouterLink v-if="hasPermission(Permissions.Camps.Update)" :to="`/camps/${camp.id}/edit`" class="btn btn-sm btn-light">
             <i class="ki-outline ki-pencil fs-4 me-1"></i>{{ $t('common.edit') }}
           </RouterLink>
         </div>
@@ -52,7 +50,7 @@
               <h3 class="card-title fw-bold">{{ $t('camp.detail.periods') }}</h3>
               <div class="card-toolbar">
                 <button
-                  v-if="hasPermission('camp:update')"
+                  v-if="hasPermission(Permissions.Camps.Update)"
                   class="btn btn-sm btn-light-primary"
                   @click="showPeriodModal = true"
                 >
@@ -165,6 +163,8 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
 import { useAuthStore } from '@/stores/auth.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const campStore = useCampStore()

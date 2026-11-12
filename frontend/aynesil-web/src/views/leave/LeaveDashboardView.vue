@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -42,7 +43,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('leave.dashboard.title')" :description="t('leave.dashboard.subtitle')">
       <button
-        v-if="can('leave_request:submit')"
+        v-if="can(Permissions.LeaveRequests.Submit)"
         @click="router.push({ name: 'leave-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -104,7 +105,7 @@ onMounted(async () => {
               </p>
             </div>
             <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-              {{ t('leave.status.pending') }}
+              {{ t('statusBadge.leave.pending') }}
             </span>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { usePermission } from '@/composables/usePermission'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { PermissionListItemDto } from '@/types/permission.types'
+import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -73,7 +74,7 @@ function isAssigned(permId: string): boolean {
 }
 
 async function togglePermission(perm: PermissionListItemDto) {
-  if (!can('role:assign_permission')) return
+  if (!can(Permissions.Roles.AssignPermission)) return
   permError.value = ''
   savingPermissions.value = true
   try {
@@ -90,7 +91,7 @@ async function togglePermission(perm: PermissionListItemDto) {
 }
 
 async function toggleResource(resource: string) {
-  if (!can('role:assign_permission')) return
+  if (!can(Permissions.Roles.AssignPermission)) return
   const perms = permStore.catalogByResource[resource] ?? []
   const allAssigned = perms.every((p) => isAssigned(p.id))
   savingPermissions.value = true
@@ -140,7 +141,7 @@ function resourceSomeAssigned(resource: string): boolean {
         </div>
         <p class="text-sm text-muted-foreground">{{ store.current?.code }}</p>
       </div>
-      <button v-if="can('role:update') && store.current && !store.current.isSystem"
+      <button v-if="can(Permissions.Roles.Update) && store.current && !store.current.isSystem"
         @click="openEdit" class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">
         {{ t('common.edit') }}
       </button>
@@ -223,7 +224,7 @@ function resourceSomeAssigned(resource: string): boolean {
                 type="checkbox"
                 :checked="resourceAllAssigned(resource)"
                 :indeterminate="!resourceAllAssigned(resource) && resourceSomeAssigned(resource)"
-                :disabled="!can('role:assign_permission') || store.current?.isSystem"
+                :disabled="!can(Permissions.Roles.AssignPermission) || store.current?.isSystem"
                 @change="toggleResource(resource)"
                 class="rounded border-border text-primary focus:ring-primary disabled:opacity-50"
               />
@@ -237,12 +238,12 @@ function resourceSomeAssigned(resource: string): boolean {
               v-for="perm in perms"
               :key="perm.id"
               class="flex items-center gap-1.5 cursor-pointer select-none"
-              :class="(!can('role:assign_permission') || store.current?.isSystem) ? 'opacity-50 cursor-default' : ''"
+              :class="(!can(Permissions.Roles.AssignPermission) || store.current?.isSystem) ? 'opacity-50 cursor-default' : ''"
             >
               <input
                 type="checkbox"
                 :checked="isAssigned(perm.id)"
-                :disabled="!can('role:assign_permission') || store.current?.isSystem || savingPermissions"
+                :disabled="!can(Permissions.Roles.AssignPermission) || store.current?.isSystem || savingPermissions"
                 @change="togglePermission(perm)"
                 class="rounded border-border text-primary focus:ring-primary disabled:opacity-50"
               />

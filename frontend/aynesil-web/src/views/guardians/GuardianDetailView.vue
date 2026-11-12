@@ -7,6 +7,8 @@ import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { StudentGuardianDto, GuardianPortalAccessDto, GrantPortalAccessPayload } from '@/types/student.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -160,14 +162,14 @@ async function doDelete() {
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
-            v-if="can('guardian:update')"
+            v-if="can(Permissions.Guardians.Update)"
             @click="router.push({ name: 'guardian-edit', params: { id: guardian.id } })"
             class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="can('guardian:delete')"
+            v-if="can(Permissions.Guardians.Delete)"
             @click="showDelete = true"
             class="px-3 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
           >
@@ -222,11 +224,7 @@ async function doDelete() {
             <div class="flex justify-between">
               <dt class="text-muted-foreground">{{ t('guardian.hasPortalAccount') }}</dt>
               <dd>
-                <span
-                  :class="['px-2 py-0.5 rounded-full text-xs font-medium', guardian.hasPortalAccount ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600']"
-                >
-                  {{ guardian.hasPortalAccount ? t('common.yes') : t('common.no') }}
-                </span>
+                <StatusBadge :value="Boolean(guardian.hasPortalAccount)" :true-label="t('common.yes')" :false-label="t('common.no')" />
               </dd>
             </div>
             <div class="flex justify-between">
@@ -298,7 +296,7 @@ async function doDelete() {
                 <p class="text-sm font-semibold text-foreground">{{ link.studentFullName }}</p>
                 <p class="text-xs text-muted-foreground">{{ link.relationshipLabel ?? '—' }}</p>
               </div>
-              <div v-if="can('guardian:manage_portal')" class="flex gap-2">
+              <div v-if="can(Permissions.Guardians.ManagePortal)" class="flex gap-2">
                 <button
                   v-if="!link.portalAccess"
                   @click="openPortalModal(link, 'grant')"

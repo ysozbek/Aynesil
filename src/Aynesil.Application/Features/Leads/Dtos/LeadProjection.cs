@@ -16,9 +16,10 @@ internal static class LeadProjection
     /// Returns null when no matching lead is found.
     /// Executes one query with LEFT JOINs to campus, ref_value (×3), and user_account.
     /// </summary>
-    internal static Task<LeadDto?> LoadAsync(
-        IAppDbContext db, Guid leadId, CancellationToken ct)
-        => (
+    internal static async Task<LeadDto?> LoadAsync(
+        IAppDbContext db, Guid leadId, string? locale, CancellationToken ct)
+    {
+        var dto = await (
             from l in db.Leads.AsNoTracking()
             where l.Id == leadId
             join src in db.RefValues.AsNoTracking() on l.SourceId equals src.Id into srcG
@@ -34,9 +35,9 @@ internal static class LeadProjection
             select new LeadDto(
                 l.Id, l.CorporationId,
                 l.CampusId, camp != null ? camp.Name : null,
-                l.SourceId, src != null ? src.Code : null,
-                l.StatusId, stat != null ? stat.Code : null,
-                l.PipelineStageId, stg != null ? stg.Code : null,
+                l.SourceId, src != null ? src.Code : null, null,
+                l.StatusId, stat != null ? stat.Code : null, null,
+                l.PipelineStageId, stg != null ? stg.Code : null, null,
                 l.ChildName, l.ChildBirthDate,
                 l.ContactName, l.ContactPhone, l.ContactEmail,
                 l.PresentingNeed, l.ReferralDetail,
@@ -45,4 +46,7 @@ internal static class LeadProjection
                 l.ConvertedStudentId != null,
                 l.CreatedAt, l.UpdatedAt, l.RowVersion)
         ).FirstOrDefaultAsync(ct);
+
+        return dto is null ? null : (await LeadLabels.ApplyAsync(db, [dto], locale, ct))[0];
+    }
 }

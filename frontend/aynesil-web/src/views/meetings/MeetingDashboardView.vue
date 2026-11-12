@@ -8,6 +8,8 @@ import { useFollowUpStore } from '@/stores/followUp.store'
 import { usePermission } from '@/composables/usePermission'
 import { meetingService } from '@/services/meeting.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -53,26 +55,6 @@ function meetingTypeClass(code?: string): string {
   return (code && map[code.toLowerCase()]) ? map[code.toLowerCase()] : 'bg-gray-100 text-gray-600'
 }
 
-function followUpStatusClass(s: string): string {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    in_progress: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-gray-100 text-gray-600',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function followUpStatusLabel(s: string): string {
-  const map: Record<string, string> = {
-    pending: t('followUp.pending'),
-    in_progress: t('followUp.inProgress'),
-    completed: t('followUp.completed'),
-    cancelled: t('followUp.cancelled'),
-  }
-  return map[s] ?? s
-}
-
 async function loadFollowUps() {
   const results = await Promise.all(
     store.meetingList.items.map(async (m) => {
@@ -105,7 +87,7 @@ onMounted(async () => {
     <PageHeader :title="t('meeting.dashboard.title')" :description="t('meeting.dashboard.subtitle')">
       <div class="flex flex-wrap items-center gap-2">
         <button
-          v-if="can('meeting:create')"
+          v-if="can(Permissions.Meetings.Create)"
           @click="router.push({ name: 'meeting-new' })"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >
@@ -209,9 +191,7 @@ onMounted(async () => {
             @click="router.push({ name: 'meeting-detail', params: { id: fu.meetingId } })"
           >
             <div class="flex items-center gap-2 mb-1">
-              <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', followUpStatusClass(fu.status)]">
-                {{ followUpStatusLabel(fu.status) }}
-              </span>
+              <StatusBadge entity="meetingFollowUp" :status="fu.status" />
             </div>
             <p class="text-sm font-medium text-foreground truncate">{{ fu.action }}</p>
             <p v-if="fu.dueDate" class="text-xs text-muted-foreground mt-0.5">{{ formatDate(fu.dueDate) }}</p>

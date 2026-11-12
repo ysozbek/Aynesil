@@ -5,7 +5,7 @@
         <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camp.list.title') }}</h1>
         <p class="text-muted mb-0">{{ $t('camp.list.subtitle') }}</p>
       </div>
-      <RouterLink v-if="hasPermission('camp:create')" to="/camps/new" class="btn btn-primary">
+      <RouterLink v-if="hasPermission(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
         <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
       </RouterLink>
     </div>
@@ -64,15 +64,13 @@
                 <td class="text-muted">{{ c.location ?? '—' }}</td>
                 <td class="text-center">{{ c.periodCount }}</td>
                 <td>
-                  <span :class="c.isActive ? 'badge badge-light-success' : 'badge badge-light-danger'">
-                    {{ c.isActive ? $t('common.active') : $t('common.passive') }}
-                  </span>
+                  <StatusBadge :value="c.isActive" />
                 </td>
                 <td class="text-end pe-4">
                   <RouterLink :to="`/camps/${c.id}`" class="btn btn-sm btn-light-primary me-2">
                     <i class="ki-outline ki-eye fs-4"></i>
                   </RouterLink>
-                  <RouterLink v-if="hasPermission('camp:update')" :to="`/camps/${c.id}/edit`" class="btn btn-sm btn-light">
+                  <RouterLink v-if="hasPermission(Permissions.Camps.Update)" :to="`/camps/${c.id}/edit`" class="btn btn-sm btn-light">
                     <i class="ki-outline ki-pencil fs-4"></i>
                   </RouterLink>
                 </td>
@@ -98,6 +96,8 @@ import { reactive, onMounted } from 'vue'
 import { useCampStore } from '@/stores/camp.store'
 import { useAuthStore } from '@/stores/auth.store'
 import type { CampListQuery } from '@/types/camp.types'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const campStore = useCampStore()
 const authStore = useAuthStore()

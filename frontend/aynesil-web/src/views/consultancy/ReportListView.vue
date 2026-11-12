@@ -11,6 +11,7 @@ import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { ConsultancyReportListItemDto } from '@/types/consultancy.types'
 import { ref } from 'vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -106,7 +107,7 @@ async function submitCreate() {
   <div>
     <PageHeader :title="t('consultancy.report.list.title')" :description="t('consultancy.report.list.subtitle')">
       <button
-        v-if="can('consultancy_report:create')"
+        v-if="can(Permissions.ConsultancyReports.Create)"
         type="button"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"

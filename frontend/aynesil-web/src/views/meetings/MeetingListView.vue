@@ -9,7 +9,9 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { MeetingListItemDto, MeetingListQuery } from '@/types/meeting.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -37,24 +39,6 @@ const columns: Column<MeetingListItemDto>[] = [
 function formatDateTime(d: unknown) {
   if (!d) return '—'
   return new Date(String(d)).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-function meetingStatusClass(s: string) {
-  const map: Record<string, string> = {
-    [MeetingStatus.Scheduled]: 'bg-blue-100 text-blue-700',
-    [MeetingStatus.Completed]: 'bg-green-100 text-green-700',
-    [MeetingStatus.Cancelled]: 'bg-red-100 text-red-700',
-  }
-  return map[s] ?? 'bg-gray-100 text-gray-600'
-}
-
-function meetingStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    [MeetingStatus.Scheduled]: t('meeting.status.scheduled'),
-    [MeetingStatus.Completed]: t('meeting.status.completed'),
-    [MeetingStatus.Cancelled]: t('meeting.status.cancelled'),
-  }
-  return map[s] ?? s
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -92,7 +76,7 @@ onMounted(() => store.fetchMeetings(filters))
   <div>
     <PageHeader :title="t('meeting.list.title')" :description="t('meeting.list.subtitle')">
       <button
-        v-if="can('meeting:create')"
+        v-if="can(Permissions.Meetings.Create)"
         @click="router.push({ name: 'meeting-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -118,9 +102,9 @@ onMounted(() => store.fetchMeetings(filters))
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option :value="MeetingStatus.Scheduled">{{ t('meeting.status.scheduled') }}</option>
-          <option :value="MeetingStatus.Completed">{{ t('meeting.status.completed') }}</option>
-          <option :value="MeetingStatus.Cancelled">{{ t('meeting.status.cancelled') }}</option>
+          <option :value="MeetingStatus.Scheduled">{{ t('statusBadge.meeting.scheduled') }}</option>
+          <option :value="MeetingStatus.Completed">{{ t('statusBadge.meeting.completed') }}</option>
+          <option :value="MeetingStatus.Cancelled">{{ t('statusBadge.meeting.cancelled') }}</option>
         </select>
       </div>
       <div>
@@ -157,15 +141,13 @@ onMounted(() => store.fetchMeetings(filters))
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ value }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', meetingStatusClass(String(value))]">
-          {{ meetingStatusLabel(String(value)) }}
-        </span>
+        <StatusBadge entity="meeting" :status="String(value)" />
       </template>
       <template #cell-participantCount="{ value }">{{ value ?? 0 }}</template>
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('meeting:update') && row.status === MeetingStatus.Scheduled"
+            v-if="can(Permissions.Meetings.Update) && row.status === MeetingStatus.Scheduled"
             @click="router.push({ name: 'meeting-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"

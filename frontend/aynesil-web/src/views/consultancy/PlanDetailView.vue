@@ -6,6 +6,8 @@ import { useConsultancyStore } from '@/stores/consultancy.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -22,16 +24,6 @@ onMounted(() => store.fetchPlan(String(route.params.id)))
 function formatDate(val?: string | null) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('tr-TR')
-}
-
-function statusClass(status?: string) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    active: 'bg-green-100 text-green-700',
-    completed: 'bg-blue-100 text-blue-700',
-    cancelled: 'bg-red-100 text-red-700',
-  }
-  return map[status?.toLowerCase() ?? ''] ?? 'bg-gray-100 text-gray-600'
 }
 
 async function runAction() {
@@ -62,7 +54,7 @@ async function runAction() {
         {{ t('common.back') }}
       </button>
       <button
-        v-if="plan?.status === 'draft' && can('consultancy_plan:activate')"
+        v-if="plan?.status === 'draft' && can(Permissions.ConsultancyPlans.Activate)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
         @click="actionTarget = 'activate'"
@@ -70,7 +62,7 @@ async function runAction() {
         {{ t('consultancy.plan.actions.activate') }}
       </button>
       <button
-        v-if="plan?.status === 'active' && can('consultancy_plan:complete')"
+        v-if="plan?.status === 'active' && can(Permissions.ConsultancyPlans.Complete)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
         @click="actionTarget = 'complete'"
@@ -78,7 +70,7 @@ async function runAction() {
         {{ t('consultancy.plan.actions.complete') }}
       </button>
       <button
-        v-if="(plan?.status === 'draft' || plan?.status === 'active') && can('consultancy_plan:cancel')"
+        v-if="(plan?.status === 'draft' || plan?.status === 'active') && can(Permissions.ConsultancyPlans.Cancel)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
         @click="actionTarget = 'cancel'"
@@ -93,9 +85,7 @@ async function runAction() {
 
     <div v-else-if="plan" class="bg-white rounded-xl border border-border p-6 space-y-6">
       <div class="flex items-center gap-2">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusClass(plan.status)]">
-          {{ t(`consultancy.plan.status.${plan.status.toLowerCase()}`, plan.status) }}
-        </span>
+        <StatusBadge entity="consultancyPlan" :status="plan.status" />
         <span v-if="plan.consultancyTypeCode" class="text-sm text-muted-foreground">
           {{ plan.consultancyTypeCode }}
         </span>

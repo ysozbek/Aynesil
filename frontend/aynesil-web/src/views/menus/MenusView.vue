@@ -9,6 +9,7 @@ import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import MenuTreeLevel, { type TreeNode } from './MenuTreeLevel.vue'
 import type { MenuItemListItemDto, MenuItemTranslationDto } from '@/types/menu-admin.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const { adminTree, adminLoading, loadAdminTree, createItem, updateItem, removeItem, setTranslations, activateItem, deactivateItem } =
@@ -245,7 +246,7 @@ const allPermissions = computed(() => permStore.catalog)
 <template>
   <div>
     <PageHeader :title="t('menu.title')" :description="t('menu.description')">
-      <button v-if="can('menu:manage')" @click="openCreate(undefined)"
+      <button v-if="can(Permissions.Menu.Manage)" @click="openCreate(undefined)"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -271,7 +272,7 @@ const allPermissions = computed(() => permStore.catalog)
         @toggle-active="toggleActive" @delete="confirmDelete"
         @move-up="moveUp" @move-down="moveDown"
         :get-label="getLabel" :expanded="expanded" @toggle-expand="toggleExpand"
-        :can-manage="can('menu:manage')" />
+        :can-manage="can(Permissions.Menu.Manage)" />
     </div>
   </div>
 

@@ -12,6 +12,7 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { CorporationListItemDto } from '@/types/corporation.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -175,7 +176,7 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
   <div>
     <PageHeader :title="t('corporation.title')" :description="t('corporation.description')">
       <button
-        v-if="can('corporation:create')"
+        v-if="can(Permissions.Corporation.Create)"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -231,7 +232,7 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('corporation:read')"
+            v-if="can(Permissions.Corporation.Read)"
             @click="router.push({ name: 'corporation-detail', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -242,7 +243,7 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
             </svg>
           </button>
           <button
-            v-if="can('corporation:update')"
+            v-if="can(Permissions.Corporation.Update)"
             @click="(e) => openEdit(row, e)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -252,7 +253,7 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
             </svg>
           </button>
           <button
-            v-if="can('corporation:update')"
+            v-if="can(Permissions.Corporation.Update)"
             @click="(e) => toggleStatus(row, e)"
             :title="row.status === CorporationStatus.Active ? t('common.deactivate') : t('common.activate')"
             :class="[

@@ -6,6 +6,8 @@ import { usePaymentStore } from '@/stores/payment.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -30,16 +32,6 @@ function formatDate(val: string | undefined | null): string {
 
 function formatCurrency(val: number, currency = 'TRY'): string {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(val)
-}
-
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    captured: 'bg-green-100 text-green-700',
-    failed: 'bg-red-100 text-red-700',
-    refunded: 'bg-gray-100 text-gray-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
 async function doCapture() {
@@ -68,16 +60,14 @@ async function doRefund() {
       :description="payment?.studentFullName ?? ''"
     >
       <div v-if="payment" class="flex items-center gap-2">
-        <span :class="['px-3 py-1 rounded-full text-sm font-medium', statusColor(payment.status)]">
-          {{ t(`finance.payment.status.${payment.status}`) }}
-        </span>
+        <StatusBadge entity="payment" :status="payment.status" />
         <button
-          v-if="can('finance_payment:capture') && payment.status === 'pending'"
+          v-if="can(Permissions.FinancePayments.Capture) && payment.status === 'pending'"
           @click="captureModal = true"
           class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
         >{{ t('finance.payment.capture') }}</button>
         <button
-          v-if="can('refund:request') && payment.status === 'captured'"
+          v-if="can(Permissions.Refunds.Request) && payment.status === 'captured'"
           @click="refundAmount = payment.amount; refundModal = true"
           class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm hover:bg-red-100"
         >{{ t('finance.payment.refund') }}</button>

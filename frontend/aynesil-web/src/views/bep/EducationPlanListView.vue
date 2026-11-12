@@ -11,7 +11,9 @@ import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { EducationPlanListItemDto } from '@/types/bep.types'
+import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -94,30 +96,6 @@ function formatDate(val: unknown): string {
 
 // Status tokens mirror the backend domain:
 //   draft, in_review, approved, active, revised, closed
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    in_review: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    active: 'bg-blue-100 text-blue-700',
-    revised: 'bg-amber-100 text-amber-700',
-    closed: 'bg-slate-100 text-slate-600',
-  }
-  return map[status] ?? 'bg-gray-100 text-gray-700'
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    draft: t('bep.status.draft'),
-    in_review: t('bep.status.in_review'),
-    approved: t('bep.status.approved'),
-    active: t('bep.status.active'),
-    revised: t('bep.status.revised'),
-    closed: t('bep.status.closed'),
-  }
-  return map[status] ?? status
-}
-
 // ── Delete ─────────────────────────────────────────────────────────────────────
 const deleteTarget = ref<EducationPlanListItemDto | null>(null)
 const deleteLoading = ref(false)
@@ -144,7 +122,7 @@ async function doDelete() {
   <div>
     <PageHeader :title="t('bep.title')" :description="t('bep.description')">
       <button
-        v-if="can('education_plan:create')"
+        v-if="can(Permissions.EducationPlans.Create)"
         @click="router.push({ name: 'bep-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
@@ -201,12 +179,12 @@ async function doDelete() {
         class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
       >
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="draft">{{ t('bep.status.draft') }}</option>
-        <option value="in_review">{{ t('bep.status.in_review') }}</option>
-        <option value="approved">{{ t('bep.status.approved') }}</option>
-        <option value="active">{{ t('bep.status.active') }}</option>
-        <option value="revised">{{ t('bep.status.revised') }}</option>
-        <option value="closed">{{ t('bep.status.closed') }}</option>
+        <option value="draft">{{ t('statusBadge.educationPlan.draft') }}</option>
+        <option value="in_review">{{ t('statusBadge.educationPlan.in_review') }}</option>
+        <option value="approved">{{ t('statusBadge.educationPlan.approved') }}</option>
+        <option value="active">{{ t('statusBadge.educationPlan.active') }}</option>
+        <option value="revised">{{ t('statusBadge.educationPlan.revised') }}</option>
+        <option value="closed">{{ t('statusBadge.educationPlan.closed') }}</option>
       </select>
     </div>
 
@@ -227,9 +205,7 @@ async function doDelete() {
         <span class="font-mono text-xs font-medium text-muted-foreground">v{{ value }}</span>
       </template>
       <template #cell-status="{ row }">
-        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', statusColor(row.status)]">
-          {{ statusLabel(row.status) }}
-        </span>
+        <StatusBadge entity="educationPlan" :status="row.status" />
       </template>
       <template #cell-effectiveFrom="{ value }">
         {{ formatDate(value) }}
@@ -249,7 +225,7 @@ async function doDelete() {
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('education_plan:read')"
+            v-if="can(Permissions.EducationPlans.Read)"
             @click="goDetail(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.view')"
@@ -259,7 +235,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('education_plan:update') && (row.status === 'draft' || row.status === 'in_review')"
+            v-if="can(Permissions.EducationPlans.Update) && (row.status === 'draft' || row.status === 'in_review')"
             @click.stop="router.push({ name: 'bep-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             :title="t('common.edit')"
@@ -269,7 +245,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('education_plan:delete') && row.status === 'draft'"
+            v-if="can(Permissions.EducationPlans.Delete) && row.status === 'draft'"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
             :title="t('common.delete')"

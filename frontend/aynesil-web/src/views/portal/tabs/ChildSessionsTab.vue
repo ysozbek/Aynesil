@@ -16,7 +16,7 @@
                 <p class="font-semibold">{{ s.title ?? $t('portal.sessions.session') }}</p>
                 <p class="text-sm text-gray-500">{{ formatDateTime(s.startsAt) }} – {{ formatTime(s.endsAt) }}</p>
               </div>
-              <span :class="['badge', sessionStatusClass(s.status)]">{{ s.status }}</span>
+              <StatusBadge entity="session" :status="s.status" />
             </div>
           </div>
         </div>
@@ -42,7 +42,7 @@
               <tr v-for="s in store.sessionList" :key="s.id">
                 <td>{{ s.title ?? $t('portal.sessions.session') }}</td>
                 <td>{{ formatDateTime(s.startsAt) }}</td>
-                <td><span :class="['badge badge-sm', sessionStatusClass(s.status)]">{{ s.status }}</span></td>
+                <td><StatusBadge entity="session" :status="s.status" /></td>
               </tr>
             </tbody>
           </table>
@@ -62,6 +62,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useParentPortalStore } from '@/stores/parentPortal.store'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
 
 const props = defineProps<{ studentId: string }>()
 const store = useParentPortalStore()
@@ -79,16 +80,6 @@ function formatDateTime(d: string): string {
 function formatTime(d: string): string {
   return new Date(d).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 }
-function sessionStatusClass(s: string): string {
-  const map: Record<string, string> = {
-    scheduled: 'badge-info',
-    completed: 'badge-success',
-    cancelled: 'badge-error',
-    no_show: 'badge-warning',
-  }
-  return map[s] ?? 'badge-ghost'
-}
-
 async function load(page = 1) {
   await store.fetchSessions({
     studentId: props.studentId,
