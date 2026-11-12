@@ -10,11 +10,25 @@ public static class Permissions
     // ── Corporation (admin) ──────────────────────────────────────────────
     public static class Corporation
     {
+        /// <summary>Kendi kurumunu okur (handler'lar ve RLS kurumu oturumdakiyle sınırlar).</summary>
         public const string Read = "corporation:read";
+        /// <summary>Platform işlemi (devops/new_tenant.py). Kurum rollerine atanamaz (<see cref="PlatformOnly"/>).</summary>
         public const string Create = "corporation:create";
+        /// <summary>Kendi kurumunun bilgilerini ve ayarlarını günceller.</summary>
         public const string Update = "corporation:update";
+        /// <summary>Platform işlemi: kurumu etkinleştir/pasifleştir. Kurum rollerine atanamaz (<see cref="PlatformOnly"/>).</summary>
         public const string Delete = "corporation:delete";
     }
+
+    /// <summary>
+    /// Platform işletmecisine ait izinler (Y1). Kurum (kiracı) rollerine atanamaz: V43 mevcut rollerden
+    /// kaldırır, seed/new_tenant.py hiç vermez, AssignRolePermission reddeder.
+    /// </summary>
+    public static readonly IReadOnlySet<string> PlatformOnly = new HashSet<string>
+    {
+        Corporation.Create,
+        Corporation.Delete,
+    };
 
     // ── Campus ──────────────────────────────────────────────────────────
     public static class Campus

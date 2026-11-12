@@ -217,6 +217,7 @@
   <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>'{0}' durumundaki bir plan revize edilemez.</value></data>
   <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Yalnızca taslak bir plan incelemeye gönderilebilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform varsayılan menü öğeleri silinemez.</value></data>
+  <data name="Rule.PlatformPermissionNotAssignable" xml:space="preserve"><value>"{0}" bir platform işlemi iznidir; kurum rollerine atanamaz.</value></data>
   <data name="Rule.PlatformRecordReadOnly" xml:space="preserve"><value>Bu {0} bir platform kaydıdır; kurumlar tarafından değiştirilemez.</value></data>
   <data name="Rule.PortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için portal erişim kaydı bulunamadı.</value></data>
   <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>Bu öğrenci için zaten bir birincil bakım ekibi ataması var. Yeni atama yapmadan önce mevcut birincil atamayı kaldırın.</value></data>

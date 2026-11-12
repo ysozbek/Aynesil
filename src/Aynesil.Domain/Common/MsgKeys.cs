@@ -251,6 +251,7 @@ public static class MsgKeys
         public static readonly MsgKey PlanReviseStatus = new("Rule.PlanReviseStatus");
         public static readonly MsgKey PlanSubmitNeedsDraft = new("Rule.PlanSubmitNeedsDraft");
         public static readonly MsgKey PlatformMenuNoDelete = new("Rule.PlatformMenuNoDelete");
+        public static readonly MsgKey PlatformPermissionNotAssignable = new("Rule.PlatformPermissionNotAssignable");
         public static readonly MsgKey PlatformRecordReadOnly = new("Rule.PlatformRecordReadOnly");
         public static readonly MsgKey PrimaryCareTeamExists = new("Rule.PrimaryCareTeamExists");
         public static readonly MsgKey ProgramHasAssignments = new("Rule.ProgramHasAssignments");

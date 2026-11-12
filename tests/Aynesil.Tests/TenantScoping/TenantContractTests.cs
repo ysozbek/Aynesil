@@ -38,6 +38,7 @@ public class TenantContractTests
     /// <summary>Requests whose CorporationId was moved from the payload to ITenantContext.</summary>
     private static readonly string[] TenantScopedRequests =
     [
+        "ActivateCorporationCommand",
         "AddAssessmentItemCommand",
         "AddAssessmentSectionCommand",
         "AddMeetingFollowUpCommand",
@@ -93,6 +94,7 @@ public class TenantContractTests
         "CreateStudentCommand",
         "CreateStudentGoalCommand",
         "CreateSurveyDefinitionCommand",
+        "DeactivateCorporationCommand",
         "DeleteAssessmentItemCommand",
         "DeleteAssessmentSectionCommand",
         "DeleteNotificationTemplateCommand",
@@ -123,6 +125,9 @@ public class TenantContractTests
         "GetContractTemplateVersionsQuery",
         "GetConversionReportQuery",
         "GetCorporationKpiTrendQuery",
+        "GetCorporationQuery",
+        "GetCorporationSettingsQuery",
+        "GetCorporationsQuery",
         "GetCreditLedgerQuery",
         "GetCreditSummaryQuery",
         "GetCreditUsageReportQuery",
@@ -224,6 +229,8 @@ public class TenantContractTests
         "UpdateAssessmentSectionCommand",
         "UpdateConsentTemplateCommand",
         "UpdateContractTemplateCommand",
+        "UpdateCorporationCommand",
+        "UpdateCorporationSettingsCommand",
         "UpdateNotificationPreferencesCommand",
         "UpdateNotificationTemplateCommand",
         "UpdateRefValueCommand",

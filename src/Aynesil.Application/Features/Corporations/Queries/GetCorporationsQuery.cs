@@ -8,8 +8,9 @@ namespace Aynesil.Application.Features.Corporations.Queries;
 
 // ── Request ──────────────────────────────────────────────────────────────────
 /// <summary>
-/// Returns a paginated, filterable list of all corporations.
-/// This is a platform-admin operation; RLS does not restrict core.corporation rows.
+/// Returns the caller's own corporation as a (single-row) paginated list (Y1). There is no platform
+/// tier in the API: the handler filters by the session tenant and core.corporation RLS
+/// (id = core.current_corporation_id()) enforces the same in the database.
 /// </summary>
 public class GetCorporationsQuery : PagedQuery, IRequest<PaginatedResult<CorporationListItemDto>>
 {
@@ -22,13 +23,20 @@ public sealed class GetCorporationsQueryHandler
     : IRequestHandler<GetCorporationsQuery, PaginatedResult<CorporationListItemDto>>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetCorporationsQueryHandler(IAppDbContext db) => _db = db;
+    public GetCorporationsQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaginatedResult<CorporationListItemDto>> Handle(
         GetCorporationsQuery req, CancellationToken ct)
     {
-        var query = _db.Corporations.AsNoTracking();
+        var corporationId = _tenant.RequireCorporationId();
+
+        var query = _db.Corporations.AsNoTracking().Where(c => c.Id == corporationId);
 
         if (!string.IsNullOrWhiteSpace(req.Status))
             query = query.Where(c => c.Status == req.Status);

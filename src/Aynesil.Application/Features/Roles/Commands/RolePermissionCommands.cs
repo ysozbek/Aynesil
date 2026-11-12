@@ -47,6 +47,10 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
         var permission = await _db.Permissions.FindAsync([req.PermissionId], ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Permission"));
 
+        // Platform operations (create / activate / suspend corporations) are not tenant permissions (Y1).
+        if (Aynesil.Shared.Constants.Permissions.PlatformOnly.Contains(permission.Code))
+            throw new ForbiddenAccessException(MsgKeys.Rule.PlatformPermissionNotAssignable, permission.Code);
+
         var alreadyAssigned = await _db.RolePermissions.AnyAsync(
             rp => rp.RoleId == req.RoleId && rp.PermissionId == req.PermissionId, ct);
         if (alreadyAssigned)

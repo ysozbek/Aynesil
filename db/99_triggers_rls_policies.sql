@@ -106,6 +106,14 @@ create policy menu_item_delete on iam.menu_item
   for delete
   using (corporation_id = core.current_corporation_id());
 
+-- core.corporation (V43, Y1): the tenant root has no corporation_id column; a tenant sees and
+-- changes only its own row. Creating/suspending corporations is a platform operation (owner role).
+alter table core.corporation enable row level security;
+drop policy if exists tenant_isolation on core.corporation;
+create policy tenant_isolation on core.corporation
+  using (id = core.current_corporation_id())
+  with check (id = core.current_corporation_id());
+
 -- ---------------------------------------------------------------------
 -- 3) Generic audit trigger on clinical / financial / legal / scheduling data
 -- ---------------------------------------------------------------------

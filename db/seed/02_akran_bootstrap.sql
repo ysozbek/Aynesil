@@ -44,6 +44,8 @@ from iam.role r
 join core.corporation c on c.id = r.corporation_id and c.code = 'akran'
 cross join iam.permission p
 where r.code = 'admin'
+  -- Platform operations (Permissions.PlatformOnly, V43) are never tenant permissions.
+  and p.code not in ('corporation:create', 'corporation:delete')
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------

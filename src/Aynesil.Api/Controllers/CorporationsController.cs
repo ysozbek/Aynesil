@@ -9,8 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace Aynesil.Api.Controllers;
 
 /// <summary>
-/// Platform-level corporation (tenant) management.
-/// Corporation = tenant root; only platform administrators should hold Corporation permissions.
+/// Corporation (tenant root) endpoints. Read/update/settings work only on the caller's own
+/// corporation (handlers filter by the session tenant; core.corporation RLS enforces the same).
+/// Creating and activating/suspending a corporation are platform operations (devops/new_tenant.py):
+/// corporation:create / corporation:delete are never granted to tenant roles (Permissions.PlatformOnly).
 /// All endpoints require the corresponding permission — never authorize by role name.
 /// </summary>
 [Route("api/corporations")]
@@ -18,7 +20,7 @@ public sealed class CorporationsController : BaseController
 {
     // ── Queries ──────────────────────────────────────────────────────────────
 
-    /// <summary>Returns a paginated, searchable list of all corporations.</summary>
+    /// <summary>Returns the caller's own corporation as a paginated list.</summary>
     [HttpGet]
     [HasPermission(Permissions.Corporation.Read)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<CorporationListItemDto>>), StatusCodes.Status200OK)]
@@ -68,7 +70,7 @@ public sealed class CorporationsController : BaseController
 
     // ── Commands ─────────────────────────────────────────────────────────────
 
-    /// <summary>Creates a new corporation (tenant). The code slug must be globally unique.</summary>
+    /// <summary>Creates a new corporation (tenant). Platform operation; tenant roles never hold corporation:create.</summary>
     [HttpPost]
     [HasPermission(Permissions.Corporation.Create)]
     [ProducesResponseType(typeof(ApiResponse<CorporationDto>), StatusCodes.Status201Created)]
@@ -134,7 +136,7 @@ public sealed class CorporationsController : BaseController
 
     /// <summary>Transitions the corporation status to 'active'.</summary>
     [HttpPost("{id:guid}/activate")]
-    [HasPermission(Permissions.Corporation.Update)]
+    [HasPermission(Permissions.Corporation.Delete)]   // platform operation (Permissions.PlatformOnly)
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
@@ -146,7 +148,7 @@ public sealed class CorporationsController : BaseController
 
     /// <summary>Transitions the corporation status to 'suspended'.</summary>
     [HttpPost("{id:guid}/deactivate")]
-    [HasPermission(Permissions.Corporation.Update)]
+    [HasPermission(Permissions.Corporation.Delete)]   // platform operation (Permissions.PlatformOnly)
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]

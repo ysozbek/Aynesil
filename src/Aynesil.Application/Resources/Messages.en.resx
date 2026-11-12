@@ -217,6 +217,7 @@
   <data name="Rule.PlanReviseStatus" xml:space="preserve"><value>A plan in status '{0}' cannot be revised.</value></data>
   <data name="Rule.PlanSubmitNeedsDraft" xml:space="preserve"><value>Only a draft plan can be submitted for review. Current status: {0}.</value></data>
   <data name="Rule.PlatformMenuNoDelete" xml:space="preserve"><value>Platform default menu items cannot be deleted.</value></data>
+  <data name="Rule.PlatformPermissionNotAssignable" xml:space="preserve"><value>"{0}" is a platform operation permission and cannot be assigned to an organization role.</value></data>
   <data name="Rule.PlatformRecordReadOnly" xml:space="preserve"><value>This {0} is a platform record and cannot be changed by an organization.</value></data>
   <data name="Rule.PortalAccessNotFound" xml:space="preserve"><value>Portal access record not found for guardian {0} / student {1}.</value></data>
   <data name="Rule.PrimaryCareTeamExists" xml:space="preserve"><value>A primary care-team assignment already exists for this student. Remove the existing primary assignment before assigning a new one.</value></data>

@@ -6,7 +6,8 @@ Yeni bir müşteri (kurum / tenant) açar. Tek komut, tek transaction.
 Oluşturulanlar:
   1. core.corporation    — kurum kaydı
   2. core.campus         — bir veya daha fazla kampüs (şube)
-  3. iam.role 'admin'    — tüm izinlere sahip kurum yöneticisi rolü
+  3. iam.role 'admin'    — kurum yöneticisi rolü: platform işlemleri (corporation:create/delete)
+                           dışındaki tüm izinler
   4. iam.user_account    — ilk yönetici kullanıcı (+ iam.user_role ataması)
 
 Referans veriler (seans türleri, ödeme yöntemleri vb.), izin kataloğu ve menüler
@@ -175,13 +176,16 @@ begin
     v_first := coalesce(v_first, v_campus);
   end loop;
 
-  -- ── Admin role: every permission in the platform catalog ────────────────
+  -- ── Admin role: every tenant permission in the platform catalog ─────────
+  -- (platform operations — Permissions.PlatformOnly, V43 — are never granted to a tenant)
   insert into iam.role (corporation_id, code, name, is_system)
   values (v_corp, 'admin', 'Administrator', true)
   returning id into v_role;
 
   insert into iam.role_permission (role_id, permission_id)
-  select v_role, p.id from iam.permission p;
+  select v_role, p.id from iam.permission p
+   where p.code not in ('corporation:create', 'corporation:delete');
+  get diagnostics v_perms = row_count;
 
   -- ── First admin user ────────────────────────────────────────────────────
   insert into iam.user_account (corporation_id, username, email, full_name, password_hash,

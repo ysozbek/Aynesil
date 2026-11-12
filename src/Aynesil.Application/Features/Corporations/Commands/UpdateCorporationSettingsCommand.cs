@@ -65,17 +65,22 @@ public sealed class UpdateCorporationSettingsCommandHandler
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public UpdateCorporationSettingsCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public UpdateCorporationSettingsCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
     {
         _db = db;
         _currentUser = currentUser;
+        _tenant = tenant;
     }
 
     public async Task<CorporationSettingsDto> Handle(UpdateCorporationSettingsCommand req, CancellationToken ct)
     {
+        // Only the caller's own corporation; any other id is "not found" (Y1). RLS enforces the same.
+        var corporationId = _tenant.RequireCorporationId();
+
         var corp = await _db.Corporations
-            .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
+            .FirstOrDefaultAsync(c => c.Id == req.Id && c.Id == corporationId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Corporation"));
 
         if (corp.RowVersion != req.RowVersion)
