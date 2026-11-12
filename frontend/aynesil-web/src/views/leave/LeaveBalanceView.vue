@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LeaveUnit } from '@/constants/statuses'
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLeaveStore } from '@/stores/leave.store'
@@ -120,7 +121,7 @@ onMounted(async () => {
         <span class="font-semibold text-green-600">{{ value }}</span>
       </template>
       <template #cell-unit="{ value }">
-        {{ value === 'Day' ? t('leave.unit.day') : t('leave.unit.hour') }}
+        {{ value === LeaveUnit.Day ? t('leave.unit.day') : t('leave.unit.hour') }}
       </template>
       <template #actions="{ row }">
         <div class="flex justify-end" @click.stop>

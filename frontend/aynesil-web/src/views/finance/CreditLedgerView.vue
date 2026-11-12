@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CreditEntryType } from '@/constants/statuses'
 import { ref, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -91,11 +92,11 @@ function formatDate(val: unknown): string {
 
 function entryTypeColor(type: string): string {
   const map: Record<string, string> = {
-    consumed: 'bg-red-100 text-red-700',
-    granted: 'bg-green-100 text-green-700',
-    refunded: 'bg-blue-100 text-blue-700',
-    adjusted: 'bg-violet-100 text-violet-700',
-    purchase: 'bg-teal-100 text-teal-700',
+    [CreditEntryType.Consume]: 'bg-red-100 text-red-700',
+    [CreditEntryType.Grant]: 'bg-green-100 text-green-700',
+    [CreditEntryType.Refund]: 'bg-blue-100 text-blue-700',
+    [CreditEntryType.Adjustment]: 'bg-violet-100 text-violet-700',
+    [CreditEntryType.Expire]: 'bg-gray-100 text-gray-600',
   }
   return map[type] ?? 'bg-gray-100 text-gray-600'
 }
@@ -188,11 +189,11 @@ function openAdjust() {
       <div class="mb-4 flex items-center gap-3">
         <select v-model="query.entryType" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
           <option value="">{{ t('finance.credit.allTypes') }}</option>
-          <option value="consumed">{{ t('finance.credit.type.consumed') }}</option>
-          <option value="granted">{{ t('finance.credit.type.granted') }}</option>
-          <option value="refunded">{{ t('finance.credit.type.refunded') }}</option>
-          <option value="adjusted">{{ t('finance.credit.type.adjusted') }}</option>
-          <option value="purchase">{{ t('finance.credit.type.purchase') }}</option>
+          <option :value="CreditEntryType.Grant">{{ t('finance.credit.type.grant') }}</option>
+          <option :value="CreditEntryType.Consume">{{ t('finance.credit.type.consume') }}</option>
+          <option :value="CreditEntryType.Refund">{{ t('finance.credit.type.refund') }}</option>
+          <option :value="CreditEntryType.Adjustment">{{ t('finance.credit.type.adjustment') }}</option>
+          <option :value="CreditEntryType.Expire">{{ t('finance.credit.type.expire') }}</option>
         </select>
         <input v-model="query.from" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
         <input v-model="query.to" type="date" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />

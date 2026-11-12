@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ConsentState } from '@/constants/statuses'
 import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -35,9 +36,9 @@ function formatDate(dt: unknown) {
 
 function stateClass(s: string) {
   const map: Record<string, string> = {
-    Granted: 'bg-green-100 text-green-700',
-    Withdrawn: 'bg-red-100 text-red-700',
-    Pending: 'bg-amber-100 text-amber-700',
+    [ConsentState.Granted]: 'bg-green-100 text-green-700',
+    [ConsentState.Withdrawn]: 'bg-red-100 text-red-700',
+    [ConsentState.Expired]: 'bg-amber-100 text-amber-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
@@ -78,9 +79,9 @@ onMounted(() => consentStore.fetchConsents(filters))
           @change="doFetch"
         >
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="Granted">{{ t('legal.consent.state.granted') }}</option>
-          <option value="Withdrawn">{{ t('legal.consent.state.withdrawn') }}</option>
-          <option value="Pending">{{ t('legal.consent.state.pending') }}</option>
+          <option :value="ConsentState.Granted">{{ t('legal.consent.state.granted') }}</option>
+          <option :value="ConsentState.Withdrawn">{{ t('legal.consent.state.withdrawn') }}</option>
+          <option :value="ConsentState.Expired">{{ t('legal.consent.state.expired') }}</option>
         </select>
       </div>
       <button

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MeetingStatus } from '@/constants/statuses'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -15,16 +16,16 @@ const followUpStore = useFollowUpStore()
 const { can } = usePermission()
 
 const scheduledCount = computed(() =>
-  store.meetingList.items.filter((m) => m.status === 'scheduled').length
+  store.meetingList.items.filter((m) => m.status === MeetingStatus.Scheduled).length
 )
 const completedCount = computed(() =>
-  store.meetingList.items.filter((m) => m.status === 'completed').length
+  store.meetingList.items.filter((m) => m.status === MeetingStatus.Completed).length
 )
 
 const upcomingMeetings = computed(() => {
   const now = new Date()
   return store.meetingList.items
-    .filter((m) => m.scheduledAt && new Date(m.scheduledAt) >= now && m.status === 'scheduled')
+    .filter((m) => m.scheduledAt && new Date(m.scheduledAt) >= now && m.status === MeetingStatus.Scheduled)
     .slice(0, 8)
 })
 

@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { legalService } from '@/services/legal.service'
 import type { SignatureReportItemDto } from '@/types/legal.types'
+import { ContractStatus } from '@/constants/statuses'
 
 export const useSignatureStore = defineStore('signature', () => {
   const signatureReport = ref<SignatureReportItemDto[]>([])
@@ -20,7 +21,7 @@ export const useSignatureStore = defineStore('signature', () => {
       const res = await legalService.getSignatureReport(query)
       if (res.success && res.data) {
         signatureReport.value = res.data
-        pendingSignatures.value = res.data.filter(r => r.status === 'Sent')
+        pendingSignatures.value = res.data.filter(r => r.status === ContractStatus.Sent)
       }
     } catch (e: unknown) {
       error.value = (e as Error).message

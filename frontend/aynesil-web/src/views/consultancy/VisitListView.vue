@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SchoolVisitStatus } from '@/constants/statuses'
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -36,18 +37,18 @@ const columns: Column<SchoolVisitListItemDto>[] = [
 
 function visitStatusClass(s: string) {
   const map: Record<string, string> = {
-    Scheduled: 'bg-blue-100 text-blue-700',
-    Completed: 'bg-green-100 text-green-700',
-    Cancelled: 'bg-red-100 text-red-700',
+    [SchoolVisitStatus.Planned]: 'bg-blue-100 text-blue-700',
+    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
+    [SchoolVisitStatus.Cancelled]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function visitStatusLabel(s: string) {
   const map: Record<string, string> = {
-    Scheduled: t('consultancy.visit.status.scheduled'),
-    Completed: t('consultancy.visit.status.completed'),
-    Cancelled: t('consultancy.visit.status.cancelled'),
+    [SchoolVisitStatus.Planned]: t('consultancy.visit.status.planned'),
+    [SchoolVisitStatus.Completed]: t('consultancy.visit.status.completed'),
+    [SchoolVisitStatus.Cancelled]: t('consultancy.visit.status.cancelled'),
   }
   return map[s] ?? s
 }
@@ -90,9 +91,9 @@ onMounted(doFetch)
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="Scheduled">{{ t('consultancy.visit.status.scheduled') }}</option>
-          <option value="Completed">{{ t('consultancy.visit.status.completed') }}</option>
-          <option value="Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
+          <option :value="SchoolVisitStatus.Planned">{{ t('consultancy.visit.status.planned') }}</option>
+          <option :value="SchoolVisitStatus.Completed">{{ t('consultancy.visit.status.completed') }}</option>
+          <option :value="SchoolVisitStatus.Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
         </select>
       </div>
       <div>

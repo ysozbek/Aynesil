@@ -11,6 +11,7 @@ import type {
   UpdateUserRequest,
   AssignUserRoleRequest,
 } from '@/types/user.types'
+import { UserStatus } from '@/constants/statuses'
 
 export const useUserStore = defineStore('user', () => {
   const list = ref<PaginatedResult<UserListItemDto>>({
@@ -90,15 +91,15 @@ export const useUserStore = defineStore('user', () => {
   async function activate(id: string) {
     await userService.activate(id)
     const item = list.value.items.find((u) => u.id === id)
-    if (item) item.status = 'Active'
-    if (current.value?.id === id) current.value.status = 'Active'
+    if (item) item.status = UserStatus.Active
+    if (current.value?.id === id) current.value.status = UserStatus.Active
   }
 
   async function suspend(id: string) {
     await userService.suspend(id)
     const item = list.value.items.find((u) => u.id === id)
-    if (item) item.status = 'Suspended'
-    if (current.value?.id === id) current.value.status = 'Suspended'
+    if (item) item.status = UserStatus.Suspended
+    if (current.value?.id === id) current.value.status = UserStatus.Suspended
   }
 
   async function assignRole(id: string, request: AssignUserRoleRequest) {

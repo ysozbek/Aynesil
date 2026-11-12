@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ContractStatus, ConsentState } from '@/constants/statuses'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -14,37 +15,38 @@ const consentStore = useConsentStore()
 const { can } = usePermission()
 
 const pendingSignatures = computed(() =>
-  contractStore.contracts.items.filter((c) => c.status === 'Sent').length
+  contractStore.contracts.items.filter((c) => c.status === ContractStatus.Sent).length
 )
 const activeContracts = computed(() =>
-  contractStore.contracts.items.filter((c) => c.status === 'Active').length
+  contractStore.contracts.items.filter((c) => c.status === ContractStatus.Active).length
 )
 const grantedConsents = computed(() =>
-  consentStore.consents.items.filter((c) => c.state === 'Granted').length
+  consentStore.consents.items.filter((c) => c.state === ConsentState.Granted).length
 )
 const expiringContracts = computed(() => {
   const thirtyDays = Date.now() + 30 * 24 * 60 * 60 * 1000
   return contractStore.contracts.items.filter(
-    (c) => c.status === 'Active' && c.endsOn && new Date(c.endsOn).getTime() < thirtyDays
+    (c) => c.status === ContractStatus.Active && c.endsOn && new Date(c.endsOn).getTime() < thirtyDays
   ).length
 })
 
 function contractStatusClass(s: string) {
   const map: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-600',
-    Sent: 'bg-amber-100 text-amber-700',
-    Active: 'bg-green-100 text-green-700',
-    Expired: 'bg-gray-100 text-gray-700',
-    Terminated: 'bg-red-100 text-red-700',
+    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
+    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
+    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
+    [ContractStatus.Active]: 'bg-green-100 text-green-700',
+    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
+    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function consentStateClass(s: string) {
   const map: Record<string, string> = {
-    Granted: 'bg-green-100 text-green-700',
-    Withdrawn: 'bg-red-100 text-red-700',
-    Pending: 'bg-amber-100 text-amber-700',
+    [ConsentState.Granted]: 'bg-green-100 text-green-700',
+    [ConsentState.Withdrawn]: 'bg-red-100 text-red-700',
+    [ConsentState.Expired]: 'bg-amber-100 text-amber-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }

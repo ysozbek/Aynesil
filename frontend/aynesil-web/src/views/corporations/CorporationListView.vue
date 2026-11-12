@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CorporationStatus } from '@/constants/statuses'
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -162,7 +163,7 @@ async function submitForm() {
 // ── Activate / Deactivate (delete is not allowed — suspend only) ──────────────
 async function toggleStatus(row: CorporationListItemDto, e: Event) {
   e.stopPropagation()
-  if (row.status === 'Active') {
+  if (row.status === CorporationStatus.Active) {
     await store.deactivate(row.id)
   } else {
     await store.activate(row.id)
@@ -205,8 +206,9 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
         class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
       >
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="Active">{{ t('common.active') }}</option>
-        <option value="Inactive">{{ t('common.passive') }}</option>
+        <option :value="CorporationStatus.Active">{{ t('common.active') }}</option>
+        <option :value="CorporationStatus.Suspended">{{ t('corporation.suspended') }}</option>
+        <option :value="CorporationStatus.Closed">{{ t('corporation.closed') }}</option>
       </select>
     </div>
 
@@ -221,7 +223,7 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
       @row-click="goDetail"
     >
       <template #cell-status="{ value }">
-        <StatusBadge :value="String(value)" />
+        <StatusBadge entity="corporation" :status="String(value)" />
       </template>
       <template #cell-createdAt="{ value }">
         {{ value ? new Date(String(value)).toLocaleDateString('tr-TR') : '' }}
@@ -252,10 +254,10 @@ async function toggleStatus(row: CorporationListItemDto, e: Event) {
           <button
             v-if="can('corporation:update')"
             @click="(e) => toggleStatus(row, e)"
-            :title="row.status === 'Active' ? t('common.deactivate') : t('common.activate')"
+            :title="row.status === CorporationStatus.Active ? t('common.deactivate') : t('common.activate')"
             :class="[
               'p-1.5 rounded-lg hover:bg-accent transition-colors',
-              row.status === 'Active' ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700',
+              row.status === CorporationStatus.Active ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700',
             ]"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

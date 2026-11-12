@@ -33,9 +33,10 @@ function qs(params: object): string {
 export const meetingService = {
   // ── Meetings ───────────────────────────────────────────────────────────────
 
-  list: (query: MeetingListQuery) =>
+  list: ({ from, to, ...rest }: MeetingListQuery) =>
     apiService.get<PaginatedResult<MeetingListItemDto>>(
-      `/meetings${qs(query)}`
+      // Backend parametreleri scheduledFrom/scheduledTo (GetMeetingsQuery).
+      `/meetings${qs({ ...rest, scheduledFrom: from, scheduledTo: to })}`
     ),
 
   get: (id: string) =>

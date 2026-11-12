@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MeetingStatus } from '@/constants/statuses'
 import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -40,20 +41,18 @@ function formatDateTime(d: unknown) {
 
 function meetingStatusClass(s: string) {
   const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    scheduled: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
+    [MeetingStatus.Scheduled]: 'bg-blue-100 text-blue-700',
+    [MeetingStatus.Completed]: 'bg-green-100 text-green-700',
+    [MeetingStatus.Cancelled]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function meetingStatusLabel(s: string) {
   const map: Record<string, string> = {
-    draft: 'Taslak',
-    scheduled: 'Planlandı',
-    completed: 'Tamamlandı',
-    cancelled: 'İptal Edildi',
+    [MeetingStatus.Scheduled]: t('meeting.status.scheduled'),
+    [MeetingStatus.Completed]: t('meeting.status.completed'),
+    [MeetingStatus.Cancelled]: t('meeting.status.cancelled'),
   }
   return map[s] ?? s
 }
@@ -119,10 +118,9 @@ onMounted(() => store.fetchMeetings(filters))
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="draft">Taslak</option>
-          <option value="scheduled">Planlandı</option>
-          <option value="completed">Tamamlandı</option>
-          <option value="cancelled">İptal Edildi</option>
+          <option :value="MeetingStatus.Scheduled">{{ t('meeting.status.scheduled') }}</option>
+          <option :value="MeetingStatus.Completed">{{ t('meeting.status.completed') }}</option>
+          <option :value="MeetingStatus.Cancelled">{{ t('meeting.status.cancelled') }}</option>
         </select>
       </div>
       <div>
@@ -167,7 +165,7 @@ onMounted(() => store.fetchMeetings(filters))
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('meeting:update') && (row.status === 'scheduled' || row.status === 'draft')"
+            v-if="can('meeting:update') && row.status === MeetingStatus.Scheduled"
             @click="router.push({ name: 'meeting-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"

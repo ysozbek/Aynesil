@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SessionStatus } from '@/constants/statuses'
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -87,22 +88,22 @@ function formatDateTime(val: unknown): string {
 
 function statusColor(status: string): string {
   const map: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-    no_show: 'bg-gray-100 text-gray-600',
+    [SessionStatus.Scheduled]: 'bg-blue-100 text-blue-700',
+    [SessionStatus.Rescheduled]: 'bg-amber-100 text-amber-700',
+    [SessionStatus.Completed]: 'bg-green-100 text-green-700',
+    [SessionStatus.Cancelled]: 'bg-red-100 text-red-700',
+    [SessionStatus.NoShow]: 'bg-gray-100 text-gray-600',
   }
   return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    scheduled: t('scheduling.session.status.scheduled'),
-    in_progress: t('scheduling.session.status.in_progress'),
-    completed: t('scheduling.session.status.completed'),
-    cancelled: t('scheduling.session.status.cancelled'),
-    no_show: t('scheduling.session.status.no_show'),
+    [SessionStatus.Scheduled]: t('scheduling.session.status.scheduled'),
+    [SessionStatus.Rescheduled]: t('scheduling.session.status.rescheduled'),
+    [SessionStatus.Completed]: t('scheduling.session.status.completed'),
+    [SessionStatus.Cancelled]: t('scheduling.session.status.cancelled'),
+    [SessionStatus.NoShow]: t('scheduling.session.status.no_show'),
   }
   return map[status] ?? status
 }
@@ -159,11 +160,11 @@ async function doDelete() {
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="scheduled">{{ t('scheduling.session.status.scheduled') }}</option>
-        <option value="in_progress">{{ t('scheduling.session.status.in_progress') }}</option>
-        <option value="completed">{{ t('scheduling.session.status.completed') }}</option>
-        <option value="cancelled">{{ t('scheduling.session.status.cancelled') }}</option>
-        <option value="no_show">{{ t('scheduling.session.status.no_show') }}</option>
+        <option :value="SessionStatus.Scheduled">{{ t('scheduling.session.status.scheduled') }}</option>
+        <option :value="SessionStatus.Rescheduled">{{ t('scheduling.session.status.rescheduled') }}</option>
+        <option :value="SessionStatus.Completed">{{ t('scheduling.session.status.completed') }}</option>
+        <option :value="SessionStatus.Cancelled">{{ t('scheduling.session.status.cancelled') }}</option>
+        <option :value="SessionStatus.NoShow">{{ t('scheduling.session.status.no_show') }}</option>
       </select>
 
       <select v-model="query.sessionTypeId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
@@ -227,7 +228,7 @@ async function doDelete() {
             </svg>
           </button>
           <button
-            v-if="can('session:delete') && row.status === 'scheduled'"
+            v-if="can('session:delete') && row.status === SessionStatus.Scheduled"
             @click="confirmDelete(row, $event)"
             class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
             :title="t('common.delete')"

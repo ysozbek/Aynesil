@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserStatus } from '@/constants/statuses'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -68,7 +69,7 @@ async function submitEdit() {
 // ── Status ─────────────────────────────────────────────────────────────────────
 async function toggleStatus() {
   if (!store.current) return
-  if (store.current.status === 'Active') await store.suspend(id.value)
+  if (store.current.status === UserStatus.Active) await store.suspend(id.value)
   else await store.activate(id.value)
 }
 
@@ -143,7 +144,7 @@ function getBranchName(campusId?: string) {
           <div>
             <div class="flex items-center gap-2">
               <h1 class="text-xl font-bold text-foreground">{{ store.current.fullName }}</h1>
-              <StatusBadge :value="store.current.status" />
+              <StatusBadge entity="user" :status="store.current.status" />
             </div>
             <p class="text-sm text-muted-foreground">@{{ store.current.username }}</p>
           </div>
@@ -154,8 +155,8 @@ function getBranchName(campusId?: string) {
           {{ t('common.edit') }}
         </button>
         <button @click="toggleStatus"
-          :class="['px-3 py-2 text-sm rounded-lg border transition-colors', store.current.status === 'Active' ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50']">
-          {{ store.current.status === 'Active' ? t('user.suspend') : t('user.activate') }}
+          :class="['px-3 py-2 text-sm rounded-lg border transition-colors', store.current.status === UserStatus.Active ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50']">
+          {{ store.current.status === UserStatus.Active ? t('user.suspend') : t('user.activate') }}
         </button>
       </div>
     </div>

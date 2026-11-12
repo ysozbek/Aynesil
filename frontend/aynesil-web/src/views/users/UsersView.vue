@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserStatus } from '@/constants/statuses'
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -136,8 +137,7 @@ async function doDelete() {
 }
 
 function statusActions(row: UserListItemDto) {
-  if (row.status === 'Active') return [{ label: t('user.suspend'), action: suspendUser, class: 'text-amber-600' }]
-  if (row.status === 'Suspended') return [{ label: t('user.activate'), action: activateUser, class: 'text-emerald-600' }]
+  if (row.status === UserStatus.Active) return [{ label: t('user.suspend'), action: suspendUser, class: 'text-amber-600' }]
   return [{ label: t('user.activate'), action: activateUser, class: 'text-emerald-600' }]
 }
 </script>
@@ -169,9 +169,10 @@ function statusActions(row: UserListItemDto) {
 
       <select v-model="query.status" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
         <option value="">{{ t('common.allStatuses') }}</option>
-        <option value="Active">{{ t('common.active') }}</option>
-        <option value="Suspended">{{ t('user.suspended') }}</option>
-        <option value="Inactive">{{ t('common.passive') }}</option>
+        <option :value="UserStatus.Invited">{{ t('user.invited') }}</option>
+        <option :value="UserStatus.Active">{{ t('common.active') }}</option>
+        <option :value="UserStatus.Suspended">{{ t('user.suspended') }}</option>
+        <option :value="UserStatus.Disabled">{{ t('user.disabled') }}</option>
       </select>
 
       <select v-model="query.campusId" @change="query.page = 1" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary">
@@ -185,7 +186,7 @@ function statusActions(row: UserListItemDto) {
       :sort-by="query.sortBy" :sort-direction="query.sortDirection"
       @sort="onSort" @row-click="goDetail">
       <template #cell-status="{ value }">
-        <StatusBadge :value="String(value)" />
+        <StatusBadge entity="user" :status="String(value)" />
       </template>
       <template #cell-lastLoginAt="{ value }">
         {{ value ? new Date(String(value)).toLocaleDateString('tr-TR') : '-' }}

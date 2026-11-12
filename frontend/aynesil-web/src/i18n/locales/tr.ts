@@ -196,10 +196,35 @@ const tr = {
   },
 
   // ── Corporation ────────────────────────────────────────────────────────────
+  statusBadge: {
+    unknown: 'Bilinmiyor',
+    user: { invited: 'Davet Edildi', active: 'Aktif', suspended: 'Askıya Alınmış', disabled: 'Devre Dışı' },
+    corporation: { active: 'Aktif', suspended: 'Askıya Alınmış', closed: 'Kapatıldı' },
+    contract: {
+      draft: 'Taslak', sent: 'Gönderildi', signed: 'İmzalandı', active: 'Aktif',
+      expired: 'Süresi Doldu', terminated: 'Feshedildi',
+    },
+    consent: { granted: 'Verildi', withdrawn: 'Geri Alındı', expired: 'Süresi Doldu' },
+    campEnrollment: { enrolled: 'Kayıtlı', waitlist: 'Bekleme Listesi', withdrawn: 'Ayrıldı', completed: 'Tamamlandı' },
+    meeting: { scheduled: 'Planlandı', completed: 'Tamamlandı', cancelled: 'İptal Edildi' },
+    meetingFollowUp: { open: 'Açık', in_progress: 'Devam Ediyor', done: 'Tamamlandı', cancelled: 'İptal Edildi' },
+    consultancyFollowUp: { pending: 'Bekliyor', in_progress: 'Devam Ediyor', completed: 'Tamamlandı', cancelled: 'İptal Edildi' },
+    consultancyPlan: { draft: 'Taslak', active: 'Aktif', completed: 'Tamamlandı', cancelled: 'İptal Edildi' },
+    schoolVisit: { planned: 'Planlandı', completed: 'Tamamlandı', cancelled: 'İptal Edildi' },
+    session: {
+      scheduled: 'Planlandı', rescheduled: 'Yeniden Planlandı', completed: 'Tamamlandı',
+      cancelled: 'İptal Edildi', no_show: 'Gelmedi',
+    },
+    leave: { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi', cancelled: 'İptal Edildi' },
+    creditEntry: { grant: 'Verildi', consume: 'Tüketildi', refund: 'İade', adjustment: 'Düzeltme', expire: 'Süresi Doldu' },
+  },
+
   corporation: {
     title: 'Kurumlar',
     description: 'Tüm kurum ve şirketleri yönetin.',
     all: 'Tüm Kurumlar',
+    suspended: 'Askıya Alınmış',
+    closed: 'Kapatıldı',
     code: 'Kod',
     codePlaceholder: 'KURUM01',
     legalName: 'Yasal Ad',
@@ -251,6 +276,8 @@ const tr = {
     primaryCampus: 'Birincil Kampüs',
     lastLogin: 'Son Giriş',
     suspended: 'Askıya Alınmış',
+    invited: 'Davet Edildi',
+    disabled: 'Devre Dışı',
     activate: 'Aktif Et',
     suspend: 'Askıya Al',
     searchPlaceholder: 'Ad, kullanıcı adı veya e-posta ile ara...',
@@ -1146,7 +1173,7 @@ const tr = {
       participantsLaterHint: 'Grup seansı için başka öğrenci ve eğitimcileri seansı kaydettikten sonra seans detayından ekleyebilirsiniz.',
       status: {
         scheduled: 'Planlandı',
-        in_progress: 'Devam Ediyor',
+        rescheduled: 'Yeniden Planlandı',
         completed: 'Tamamlandı',
         cancelled: 'İptal Edildi',
         no_show: 'Gelmedi',
@@ -1442,11 +1469,11 @@ const tr = {
       adjust: 'Kredi Düzelt',
       adjustTitle: 'Kredi Düzelt',
       type: {
-        consumed: 'Tüketildi',
-        granted: 'Verildi',
-        refunded: 'İade',
-        adjusted: 'Düzeltme',
-        purchase: 'Satın Alma',
+        grant: 'Verildi',
+        consume: 'Tüketildi',
+        refund: 'İade',
+        adjustment: 'Düzeltme',
+        expire: 'Süresi Doldu',
       },
     },
     invoice: {
@@ -1735,6 +1762,11 @@ const tr = {
 
   // ── Meeting Module ───────────────────────────────────────────────────────────
   meeting: {
+    status: {
+      scheduled: 'Planlandı',
+      completed: 'Tamamlandı',
+      cancelled: 'İptal Edildi',
+    },
     dashboard: {
       title: 'Toplantı Paneli',
       subtitle: 'Toplantıları, takip görevlerini ve takvimi yönetin.',
@@ -2164,7 +2196,7 @@ const tr = {
         noData: 'Ziyaret bulunamadı.',
       },
       status: {
-        scheduled: 'Planlandı',
+        planned: 'Planlandı',
         completed: 'Tamamlandı',
         cancelled: 'İptal Edildi',
       },
@@ -2299,6 +2331,8 @@ const tr = {
     noData: 'Takip görevi bulunamadı.',
     // Status labels
     pending: 'Bekliyor',
+    open: 'Açık',
+    done: 'Tamamlandı',
     inProgress: 'Devam Ediyor',
     completed: 'Tamamlandı',
     cancelled: 'İptal Edildi',
@@ -2454,6 +2488,7 @@ const tr = {
       status: {
         draft: 'Taslak',
         sent: 'Gönderildi',
+        signed: 'İmzalandı',
         active: 'Aktif',
         expired: 'Sona Erdi',
         terminated: 'Feshedildi',
@@ -2492,7 +2527,7 @@ const tr = {
       state: {
         granted: 'Verildi',
         withdrawn: 'Geri Alındı',
-        pending: 'Bekliyor',
+        expired: 'Süresi Doldu',
       },
       fields: {
         student: 'Öğrenci',

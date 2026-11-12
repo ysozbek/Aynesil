@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { meetingService } from '@/services/meeting.service'
 import type { MeetingFollowUpDto, UpdateFollowUpStatusPayload } from '@/types/meeting.types'
+import { MeetingFollowUpStatus } from '@/constants/statuses'
 
 export const useFollowUpStore = defineStore('followUp', () => {
   // All follow-ups collected across meetings
@@ -16,12 +17,12 @@ export const useFollowUpStore = defineStore('followUp', () => {
 
   // Computed filtered views
   const pendingFollowUps = computed(() =>
-    allFollowUps.value.filter(f => f.status === 'pending' || f.status === 'in_progress')
+    allFollowUps.value.filter(f => f.status === MeetingFollowUpStatus.Open || f.status === MeetingFollowUpStatus.InProgress)
   )
   const overdueFollowUps = computed(() => {
     const today = new Date().toISOString().split('T')[0]
     return allFollowUps.value.filter(f =>
-      f.dueDate && f.dueDate < today && f.status !== 'completed' && f.status !== 'cancelled'
+      f.dueDate && f.dueDate < today && f.status !== MeetingFollowUpStatus.Done && f.status !== MeetingFollowUpStatus.Cancelled
     )
   })
 

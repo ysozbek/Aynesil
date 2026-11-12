@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ContractStatus } from '@/constants/statuses'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
@@ -60,11 +61,12 @@ function formatDate(dt: unknown) {
 
 function statusClass(s: string) {
   const map: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-600',
-    Sent: 'bg-amber-100 text-amber-700',
-    Active: 'bg-green-100 text-green-700',
-    Expired: 'bg-gray-100 text-gray-700',
-    Terminated: 'bg-red-100 text-red-700',
+    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
+    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
+    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
+    [ContractStatus.Active]: 'bg-green-100 text-green-700',
+    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
+    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }

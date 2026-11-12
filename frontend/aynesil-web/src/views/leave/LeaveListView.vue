@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LeaveStatus, LeaveUnit } from '@/constants/statuses'
 import { reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -42,10 +43,10 @@ function formatDate(dt: unknown) {
 
 function statusClass(status: string) {
   const map: Record<string, string> = {
-    Pending: 'bg-amber-100 text-amber-700',
-    Approved: 'bg-green-100 text-green-700',
-    Rejected: 'bg-red-100 text-red-700',
-    Cancelled: 'bg-gray-100 text-gray-600',
+    [LeaveStatus.Pending]: 'bg-amber-100 text-amber-700',
+    [LeaveStatus.Approved]: 'bg-green-100 text-green-700',
+    [LeaveStatus.Rejected]: 'bg-red-100 text-red-700',
+    [LeaveStatus.Cancelled]: 'bg-gray-100 text-gray-600',
   }
   return map[status] ?? 'bg-gray-100 text-gray-600'
 }
@@ -112,18 +113,18 @@ onMounted(() => leaveStore.fetchLeaves(filters))
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="filters.status" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="Pending">{{ t('leave.status.pending') }}</option>
-          <option value="Approved">{{ t('leave.status.approved') }}</option>
-          <option value="Rejected">{{ t('leave.status.rejected') }}</option>
-          <option value="Cancelled">{{ t('leave.status.cancelled') }}</option>
+          <option :value="LeaveStatus.Pending">{{ t('leave.status.pending') }}</option>
+          <option :value="LeaveStatus.Approved">{{ t('leave.status.approved') }}</option>
+          <option :value="LeaveStatus.Rejected">{{ t('leave.status.rejected') }}</option>
+          <option :value="LeaveStatus.Cancelled">{{ t('leave.status.cancelled') }}</option>
         </select>
       </div>
       <div>
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('leave.fields.unit') }}</label>
         <select v-model="filters.unit" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="doFetch">
           <option value="">{{ t('common.select') }}</option>
-          <option value="Day">{{ t('leave.unit.day') }}</option>
-          <option value="Hour">{{ t('leave.unit.hour') }}</option>
+          <option :value="LeaveUnit.Day">{{ t('leave.unit.day') }}</option>
+          <option :value="LeaveUnit.Hour">{{ t('leave.unit.hour') }}</option>
         </select>
       </div>
       <div>
@@ -156,7 +157,7 @@ onMounted(() => leaveStore.fetchLeaves(filters))
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-unit="{ value }">
-        {{ value === 'Day' ? t('leave.unit.day') : t('leave.unit.hour') }}
+        {{ value === LeaveUnit.Day ? t('leave.unit.day') : t('leave.unit.hour') }}
       </template>
       <template #cell-startsAt="{ value }">{{ formatDate(value) }}</template>
       <template #cell-endsAt="{ value }">{{ formatDate(value) }}</template>

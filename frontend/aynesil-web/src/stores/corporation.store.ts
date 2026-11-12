@@ -11,6 +11,7 @@ import type {
   UpdateCorporationRequest,
   UpdateCorporationSettingsRequest,
 } from '@/types/corporation.types'
+import { CorporationStatus } from '@/constants/statuses'
 
 export const useCorporationStore = defineStore('corporation', () => {
   const list = ref<PaginatedResult<CorporationListItemDto>>({
@@ -97,15 +98,15 @@ export const useCorporationStore = defineStore('corporation', () => {
   async function activate(id: string) {
     await corporationService.activate(id)
     const item = list.value.items.find((c) => c.id === id)
-    if (item) item.status = 'Active'
-    if (current.value?.id === id) current.value.status = 'Active'
+    if (item) item.status = CorporationStatus.Active
+    if (current.value?.id === id) current.value.status = CorporationStatus.Active
   }
 
   async function deactivate(id: string) {
     await corporationService.deactivate(id)
     const item = list.value.items.find((c) => c.id === id)
-    if (item) item.status = 'Inactive'
-    if (current.value?.id === id) current.value.status = 'Inactive'
+    if (item) item.status = CorporationStatus.Suspended
+    if (current.value?.id === id) current.value.status = CorporationStatus.Suspended
   }
 
   function clear() {

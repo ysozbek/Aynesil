@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MeetingFollowUpStatus } from '@/constants/statuses'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -41,26 +42,26 @@ function formatDate(d: string): string {
 
 function followUpStatusClass(s: string): string {
   const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    in_progress: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-gray-100 text-gray-600',
+    [MeetingFollowUpStatus.Open]: 'bg-amber-100 text-amber-700',
+    [MeetingFollowUpStatus.InProgress]: 'bg-blue-100 text-blue-700',
+    [MeetingFollowUpStatus.Done]: 'bg-green-100 text-green-700',
+    [MeetingFollowUpStatus.Cancelled]: 'bg-gray-100 text-gray-600',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function followUpStatusLabel(s: string): string {
   const map: Record<string, string> = {
-    pending: t('followUp.pending'),
-    in_progress: t('followUp.inProgress'),
-    completed: t('followUp.completed'),
-    cancelled: t('followUp.cancelled'),
+    [MeetingFollowUpStatus.Open]: t('followUp.open'),
+    [MeetingFollowUpStatus.InProgress]: t('followUp.inProgress'),
+    [MeetingFollowUpStatus.Done]: t('followUp.done'),
+    [MeetingFollowUpStatus.Cancelled]: t('followUp.cancelled'),
   }
   return map[s] ?? s
 }
 
 function isOverdue(dueDate?: string, status?: string): boolean {
-  if (!dueDate || status === 'completed' || status === 'cancelled') return false
+  if (!dueDate || status === MeetingFollowUpStatus.Done || status === MeetingFollowUpStatus.Cancelled) return false
   return new Date(dueDate) < new Date()
 }
 
@@ -87,7 +88,7 @@ async function loadFollowUps() {
 }
 
 async function completeFollowUp(fu: FollowUpRow) {
-  await followUpStore.updateStatus(fu.meetingId, fu.id, { status: 'completed' })
+  await followUpStore.updateStatus(fu.meetingId, fu.id, { status: MeetingFollowUpStatus.Done })
 }
 
 onMounted(loadFollowUps)
@@ -102,10 +103,10 @@ onMounted(loadFollowUps)
         <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
         <select v-model="statusFilter" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent">
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="pending">{{ t('followUp.pending') }}</option>
-          <option value="in_progress">{{ t('followUp.inProgress') }}</option>
-          <option value="completed">{{ t('followUp.completed') }}</option>
-          <option value="cancelled">{{ t('followUp.cancelled') }}</option>
+          <option :value="MeetingFollowUpStatus.Open">{{ t('followUp.open') }}</option>
+          <option :value="MeetingFollowUpStatus.InProgress">{{ t('followUp.inProgress') }}</option>
+          <option :value="MeetingFollowUpStatus.Done">{{ t('followUp.done') }}</option>
+          <option :value="MeetingFollowUpStatus.Cancelled">{{ t('followUp.cancelled') }}</option>
         </select>
       </div>
     </div>
@@ -131,7 +132,7 @@ onMounted(loadFollowUps)
           <span class="flex-1 text-sm text-foreground">{{ fu.action }}</span>
           <span v-if="fu.dueDate" class="text-xs text-red-600 font-medium">{{ formatDate(fu.dueDate) }}</span>
           <button
-            v-if="can('meeting:manage_follow_ups') && fu.status !== 'completed' && fu.status !== 'cancelled'"
+            v-if="can('meeting:manage_follow_ups') && fu.status !== MeetingFollowUpStatus.Done && fu.status !== MeetingFollowUpStatus.Cancelled"
             @click="completeFollowUp(fu)"
             :disabled="followUpStore.saving"
             class="px-2 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -168,7 +169,7 @@ onMounted(loadFollowUps)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can('meeting:manage_follow_ups') && row.status !== 'completed' && row.status !== 'cancelled'"
+            v-if="can('meeting:manage_follow_ups') && row.status !== MeetingFollowUpStatus.Done && row.status !== MeetingFollowUpStatus.Cancelled"
             @click="completeFollowUp(row)"
             :disabled="followUpStore.saving"
             class="px-2 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"

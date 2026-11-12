@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SessionStatus } from '@/constants/statuses'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -92,9 +93,8 @@ function formatDateTime(val: string): string {
 //   scheduled, in_progress, rescheduled, completed, cancelled, no_show
 function statusColor(status: string): string {
   const map: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    rescheduled: 'bg-violet-100 text-violet-700',
+    [SessionStatus.Scheduled]: 'bg-blue-100 text-blue-700',
+    [SessionStatus.Rescheduled]: 'bg-violet-100 text-violet-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
     no_show: 'bg-gray-100 text-gray-600',
@@ -104,9 +104,8 @@ function statusColor(status: string): string {
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    scheduled: t('scheduling.session.status.scheduled'),
-    in_progress: t('scheduling.session.status.in_progress'),
-    rescheduled: t('scheduling.session.status.rescheduled', 'Yeniden Planlandı'),
+    [SessionStatus.Scheduled]: t('scheduling.session.status.scheduled'),
+    [SessionStatus.Rescheduled]: t('scheduling.session.status.rescheduled'),
     completed: t('scheduling.session.status.completed'),
     cancelled: t('scheduling.session.status.cancelled'),
     no_show: t('scheduling.session.status.no_show'),
@@ -116,7 +115,7 @@ function statusLabel(status: string): string {
 
 /** Lifecycle actions are available while a session is `scheduled` or `rescheduled`. */
 const isLiveSession = (status: string | undefined) =>
-  status === 'scheduled' || status === 'rescheduled'
+  status === SessionStatus.Scheduled || status === SessionStatus.Rescheduled
 
 function attendanceStatusColor(status: string): string {
   const map: Record<string, string> = {
@@ -264,11 +263,11 @@ function getAttendance(studentId: string) {
           <ul v-else class="space-y-1">
             <li v-for="p in session.participants" :key="p.studentId" class="flex items-center justify-between text-sm">
               <span>{{ p.studentFullName }}</span>
-              <span v-if="session.status === 'completed' && p.creditsConsumed > 0" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+              <span v-if="session.status === SessionStatus.Completed && p.creditsConsumed > 0" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                 {{ t('scheduling.session.creditConsumed', { n: p.creditsConsumed }) }}
               </span>
               <span
-                v-else-if="session.status === 'completed'"
+                v-else-if="session.status === SessionStatus.Completed"
                 class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-help"
                 :title="t('scheduling.session.creditNotConsumedHint')"
               >

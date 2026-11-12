@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SchoolVisitStatus } from '@/constants/statuses'
 /**
  * Observations are stored per school visit (no top-level list API).
  * This screen lists visits with observation counts as the entry point.
@@ -39,9 +40,9 @@ function formatDate(val: unknown) {
 
 function statusClass(status: string) {
   const map: Record<string, string> = {
-    scheduled: 'bg-amber-100 text-amber-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-gray-100 text-gray-600',
+    [SchoolVisitStatus.Planned]: 'bg-amber-100 text-amber-700',
+    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
+    [SchoolVisitStatus.Cancelled]: 'bg-gray-100 text-gray-600',
   }
   return map[status?.toLowerCase()] ?? 'bg-gray-100 text-gray-600'
 }
@@ -81,9 +82,9 @@ onMounted(() => store.fetchVisits(filters))
           @change="() => { filters.page = 1; store.fetchVisits(filters) }"
         >
           <option value="">{{ t('common.allStatuses') }}</option>
-          <option value="scheduled">{{ t('consultancy.visit.status.scheduled') }}</option>
-          <option value="completed">{{ t('consultancy.visit.status.completed') }}</option>
-          <option value="cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
+          <option :value="SchoolVisitStatus.Planned">{{ t('consultancy.visit.status.planned') }}</option>
+          <option :value="SchoolVisitStatus.Completed">{{ t('consultancy.visit.status.completed') }}</option>
+          <option :value="SchoolVisitStatus.Cancelled">{{ t('consultancy.visit.status.cancelled') }}</option>
         </select>
       </div>
     </div>

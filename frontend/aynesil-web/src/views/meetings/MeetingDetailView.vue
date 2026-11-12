@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MeetingFollowUpStatus, MeetingStatus } from '@/constants/statuses'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -53,7 +54,6 @@ function formatDate(d: string) {
 
 function meetingStatusClass(s: string) {
   const map: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
     scheduled: 'bg-blue-100 text-blue-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
@@ -63,7 +63,6 @@ function meetingStatusClass(s: string) {
 
 function meetingStatusLabel(s: string) {
   const map: Record<string, string> = {
-    draft: 'Taslak',
     scheduled: 'Planlandı',
     completed: 'Tamamlandı',
     cancelled: 'İptal Edildi',
@@ -73,20 +72,20 @@ function meetingStatusLabel(s: string) {
 
 function followUpStatusClass(s: string) {
   const map: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    in_progress: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-gray-100 text-gray-600',
+    [MeetingFollowUpStatus.Open]: 'bg-amber-100 text-amber-700',
+    [MeetingFollowUpStatus.InProgress]: 'bg-blue-100 text-blue-700',
+    [MeetingFollowUpStatus.Done]: 'bg-green-100 text-green-700',
+    [MeetingFollowUpStatus.Cancelled]: 'bg-gray-100 text-gray-600',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function followUpStatusLabel(s: string) {
   const map: Record<string, string> = {
-    pending: t('followUp.pending'),
-    in_progress: t('followUp.inProgress'),
-    completed: t('followUp.completed'),
-    cancelled: t('followUp.cancelled'),
+    [MeetingFollowUpStatus.Open]: t('followUp.open'),
+    [MeetingFollowUpStatus.InProgress]: t('followUp.inProgress'),
+    [MeetingFollowUpStatus.Done]: t('followUp.done'),
+    [MeetingFollowUpStatus.Cancelled]: t('followUp.cancelled'),
   }
   return map[s] ?? s
 }
@@ -144,7 +143,7 @@ async function saveFollowUp() {
 }
 
 async function markFollowUpDone(followUpId: string) {
-  await store.updateFollowUpStatus(id.value, followUpId, { status: 'completed' })
+  await store.updateFollowUpStatus(id.value, followUpId, { status: MeetingFollowUpStatus.Done })
 }
 
 onMounted(async () => {
@@ -168,14 +167,14 @@ onMounted(async () => {
             {{ meetingStatusLabel(meeting.status) }}
           </span>
           <button
-            v-if="(meeting.status === 'scheduled' || meeting.status === 'draft') && can('meeting:update')"
+            v-if="meeting.status === MeetingStatus.Scheduled && can('meeting:update')"
             @click="router.push({ name: 'meeting-edit', params: { id: meeting.id } })"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="meeting.status === 'scheduled' && can('meeting:complete')"
+            v-if="meeting.status === MeetingStatus.Scheduled && can('meeting:complete')"
             :disabled="store.saving"
             @click="complete"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -183,7 +182,7 @@ onMounted(async () => {
             {{ t('meeting.actions.complete') }}
           </button>
           <button
-            v-if="meeting.status !== 'completed' && meeting.status !== 'cancelled' && can('meeting:cancel')"
+            v-if="meeting.status !== MeetingStatus.Completed && meeting.status !== MeetingStatus.Cancelled && can('meeting:cancel')"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >
@@ -265,7 +264,7 @@ onMounted(async () => {
                 <span class="flex-1 text-sm text-foreground">{{ fu.action }}</span>
                 <span v-if="fu.dueDate" class="text-xs text-muted-foreground shrink-0">{{ formatDate(fu.dueDate) }}</span>
                 <button
-                  v-if="canManageFollowUps && fu.status !== 'completed'"
+                  v-if="canManageFollowUps && fu.status !== MeetingFollowUpStatus.Done"
                   @click="markFollowUpDone(fu.id)"
                   class="px-2 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700 shrink-0"
                 >

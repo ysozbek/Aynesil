@@ -79,17 +79,17 @@
               <tr v-for="e in campStore.enrollments.items" :key="e.id">
                 <td class="ps-4 fw-semibold">{{ e.studentId }}</td>
                 <td>
-                  <span :class="enrollmentStatusBadge(e.status)">{{ e.status }}</span>
+                  <span :class="enrollmentStatusBadge(e.status)">{{ $t(`camp.enrollment.${e.status}`, e.status) }}</span>
                 </td>
                 <td class="text-muted fs-7">{{ formatDate(e.enrolledAt) }}</td>
                 <td class="text-end pe-4">
                   <button
-                    v-if="e.status === 'Waitlist' && hasPermission('camp_enrollment:manage')"
+                    v-if="e.status === CampEnrollmentStatus.Waitlist && hasPermission('camp_enrollment:manage')"
                     class="btn btn-sm btn-light-success me-2"
                     @click="campStore.promoteFromWaitlist(e.id, periodId)"
                   >{{ $t('camp.enrollment.promote') }}</button>
                   <button
-                    v-if="e.status === 'Enrolled' && hasPermission('camp_enrollment:withdraw')"
+                    v-if="e.status === CampEnrollmentStatus.Enrolled && hasPermission('camp_enrollment:withdraw')"
                     class="btn btn-sm btn-light-danger"
                     @click="campStore.withdraw(e.id, periodId)"
                   >{{ $t('camp.enrollment.withdraw') }}</button>
@@ -127,6 +127,7 @@
 </template>
 
 <script setup lang="ts">
+import { CampEnrollmentStatus } from '@/constants/statuses'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
@@ -145,8 +146,10 @@ function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR'
 
 function enrollmentStatusBadge(status: string) {
   const map: Record<string, string> = {
-    Enrolled: 'badge badge-light-success', Waitlist: 'badge badge-light-warning',
-    Completed: 'badge badge-light-primary', Withdrawn: 'badge badge-light-danger',
+    [CampEnrollmentStatus.Enrolled]: 'badge badge-light-success',
+    [CampEnrollmentStatus.Waitlist]: 'badge badge-light-warning',
+    [CampEnrollmentStatus.Completed]: 'badge badge-light-primary',
+    [CampEnrollmentStatus.Withdrawn]: 'badge badge-light-danger',
   }
   return map[status] ?? 'badge badge-light'
 }

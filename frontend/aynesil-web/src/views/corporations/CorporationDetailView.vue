@@ -53,7 +53,7 @@ function formatDate(val: string | undefined) {
       <div class="flex-1">
         <div class="flex items-center gap-3">
           <h1 class="text-xl font-bold text-foreground">{{ store.current?.displayName }}</h1>
-          <StatusBadge v-if="store.current" :value="store.current.status" />
+          <StatusBadge v-if="store.current" entity="corporation" :status="store.current.status" />
         </div>
         <p class="text-sm text-muted-foreground">{{ store.current?.code }}</p>
       </div>

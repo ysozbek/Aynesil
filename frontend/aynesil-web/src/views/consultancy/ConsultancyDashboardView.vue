@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SchoolVisitStatus, ConsultancyFollowUpStatus, ConsultancyPlanStatus } from '@/constants/statuses'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -12,27 +13,27 @@ const consultancyStore = useConsultancyStore()
 const { can } = usePermission()
 
 const upcomingVisits = computed(() =>
-  consultancyStore.visits.items.filter(v => v.status !== 'Completed' && v.status !== 'Cancelled').slice(0, 5)
+  consultancyStore.visits.items.filter(v => v.status !== SchoolVisitStatus.Completed && v.status !== SchoolVisitStatus.Cancelled).slice(0, 5)
 )
 const pendingFollowUps = computed(() =>
-  consultancyStore.followUps.items.filter(f => f.status === 'Open' || f.status === 'InProgress').length
+  consultancyStore.followUps.items.filter(f => f.status === ConsultancyFollowUpStatus.Pending || f.status === ConsultancyFollowUpStatus.InProgress).length
 )
 
 function visitStatusClass(s: string) {
   const map: Record<string, string> = {
-    Scheduled: 'bg-blue-100 text-blue-700',
-    Completed: 'bg-green-100 text-green-700',
-    Cancelled: 'bg-red-100 text-red-700',
+    [SchoolVisitStatus.Planned]: 'bg-blue-100 text-blue-700',
+    [SchoolVisitStatus.Completed]: 'bg-green-100 text-green-700',
+    [SchoolVisitStatus.Cancelled]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
 
 function followUpStatusClass(s: string) {
   const map: Record<string, string> = {
-    Open: 'bg-amber-100 text-amber-700',
-    InProgress: 'bg-sky-100 text-sky-700',
-    Completed: 'bg-green-100 text-green-700',
-    Cancelled: 'bg-red-100 text-red-700',
+    [ConsultancyFollowUpStatus.Pending]: 'bg-amber-100 text-amber-700',
+    [ConsultancyFollowUpStatus.InProgress]: 'bg-sky-100 text-sky-700',
+    [ConsultancyFollowUpStatus.Completed]: 'bg-green-100 text-green-700',
+    [ConsultancyFollowUpStatus.Cancelled]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
@@ -40,9 +41,9 @@ function followUpStatusClass(s: string) {
 onMounted(async () => {
   await Promise.all([
     consultancyStore.fetchInstitutions({}),
-    consultancyStore.fetchPlans({ status: 'Active' }),
+    consultancyStore.fetchPlans({ status: ConsultancyPlanStatus.Active }),
     consultancyStore.fetchVisits({ pageSize: 10 }),
-    consultancyStore.fetchFollowUps({ status: 'Open', pageSize: 10 }),
+    consultancyStore.fetchFollowUps({ status: ConsultancyFollowUpStatus.Pending, pageSize: 10 }),
   ])
 })
 </script>

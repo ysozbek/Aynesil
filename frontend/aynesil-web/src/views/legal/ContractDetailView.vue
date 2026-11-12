@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ContractStatus } from '@/constants/statuses'
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -30,11 +31,12 @@ function formatDatetime(dt: string) {
 
 function statusClass(s: string) {
   const map: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-600',
-    Sent: 'bg-amber-100 text-amber-700',
-    Active: 'bg-green-100 text-green-700',
-    Expired: 'bg-gray-100 text-gray-700',
-    Terminated: 'bg-red-100 text-red-700',
+    [ContractStatus.Draft]: 'bg-gray-100 text-gray-600',
+    [ContractStatus.Sent]: 'bg-amber-100 text-amber-700',
+    [ContractStatus.Signed]: 'bg-blue-100 text-blue-700',
+    [ContractStatus.Active]: 'bg-green-100 text-green-700',
+    [ContractStatus.Expired]: 'bg-gray-100 text-gray-700',
+    [ContractStatus.Terminated]: 'bg-red-100 text-red-700',
   }
   return map[s] ?? 'bg-gray-100 text-gray-600'
 }
@@ -82,7 +84,7 @@ onMounted(() => {
             {{ statusLabel(contract.status) }}
           </span>
           <button
-            v-if="contract.status === 'Draft' && can('student_contract:send')"
+            v-if="contract.status === ContractStatus.Draft && can('student_contract:send')"
             :disabled="contractStore.saving"
             @click="doSend"
             class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
@@ -90,7 +92,7 @@ onMounted(() => {
             {{ t('legal.contract.actions.send') }}
           </button>
           <button
-            v-if="contract.status === 'Sent' && can('student_contract:sign')"
+            v-if="contract.status === ContractStatus.Sent && can('student_contract:sign')"
             :disabled="contractStore.saving"
             @click="showSignModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
@@ -98,7 +100,7 @@ onMounted(() => {
             {{ t('legal.contract.actions.sign') }}
           </button>
           <button
-            v-if="contract.status === 'Active' && can('student_contract:terminate')"
+            v-if="contract.status === ContractStatus.Active && can('student_contract:terminate')"
             :disabled="contractStore.saving"
             @click="showTerminateConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
