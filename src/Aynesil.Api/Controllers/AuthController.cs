@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Api.RateLimiting;
 using Aynesil.Application.Features.Auth.Commands;
 using Aynesil.Application.Features.Users.Dtos;
 using Aynesil.Shared;
@@ -21,6 +22,8 @@ public class AuthController : BaseController
 
     [AllowAnonymous]
     [HttpPost("login")]
+    [AuthRateLimit(AuthRateLimitPolicy.Login, nameof(LoginRequest.Username))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
@@ -99,6 +102,8 @@ public class AuthController : BaseController
     /// </summary>
     [AllowAnonymous]
     [HttpPost("request-password-reset")]
+    [AuthRateLimit(AuthRateLimitPolicy.PasswordResetRequest, nameof(RequestPasswordResetRequest.Email))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> RequestPasswordReset(
         [FromBody] RequestPasswordResetRequest request, CancellationToken ct)
@@ -113,6 +118,8 @@ public class AuthController : BaseController
     /// </summary>
     [AllowAnonymous]
     [HttpPost("confirm-password-reset")]
+    [AuthRateLimit(AuthRateLimitPolicy.PasswordResetConfirm, nameof(ConfirmPasswordResetRequest.Token))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> ConfirmPasswordReset(

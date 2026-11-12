@@ -39,7 +39,7 @@ async function http(method, p, body) {
     const text = await res.text()
     let json = null
     try { json = text ? JSON.parse(text) : null } catch { /* gövde JSON değil */ }
-    return { status: res.status, json, text, ms: Date.now() - t0 }
+    return { status: res.status, json, text, ms: Date.now() - t0, retryAfter: res.headers.get('retry-after') }
   } catch (e) {
     return { status: 0, json: null, text: String(e?.message || e), ms: Date.now() - t0, netErr: true }
   }
@@ -146,7 +146,13 @@ async function buildUrl(ep) {
 
 // ── Fazlar ──────────────────────────────────────────────────────────────────
 async function login(username = fx.admin.username, password = fx.admin.password, phase = 'giriş') {
-  const res = await http('POST', '/auth/login', { username, password })
+  let res = await http('POST', '/auth/login', { username, password })
+  // Giriş IP + kullanıcı başına hız sınırlı (10/dk); demo-seed hemen önce aynı IP'den giriş yapmış olabilir.
+  for (let i = 0; i < 3 && res.status === 429; i++) {
+    console.log(`  (giriş hız sınırı: ${res.retryAfter || 60} sn bekleniyor)`)
+    await new Promise((ok) => setTimeout(ok, (Number(res.retryAfter) || 60) * 1000 + 250))
+    res = await http('POST', '/auth/login', { username, password })
+  }
   const ep = byId['post:auth.login'] // auth.service yoksa frontend tipi store'dadır; zarf kontrolü yeterli
   const { mismatches } = checkAgainst(ep, res)
   const d = res.json?.data

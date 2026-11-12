@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Api.RateLimiting;
 using Aynesil.Api.Services;
 using Aynesil.Application;
 using Aynesil.Application.Common.Interfaces;
@@ -63,6 +64,10 @@ public static class ApiServiceCollectionExtensions
             .SetDefaultPolicy(new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build());
+
+        // ── Anonim auth uçlarının hız sınırı (Y7): IP + hedef kimlik başına sabit pencere ─────────
+        services.Configure<AuthRateLimitOptions>(configuration.GetSection(AuthRateLimitOptions.Section));
+        services.AddSingleton<AuthRateLimiter>();
 
         // ── API controllers & OpenAPI ─────────────────────────────────────────────
         services.AddControllers()

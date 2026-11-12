@@ -39,6 +39,7 @@
   <data name="Error.ReferenceMissing" xml:space="preserve"><value>İlişkili kayıt bulunamadı veya bu kuruma ait değil.</value></data>
   <data name="Error.RequestCancelled" xml:space="preserve"><value>İstek iptal edildi.</value></data>
   <data name="Error.TenantSessionInvalid" xml:space="preserve"><value>Oturumunuz artık geçerli değil. Lütfen yeniden giriş yapın.</value></data>
+  <data name="Error.TooManyRequests" xml:space="preserve"><value>Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.</value></data>
   <data name="Error.Unauthorized" xml:space="preserve"><value>Oturum açmanız gerekiyor.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Doğrulama hatası.</value></data>

@@ -39,6 +39,7 @@
   <data name="Error.ReferenceMissing" xml:space="preserve"><value>The related record was not found or does not belong to this organization.</value></data>
   <data name="Error.RequestCancelled" xml:space="preserve"><value>The request was cancelled.</value></data>
   <data name="Error.TenantSessionInvalid" xml:space="preserve"><value>Your session is no longer valid. Please sign in again.</value></data>
+  <data name="Error.TooManyRequests" xml:space="preserve"><value>Too many attempts. Please wait a moment and try again.</value></data>
   <data name="Error.Unauthorized" xml:space="preserve"><value>You need to sign in.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>An unexpected error occurred. Please try again.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Validation failed.</value></data>

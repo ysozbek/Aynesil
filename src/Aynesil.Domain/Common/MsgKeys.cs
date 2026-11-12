@@ -17,6 +17,7 @@ public static class MsgKeys
         public static readonly MsgKey Forbidden = new("Error.Forbidden");
         public static readonly MsgKey Unauthorized = new("Error.Unauthorized");
         public static readonly MsgKey TenantSessionInvalid = new("Error.TenantSessionInvalid");
+        public static readonly MsgKey TooManyRequests = new("Error.TooManyRequests");
         public static readonly MsgKey Concurrency = new("Error.Concurrency");
         public static readonly MsgKey DuplicateKey = new("Error.DuplicateKey");
         public static readonly MsgKey ReferenceMissing = new("Error.ReferenceMissing");

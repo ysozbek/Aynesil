@@ -21,10 +21,15 @@ export class Client {
     const text = await res.text()
     let json = null
     try { json = text ? JSON.parse(text) : null } catch { /* JSON değil */ }
-    return { status: res.status, json, text }
+    return { status: res.status, json, text, retryAfter: res.headers.get('retry-after') }
   }
   async login(username, password) {
-    const r = await this.raw('POST', '/auth/login', { username, password })
+    let r = await this.raw('POST', '/auth/login', { username, password })
+    // Giriş IP + kullanıcı başına hız sınırlı (10/dk); yerelde tüm istekler aynı IP'den gelir → Retry-After kadar bekle.
+    for (let i = 0; i < 3 && r.status === 429; i++) {
+      await new Promise((ok) => setTimeout(ok, (Number(r.retryAfter) || 60) * 1000 + 250))
+      r = await this.raw('POST', '/auth/login', { username, password })
+    }
     if (!r.json?.data?.accessToken) throw new Error(`giriş başarısız (${username}): HTTP ${r.status} ${r.text.slice(0, 200)}`)
     this.token = r.json.data.accessToken
     this.me = r.json.data
