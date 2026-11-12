@@ -42,6 +42,19 @@ async function loadList() {
   }
 }
 
+async function openEdit(row: PromotionListItemDto) {
+  // Liste DTO'sunda maxRedemptions yok; kaydedince sıfırlanmaması için detaydan çek.
+  const res = await financeService.getPromotion(row.id)
+  if (!res.success || !res.data) return
+  const d = res.data
+  editTarget.value = row
+  Object.assign(formData, {
+    code: d.code, name: d.name, value: d.value, isPercentage: d.isPercentage,
+    maxRedemptions: d.maxRedemptions ?? '', validFrom: d.validFrom ?? '', validTo: d.validTo ?? '',
+  })
+  showForm.value = true
+}
+
 async function submitForm() {
   saving.value = true
   try {
@@ -74,7 +87,6 @@ const columns: Column<PromotionListItemDto>[] = [
   { key: 'code', label: t('finance.promotion.code'), width: '100px' },
   { key: 'name', label: t('finance.promotion.name') },
   { key: 'value', label: t('finance.promotion.value'), width: '90px', align: 'center' },
-  { key: 'redemptionCount', label: t('finance.promotion.redemptions'), width: '90px', align: 'center' },
   { key: 'validTo', label: t('finance.promotion.validTo'), width: '110px' },
   { key: 'isActive', label: t('common.status'), width: '90px' },
 ]
@@ -124,7 +136,7 @@ function formatDate(val: unknown): string {
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
             v-if="can('promotion:update')"
-            @click="editTarget = row; Object.assign(formData, { name: row.name, value: row.value, isPercentage: row.isPercentage, maxRedemptions: row.maxRedemptions ?? '', validFrom: '', validTo: row.validTo ?? '' }); showForm = true"
+            @click="openEdit(row)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

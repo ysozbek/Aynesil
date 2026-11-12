@@ -32,7 +32,7 @@ const query = reactive({
 const showForm = ref(false)
 const formData = reactive({
   studentId: '', scholarshipTypeId: '', percentage: '' as string | number,
-  amount: '' as string | number, currency: 'TRY', validFrom: '', validTo: '', notes: '',
+  amount: '' as string | number, validFrom: '', validTo: '', note: '',
 })
 
 watch(() => [query.studentId, query.scholarshipTypeId, query.page], () => loadList())
@@ -65,10 +65,9 @@ async function submitForm() {
       scholarshipTypeId: formData.scholarshipTypeId,
       percentage: formData.percentage ? Number(formData.percentage) : undefined,
       amount: formData.amount ? Number(formData.amount) : undefined,
-      currency: formData.currency || undefined,
       validFrom: formData.validFrom,
       validTo: formData.validTo || undefined,
-      notes: formData.notes || undefined,
+      note: formData.note || undefined,
     })
     showForm.value = false
     await loadList()
@@ -79,7 +78,7 @@ async function submitForm() {
 
 const columns: Column<ScholarshipListItemDto>[] = [
   { key: 'studentFullName', label: t('student.fullName') },
-  { key: 'scholarshipTypeLabel', label: t('finance.scholarship.type'), width: '140px' },
+  { key: 'scholarshipTypeName', label: t('finance.scholarship.type'), width: '140px' },
   { key: 'percentage', label: t('finance.scholarship.percentage'), width: '90px', align: 'center' },
   { key: 'amount', label: t('finance.scholarship.amount'), width: '110px', align: 'right' },
   { key: 'validFrom', label: t('finance.scholarship.validFrom'), width: '110px' },
@@ -122,9 +121,9 @@ function formatDate(val: unknown): string {
     </div>
 
     <DataTable :columns="columns" :rows="list.items" :loading="loading">
-      <template #cell-scholarshipTypeLabel="{ value }"><span class="text-muted-foreground">{{ value ?? '—' }}</span></template>
+      <template #cell-scholarshipTypeName="{ value }"><span class="text-muted-foreground">{{ value ?? '—' }}</span></template>
       <template #cell-percentage="{ value }"><span v-if="value" class="font-mono">%{{ value }}</span><span v-else class="text-muted-foreground">—</span></template>
-      <template #cell-amount="{ row }"><span v-if="row.amount" class="font-mono">{{ row.amount }} {{ row.currency }}</span><span v-else class="text-muted-foreground">—</span></template>
+      <template #cell-amount="{ row }"><span v-if="row.amount" class="font-mono">{{ row.amount }}</span><span v-else class="text-muted-foreground">—</span></template>
       <template #cell-validFrom="{ value }">{{ formatDate(value) }}</template>
       <template #cell-validTo="{ value }">{{ formatDate(value) }}</template>
     </DataTable>

@@ -55,7 +55,8 @@ public class Payment : TenantEntity
         Guid? paymentMethodId = null,
         Guid? gatewayProviderId = null,
         string? gatewayReference = null,
-        string? idempotencyKey = null)
+        string? idempotencyKey = null,
+        DateTimeOffset? paidAt = null)
     {
         if (amount <= 0)
             throw new ArgumentException("Payment amount must be positive.");
@@ -72,6 +73,7 @@ public class Payment : TenantEntity
             GatewayProviderId = gatewayProviderId,
             GatewayReference  = gatewayReference,
             IdempotencyKey    = idempotencyKey,
+            PaidAt            = paidAt,
             CreatedAt         = DateTimeOffset.UtcNow,
             UpdatedAt         = DateTimeOffset.UtcNow
         };
@@ -96,7 +98,7 @@ public class Payment : TenantEntity
 
         Status           = "captured";
         GatewayReference = gatewayReference ?? GatewayReference;
-        PaidAt           = paidAt ?? DateTimeOffset.UtcNow;
+        PaidAt           = paidAt ?? PaidAt ?? DateTimeOffset.UtcNow;
         UpdatedAt        = DateTimeOffset.UtcNow;
 
         AddDomainEvent(new PaymentCapturedEvent(

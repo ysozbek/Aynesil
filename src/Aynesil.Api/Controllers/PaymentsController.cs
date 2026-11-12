@@ -378,7 +378,7 @@ public sealed class PaymentsController : BaseController
         var result = await Sender.Send(new RecordPaymentCommand(
             req.Amount, req.Currency,
             req.InvoiceId, req.StudentId, req.PaymentMethodId,
-            req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey), ct);
+            req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey, req.PaidAt), ct);
         return CreatedResult(result, $"/api/payments/transactions/{result.Id}");
     }
 
@@ -734,7 +734,8 @@ public record RecordPaymentRequest(
     Guid? PaymentMethodId = null,
     Guid? GatewayProviderId = null,
     string? GatewayReference = null,
-    string? IdempotencyKey = null);
+    string? IdempotencyKey = null,
+    DateTimeOffset? PaidAt = null);
 
 public record CapturePaymentRequest(
     string? GatewayReference,

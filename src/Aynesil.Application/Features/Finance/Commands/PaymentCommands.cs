@@ -17,7 +17,8 @@ public record RecordPaymentCommand(
     Guid? PaymentMethodId = null,
     Guid? GatewayProviderId = null,
     string? GatewayReference = null,
-    string? IdempotencyKey = null) : IRequest<PaymentDto>;
+    string? IdempotencyKey = null,
+    DateTimeOffset? PaidAt = null) : IRequest<PaymentDto>;
 
 public class RecordPaymentCommandValidator : AbstractValidator<RecordPaymentCommand>
 {
@@ -25,6 +26,11 @@ public class RecordPaymentCommandValidator : AbstractValidator<RecordPaymentComm
     {
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.Currency).NotEmpty().Length(3);
+        // Saat farkı/gecikme için 5 dk tolerans; geleceğe tarihli ödeme kaydedilemez.
+        RuleFor(x => x.PaidAt)
+            .Must(d => d!.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
+            .When(x => x.PaidAt.HasValue)
+            .WithMessage("Ödeme tarihi gelecekte olamaz.");
     }
 }
 
@@ -56,7 +62,7 @@ public sealed class RecordPaymentCommandHandler
         var payment = Payment.Record(
             corporationId, req.Amount, req.Currency,
             req.InvoiceId, req.StudentId, req.PaymentMethodId,
-            req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey);
+            req.GatewayProviderId, req.GatewayReference, req.IdempotencyKey, req.PaidAt);
 
         _db.Payments.Add(payment);
         await _db.SaveChangesAsync(ct);

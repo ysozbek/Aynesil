@@ -58,8 +58,23 @@ public sealed class GetPackageDefinitionsQueryHandler
             .Take(req.PageSize)
             .Select(p => new PackageDefinitionListItemDto(
                 p.Id, p.CorporationId, p.Code, p.Name,
-                p.PackageTypeId, p.TotalCredits, p.ListPrice, p.Currency, p.IsActive))
+                p.PackageTypeId, p.TotalCredits, p.ListPrice, p.Currency, p.IsActive,
+                p.ValidityDays,
+                _db.EducationPrograms
+                    .Where(g => g.Id == p.ProgramId)
+                    .Select(g => g.Name)
+                    .FirstOrDefault(),
+                null))
             .ToListAsync(ct);
+
+        var typeIds = items.Where(i => i.PackageTypeId.HasValue)
+            .Select(i => i.PackageTypeId!.Value).Distinct().ToList();
+        var typeNames = await FinanceProjection.LoadRefLabelsAsync(_db, typeIds, _tenant.Locale, ct);
+        items = items
+            .Select(i => i.PackageTypeId.HasValue
+                ? i with { PackageTypeName = typeNames.GetValueOrDefault(i.PackageTypeId.Value) }
+                : i)
+            .ToList();
         return PaginatedResult<PackageDefinitionListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
 }

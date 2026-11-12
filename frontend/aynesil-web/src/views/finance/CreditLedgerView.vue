@@ -219,6 +219,9 @@ function openAdjust() {
         <template #cell-sessionTitle="{ value }">
           <span class="text-muted-foreground">{{ value ?? '—' }}</span>
         </template>
+        <template #cell-recordedByName="{ value }">
+          <span class="text-muted-foreground">{{ value ?? '—' }}</span>
+        </template>
         <template #cell-reason="{ value }">
           <span class="text-muted-foreground">{{ value ?? '—' }}</span>
         </template>

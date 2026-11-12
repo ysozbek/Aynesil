@@ -49,7 +49,10 @@ public sealed class GetPaymentsQueryHandler
             join student in _db.Students.AsNoTracking()
                 on pay.StudentId equals student.Id into studentGrp
             from student in studentGrp.DefaultIfEmpty()
-            select new { pay, student };
+            join invoice in _db.Invoices.AsNoTracking()
+                on pay.InvoiceId equals invoice.Id into invoiceGrp
+            from invoice in invoiceGrp.DefaultIfEmpty()
+            select new { pay, student, invoice };
 
         var sorted = req.SortBy?.ToLower() switch
         {
@@ -67,8 +70,19 @@ public sealed class GetPaymentsQueryHandler
                 x.pay.Id, x.pay.InvoiceId,
                 x.student != null ? x.student.FirstName + " " + x.student.LastName : null,
                 x.pay.PaymentMethodId, x.pay.Amount, x.pay.Currency,
-                x.pay.Status, x.pay.PaidAt, x.pay.CreatedAt))
+                x.pay.Status, x.pay.PaidAt, x.pay.CreatedAt,
+                x.invoice != null ? x.invoice.InvoiceNo : null,
+                null))
             .ToListAsync(ct);
+
+        var methodIds = items.Where(i => i.PaymentMethodId.HasValue)
+            .Select(i => i.PaymentMethodId!.Value).Distinct().ToList();
+        var methodNames = await FinanceProjection.LoadRefLabelsAsync(_db, methodIds, _tenant.Locale, ct);
+        items = items
+            .Select(i => i.PaymentMethodId.HasValue
+                ? i with { PaymentMethodName = methodNames.GetValueOrDefault(i.PaymentMethodId.Value) }
+                : i)
+            .ToList();
 
         return PaginatedResult<PaymentListItemDto>.Create(items, total, req.Page, req.PageSize);
     }
@@ -81,8 +95,13 @@ public record GetPaymentQuery(Guid Id) : IRequest<PaymentDto>;
 public sealed class GetPaymentQueryHandler : IRequestHandler<GetPaymentQuery, PaymentDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public GetPaymentQueryHandler(IAppDbContext db) => _db = db;
+    public GetPaymentQueryHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task<PaymentDto> Handle(GetPaymentQuery req, CancellationToken ct)
     {
@@ -100,6 +119,23 @@ public sealed class GetPaymentQueryHandler : IRequestHandler<GetPaymentQuery, Pa
             studentName = s is null ? null : $"{s.FirstName} {s.LastName}".Trim();
         }
 
-        return FinanceProjection.ToPaymentDto(p, studentName);
+        string? invoiceNo = null;
+        if (p.InvoiceId.HasValue)
+        {
+            invoiceNo = await _db.Invoices.AsNoTracking()
+                .Where(i => i.Id == p.InvoiceId.Value)
+                .Select(i => i.InvoiceNo)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        string? methodName = null;
+        if (p.PaymentMethodId.HasValue)
+        {
+            var labels = await FinanceProjection.LoadRefLabelsAsync(
+                _db, [p.PaymentMethodId.Value], _tenant.Locale, ct);
+            methodName = labels.GetValueOrDefault(p.PaymentMethodId.Value);
+        }
+
+        return FinanceProjection.ToPaymentDto(p, studentName, invoiceNo, methodName);
     }
 }

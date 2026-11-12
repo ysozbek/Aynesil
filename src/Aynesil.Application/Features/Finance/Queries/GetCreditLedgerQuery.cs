@@ -57,6 +57,25 @@ public sealed class GetCreditLedgerQueryHandler
         var total   = await ordered.CountAsync(ct);
         var entries = await ordered.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);
 
+        // Resolve display names for the page (LEFT JOIN semantics: missing → null)
+        var sessionIds = entries.Where(e => e.SessionId.HasValue)
+            .Select(e => e.SessionId!.Value).Distinct().ToList();
+        var sessionTitles = sessionIds.Count == 0
+            ? new Dictionary<Guid, string?>()
+            : await _db.Sessions.AsNoTracking()
+                .Where(s => sessionIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.Title })
+                .ToDictionaryAsync(s => s.Id, s => s.Title, ct);
+
+        var userIds = entries.Where(e => e.CreatedBy.HasValue)
+            .Select(e => e.CreatedBy!.Value).Distinct().ToList();
+        var userNames = userIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await _db.UserAccounts.AsNoTracking()
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.FullName })
+                .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
+
         // Compute running balance per package within the page
         var balanceByPackage = new Dictionary<Guid, decimal>();
         var items = entries.Select(e =>
@@ -68,7 +87,9 @@ public sealed class GetCreditLedgerQueryHandler
             return new CreditLedgerEntryDto(
                 e.Id, e.StudentPackageId, e.EntryType,
                 e.Delta, running,
-                e.SessionId, e.Reason, e.OccurredAt, e.CreatedBy);
+                e.SessionId, e.Reason, e.OccurredAt, e.CreatedBy,
+                e.SessionId.HasValue ? sessionTitles.GetValueOrDefault(e.SessionId.Value) : null,
+                e.CreatedBy.HasValue ? userNames.GetValueOrDefault(e.CreatedBy.Value) : null);
         }).ToList();
 
         return PaginatedResult<CreditLedgerEntryDto>.Create(items, total, req.Page, req.PageSize);

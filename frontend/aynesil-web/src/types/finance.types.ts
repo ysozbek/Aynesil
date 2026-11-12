@@ -12,9 +12,7 @@ export interface PackageDefinitionDto {
   code: string
   name: string
   packageTypeId: string
-  packageTypeLabel?: string
   programId?: string
-  programName?: string
   totalCredits: number
   validityDays: number
   listPrice: number
@@ -23,14 +21,17 @@ export interface PackageDefinitionDto {
   rowVersion: string
 }
 
+/** Mirrors PackageDefinitionListItemDto. `packageTypeId` is resolved to a label via ref-data (package_type). */
 export interface PackageDefinitionListItemDto {
   id: string
+  corporationId: string
   code: string
   name: string
-  packageTypeLabel?: string
+  packageTypeId?: string
+  packageTypeName?: string
   programName?: string
-  totalCredits: number
-  validityDays: number
+  totalCredits?: number
+  validityDays?: number
   listPrice: number
   currency: string
   isActive: boolean
@@ -137,7 +138,8 @@ export interface CreditLedgerEntryDto {
   sessionTitle?: string
   reason?: string
   occurredAt: string
-  recordedByName: string
+  createdBy?: string
+  recordedByName?: string
 }
 
 export interface CreditSummaryDto {
@@ -190,7 +192,6 @@ export interface InvoiceLineDto {
   description: string
   quantity: number
   unitPrice: number
-  discountAmount: number
   lineTotal: number
 }
 
@@ -245,7 +246,6 @@ export interface AddInvoiceLinePayload {
   description: string
   quantity: number
   unitPrice: number
-  discountAmount?: number
 }
 
 // ── Transactions (Payments) ────────────────────────────────────────────────────
@@ -260,11 +260,10 @@ export interface PaymentDto {
   amount: number
   currency: string
   status: string
-  paymentMethodId: string
-  paymentMethodLabel?: string
+  paymentMethodId?: string
+  paymentMethodName?: string
   gatewayReference?: string
   paidAt?: string
-  notes?: string
   rowVersion: string
 }
 
@@ -275,16 +274,19 @@ export interface PaymentListItemDto {
   amount: number
   currency: string
   status: string
-  paymentMethodLabel?: string
+  paymentMethodId?: string
+  paymentMethodName?: string
   paidAt?: string
 }
 
-export interface PaymentListQuery extends PagedQuery {
+/** Backend GetPaymentsQuery has no free-text search → `search` is omitted. */
+export interface PaymentListQuery extends Omit<PagedQuery, 'search'> {
   studentId?: string
   invoiceId?: string
+  paymentMethodId?: string
   status?: string
-  from?: string
-  to?: string
+  paidFrom?: string
+  paidTo?: string
 }
 
 export interface CreatePaymentPayload {
@@ -295,7 +297,6 @@ export interface CreatePaymentPayload {
   paymentMethodId: string
   gatewayReference?: string
   paidAt?: string
-  notes?: string
 }
 
 // ── Refunds ───────────────────────────────────────────────────────────────────
@@ -365,25 +366,25 @@ export interface ScholarshipDto {
   corporationId: string
   studentId: string
   studentFullName: string
-  scholarshipTypeId: string
-  scholarshipTypeLabel?: string
+  scholarshipTypeId?: string
   percentage?: number
   amount?: number
-  currency?: string
-  validFrom: string
+  validFrom?: string
   validTo?: string
-  notes?: string
-  rowVersion: string
+  approvedBy?: string
+  note?: string
+  rowVersion: number
 }
 
 export interface ScholarshipListItemDto {
   id: string
+  studentId: string
   studentFullName: string
-  scholarshipTypeLabel?: string
+  scholarshipTypeId?: string
+  scholarshipTypeName?: string
   percentage?: number
   amount?: number
-  currency?: string
-  validFrom: string
+  validFrom?: string
   validTo?: string
 }
 
@@ -397,19 +398,19 @@ export interface CreateScholarshipPayload {
   scholarshipTypeId: string
   percentage?: number
   amount?: number
-  currency?: string
   validFrom: string
   validTo?: string
-  notes?: string
+  note?: string
 }
 
 export interface UpdateScholarshipPayload {
+  scholarshipTypeId?: string
   percentage?: number
   amount?: number
-  validFrom: string
+  validFrom?: string
   validTo?: string
-  notes?: string
-  rowVersion: string
+  note?: string
+  rowVersion: number
 }
 
 // ── Promotions ────────────────────────────────────────────────────────────────
@@ -422,11 +423,9 @@ export interface PromotionDto {
   value: number
   isPercentage: boolean
   maxRedemptions?: number
-  redemptionCount: number
   validFrom?: string
   validTo?: string
   isActive: boolean
-  rowVersion: string
 }
 
 export interface PromotionListItemDto {
@@ -435,9 +434,8 @@ export interface PromotionListItemDto {
   name: string
   value: number
   isPercentage: boolean
-  redemptionCount: number
-  maxRedemptions?: number
   isActive: boolean
+  validFrom?: string
   validTo?: string
 }
 
@@ -476,50 +474,69 @@ export interface ValidatePromotionResult {
 
 // ── Reports ───────────────────────────────────────────────────────────────────
 
+/** Mirrors RevenueByMethodDto. `methodName` carries the raw id, so labels come from ref-data via `paymentMethodId`. */
 export interface RevenueByMethodDto {
-  paymentMethodLabel: string
+  paymentMethodId?: string
+  methodName: string
   totalAmount: number
   count: number
 }
 
+/** Mirrors RevenueReportDto. Money fields are decimal amounts (no ratios). */
 export interface RevenueReportDto {
-  from: string
-  to: string
+  periodStart: string
+  periodEnd: string
   totalRevenue: number
-  totalTransactions: number
+  totalRefunded: number
+  netRevenue: number
+  paymentCount: number
+  refundCount: number
   byMethod: RevenueByMethodDto[]
 }
 
+/** Mirrors PackageSalesSummaryDto. */
 export interface TopPackageDto {
+  packageDefinitionId?: string
   packageName: string
-  soldCount: number
+  unitsSold: number
   totalRevenue: number
 }
 
+/** Mirrors PackageReportDto — an all-time snapshot; the endpoint takes no period. */
 export interface PackageReportDto {
-  from: string
-  to: string
-  totalPackagesSold: number
-  totalRevenue: number
+  corporationId: string
+  totalActive: number
+  totalExhausted: number
+  totalExpired: number
+  totalCancelled: number
+  expiringIn30Days: number
+  totalCreditsGranted: number
+  totalCreditsConsumed: number
+  totalCreditsRemaining: number
   topPackages: TopPackageDto[]
 }
 
 export interface CreditUsageByStudentDto {
+  studentId: string
   studentFullName: string
-  totalConsumed: number
-  totalGranted: number
+  granted: number
+  consumed: number
+  remaining: number
 }
 
 export interface CreditUsageReportDto {
-  from: string
-  to: string
-  totalConsumed: number
+  periodStart: string
+  periodEnd: string
   totalGranted: number
+  totalConsumed: number
+  totalExpired: number
+  totalRefunded: number
+  totalAdjusted: number
   byStudent: CreditUsageByStudentDto[]
 }
 
+/** Backend expects `periodStart` / `periodEnd` (DateOnly, yyyy-MM-dd). */
 export interface ReportQuery {
-  from: string
-  to: string
-  campusId?: string
+  periodStart: string
+  periodEnd: string
 }

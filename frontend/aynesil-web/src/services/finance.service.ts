@@ -248,10 +248,8 @@ export const financeService = {
       `/payments/reports/revenue${qs(query)}`
     ),
 
-  getPackageReport: (query: ReportQuery) =>
-    apiService.get<PackageReportDto>(
-      `/payments/reports/packages${qs(query)}`
-    ),
+  getPackageReport: () =>
+    apiService.get<PackageReportDto>('/payments/reports/packages'),
 
   getCreditUsageReport: (query: ReportQuery) =>
     apiService.get<CreditUsageReportDto>(

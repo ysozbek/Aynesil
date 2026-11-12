@@ -1,24 +1,19 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePaymentStore } from '@/stores/payment.store'
-import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { PaymentListItemDto } from '@/types/finance.types'
-import type { RefValueItem } from '@/stores/refdata.store'
 
 const { t } = useI18n()
 const router = useRouter()
 const store = usePaymentStore()
-const refData = useRefDataStore()
 const { can } = usePermission()
-
-const paymentMethods = ref<RefValueItem[]>([])
 
 const query = reactive({
   studentId: '',
@@ -30,20 +25,17 @@ const query = reactive({
 })
 
 watch(() => [query.status, query.studentId, query.from, query.to, query.page], () => loadList())
-onMounted(async () => {
-  await Promise.all([
-    loadList(),
-    refData.getValues('PAYMENT_METHOD').then(v => { paymentMethods.value = v }),
-  ])
-})
+onMounted(loadList)
 
 async function loadList() {
+  // Backend paidFrom/paidTo DateTimeOffset bekler; "to" günün sonunu kapsamalı.
   await store.fetchTransactions({
-    ...query,
+    page: query.page,
+    pageSize: query.pageSize,
     studentId: query.studentId || undefined,
     status: query.status || undefined,
-    from: query.from || undefined,
-    to: query.to || undefined,
+    paidFrom: query.from ? new Date(`${query.from}T00:00:00`).toISOString() : undefined,
+    paidTo: query.to ? new Date(`${query.to}T23:59:59.999`).toISOString() : undefined,
   })
 }
 
@@ -51,7 +43,7 @@ const columns: Column<PaymentListItemDto>[] = [
   { key: 'studentFullName', label: t('student.fullName') },
   { key: 'invoiceNo', label: t('finance.invoice.no'), width: '120px' },
   { key: 'amount', label: t('finance.payment.amount'), width: '120px', align: 'right' },
-  { key: 'paymentMethodLabel', label: t('finance.payment.method'), width: '130px' },
+  { key: 'paymentMethodName', label: t('finance.payment.method'), width: '130px' },
   { key: 'status', label: t('common.status'), width: '100px' },
   { key: 'paidAt', label: t('finance.payment.paidAt'), width: '120px' },
 ]
@@ -122,7 +114,7 @@ function statusColor(status: string): string {
       <template #cell-amount="{ row }">
         <span class="font-mono font-medium">{{ formatCurrency(row.amount, row.currency) }}</span>
       </template>
-      <template #cell-paymentMethodLabel="{ value }">
+      <template #cell-paymentMethodName="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-status="{ row }">

@@ -55,7 +55,7 @@ async function loadList() {
 const columns: Column<PackageDefinitionListItemDto>[] = [
   { key: 'code', label: t('finance.package.code'), width: '90px' },
   { key: 'name', label: t('finance.package.name') },
-  { key: 'packageTypeLabel', label: t('finance.package.type'), width: '120px' },
+  { key: 'packageTypeName', label: t('finance.package.type'), width: '120px' },
   { key: 'programName', label: t('finance.package.program'), width: '140px' },
   { key: 'totalCredits', label: t('finance.package.totalCredits'), width: '90px', align: 'center' },
   { key: 'validityDays', label: t('finance.package.validityDays'), width: '90px', align: 'center' },
@@ -127,7 +127,7 @@ async function doDelete() {
       :loading="store.loading"
       @row-click="(row) => router.push({ name: 'package-detail', params: { id: row.id } })"
     >
-      <template #cell-packageTypeLabel="{ value }">
+      <template #cell-packageTypeName="{ value }">
         <span class="text-muted-foreground">{{ value ?? '—' }}</span>
       </template>
       <template #cell-programName="{ value }">

@@ -106,7 +106,7 @@ async function doRefund() {
           </div>
           <div>
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('finance.payment.method') }}</dt>
-            <dd>{{ payment.paymentMethodLabel ?? '—' }}</dd>
+            <dd>{{ payment.paymentMethodName ?? '—' }}</dd>
           </div>
           <div>
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('finance.payment.paidAt') }}</dt>
@@ -115,10 +115,6 @@ async function doRefund() {
           <div v-if="payment.gatewayReference">
             <dt class="text-xs text-muted-foreground mb-0.5">{{ t('finance.payment.gatewayRef') }}</dt>
             <dd class="font-mono text-xs">{{ payment.gatewayReference }}</dd>
-          </div>
-          <div v-if="payment.notes" class="col-span-2">
-            <dt class="text-xs text-muted-foreground mb-0.5">{{ t('finance.payment.notes') }}</dt>
-            <dd>{{ payment.notes }}</dd>
           </div>
         </dl>
       </div>

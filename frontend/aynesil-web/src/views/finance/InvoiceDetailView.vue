@@ -17,7 +17,7 @@ const { can } = usePermission()
 const invoiceId = route.params.id as string
 
 const addLineModal = ref(false)
-const lineForm = reactive<AddInvoiceLinePayload>({ description: '', quantity: 1, unitPrice: 0, discountAmount: 0 })
+const lineForm = reactive<AddInvoiceLinePayload>({ description: '', quantity: 1, unitPrice: 0 })
 const voidModal = ref(false)
 const voidReason = ref('')
 const issueModal = ref(false)
@@ -51,7 +51,7 @@ async function doAddLine() {
   if (!lineForm.description.trim()) return
   await store.addInvoiceLine(invoiceId, { ...lineForm })
   addLineModal.value = false
-  Object.assign(lineForm, { description: '', quantity: 1, unitPrice: 0, discountAmount: 0 })
+  Object.assign(lineForm, { description: '', quantity: 1, unitPrice: 0 })
 }
 
 async function removeLine(lineId: string) {
@@ -153,7 +153,6 @@ function printInvoice() {
                   <th class="text-left px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.lineDescription') }}</th>
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.qty') }}</th>
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.unitPrice') }}</th>
-                  <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.discount') }}</th>
                   <th class="text-right px-3 py-2 text-xs text-muted-foreground">{{ t('finance.invoice.lineTotal') }}</th>
                   <th v-if="can('invoice:update') && invoice.status === 'draft'" class="px-3 py-2" />
                 </tr>
@@ -163,7 +162,6 @@ function printInvoice() {
                   <td class="px-3 py-2">{{ line.description }}</td>
                   <td class="px-3 py-2 text-right font-mono">{{ line.quantity }}</td>
                   <td class="px-3 py-2 text-right font-mono">{{ formatCurrency(line.unitPrice, invoice.currency) }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-muted-foreground">{{ line.discountAmount > 0 ? formatCurrency(line.discountAmount, invoice.currency) : '—' }}</td>
                   <td class="px-3 py-2 text-right font-mono font-medium">{{ formatCurrency(line.lineTotal, invoice.currency) }}</td>
                   <td v-if="can('invoice:update') && invoice.status === 'draft'" class="px-3 py-2">
                     <button @click="removeLine(line.id)" class="text-xs text-red-500 hover:underline">{{ t('common.delete') }}</button>
@@ -209,10 +207,9 @@ function printInvoice() {
         <h3 class="font-semibold mb-4">{{ t('finance.invoice.addLine') }}</h3>
         <div class="space-y-3">
           <input v-model="lineForm.description" type="text" :placeholder="t('finance.invoice.lineDescription')" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <input v-model.number="lineForm.quantity" type="number" min="1" :placeholder="t('finance.invoice.qty')" class="px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
             <input v-model.number="lineForm.unitPrice" type="number" min="0" step="0.01" :placeholder="t('finance.invoice.unitPrice')" class="px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
-            <input v-model.number="lineForm.discountAmount" type="number" min="0" step="0.01" :placeholder="t('finance.invoice.discount')" class="px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none" />
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-4">

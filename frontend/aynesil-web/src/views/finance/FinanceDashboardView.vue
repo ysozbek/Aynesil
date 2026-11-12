@@ -27,8 +27,8 @@ const reportLoading = ref(false)
 const reportError = ref<string | null>(null)
 
 const reportQuery = reactive({
-  from: firstOfMonth,
-  to: todayStr,
+  periodStart: firstOfMonth,
+  periodEnd: todayStr,
 })
 
 onMounted(async () => {
@@ -45,7 +45,8 @@ async function loadReports() {
   try {
     const [rev, pkg] = await Promise.all([
       financeService.getRevenueReport({ ...reportQuery }),
-      financeService.getPackageReport({ ...reportQuery }),
+      // Paket raporu dönem almaz; tüm paketlerin anlık özetidir.
+      financeService.getPackageReport(),
     ])
     if (rev.success) revenueReport.value = rev.data ?? null
     if (pkg.success) packageReport.value = pkg.data ?? null
@@ -128,9 +129,9 @@ function formatDate(val: string): string {
     <!-- Report Period Selector -->
     <div class="mb-4 flex items-center gap-3">
       <label class="text-sm text-muted-foreground">{{ t('finance.dashboard.period') }}:</label>
-      <input v-model="reportQuery.from" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
+      <input v-model="reportQuery.periodStart" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
       <span class="text-muted-foreground">–</span>
-      <input v-model="reportQuery.to" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
+      <input v-model="reportQuery.periodEnd" type="date" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
       <button @click="loadReports" :disabled="reportLoading" class="px-3 h-9 text-sm border border-border rounded-lg hover:bg-accent disabled:opacity-50">
         {{ reportLoading ? t('common.loading') : t('common.filter') }}
       </button>
@@ -154,14 +155,14 @@ function formatDate(val: string): string {
               <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.totalRevenue') }}</p>
             </div>
             <div class="text-center">
-              <p class="text-2xl font-bold text-blue-600">{{ revenueReport.totalTransactions }}</p>
+              <p class="text-2xl font-bold text-blue-600">{{ revenueReport.paymentCount }}</p>
               <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.totalTransactions') }}</p>
             </div>
           </div>
           <div v-if="revenueReport.byMethod.length > 0" class="space-y-2">
             <p class="text-xs font-medium text-muted-foreground uppercase">{{ t('finance.dashboard.byMethod') }}</p>
-            <div v-for="m in revenueReport.byMethod" :key="m.paymentMethodLabel" class="flex items-center justify-between text-sm">
-              <span>{{ m.paymentMethodLabel }}</span>
+            <div v-for="m in revenueReport.byMethod" :key="m.paymentMethodId ?? 'none'" class="flex items-center justify-between text-sm">
+              <span>{{ m.methodName }}</span>
               <span class="font-medium">{{ formatCurrency(m.totalAmount) }}</span>
             </div>
           </div>
@@ -177,19 +178,19 @@ function formatDate(val: string): string {
         <div v-else class="p-5">
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="text-center">
-              <p class="text-2xl font-bold text-foreground">{{ packageReport.totalPackagesSold }}</p>
-              <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.packagesSold') }}</p>
+              <p class="text-2xl font-bold text-foreground">{{ packageReport.totalActive }}</p>
+              <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.activePackages') }}</p>
             </div>
             <div class="text-center">
-              <p class="text-2xl font-bold text-green-600">{{ formatCurrency(packageReport.totalRevenue) }}</p>
-              <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.packageRevenue') }}</p>
+              <p class="text-2xl font-bold text-amber-600">{{ packageReport.expiringIn30Days }}</p>
+              <p class="text-xs text-muted-foreground mt-1">{{ t('finance.dashboard.expiringPackages') }}</p>
             </div>
           </div>
           <div v-if="packageReport.topPackages.length > 0" class="space-y-2">
             <p class="text-xs font-medium text-muted-foreground uppercase">{{ t('finance.dashboard.topPackages') }}</p>
-            <div v-for="p in packageReport.topPackages" :key="p.packageName" class="flex items-center justify-between text-sm">
+            <div v-for="p in packageReport.topPackages" :key="p.packageDefinitionId ?? p.packageName" class="flex items-center justify-between text-sm">
               <span class="truncate flex-1">{{ p.packageName }}</span>
-              <span class="font-medium ml-2">{{ p.soldCount }} {{ t('finance.dashboard.sold') }}</span>
+              <span class="font-medium ml-2">{{ p.unitsSold }} {{ t('finance.dashboard.sold') }} · {{ formatCurrency(p.totalRevenue) }}</span>
             </div>
           </div>
         </div>
@@ -244,7 +245,7 @@ function formatDate(val: string): string {
           >
             <div>
               <p class="text-sm font-medium text-foreground">{{ pay.studentFullName }}</p>
-              <p class="text-xs text-muted-foreground">{{ pay.paymentMethodLabel ?? '—' }}</p>
+              <p class="text-xs text-muted-foreground">{{ pay.paymentMethodName ?? '—' }}</p>
             </div>
             <p class="text-sm font-semibold text-foreground">{{ formatCurrency(pay.amount) }}</p>
           </div>

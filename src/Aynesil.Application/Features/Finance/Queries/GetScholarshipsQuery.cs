@@ -72,8 +72,17 @@ public sealed class GetScholarshipsQueryHandler
                 x.student.FirstName + " " + x.student.LastName,
                 x.sch.ScholarshipTypeId,
                 x.sch.Percentage, x.sch.Amount,
-                x.sch.ValidFrom, x.sch.ValidTo))
+                x.sch.ValidFrom, x.sch.ValidTo, null))
             .ToListAsync(ct);
+
+        var typeIds = items.Where(i => i.ScholarshipTypeId.HasValue)
+            .Select(i => i.ScholarshipTypeId!.Value).Distinct().ToList();
+        var typeNames = await FinanceProjection.LoadRefLabelsAsync(_db, typeIds, _tenant.Locale, ct);
+        items = items
+            .Select(i => i.ScholarshipTypeId.HasValue
+                ? i with { ScholarshipTypeName = typeNames.GetValueOrDefault(i.ScholarshipTypeId.Value) }
+                : i)
+            .ToList();
 
         return PaginatedResult<ScholarshipListItemDto>.Create(items, total, req.Page, req.PageSize);
     }

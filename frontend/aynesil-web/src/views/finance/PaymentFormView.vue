@@ -27,7 +27,6 @@ const form = reactive({
   paymentMethodId: '',
   gatewayReference: '',
   paidAt: new Date().toISOString().slice(0, 10),
-  notes: '',
 })
 
 const errors = reactive<Record<string, string>>({})
@@ -72,7 +71,6 @@ async function submit() {
       paymentMethodId: form.paymentMethodId,
       gatewayReference: form.gatewayReference || undefined,
       paidAt: form.paidAt ? new Date(form.paidAt).toISOString() : undefined,
-      notes: form.notes || undefined,
     })
     router.push({ name: 'payment-detail', params: { id: created.id } })
   } catch (e: unknown) {
@@ -137,11 +135,6 @@ async function submit() {
         <div>
           <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('finance.payment.paidAt') }}</label>
           <input v-model="form.paidAt" type="date" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-foreground mb-1.5">{{ t('finance.payment.notes') }}</label>
-          <textarea v-model="form.notes" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
         </div>
 
         <div class="flex justify-end gap-3 pt-2">

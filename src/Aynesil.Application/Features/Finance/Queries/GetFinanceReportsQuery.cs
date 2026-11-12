@@ -46,11 +46,21 @@ public sealed class GetRevenueReportQueryHandler
             .Select(r => r.Amount)
             .ToListAsync(ct);
 
+        // Ödeme yöntemi adı: ref_value çevirisi (kullanıcı dili → 'tr' → herhangi biri), yoksa kod.
+        var methodIds = payments.Where(p => p.PaymentMethodId.HasValue)
+            .Select(p => p.PaymentMethodId!.Value).Distinct().ToList();
+        var methodLabels = await FinanceProjection.LoadRefLabelsAsync(
+            _db, methodIds, _tenant.Locale, ct);
+
+        string MethodName(Guid? id) =>
+            !id.HasValue ? "Bilinmiyor"
+            : methodLabels.GetValueOrDefault(id.Value) ?? "Bilinmiyor";
+
         var byMethod = payments
             .GroupBy(p => p.PaymentMethodId)
             .Select(g => new RevenueByMethodDto(
                 PaymentMethodId: g.Key,
-                MethodName:      g.Key.HasValue ? g.Key.ToString()! : "Unknown",
+                MethodName:      MethodName(g.Key),
                 TotalAmount:     g.Sum(p => p.Amount),
                 Count:           g.Count()))
             .ToList();
@@ -113,12 +123,17 @@ public sealed class GetPackageReportQueryHandler
         var totalConsumed   = Math.Abs(ledgerTotals.Where(e => e.Type == "consume").Sum(e => e.Total));
         var totalRemaining  = ledgerTotals.Sum(e => e.Total);
 
+        var packageNames = await _db.PackageDefinitions.AsNoTracking()
+            .Where(d => d.CorporationId == corporationId)
+            .Select(d => new { d.Id, d.Name })
+            .ToDictionaryAsync(d => d.Id, d => d.Name, ct);
+
         var topPackages = packages
             .Where(p => p.PackageDefinitionId.HasValue)
             .GroupBy(p => p.PackageDefinitionId)
             .Select(g => new PackageSalesSummaryDto(
                 PackageDefinitionId: g.Key,
-                PackageName:         g.Key.HasValue ? g.Key.ToString()! : "Custom",
+                PackageName:         g.Key.HasValue ? packageNames.GetValueOrDefault(g.Key.Value, "") : "Custom",
                 UnitsSold:           g.Count(),
                 TotalRevenue:        g.Sum(p => p.Price)))
             .OrderByDescending(s => s.UnitsSold)

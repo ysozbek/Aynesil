@@ -31,7 +31,10 @@ public record PackageDefinitionListItemDto(
     decimal? TotalCredits,
     decimal ListPrice,
     string Currency,
-    bool IsActive);
+    bool IsActive,
+    int? ValidityDays = null,
+    string? ProgramName = null,
+    string? PackageTypeName = null);
 
 // ── Student Package DTOs ──────────────────────────────────────────────────────
 
@@ -85,7 +88,9 @@ public record CreditLedgerEntryDto(
     Guid? SessionId,
     string? Reason,
     DateTimeOffset OccurredAt,
-    Guid? CreatedBy);
+    Guid? CreatedBy,
+    string? SessionTitle = null,
+    string? RecordedByName = null);
 
 public record CreditSummaryDto(
     Guid StudentId,
@@ -162,7 +167,9 @@ public record PaymentDto(
     string? GatewayReference,
     DateTimeOffset? PaidAt,
     DateTimeOffset CreatedAt,
-    int RowVersion);
+    int RowVersion,
+    string? InvoiceNo = null,
+    string? PaymentMethodName = null);
 
 public record PaymentListItemDto(
     Guid Id,
@@ -173,7 +180,9 @@ public record PaymentListItemDto(
     string Currency,
     string Status,
     DateTimeOffset? PaidAt,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? InvoiceNo = null,
+    string? PaymentMethodName = null);
 
 // ── Refund DTOs ───────────────────────────────────────────────────────────────
 
@@ -226,7 +235,8 @@ public record ScholarshipListItemDto(
     decimal? Percentage,
     decimal? Amount,
     DateOnly? ValidFrom,
-    DateOnly? ValidTo);
+    DateOnly? ValidTo,
+    string? ScholarshipTypeName = null);
 
 // ── Promotion DTOs ────────────────────────────────────────────────────────────
 
@@ -338,6 +348,33 @@ internal static class FinanceProjection
         return ToInvoiceDto(invoice, studentName, paidAmount);
     }
 
+    /// <summary>
+    /// ref_value adları: kullanıcı dili → 'tr' → herhangi bir çeviri → kod. Bulunamayan kimlik sözlükte yer almaz.
+    /// </summary>
+    public static async Task<Dictionary<Guid, string>> LoadRefLabelsAsync(
+        IAppDbContext db, IReadOnlyCollection<Guid> ids, string? locale, CancellationToken ct)
+    {
+        if (ids.Count == 0) return new Dictionary<Guid, string>();
+
+        var codes = await db.RefValues.AsNoTracking()
+            .Where(v => ids.Contains(v.Id))
+            .Select(v => new { v.Id, v.Code })
+            .ToDictionaryAsync(v => v.Id, v => v.Code, ct);
+
+        var translations = (await db.RefValueTranslations.AsNoTracking()
+                .Where(t => ids.Contains(t.RefValueId))
+                .Select(t => new { t.RefValueId, t.Locale, t.Label })
+                .ToListAsync(ct))
+            .GroupBy(t => t.RefValueId)
+            .ToDictionary(
+                g => g.Key,
+                g => (g.FirstOrDefault(t => t.Locale == locale)
+                      ?? g.FirstOrDefault(t => t.Locale == "tr")
+                      ?? g.First()).Label);
+
+        return codes.ToDictionary(c => c.Key, c => translations.GetValueOrDefault(c.Key) ?? c.Value);
+    }
+
     public static InvoiceDto ToInvoiceDto(Invoice i, string? studentName, decimal paidAmount)
         => new(
             i.Id, i.CorporationId, i.StudentId, studentName,
@@ -353,11 +390,13 @@ internal static class FinanceProjection
         => new(l.Id, l.InvoiceId, l.Description, l.StudentPackageId,
                l.Quantity, l.UnitPrice, l.LineTotal, l.SortOrder);
 
-    public static PaymentDto ToPaymentDto(Payment p, string? studentName = null)
+    public static PaymentDto ToPaymentDto(
+        Payment p, string? studentName = null, string? invoiceNo = null,
+        string? paymentMethodName = null)
         => new(p.Id, p.CorporationId, p.InvoiceId, p.StudentId, studentName,
                p.PaymentMethodId, p.Amount, p.Currency, p.Status,
                p.GatewayProviderId, p.GatewayReference,
-               p.PaidAt, p.CreatedAt, p.RowVersion);
+               p.PaidAt, p.CreatedAt, p.RowVersion, invoiceNo, paymentMethodName);
 
     public static DiscountDto ToDiscountDto(Discount d)
         => new(d.Id, d.CorporationId, d.InvoiceId, d.StudentPackageId,
