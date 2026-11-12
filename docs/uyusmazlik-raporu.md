@@ -394,6 +394,10 @@ Handler'lar değeri `ITenantContext.RequireCorporationId()` ile alıyor. Tenant 
 - `GetCreditSummaryQuery` öğrenciyi yalnızca id ile buluyordu; kiracı filtresi eklendi.
 - **Tarama sırasında bulunan açık:** Kamp `BulkRecordAttendanceCommand` hiçbir üst kayıt kontrolü yapmıyordu. Başka kiracının dönem ve kayıt id'leriyle çağrıldığında, mevcut kiracı altında yoklama satırı yazıyordu. Artık dönemin kiracıya ait olduğu ve tüm kayıtların o döneme ait olduğu doğrulanıyor; aksi halde 404 dönüyor. Açığı test yakaladı.
 - **Kapsam dışı (bkz. #86):** Handler'ların hiç kontrol etmediği alt kimlikler (`studentId`, `educatorId`, `guardianId`, `roomId` vb.) için yeni doğrulama eklenmedi. Bu iş #86'nın composite FK çalışmasıyla birlikte yapılmalı.
+  - **Sonradan çözüldü (#86 ✅):**
+    - Alt kimlikler artık DB'de korunuyor: iki kiracı tablosu arasındaki 202 FK composite `(corporation_id, x)` oldu; global satırlı tablolara giden 72 FK tetikleyiciyle kontrol ediliyor (V38–V41).
+    - Böyle bir ihlal API'de 422 dönüyor.
+    - Uygulama düzeyinde ayrıca kontrol ediliyor: `ConductedBy`/`PerformedBy` (`TenantUserGuard`) ve `StartViewingSession`'ın kamera/seans alanları.
 
 ### D.3 — Aktör alanları istek bağlamından dolduruluyor
 
@@ -457,3 +461,8 @@ Handler'lar değeri `ITenantContext.RequireCorporationId()` ile alıyor. Tenant 
 - `dotnet test`: 344/344 geçti.
 - `npm run type-check`: temiz.
 - ESLint çalıştırılamadı, çünkü projede `eslint.config.*` dosyası yok.
+
+**Güncel durum (#86 ve #87 sonrası):**
+- `dotnet test tests/Aynesil.Tests`: 354/354. Eklenenler: `ClientChosenReferenceTests` (CRM kullanıcı alanları, izleme kamerası/seansı) ve sözleşme listesine iki CRM komutu.
+- `dotnet test tests/Aynesil.IntegrationTests` (Docker, `Category=Integration`): 10/10.
+- `bash db/validation/smoke_test.sh`: yeşil. Kapsamı: layer DDL ile Flyway migration'ları arasında kayma yok; her kiracı tablosunda RLS + `tenant_isolation` değişmez kontrolü geçiyor.
