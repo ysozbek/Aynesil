@@ -19,6 +19,7 @@ public static class DependencyInjection
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(Common.Behaviors.PerformanceBehavior<,>));
         });
 
+        Common.Validation.ValidationLocalization.Configure();
         services.AddValidatorsFromAssembly(assembly);
         services.AddAutoMapper(assembly);
 

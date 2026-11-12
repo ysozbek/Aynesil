@@ -4,7 +4,7 @@ namespace Aynesil.Application.Common.Exceptions;
 
 public class ValidationException : Exception
 {
-    public ValidationException() : base("One or more validation failures have occurred.") { }
+    public ValidationException() : base("Bir veya daha fazla doğrulama hatası oluştu.") { }
 
     public ValidationException(IEnumerable<ValidationFailure> failures) : this()
     {

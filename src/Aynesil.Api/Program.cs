@@ -70,13 +70,37 @@ try
     // PermissionAuthorizationHandler: evaluates PermissionRequirement against JWT 'perm' claims
     builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+    builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiAuthorizationResultHandler>();
     builder.Services.AddAuthorizationBuilder()
         .SetDefaultPolicy(new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
             .Build());
 
     // ── API controllers & OpenAPI ─────────────────────────────────────────────
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .ConfigureApiBehaviorOptions(opts =>
+        {
+            // Model bağlama hatalarını (400) ExceptionMiddleware ile aynı
+            // { success:false, message, errors } zarfına çevir.
+            opts.InvalidModelStateResponseFactory = ctx =>
+            {
+                var errors = Aynesil.Shared.ErrorKeyFormatter.Normalize(
+                    ctx.ModelState
+                        .Where(kv => kv.Value is { Errors.Count: > 0 })
+                        .Select(kv => new KeyValuePair<string, string[]>(
+                            kv.Key,
+                            kv.Value!.Errors
+                                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
+                                    ? "Geçersiz değer."
+                                    : e.ErrorMessage)
+                                .ToArray())));
+
+                var body = Aynesil.Shared.ApiResponse.Fail("Gönderilen veri geçersiz.", errors)
+                    with { TraceId = ctx.HttpContext.TraceIdentifier };
+
+                return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(body);
+            };
+        });
     builder.Services.AddOpenApi();
 
     // ── CORS ──────────────────────────────────────────────────────────────────

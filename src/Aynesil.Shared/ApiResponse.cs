@@ -21,7 +21,7 @@ public record ApiResponse<T>
         new() { Success = false, Message = message, Errors = errors };
 
     public static ApiResponse<T> Fail(IDictionary<string, string[]> errors) =>
-        new() { Success = false, Message = "Validation failed.", Errors = errors };
+        new() { Success = false, Message = "Doğrulama hatası.", Errors = errors };
 }
 
 /// <summary>Non-generic convenience for responses with no payload.</summary>

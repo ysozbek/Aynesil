@@ -49,7 +49,7 @@ public class ExceptionMiddleware
         {
             ValidationException ve => (
                 StatusCodes.Status422UnprocessableEntity,
-                ApiResponse.Fail("Validation failed.", ve.Errors)),
+                ApiResponse.Fail("Doğrulama hatası.", ErrorKeyFormatter.Normalize(ve.Errors))),
 
             NotFoundException nfe => (
                 StatusCodes.Status404NotFound,
@@ -61,11 +61,11 @@ public class ExceptionMiddleware
 
             ForbiddenAccessException => (
                 StatusCodes.Status403Forbidden,
-                ApiResponse.Fail("You do not have permission to perform this action.")),
+                ApiResponse.Fail("Bu işlem için yetkiniz yok.")),
 
             UnauthorizedAccessException => (
                 StatusCodes.Status401Unauthorized,
-                ApiResponse.Fail("Authentication required.")),
+                ApiResponse.Fail("Oturum açmanız gerekiyor.")),
 
             ConflictException ce => (
                 StatusCodes.Status409Conflict,
@@ -79,21 +79,21 @@ public class ExceptionMiddleware
 
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail("The record was modified by another user. Please refresh and try again.")),
+                ApiResponse.Fail("Kayıt başka bir kullanıcı tarafından değiştirildi. Lütfen sayfayı yenileyip tekrar deneyin.")),
 
             DbUpdateException dbe when IsUniqueViolation(dbe) => (
                 StatusCodes.Status409Conflict,
-                ApiResponse.Fail("A record with the same unique key already exists.")),
+                ApiResponse.Fail("Aynı anahtara sahip bir kayıt zaten mevcut.")),
 
             OperationCanceledException => (
                 StatusCodes.Status499ClientClosedRequest,
-                ApiResponse.Fail("The request was cancelled.")),
+                ApiResponse.Fail("İstek iptal edildi.")),
 
             _ => (
                 StatusCodes.Status500InternalServerError,
                 ApiResponse.Fail(_env.IsDevelopment()
                     ? exception.Message
-                    : "An unexpected error occurred. Please try again."))
+                    : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
         };
 
         if (statusCode == StatusCodes.Status500InternalServerError)

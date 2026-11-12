@@ -117,6 +117,72 @@ api.interceptors.response.use(
   }
 )
 
+// ── Response Interceptor — normalize non-2xx errors ───────────────────────
+// Registered after the refresh interceptor so it also sees errors it re-rejects.
+// Turns the backend envelope into `error.message`, so existing
+// `(e as Error).message` call sites show the real reason.
+/** Error carrying backend field errors (`{ success:false, message, errors }`). */
+export interface ApiError extends Error {
+  fieldErrors?: Record<string, string[]>
+  status?: number
+}
+
+const STATUS_FALLBACKS: Record<number, string> = {
+  401: 'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.',
+  403: 'Bu işlem için yetkiniz yok.',
+  404: 'İstenen kayıt bulunamadı.',
+  500: 'Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.',
+}
+
+function flattenErrors(errors?: Record<string, string[]>): string[] {
+  if (!errors) return []
+  return Object.values(errors).flatMap((v) => (Array.isArray(v) ? v : [String(v)]))
+}
+
+function resolveErrorMessage(status: number | undefined, data: unknown): { message?: string; errors?: Record<string, string[]> } {
+  const body = (data && typeof data === 'object' ? data : {}) as {
+    message?: string
+    title?: string
+    errors?: Record<string, string[]>
+  }
+  const errors = body.errors && typeof body.errors === 'object' ? body.errors : undefined
+  const details = flattenErrors(errors)
+
+  // Field errors present → show only them (the generic "validation failed" text would just repeat).
+  if (details.length) return { message: details.join(' '), errors }
+
+  // 1) ApiResponse envelope  2) ValidationProblemDetails title
+  const base = body.message || body.title
+  if (base) return { message: base, errors }
+
+  // 3) 403 / 401 / 404 / 500 generic texts
+  if (status && STATUS_FALLBACKS[status]) return { message: STATUS_FALLBACKS[status] }
+  if (status && status >= 500) return { message: STATUS_FALLBACKS[500] }
+  return {}
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!axios.isAxiosError(error)) return Promise.reject(error)
+
+    if (!error.response) {
+      error.message = error.code === 'ECONNABORTED'
+        ? 'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.'
+        : 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.'
+      return Promise.reject(error)
+    }
+
+    const { status, data } = error.response
+    const { message, errors } = resolveErrorMessage(status, data)
+    if (message) error.message = message
+    const apiError = error as unknown as ApiError
+    apiError.status = status
+    if (errors) apiError.fieldErrors = errors
+    return Promise.reject(error)
+  }
+)
+
 // ── Typed convenience wrappers ─────────────────────────────────────────────
 export const apiService = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>
