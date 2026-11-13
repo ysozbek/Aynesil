@@ -81,10 +81,10 @@ export const usePaymentStore = defineStore('payment', () => {
     }
   }
 
-  async function failTransaction(id: string, reason: string, rowVersion: number): Promise<PaymentDto> {
+  async function failTransaction(id: string, rowVersion: number): Promise<PaymentDto> {
     saving.value = true
     try {
-      const res = await financeService.failTransaction(id, { reason, rowVersion })
+      const res = await financeService.failTransaction(id, { rowVersion })
       if (!res.success || !res.data) throw new Error(res.message ?? 'Ödeme başarısız işaretilemedi.')
       currentTransaction.value = res.data
       return res.data

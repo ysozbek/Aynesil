@@ -71,11 +71,13 @@ create table finance.invoice (
   tax_total      numeric(14,2) not null default 0,
   grand_total    numeric(14,2) not null default 0,
   status         text not null default 'draft' check (status in ('draft','issued','paid','partial','void','overdue')),
+  void_reason    text,                                          -- V46 (Y10): required when status = 'void'
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   deleted_at  timestamptz,
   row_version integer not null default 1,
-  unique (corporation_id, invoice_no)
+  unique (corporation_id, invoice_no),
+  constraint ck_invoice_void_reason check (status <> 'void' or nullif(btrim(void_reason), '') is not null)
 );
 
 create table finance.invoice_line (

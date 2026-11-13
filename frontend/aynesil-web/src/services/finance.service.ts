@@ -151,7 +151,7 @@ export const financeService = {
   issueInvoice: (id: string, payload: { rowVersion: number }) =>
     apiService.post<InvoiceDto>(`/payments/invoices/${id}/issue`, payload),
 
-  voidInvoice: (id: string, payload: { reason?: string; rowVersion: number }) =>
+  voidInvoice: (id: string, payload: { reason: string; rowVersion: number }) =>
     apiService.post<InvoiceDto>(`/payments/invoices/${id}/void`, payload),
 
   // ── Transactions (Payments) ────────────────────────────────────────────────
@@ -170,7 +170,7 @@ export const financeService = {
   captureTransaction: (id: string, payload: { rowVersion: number }) =>
     apiService.post<PaymentDto>(`/payments/transactions/${id}/capture`, payload),
 
-  failTransaction: (id: string, payload: { reason?: string; rowVersion: number }) =>
+  failTransaction: (id: string, payload: { rowVersion: number }) =>
     apiService.post<PaymentDto>(`/payments/transactions/${id}/fail`, payload),
 
   // ── Refunds ───────────────────────────────────────────────────────────────

@@ -325,7 +325,7 @@ public sealed class PaymentsController : BaseController
     [ProducesResponseType(typeof(ApiResponse<InvoiceDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> VoidInvoice(
         Guid id, [FromBody] VoidInvoiceRequest req, CancellationToken ct)
-        => OkResult(await Sender.Send(new VoidInvoiceCommand(id, req.RowVersion), ct));
+        => OkResult(await Sender.Send(new VoidInvoiceCommand(id, req.Reason, req.RowVersion), ct));
 
     // ══════════════════════════════════════════════════════════════════════════
     // PAYMENTS (FINANCIAL TRANSACTIONS)
@@ -723,7 +723,7 @@ public record AddInvoiceLineRequest(
     int SortOrder = 0);
 
 public record IssueInvoiceRequest(string? InvoiceNo, int RowVersion);
-public record VoidInvoiceRequest(int RowVersion);
+public record VoidInvoiceRequest(string Reason, int RowVersion);
 
 // Payments
 public record RecordPaymentRequest(

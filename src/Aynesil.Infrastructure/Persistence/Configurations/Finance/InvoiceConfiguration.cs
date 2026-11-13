@@ -44,6 +44,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
             .HasColumnType("numeric(14,2)").HasDefaultValue(0m).IsRequired();
         builder.Property(x => x.Status).HasColumnName("status")
             .HasDefaultValue("draft").IsRequired();
+        builder.Property(x => x.VoidReason).HasColumnName("void_reason");
 
         builder.Property(x => x.CreatedAt).HasColumnName("created_at")
             .HasDefaultValueSql("now()").IsRequired();

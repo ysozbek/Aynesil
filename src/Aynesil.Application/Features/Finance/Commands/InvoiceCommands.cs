@@ -189,7 +189,17 @@ public sealed class IssueInvoiceCommandHandler
 
 // ── VoidInvoiceCommand ────────────────────────────────────────────────────────
 
-public record VoidInvoiceCommand(Guid Id, int RowVersion) : IRequest<InvoiceDto>;
+public record VoidInvoiceCommand(Guid Id, string Reason, int RowVersion) : IRequest<InvoiceDto>;
+
+public class VoidInvoiceCommandValidator : AbstractValidator<VoidInvoiceCommand>
+{
+    public VoidInvoiceCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        // Finansal düzeltmelerde gerekçe zorunludur; geçersiz kılma nedeni faturada saklanır.
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(1000);
+    }
+}
 
 public sealed class VoidInvoiceCommandHandler
     : IRequestHandler<VoidInvoiceCommand, InvoiceDto>
@@ -210,7 +220,7 @@ public sealed class VoidInvoiceCommandHandler
         if (invoice.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
-        invoice.Void();
+        invoice.Void(req.Reason);
         await _db.SaveChangesAsync(ct);
 
         return (await FinanceProjection.LoadInvoiceAsync(_db, req.Id, ct))!;

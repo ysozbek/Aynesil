@@ -2,7 +2,7 @@
  * Finance / Payment type definitions.
  * Mirrors Aynesil.Application.Features.Finance.Dtos.FinanceDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PageQuery, PagedQuery, SortedPageQuery } from './api.types'
 
 // ── Package Definitions ────────────────────────────────────────────────────────
 
@@ -110,7 +110,7 @@ export interface PackageBalanceDto {
   expiresOn?: string
 }
 
-export interface StudentPackageListQuery extends PagedQuery {
+export interface StudentPackageListQuery extends SortedPageQuery {
   studentId?: string
   status?: string
   packageDefinitionId?: string
@@ -151,7 +151,7 @@ export interface CreditSummaryDto {
   expiringWithin30Days: number
 }
 
-export interface CreditLedgerQuery extends PagedQuery {
+export interface CreditLedgerQuery extends PageQuery {
   studentPackageId?: string
   studentId?: string
   entryType?: string
@@ -211,6 +211,7 @@ export interface InvoiceDto {
   balance: number
   currency: string
   status: string
+  voidReason?: string | null
   lines: InvoiceLineDto[]
   rowVersion: number
 }
@@ -283,7 +284,7 @@ export interface PaymentListItemDto {
 }
 
 /** Backend GetPaymentsQuery has no free-text search → `search` is omitted. */
-export interface PaymentListQuery extends Omit<PagedQuery, 'search'> {
+export interface PaymentListQuery extends SortedPageQuery {
   studentId?: string
   invoiceId?: string
   paymentMethodId?: string
@@ -324,7 +325,7 @@ export interface RefundListItemDto {
   processedAt?: string
 }
 
-export interface RefundListQuery extends PagedQuery {
+export interface RefundListQuery extends SortedPageQuery {
   paymentId?: string
   status?: string
 }
@@ -386,7 +387,7 @@ export interface ScholarshipListItemDto {
   validTo?: string
 }
 
-export interface ScholarshipListQuery extends PagedQuery {
+export interface ScholarshipListQuery extends SortedPageQuery {
   studentId?: string
   scholarshipTypeId?: string
 }

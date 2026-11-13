@@ -1276,7 +1276,8 @@ const tr = {
       issueMessage: 'Bu faturayı kesmek istediğinize emin misiniz?',
       void: 'İptal Et',
       voidTitle: 'Faturayı İptal Et',
-      voidReason: 'İptal gerekçesi...',
+      voidReason: 'İptal gerekçesi (zorunlu)...',
+      voidReasonLabel: 'İptal Gerekçesi',
       print: 'Yazdır',
     },
     payment: {

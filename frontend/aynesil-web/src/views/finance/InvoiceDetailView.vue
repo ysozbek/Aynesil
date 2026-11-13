@@ -55,8 +55,8 @@ async function doIssue() {
 }
 
 async function doVoid() {
-  if (!invoice.value) return
-  await store.voidInvoice(invoiceId, voidReason.value, invoice.value.rowVersion)
+  if (!invoice.value || !voidReason.value.trim()) return
+  await store.voidInvoice(invoiceId, voidReason.value.trim(), invoice.value.rowVersion)
   voidModal.value = false
   voidReason.value = ''
 }
@@ -119,6 +119,10 @@ function printInvoice() {
               <p :class="invoice.dueDate && new Date(invoice.dueDate) < new Date() && invoice.status !== 'paid' ? 'text-red-600 font-medium' : ''">
                 {{ formatDate(invoice.dueDate) }}
               </p>
+            </div>
+            <div v-if="invoice.status === 'void' && invoice.voidReason" class="col-span-2">
+              <p class="text-xs text-muted-foreground mb-0.5">{{ t('finance.invoice.voidReasonLabel') }}</p>
+              <p class="whitespace-pre-line">{{ invoice.voidReason }}</p>
             </div>
           </div>
 
@@ -226,7 +230,7 @@ function printInvoice() {
         <textarea v-model="voidReason" rows="3" :placeholder="t('finance.invoice.voidReason')" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none resize-none" />
         <div class="flex justify-end gap-2 mt-4">
           <button @click="voidModal = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
-          <button @click="doVoid" :disabled="store.saving" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button @click="doVoid" :disabled="store.saving || !voidReason.trim()" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
             {{ store.saving ? t('common.saving') : t('finance.invoice.void') }}
           </button>
         </div>

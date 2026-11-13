@@ -120,6 +120,7 @@ public record InvoiceDto(
     decimal PaidAmount,
     decimal Balance,
     string Status,
+    string? VoidReason,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     int RowVersion,
@@ -354,7 +355,7 @@ internal static class FinanceProjection
             i.GuardianId, i.InvoiceNo, i.IssueDate, i.DueDate,
             i.Currency, i.Subtotal, i.DiscountTotal, i.TaxTotal, i.GrandTotal,
             paidAmount, i.GrandTotal - paidAmount,
-            i.Status, i.CreatedAt, i.UpdatedAt, i.RowVersion,
+            i.Status, i.VoidReason, i.CreatedAt, i.UpdatedAt, i.RowVersion,
             i.Lines.OrderBy(l => l.SortOrder).Select(ToInvoiceLineDto).ToList(),
             i.Payments.Select(p => ToPaymentDto(p)).ToList(),
             i.Discounts.Select(ToDiscountDto).ToList());

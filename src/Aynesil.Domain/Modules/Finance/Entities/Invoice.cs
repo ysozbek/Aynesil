@@ -29,6 +29,9 @@ public class Invoice : TenantEntity
     /// <summary>draft | issued | paid | partial | void | overdue</summary>
     public string Status { get; private set; } = "draft";
 
+    /// <summary>İptal gerekçesi (Y10); yalnızca Status = "void" iken dolu, iptalde zorunlu.</summary>
+    public string? VoidReason { get; private set; }
+
     // ── Navigations ───────────────────────────────────────────────────────────
 
     public ICollection<InvoiceLine> Lines { get; private set; } = [];
@@ -113,8 +116,11 @@ public class Invoice : TenantEntity
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    public void Void()
+    public void Void(string reason)
     {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("A void reason is required.", nameof(reason));
+
         if (Status == "void")
             throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceAlreadyVoid);
 
@@ -122,6 +128,7 @@ public class Invoice : TenantEntity
             throw new BusinessRuleViolationException(MsgKeys.Rule.PaidInvoiceNoVoid);
 
         Status    = "void";
+        VoidReason = reason.Trim();
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
