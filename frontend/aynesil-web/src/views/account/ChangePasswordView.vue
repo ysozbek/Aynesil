@@ -43,6 +43,10 @@ async function submit() {
   <div class="max-w-md">
     <h1 class="text-2xl font-bold text-foreground mb-1">{{ t('account.password.title') }}</h1>
     <p class="text-sm text-muted-foreground mb-6">{{ t('account.password.description') }}</p>
+    <div v-if="auth.mustChangePassword"
+      class="mb-5 p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+      {{ t('account.password.mustChange') }}
+    </div>
 
     <form class="rounded-xl border border-border bg-card p-5 space-y-4 shadow-sm" @submit.prevent="submit">
       <div>

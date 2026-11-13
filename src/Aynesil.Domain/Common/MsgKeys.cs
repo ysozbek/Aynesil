@@ -310,6 +310,8 @@ public static class MsgKeys
         public static readonly MsgKey AccountDisabled = new("Auth.AccountDisabled");
         /// <summary>Parola sıfırlama token'ı geçersiz, süresi dolmuş ya da kullanıcı bulunamadı (422).</summary>
         public static readonly MsgKey InvalidResetToken = new("Auth.InvalidResetToken");
+        /// <summary>Hesap ilk giriş parolasını değiştirmeden başka uçları kullanamaz (403).</summary>
+        public static readonly MsgKey PasswordChangeRequired = new("Auth.PasswordChangeRequired");
     }
 
     /// <summary>Başarı yanıtlarının mesajları (<c>message</c>); anahtar aynı zamanda yanıt kodudur (<c>code</c>).</summary>

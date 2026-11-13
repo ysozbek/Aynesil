@@ -200,10 +200,10 @@ begin
 
   -- ── First admin user ────────────────────────────────────────────────────
   insert into iam.user_account (corporation_id, username, email, full_name, password_hash,
-                                status, preferred_locale, primary_campus_id)
+                                status, preferred_locale, primary_campus_id, must_change_password)
   values (v_corp, v_username, v_email, current_setting('nt.full_name'),
           crypt(current_setting('nt.password'), gen_salt('bf', 12)),
-          'active', current_setting('nt.locale'), v_first)
+          'active', current_setting('nt.locale'), v_first, true)
   returning id into v_user;
 
   insert into iam.user_role (corporation_id, user_id, role_id, campus_id)

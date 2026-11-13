@@ -19,6 +19,8 @@ const settings = useSettingsStore()
 const sidebarCollapsed = ref(false)
 
 onMounted(async () => {
+  // Parolasını değiştirmesi zorunlu hesapta menü/ayar uçları 403 döner; yalnızca şifre sayfası gösterilir.
+  if (auth.mustChangePassword) return
   await Promise.all([menu.load(), settings.load()])
 })
 </script>
@@ -31,11 +33,12 @@ onMounted(async () => {
     - kt-sidebar-fixed: Sidebar sabit kalır
   -->
   <div
-    class="demo1 kt-header-fixed kt-sidebar-fixed"
-    :class="{ 'kt-sidebar-collapse': sidebarCollapsed }"
+    class="demo1 kt-header-fixed"
+    :class="{ 'kt-sidebar-fixed': !auth.mustChangePassword, 'kt-sidebar-collapse': sidebarCollapsed }"
   >
     <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
     <AppSidebar
+      v-if="!auth.mustChangePassword"
       :items="menu.tree"
       :collapsed="sidebarCollapsed"
       @toggle="sidebarCollapsed = !sidebarCollapsed"

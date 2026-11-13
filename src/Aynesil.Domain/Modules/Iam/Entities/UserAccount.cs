@@ -39,6 +39,12 @@ public class UserAccount : TenantEntity
 
     public DateTimeOffset? LastLoginAt { get; set; }
 
+    /// <summary>
+    /// true: hesabı yönetici açtı (parolayı yönetici belirledi/geçici parola); sahibi değiştirene kadar yalnızca
+    /// parola değiştirme ve çıkış uçları kullanılabilir (JWT "mcp" claim'i). <see cref="ChangePassword"/> false yapar.
+    /// </summary>
+    public bool MustChangePassword { get; set; }
+
     public ICollection<UserRole> Roles { get; set; } = [];
     public ICollection<AuthSession> Sessions { get; set; } = [];
     public ICollection<UserIdentity> ExternalIdentities { get; set; } = [];
@@ -59,7 +65,8 @@ public class UserAccount : TenantEntity
         string? preferredLocale = null,
         Guid? primaryCampusId = null,
         Guid? createdBy = null,
-        bool activateImmediately = false)
+        bool activateImmediately = false,
+        bool mustChangePassword = false)
     {
         var user = new UserAccount
         {
@@ -72,6 +79,7 @@ public class UserAccount : TenantEntity
             Status = activateImmediately ? "active" : "invited",
             PreferredLocale = preferredLocale,
             PrimaryCampusId = primaryCampusId,
+            MustChangePassword = mustChangePassword,
             CreatedBy = createdBy,
             UpdatedBy = createdBy
         };
@@ -138,6 +146,7 @@ public class UserAccount : TenantEntity
     public void ChangePassword(string newPasswordHash, Guid? updatedBy = null)
     {
         PasswordHash = newPasswordHash;
+        MustChangePassword = false;
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy ?? UpdatedBy;
         AddDomainEvent(new UserPasswordChangedEvent(Id, CorporationId));

@@ -22,7 +22,8 @@ public record LoginResult(
     string? Email,
     string? Locale,
     Guid UserId,
-    Guid CorporationId);
+    Guid CorporationId,
+    bool MustChangePassword = false);
 
 // ── Validator ────────────────────────────────────────────────────────────────
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
@@ -125,7 +126,8 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             user.Email,
             user.PreferredLocale,
             user.Id,
-            user.CorporationId);
+            user.CorporationId,
+            tokenPair.MustChangePassword);
     }
 
     /// <summary>

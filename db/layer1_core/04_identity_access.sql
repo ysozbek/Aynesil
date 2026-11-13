@@ -18,6 +18,7 @@ create table iam.user_account (
   primary_campus_id uuid references core.campus(id),
   mfa_enabled       boolean not null default false,
   mfa_secret        text,
+  must_change_password boolean not null default false,   -- V50: yönetici açtığı hesapta ilk girişte parola değişimi zorunlu
   last_login_at     timestamptz,
   created_at  timestamptz not null default now(),
   created_by  uuid,

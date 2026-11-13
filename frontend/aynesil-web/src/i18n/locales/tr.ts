@@ -299,6 +299,7 @@ const tr = {
       tooShort: 'Yeni şifre en az 8 karakter olmalı.',
       mismatch: 'Yeni şifreler eşleşmiyor.',
       changed: 'Şifreniz değiştirildi. Yeni şifrenizle giriş yapın.',
+      mustChange: 'Hesabınız yönetici tarafından açıldı. Devam etmeden önce geçici şifrenizi değiştirmeniz gerekiyor.',
     },
   },
 

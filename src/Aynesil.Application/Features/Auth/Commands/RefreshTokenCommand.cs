@@ -26,6 +26,6 @@ public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCom
         var pair = await _tokens.RefreshAsync(req.RefreshToken, req.IpAddress, req.UserAgent, ct);
         // Return minimal info — caller already has user details from previous login
         return new LoginResult(pair.AccessToken, pair.RefreshToken, pair.ExpiresAt,
-            string.Empty, null, null, Guid.Empty, Guid.Empty);
+            string.Empty, null, null, Guid.Empty, Guid.Empty, pair.MustChangePassword);
     }
 }

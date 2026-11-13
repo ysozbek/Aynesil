@@ -44,6 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
     return []
   })
 
+  /** Yönetici açtığı hesap: JWT'deki "mcp" claim'i true iken yalnızca /account/password açılır. */
+  const mustChangePassword = computed<boolean>(() => {
+    if (!accessToken.value) return false
+    const claim = parseJwt(accessToken.value)['mcp']
+    return claim === true || claim === 'true'
+  })
+
   // ── Actions ───────────────────────────────────────────────────────────────
   function hydrateUserFromToken(token: string): AuthUser | null {
     const payload = parseJwt(token)
@@ -122,6 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     user,
     isAuthenticated,
+    mustChangePassword,
     permissions,
     login,
     refresh,

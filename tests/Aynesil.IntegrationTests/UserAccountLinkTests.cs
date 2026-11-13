@@ -108,6 +108,15 @@ public sealed class UserAccountLinkTests : IDisposable
     {
         var (status, body) = await SendAsync(HttpMethod.Post, "/api/auth/login", body: new { username, password });
         status.Should().Be(HttpStatusCode.OK, body.ToString());
+        var token = body.GetProperty("data").GetProperty("accessToken").GetString()!;
+        if (!body.GetProperty("data").GetProperty("mustChangePassword").GetBoolean()) return token;
+
+        // Accounts opened by an admin (new_tenant.py, user-account create) start with must_change_password (V50).
+        var changed = password + "-x9";
+        (await SendAsync(HttpMethod.Post, "/api/auth/change-password", token, new { currentPassword = password, newPassword = changed }))
+            .Status.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
+        (status, body) = await SendAsync(HttpMethod.Post, "/api/auth/login", body: new { username, password = changed });
+        status.Should().Be(HttpStatusCode.OK, body.ToString());
         return body.GetProperty("data").GetProperty("accessToken").GetString()!;
     }
 

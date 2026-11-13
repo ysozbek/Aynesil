@@ -121,7 +121,8 @@ public static class UserAccountLinks
             preferredLocale: null,
             primaryCampusId: req.CampusId,
             createdBy: createdBy,
-            activateImmediately: true);
+            activateImmediately: true,
+            mustChangePassword: true);
         db.UserAccounts.Add(user);
 
         db.UserRoles.Add(new UserRole

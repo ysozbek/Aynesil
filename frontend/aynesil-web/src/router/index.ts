@@ -1150,6 +1150,11 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
+  // İlk giriş parolası değiştirilene kadar yalnızca şifre değiştirme sayfası (backend de diğer uçları reddeder).
+  if (auth.isAuthenticated && auth.mustChangePassword && to.name !== 'account-password') {
+    return { name: 'account-password' }
+  }
+
   if (to.meta.requiresGuest && auth.isAuthenticated) {
     return { path: '/' }
   }

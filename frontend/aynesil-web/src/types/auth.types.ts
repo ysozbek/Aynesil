@@ -12,6 +12,8 @@ export interface LoginResult {
   locale?: string
   userId: string
   corporationId: string
+  /** true: hesap parolasını değiştirmeden başka sayfa/uç kullanamaz (V50). */
+  mustChangePassword?: boolean
 }
 
 export interface AuthUser {

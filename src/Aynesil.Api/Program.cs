@@ -81,6 +81,8 @@ try
     app.UseCors("AynesilCors");
     app.UseAuthentication();
     app.UseMiddleware<RequestCultureMiddleware>();
+    // Parolasını değiştirmesi zorunlu hesap (JWT "mcp") yalnızca parola değiştirme/çıkış/yenileme uçlarını kullanabilir.
+    app.UseMiddleware<PasswordChangeRequiredMiddleware>();
     app.UseMiddleware<StaleTenantMiddleware>();
     app.UseAuthorization();
     app.UseMiddleware<ActivityLoggingMiddleware>();

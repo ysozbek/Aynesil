@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Infrastructure.Options;
 using Aynesil.Infrastructure.Persistence;
+using Aynesil.Shared.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -80,10 +81,14 @@ public sealed class JwtTokenService : ITokenService
             await tx.CommitAsync(cancellationToken);
         });
 
-        var accessToken = BuildAccessToken(userRow, corporationId, permissionCodes);
+        var mustChange = await _db.Database
+            .SqlQueryRaw<bool>(@"SELECT iam.must_change_password({0}) AS ""Value""", userId)
+            .FirstAsync(cancellationToken);
+
+        var accessToken = BuildAccessToken(userRow, corporationId, permissionCodes, mustChange);
         var accessExpiry = DateTimeOffset.UtcNow.AddMinutes(_opts.AccessTokenExpiryMinutes);
 
-        return new TokenPair(accessToken, rawRefresh, accessExpiry);
+        return new TokenPair(accessToken, rawRefresh, accessExpiry, mustChange);
     }
 
     public async Task<TokenPair> RefreshAsync(
@@ -154,7 +159,7 @@ public sealed class JwtTokenService : ITokenService
             corporationId.ToString(), userId.ToString());
     }
 
-    private string BuildAccessToken(UserInfoRow user, Guid corporationId, IEnumerable<string> permissions)
+    private string BuildAccessToken(UserInfoRow user, Guid corporationId, IEnumerable<string> permissions, bool mustChangePassword)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opts.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -172,6 +177,9 @@ public sealed class JwtTokenService : ITokenService
 
         if (!string.IsNullOrEmpty(user.PreferredLocale))
             claims.Add(new("locale", user.PreferredLocale));
+
+        if (mustChangePassword)
+            claims.Add(new(AuthClaims.MustChangePassword, "true"));
 
         claims.AddRange(permissions.Select(p => new Claim("perm", p)));
 

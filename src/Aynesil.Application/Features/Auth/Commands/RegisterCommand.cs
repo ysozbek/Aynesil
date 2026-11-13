@@ -112,7 +112,8 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Us
             req.PreferredLocale,
             req.PrimaryCampusId,
             createdBy: _currentUser.UserId,
-            activateImmediately: !sendVerification);
+            activateImmediately: !sendVerification,
+            mustChangePassword: true);
 
         _db.UserAccounts.Add(user);
         await _db.SaveChangesAsync(ct);

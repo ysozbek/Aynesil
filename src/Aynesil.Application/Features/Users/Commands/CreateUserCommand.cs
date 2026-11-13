@@ -100,7 +100,8 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
             req.PreferredLocale,
             req.PrimaryCampusId,
             createdBy: _currentUser.UserId,
-            activateImmediately: req.ActivateImmediately);
+            activateImmediately: req.ActivateImmediately,
+            mustChangePassword: true);
 
         _db.UserAccounts.Add(user);
         await _db.SaveChangesAsync(ct);

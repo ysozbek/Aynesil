@@ -187,6 +187,16 @@ public sealed class CorporationIsolationTests : IDisposable
         var token = login.GetProperty("data").GetProperty("accessToken").GetString()!;
         login.GetProperty("data").GetProperty("corporationId").GetGuid().Should().Be(own);
 
+        // The script marks the admin must_change_password (V50): other endpoints stay closed until the password changes.
+        login.GetProperty("data").GetProperty("mustChangePassword").GetBoolean().Should().BeTrue();
+        (await SendAsync(HttpMethod.Get, "/api/corporations?page=1&pageSize=50", token)).Status.Should().Be(HttpStatusCode.Forbidden);
+        var changed = password + "-x9";
+        (await SendAsync(HttpMethod.Post, "/api/auth/change-password", token, new { currentPassword = password, newPassword = changed }))
+            .Status.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
+        (loginStatus, login) = await SendAsync(HttpMethod.Post, "/api/auth/login", body: new { username, password = changed });
+        loginStatus.Should().Be(HttpStatusCode.OK, login.ToString());
+        token = login.GetProperty("data").GetProperty("accessToken").GetString()!;
+
         var perms = PermissionClaims(token);
         perms.Should().Contain(["corporation:read", "corporation:update"]);
         perms.Should().NotContain(["corporation:create", "corporation:delete"]);

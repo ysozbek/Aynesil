@@ -1,6 +1,7 @@
 namespace Aynesil.Application.Common.Interfaces;
 
-public record TokenPair(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);
+/// <param name="MustChangePassword">Hesap parola değiştirmeye zorunluysa true; erişim token'ına "mcp" claim'i konur.</param>
+public record TokenPair(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt, bool MustChangePassword = false);
 
 /// <summary>
 /// Generates and validates JWT access tokens and opaque refresh tokens.
