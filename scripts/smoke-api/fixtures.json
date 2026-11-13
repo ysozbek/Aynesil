@@ -24,7 +24,9 @@
     "leadId": "/leads",
     "goalId": "/goals/student-goals",
     "campId": "/camps",
-    "enrollmentId": "/camps/enrollments"
+    "enrollmentId": "/camps/enrollments",
+    "userId": "/users",
+    "guardianId": "/guardians"
   },
   "paramSourcesByFile": {
     "sessionId": {
