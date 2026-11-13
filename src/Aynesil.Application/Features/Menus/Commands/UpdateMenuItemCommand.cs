@@ -67,9 +67,8 @@ public sealed class UpdateMenuItemCommandHandler : IRequestHandler<UpdateMenuIte
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
-        // Tenants may update their own items and platform defaults (e.g. reorder)
-        if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
+        // Platform menu items (corporation_id IS NULL) are read-only for tenants (V45).
+        TenantOwnership.EnsureWritable(item.CorporationId, corporationId, "MenuItem");
 
         if (req.RowVersion != item.RowVersion)
             throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);

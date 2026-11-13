@@ -238,6 +238,27 @@ public class ChildTableOwnershipTests
     }
 
     [Fact]
+    public async Task Platform_menu_item_cannot_be_updated_toggled_or_deleted_by_a_tenant()
+    {
+        using var ctx = new TenantTestContext();
+        var item = MenuItem.Create(null, null, "dashboard", "/", "home");
+        await ctx.SeedAsync(item);
+
+        await ShouldBePlatformReadOnlyAsync(() => ctx.Handler<UpdateMenuItemCommandHandler>().Handle(
+            new UpdateMenuItemCommand(item.Id, null, "/", "home", 99, null, null, item.RowVersion), default));
+        await ShouldBePlatformReadOnlyAsync(() => ctx.Handler<DeactivateMenuItemCommandHandler>()
+            .Handle(new DeactivateMenuItemCommand(item.Id), default));
+        await ShouldBePlatformReadOnlyAsync(() => ctx.Handler<ActivateMenuItemCommandHandler>()
+            .Handle(new ActivateMenuItemCommand(item.Id), default));
+        await ShouldBePlatformReadOnlyAsync(() => ctx.Handler<DeleteMenuItemCommandHandler>()
+            .Handle(new DeleteMenuItemCommand(item.Id), default));
+
+        var stored = await ctx.Db.MenuItems.SingleAsync();
+        stored.SortOrder.Should().NotBe(99);
+        stored.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Menu_translations_of_own_menu_item_are_replaced()
     {
         using var ctx = new TenantTestContext();

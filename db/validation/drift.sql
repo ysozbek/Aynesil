@@ -209,6 +209,30 @@ delete from rls_off_violations where problem is null;
 \echo '== Invariant: every RLS-less table reachable by aynesil_app is a listed exception (both databases) =='
 select db, tbl, problem from rls_off_violations order by db, tbl;
 
+-- ── Invariant: global rows (nullable corporation_id) cannot be deleted by a tenant ──
+-- No DELETE-applicable policy (FOR DELETE or FOR ALL) on a table that can hold global rows may
+-- have an `corporation_id IS NULL` branch in USING (V45).
+create temp table delete_policy_sql as select $del$
+  select c.oid::regclass::text as tbl, p.polname::text as polname
+    from pg_policy p
+    join pg_class c on c.oid = p.polrelid
+    join pg_attribute a on a.attrelid = c.oid and a.attname = 'corporation_id' and not a.attisdropped
+   where not a.attnotnull
+     and p.polcmd in ('d', '*')
+     and pg_get_expr(p.polqual, p.polrelid) ilike '%corporation_id IS NULL%'
+$del$ as q;
+
+create temp table delete_violations as
+  select 'akran (layer DDL)' as db, * from dblink('dbname=akran user=postgres', (select q from delete_policy_sql))
+    as t(tbl text, polname text)
+  union all
+  select 'akran_flyway (migrations)', * from dblink('dbname=akran_flyway user=postgres', (select q from delete_policy_sql))
+    as t(tbl text, polname text);
+
+\echo '== Invariant: DELETE policies never expose global rows (both databases) =='
+select db, tbl, polname, 'DELETE policy has a corporation_id IS NULL branch' as problem
+  from delete_violations order by db, tbl;
+
 do $$
 declare
   n int;
@@ -219,6 +243,12 @@ begin
     raise exception 'FAIL app-access invariant: % RLS-less table(s) reachable by aynesil_app without a valid exception (listed above)', v;
   end if;
   raise notice 'APP ACCESS INVARIANT OK (RLS-less exceptions: %)', (select string_agg(tbl, ', ' order by tbl) from rls_off_exceptions);
+
+  select count(*) into v from delete_violations;
+  if v > 0 then
+    raise exception 'FAIL global-row delete invariant: % DELETE policy(ies) expose global rows (listed above)', v;
+  end if;
+  raise notice 'GLOBAL-ROW DELETE INVARIANT OK';
 
   select count(*) into v from rls_violations;
   if v > 0 then

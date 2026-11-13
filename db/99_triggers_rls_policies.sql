@@ -56,10 +56,24 @@ begin
   loop
     execute format('alter table %I.%I enable row level security', r.sch, r.tbl);
     execute format('drop policy if exists tenant_isolation on %I.%I', r.sch, r.tbl);
+    -- Split per command (V45): global rows (corporation_id IS NULL) are readable and targetable
+    -- by UPDATE, but never deletable by a tenant.
+    execute format('drop policy if exists tenant_isolation_insert on %I.%I', r.sch, r.tbl);
+    execute format('drop policy if exists tenant_isolation_update on %I.%I', r.sch, r.tbl);
+    execute format('drop policy if exists tenant_isolation_delete on %I.%I', r.sch, r.tbl);
     execute format(
-      'create policy tenant_isolation on %I.%I
+      'create policy tenant_isolation on %I.%I for select
+         using (corporation_id is null or corporation_id = core.current_corporation_id())', r.sch, r.tbl);
+    execute format(
+      'create policy tenant_isolation_insert on %I.%I for insert
+         with check (corporation_id = core.current_corporation_id())', r.sch, r.tbl);
+    execute format(
+      'create policy tenant_isolation_update on %I.%I for update
          using (corporation_id is null or corporation_id = core.current_corporation_id())
          with check (corporation_id = core.current_corporation_id())', r.sch, r.tbl);
+    execute format(
+      'create policy tenant_isolation_delete on %I.%I for delete
+         using (corporation_id = core.current_corporation_id())', r.sch, r.tbl);
   end loop;
 end $$;
 
@@ -77,6 +91,10 @@ begin
     ) as t(sch, tbl)
   loop
     execute format('drop policy if exists tenant_isolation on %I.%I', r.sch, r.tbl);
+    -- the generic loop above created the split (V45) policies on these tables too
+    execute format('drop policy if exists tenant_isolation_insert on %I.%I', r.sch, r.tbl);
+    execute format('drop policy if exists tenant_isolation_update on %I.%I', r.sch, r.tbl);
+    execute format('drop policy if exists tenant_isolation_delete on %I.%I', r.sch, r.tbl);
     execute format(
       'create policy tenant_isolation on %I.%I
          using (corporation_id = core.current_corporation_id())
@@ -84,8 +102,8 @@ begin
   end loop;
 end $$;
 
--- iam.menu_item: platform defaults (corporation_id IS NULL) are readable/updatable
--- by every tenant (reorder, activate/deactivate) but INSERT/DELETE stay tenant-scoped.
+-- iam.menu_item: platform defaults (corporation_id IS NULL) are read-only for tenants (V45);
+-- INSERT/UPDATE/DELETE are tenant-scoped.
 alter table iam.menu_item enable row level security;
 drop policy if exists tenant_isolation on iam.menu_item;
 drop policy if exists menu_item_select on iam.menu_item;
@@ -100,8 +118,8 @@ create policy menu_item_insert on iam.menu_item
   with check (corporation_id = core.current_corporation_id());
 create policy menu_item_update on iam.menu_item
   for update
-  using (corporation_id is null or corporation_id = core.current_corporation_id())
-  with check (corporation_id is null or corporation_id = core.current_corporation_id());
+  using (corporation_id = core.current_corporation_id())
+  with check (corporation_id = core.current_corporation_id());
 create policy menu_item_delete on iam.menu_item
   for delete
   using (corporation_id = core.current_corporation_id());

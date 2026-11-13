@@ -66,8 +66,10 @@ defineEmits<{
 
         <span class="text-xs text-muted-foreground w-10 text-right shrink-0">{{ node.sortOrder }}</span>
 
+        <!-- Platform öğeleri (corporationId yok) salt okunur: sıralama/düzenleme/etkinleştirme/silme yok; yalnızca alt öğe eklenebilir. -->
         <div v-if="canManage" class="flex items-center gap-0.5 shrink-0">
           <button
+            v-if="node.corporationId"
             type="button"
             :disabled="idx === 0"
             class="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
@@ -77,6 +79,7 @@ defineEmits<{
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
           </button>
           <button
+            v-if="node.corporationId"
             type="button"
             :disabled="idx === nodes.length - 1"
             class="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
@@ -104,6 +107,7 @@ defineEmits<{
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
           </button>
           <button
+            v-if="node.corporationId"
             type="button"
             class="p-1 rounded hover:bg-accent text-muted-foreground"
             title="Düzenle"
@@ -112,6 +116,7 @@ defineEmits<{
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </button>
           <button
+            v-if="node.corporationId"
             type="button"
             :class="node.isActive ? 'text-amber-600' : 'text-emerald-600'"
             class="p-1 rounded hover:bg-accent"
@@ -121,6 +126,7 @@ defineEmits<{
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 5.636a9 9 0 1012.728 12.728M9 9l6 6" /></svg>
           </button>
           <button
+            v-if="node.corporationId"
             type="button"
             class="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600"
             title="Sil"

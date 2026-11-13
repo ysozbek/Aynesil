@@ -1,5 +1,6 @@
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Exceptions;
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Shared.Constants;
 using FluentValidation;
@@ -45,8 +46,8 @@ public sealed class DeleteMenuItemCommandHandler : IRequestHandler<DeleteMenuIte
         var item = await _db.MenuItems.FindAsync([req.Id], ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MenuItem"));
 
-        if (item.CorporationId.HasValue && item.CorporationId != corporationId)
-            throw new ForbiddenAccessException(MsgKeys.Rule.NoAccessToEntity, new EnumValue("Entity", "MenuItem"));
+        // Platform menu items (corporation_id IS NULL) are read-only for tenants (V45).
+        TenantOwnership.EnsureWritable(item.CorporationId, corporationId, "MenuItem");
 
         item.EnsureCanBeDeleted();
 
