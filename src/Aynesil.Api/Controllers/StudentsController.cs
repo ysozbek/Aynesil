@@ -425,6 +425,14 @@ public sealed class StudentsController : BaseController
         return OkResult(result);
     }
 
+    /// <summary>Finalize a draft development report; only finalized reports are visible to guardians (parent portal).</summary>
+    [HttpPost("{id:guid}/development-reports/{reportId:guid}/finalize")]
+    [HasPermission(Permissions.Students.Write)]
+    [ProducesResponseType(typeof(ApiResponse<DevelopmentReportDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> FinalizeDevelopmentReport(
+        Guid id, Guid reportId, [FromBody] FinalizeDevelopmentReportRequest req, CancellationToken ct)
+        => OkResult(await Sender.Send(new FinalizeDevelopmentReportCommand(reportId, req.RowVersion), ct));
+
     [HttpDelete("{id:guid}/development-reports/{reportId:guid}")]
     [HasPermission(Permissions.Students.Write)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
@@ -585,6 +593,8 @@ public record AddDevelopmentReportRequest(
     DateOnly? ReportDate,
     string? Content,
     Guid? FileId);
+
+public record FinalizeDevelopmentReportRequest(int RowVersion);
 
 public record UpdateDevelopmentReportRequest(
     string? PeriodLabel,

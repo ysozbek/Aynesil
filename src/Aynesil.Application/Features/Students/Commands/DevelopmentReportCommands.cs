@@ -109,6 +109,8 @@ public sealed class UpdateDevelopmentReportCommandHandler
         if (report.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
+        report.EnsureEditable();
+
         report.PeriodLabel = req.PeriodLabel;
         report.ReportDate  = req.ReportDate;
         // AuthoredBy is set once at creation; editing does not change the author.
@@ -116,6 +118,44 @@ public sealed class UpdateDevelopmentReportCommandHandler
         report.FileId      = req.FileId;
         report.UpdatedAt   = DateTimeOffset.UtcNow;
 
+        await _db.SaveChangesAsync(ct);
+
+        return StudentProjection.ToDevelopmentReportDto(report);
+    }
+}
+
+// ── FinalizeDevelopmentReportCommand (Y15) ───────────────────────────────────
+
+/// <summary>Draft → finalized. Only finalized reports are visible to guardians in the parent portal.</summary>
+public record FinalizeDevelopmentReportCommand(Guid Id, int RowVersion) : IRequest<DevelopmentReportDto>;
+
+public class FinalizeDevelopmentReportCommandValidator : AbstractValidator<FinalizeDevelopmentReportCommand>
+{
+    public FinalizeDevelopmentReportCommandValidator() => RuleFor(x => x.Id).NotEmpty();
+}
+
+public sealed class FinalizeDevelopmentReportCommandHandler
+    : IRequestHandler<FinalizeDevelopmentReportCommand, DevelopmentReportDto>
+{
+    private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+
+    public FinalizeDevelopmentReportCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
+
+    public async Task<DevelopmentReportDto> Handle(FinalizeDevelopmentReportCommand req, CancellationToken ct)
+    {
+        var report = await _db.DevelopmentReports
+            .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "DevelopmentReport"));
+
+        if (report.RowVersion != req.RowVersion)
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
+
+        report.Finalize(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
 
         return StudentProjection.ToDevelopmentReportDto(report);

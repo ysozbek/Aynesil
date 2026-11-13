@@ -180,7 +180,9 @@ public record DevelopmentReportDto(
     string? Content,
     Guid? FileId,
     DateTimeOffset CreatedAt,
-    int RowVersion);
+    int RowVersion,
+    bool IsFinalized = false,
+    DateTimeOffset? FinalizedAt = null);
 
 public record ExternalInstitutionReportDto(
     Guid Id,
@@ -429,7 +431,7 @@ internal static class StudentProjection
 
     public static DevelopmentReportDto ToDevelopmentReportDto(DevelopmentReport r)
         => new(r.Id, r.StudentId, r.PeriodLabel, r.ReportDate, r.AuthoredBy,
-            r.Content, r.FileId, r.CreatedAt, r.RowVersion);
+            r.Content, r.FileId, r.CreatedAt, r.RowVersion, r.IsFinalized, r.FinalizedAt);
 
     public static ExternalInstitutionReportDto ToExternalInstitutionReportDto(ExternalInstitutionReport r)
         => new(r.Id, r.StudentId, r.InstitutionName, r.InstitutionTypeId, null,

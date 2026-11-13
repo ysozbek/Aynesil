@@ -28,4 +28,33 @@ public class DevelopmentReport : TenantEntity
 
     /// <summary>FK to core.file_object — optional attached report document.</summary>
     public Guid? FileId { get; set; }
+
+    /// <summary>
+    /// Y15: guardians (parent portal) see finalized reports only. A report starts as a draft; once
+    /// finalized it can no longer be edited (guardians may already have read it).
+    /// </summary>
+    public bool IsFinalized { get; private set; }
+
+    public DateTimeOffset? FinalizedAt { get; private set; }
+
+    /// <summary>iam.user_account id of the staff member who finalized the report.</summary>
+    public Guid? FinalizedBy { get; private set; }
+
+    public void Finalize(Guid? userId)
+    {
+        if (IsFinalized)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.DevelopmentReportAlreadyFinalized);
+
+        IsFinalized = true;
+        FinalizedAt = DateTimeOffset.UtcNow;
+        FinalizedBy = userId;
+        UpdatedAt   = FinalizedAt.Value;
+    }
+
+    /// <summary>Content/period/file may change only while the report is a draft.</summary>
+    public void EnsureEditable()
+    {
+        if (IsFinalized)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.DevelopmentReportFinalized);
+    }
 }

@@ -163,12 +163,18 @@ create table students.development_report (
   authored_by    uuid,                                          -- educator user
   content        text,
   file_id        uuid references core.file_object(id),
+  is_finalized   boolean not null default false,                -- V47 (Y15): guardians (portal) see finalized reports only
+  finalized_at   timestamptz,
+  finalized_by   uuid,
   created_at  timestamptz not null default now(),
   created_by  uuid,
   updated_at  timestamptz not null default now(),
   deleted_at  timestamptz,
-  row_version integer not null default 1
+  row_version integer not null default 1,
+  constraint ck_development_report_finalized check (not is_finalized or finalized_at is not null)
 );
+create index ix_development_report_student_finalized
+  on students.development_report (student_id, is_finalized) where deleted_at is null;
 
 create table students.external_institution_report (
   id               uuid primary key default core.uuid_generate_v7(),

@@ -53,14 +53,14 @@ public sealed class PortalController : BaseController
 
     // ── Per-Student Read-Only Views ───────────────────────────────────────────────
 
-    /// <summary>Development reports visible to the guardian.</summary>
+    /// <summary>Finalized development reports only; drafts are never visible to guardians.</summary>
     [HttpGet("students/{studentId:guid}/development-reports")]
     [HasPermission(Permissions.Portal.Access)]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<DevelopmentReportDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDevelopmentReports(Guid studentId, CancellationToken ct)
     {
         await VerifyPortalAccess(studentId, ct);
-        return OkResult(await Sender.Send(new GetDevelopmentReportsQuery(studentId), ct));
+        return OkResult(await Sender.Send(new GetDevelopmentReportsQuery(studentId, FinalizedOnly: true), ct));
     }
 
     /// <summary>Session history for a student (guarded by CanViewSessions flag).</summary>

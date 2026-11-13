@@ -27,6 +27,9 @@ public class DevelopmentReportConfiguration : IEntityTypeConfiguration<Developme
         builder.Property(x => x.AuthoredBy).HasColumnName("authored_by");
         builder.Property(x => x.Content).HasColumnName("content");
         builder.Property(x => x.FileId).HasColumnName("file_id");
+        builder.Property(x => x.IsFinalized).HasColumnName("is_finalized").HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.FinalizedAt).HasColumnName("finalized_at");
+        builder.Property(x => x.FinalizedBy).HasColumnName("finalized_by");
 
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()").IsRequired();
         builder.Property(x => x.CreatedBy).HasColumnName("created_by");

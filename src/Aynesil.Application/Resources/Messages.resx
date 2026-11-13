@@ -366,4 +366,6 @@
   <data name="Success.UserDeleted" xml:space="preserve"><value>Kullanıcı silindi.</value></data>
   <data name="Success.UserRoleRemoved" xml:space="preserve"><value>Rol kullanıcıdan kaldırıldı.</value></data>
   <data name="Success.UserSuspended" xml:space="preserve"><value>Kullanıcı askıya alındı.</value></data>
+  <data name="Rule.DevelopmentReportAlreadyFinalized" xml:space="preserve"><value>Gelişim raporu zaten kesinleşmiş.</value></data>
+  <data name="Rule.DevelopmentReportFinalized" xml:space="preserve"><value>Kesinleşmiş gelişim raporu değiştirilemez.</value></data>
 </root>

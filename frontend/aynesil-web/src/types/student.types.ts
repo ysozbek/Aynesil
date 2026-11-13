@@ -197,6 +197,9 @@ export interface DevelopmentReportDto {
   fileId: string | null
   createdAt: string
   rowVersion: number
+  /** Guardians (parent portal) see finalized reports only; a finalized report is read-only. */
+  isFinalized: boolean
+  finalizedAt: string | null
 }
 
 export interface ExternalInstitutionReportDto {

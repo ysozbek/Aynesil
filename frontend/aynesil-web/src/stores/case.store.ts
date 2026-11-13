@@ -179,6 +179,19 @@ export const useCaseStore = defineStore('case', () => {
     }
   }
 
+  async function finalizeDevelopmentReport(studentId: string, reportId: string, rowVersion: number): Promise<DevelopmentReportDto> {
+    saving.value = true
+    try {
+      const res = await studentService.finalizeDevelopmentReport(studentId, reportId, rowVersion)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Gelişim raporu kesinleştirilemedi.')
+      const idx = developmentReports.value.findIndex(r => r.id === reportId)
+      if (idx >= 0) developmentReports.value[idx] = res.data
+      return res.data
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function deleteDevelopmentReport(studentId: string, reportId: string) {
     saving.value = true
     try {
@@ -224,7 +237,7 @@ export const useCaseStore = defineStore('case', () => {
     fetchCaseNotes, fetchMedicalReports, fetchDevelopmentReports, fetchExternalReports,
     addCaseNote, updateCaseNote, deleteCaseNote,
     addMedicalReport, updateMedicalReport, deleteMedicalReport,
-    addDevelopmentReport, updateDevelopmentReport, deleteDevelopmentReport,
+    addDevelopmentReport, updateDevelopmentReport, finalizeDevelopmentReport, deleteDevelopmentReport,
     addExternalReport, deleteExternalReport,
     clearAll,
   }

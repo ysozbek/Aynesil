@@ -366,4 +366,6 @@
   <data name="Success.UserDeleted" xml:space="preserve"><value>User deleted.</value></data>
   <data name="Success.UserRoleRemoved" xml:space="preserve"><value>Role removed from the user.</value></data>
   <data name="Success.UserSuspended" xml:space="preserve"><value>User suspended.</value></data>
+  <data name="Rule.DevelopmentReportAlreadyFinalized" xml:space="preserve"><value>The development report is already finalized.</value></data>
+  <data name="Rule.DevelopmentReportFinalized" xml:space="preserve"><value>A finalized development report can no longer be edited.</value></data>
 </root>

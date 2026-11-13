@@ -321,6 +321,10 @@ function openAddDevReport() {
   showDevReportModal.value = true
 }
 
+async function finalizeDevReport(r: DevelopmentReportDto) {
+  await caseStore.finalizeDevelopmentReport(id.value, r.id, r.rowVersion)
+}
+
 function openEditDevReport(r: DevelopmentReportDto) {
   editDevReportTarget.value = r
   devReportForm.periodLabel = r.periodLabel ?? ''
@@ -1275,7 +1279,13 @@ function formatDateTime(val: string | null): string {
             >
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <p class="font-medium text-foreground text-sm">{{ r.periodLabel ?? '—' }}</p>
+                  <p class="font-medium text-foreground text-sm">
+                    {{ r.periodLabel ?? '—' }}
+                    <span
+                      class="ml-2 align-middle text-[11px] font-normal px-1.5 py-0.5 rounded"
+                      :class="r.isFinalized ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
+                    >{{ r.isFinalized ? t('student.developmentReport.finalized') : t('student.developmentReport.draft') }}</span>
+                  </p>
                   <p class="text-xs text-muted-foreground mt-0.5">
                     {{ formatDate(r.reportDate) }}
                     <span v-if="r.authoredBy"> · {{ r.authoredBy }}</span>
@@ -1283,8 +1293,17 @@ function formatDateTime(val: string | null): string {
                   <p v-if="r.content" class="text-xs text-foreground mt-1 line-clamp-2">{{ r.content }}</p>
                 </div>
                 <div v-if="can(Permissions.Students.Write)" class="flex gap-1 shrink-0">
-                  <!-- Edit uses `PUT /students/{id}/development-reports/{reportId}` (student:write). -->
+                  <!-- Finalize: `POST …/finalize` (student:write). Only finalized reports reach guardians in the portal. -->
                   <button
+                    v-if="!r.isFinalized"
+                    :disabled="caseStore.saving"
+                    @click="finalizeDevReport(r)"
+                    class="px-2 py-1 rounded text-xs text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                    :title="t('student.developmentReport.finalizeHint')"
+                  >{{ t('student.developmentReport.finalize') }}</button>
+                  <!-- Edit uses `PUT /students/{id}/development-reports/{reportId}` (student:write); finalized reports are read-only. -->
+                  <button
+                    v-if="!r.isFinalized"
                     @click="openEditDevReport(r)"
                     class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                   >

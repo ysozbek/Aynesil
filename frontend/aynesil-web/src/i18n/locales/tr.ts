@@ -694,6 +694,10 @@ const tr = {
       periodLabel: 'Dönem',
       reportDate: 'Rapor Tarihi',
       content: 'İçerik',
+      draft: 'Taslak',
+      finalized: 'Kesinleşti',
+      finalize: 'Kesinleştir',
+      finalizeHint: 'Kesinleşen rapor veliye görünür hale gelir ve artık düzenlenemez.',
     },
     externalReport: {
       title: 'Kurum Raporları',

@@ -179,6 +179,9 @@ export const studentService = {
   updateDevelopmentReport: (id: string, reportId: string, payload: UpdateDevelopmentReportPayload) =>
     apiService.put<DevelopmentReportDto>(`/students/${id}/development-reports/${reportId}`, payload),
 
+  finalizeDevelopmentReport: (id: string, reportId: string, rowVersion: number) =>
+    apiService.post<DevelopmentReportDto>(`/students/${id}/development-reports/${reportId}/finalize`, { rowVersion }),
+
   deleteDevelopmentReport: (id: string, reportId: string) =>
     apiService.delete(`/students/${id}/development-reports/${reportId}`),
 

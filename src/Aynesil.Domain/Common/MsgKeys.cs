@@ -294,6 +294,8 @@ public static class MsgKeys
         public static readonly MsgKey ViewingSessionEnded = new("Rule.ViewingSessionEnded");
         public static readonly MsgKey VisitActionStatus = new("Rule.VisitActionStatus");
         public static readonly MsgKey VisitHasObservations = new("Rule.VisitHasObservations");
+        public static readonly MsgKey DevelopmentReportFinalized = new("Rule.DevelopmentReportFinalized");
+        public static readonly MsgKey DevelopmentReportAlreadyFinalized = new("Rule.DevelopmentReportAlreadyFinalized");
     }
 
     /// <summary>Kimlik doğrulama (giriş) hataları.</summary>
