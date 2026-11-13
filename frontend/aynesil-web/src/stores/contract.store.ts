@@ -11,6 +11,7 @@ import type {
   ContractReportItemDto, SignatureReportItemDto,
   ContractListQuery, ContractTemplateListQuery,
   CreateContractPayload, SignContractPayload,
+  CreateContractTemplatePayload, UpdateContractTemplatePayload, NewTemplateVersionPayload,
 } from '@/types/legal.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -45,6 +46,32 @@ export const useContractStore = defineStore('contract', () => {
       if (res.success && res.data) currentTemplate.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
+  }
+
+  async function createTemplate(payload: CreateContractTemplatePayload): Promise<ContractTemplateDto> {
+    saving.value = true
+    try {
+      const res = await legalService.createContractTemplate(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Şablon oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
+  }
+
+  async function updateTemplate(id: string, payload: UpdateContractTemplatePayload) {
+    saving.value = true
+    try {
+      const res = await legalService.updateContractTemplate(id, payload)
+      if (!res.success) throw new Error(res.message ?? 'Şablon güncellenemedi.')
+    } finally { saving.value = false }
+  }
+
+  async function newTemplateVersion(id: string, payload: NewTemplateVersionPayload): Promise<ContractTemplateDto> {
+    saving.value = true
+    try {
+      const res = await legalService.newContractTemplateVersion(id, payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Yeni sürüm oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
   }
 
   async function fetchContracts(query: ContractListQuery) {
@@ -128,7 +155,7 @@ export const useContractStore = defineStore('contract', () => {
   return {
     templates, currentTemplate, contracts, currentContract,
     contractReport, signatureReport, loading, saving, error,
-    fetchTemplates, fetchTemplate, fetchContracts, fetchContract,
+    fetchTemplates, createTemplate, updateTemplate, newTemplateVersion, fetchTemplate, fetchContracts, fetchContract,
     createContract, sendContract, signContract, terminateContract,
     fetchContractReport, fetchSignatureReport, clearCurrent,
   }

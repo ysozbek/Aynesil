@@ -275,3 +275,26 @@ export interface CreateConsentTemplatePayload {
   effectiveFrom?: string
   translations?: TemplateTranslationPayload[]
 }
+
+/** Mirrors UpdateContractTemplateCommand (Id route'tan gelir). */
+export interface UpdateContractTemplatePayload {
+  contractTypeId?: string
+  effectiveFrom?: string
+  translations?: TemplateTranslationPayload[]
+  rowVersion: number
+}
+
+/** Mirrors UpdateConsentTemplateCommand. */
+export interface UpdateConsentTemplatePayload {
+  consentTypeId?: string
+  isMandatory: boolean
+  effectiveFrom?: string
+  translations?: TemplateTranslationPayload[]
+  rowVersion: number
+}
+
+/** Mirrors NewVersionContractTemplateCommand / NewVersionConsentTemplateCommand (CurrentTemplateId route'tan gelir). */
+export interface NewTemplateVersionPayload {
+  effectiveFrom?: string
+  translations?: TemplateTranslationPayload[]
+}

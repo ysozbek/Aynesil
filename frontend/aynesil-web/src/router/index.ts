@@ -1053,8 +1053,14 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'legal/contract-templates',
         name: 'contract-templates',
-        component: () => import('@/views/legal/ContractTemplateListView.vue'),
-        meta: { permission: Permissions.ContractTemplates.Read },
+        component: () => import('@/views/legal/TemplateListView.vue'),
+        meta: { permission: Permissions.ContractTemplates.Read, templateKind: 'contract' },
+      },
+      {
+        path: 'legal/consent-templates',
+        name: 'consent-templates',
+        component: () => import('@/views/legal/TemplateListView.vue'),
+        meta: { permission: Permissions.ConsentTemplates.Read, templateKind: 'consent' },
       },
       {
         path: 'legal/consents',

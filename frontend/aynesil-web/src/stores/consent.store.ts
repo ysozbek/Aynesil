@@ -11,6 +11,7 @@ import type {
   ConsentReportItemDto,
   ConsentListQuery, ConsentTemplateListQuery,
   GrantConsentPayload,
+  CreateConsentTemplatePayload, UpdateConsentTemplatePayload, NewTemplateVersionPayload,
 } from '@/types/legal.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -44,6 +45,32 @@ export const useConsentStore = defineStore('consent', () => {
       if (res.success && res.data) currentTemplate.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
+  }
+
+  async function createTemplate(payload: CreateConsentTemplatePayload): Promise<ConsentTemplateDto> {
+    saving.value = true
+    try {
+      const res = await legalService.createConsentTemplate(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Şablon oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
+  }
+
+  async function updateTemplate(id: string, payload: UpdateConsentTemplatePayload) {
+    saving.value = true
+    try {
+      const res = await legalService.updateConsentTemplate(id, payload)
+      if (!res.success) throw new Error(res.message ?? 'Şablon güncellenemedi.')
+    } finally { saving.value = false }
+  }
+
+  async function newTemplateVersion(id: string, payload: NewTemplateVersionPayload): Promise<ConsentTemplateDto> {
+    saving.value = true
+    try {
+      const res = await legalService.newConsentTemplateVersion(id, payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Yeni sürüm oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
   }
 
   async function fetchConsents(query: ConsentListQuery) {
@@ -102,7 +129,7 @@ export const useConsentStore = defineStore('consent', () => {
   return {
     templates, currentTemplate, consents, currentConsent,
     consentReport, loading, saving, error,
-    fetchTemplates, fetchTemplate, fetchConsents, fetchConsent,
+    fetchTemplates, fetchTemplate, createTemplate, updateTemplate, newTemplateVersion, fetchConsents, fetchConsent,
     grantConsent, withdrawConsent, fetchConsentReport, clearCurrent,
   }
 })

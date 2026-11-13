@@ -4,7 +4,10 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
-import type { CreateConsentTemplatePayload, CreateContractTemplatePayload } from '@/types/legal.types'
+import type {
+  CreateConsentTemplatePayload, CreateContractTemplatePayload,
+  UpdateConsentTemplatePayload, UpdateContractTemplatePayload, NewTemplateVersionPayload,
+} from '@/types/legal.types'
 import type {
   ContractTemplateListItemDto, ContractTemplateDto,
   ConsentTemplateListItemDto, ConsentTemplateDto,
@@ -38,6 +41,18 @@ export const legalService = {
 
   createContractTemplate: (payload: CreateContractTemplatePayload) =>
     apiService.post<ContractTemplateDto>('/legal/contract-templates', payload),
+
+  /** Güncel sürümün türünü/geçerliliğini/metnini günceller (kullanılmış sürümde backend reddeder). */
+  updateContractTemplate: (id: string, payload: UpdateContractTemplatePayload) =>
+    apiService.put<void>(`/legal/contract-templates/${id}`, payload),
+
+  /** Güncel sürümü arşivler, yeni sürümü (v+1) üretir. */
+  newContractTemplateVersion: (id: string, payload: NewTemplateVersionPayload) =>
+    apiService.post<ContractTemplateDto>(`/legal/contract-templates/${id}/new-version`, payload),
+
+  /** Bir şablon kodunun tüm sürümleri (arşiv dahil). */
+  listContractTemplateVersions: (code: string) =>
+    apiService.get<ContractTemplateListItemDto[]>(`/legal/contract-templates/${code}/versions`),
 
   // ── Student Contracts ──────────────────────────────────────────────────────
   listContracts: (query: ContractListQuery) =>
@@ -78,6 +93,15 @@ export const legalService = {
 
   createConsentTemplate: (payload: CreateConsentTemplatePayload) =>
     apiService.post<ConsentTemplateDto>('/legal/consent-templates', payload),
+
+  updateConsentTemplate: (id: string, payload: UpdateConsentTemplatePayload) =>
+    apiService.put<void>(`/legal/consent-templates/${id}`, payload),
+
+  newConsentTemplateVersion: (id: string, payload: NewTemplateVersionPayload) =>
+    apiService.post<ConsentTemplateDto>(`/legal/consent-templates/${id}/new-version`, payload),
+
+  listConsentTemplateVersions: (code: string) =>
+    apiService.get<ConsentTemplateListItemDto[]>(`/legal/consent-templates/${code}/versions`),
 
   // ── Student Consents ───────────────────────────────────────────────────────
   listConsents: (query: ConsentListQuery) =>

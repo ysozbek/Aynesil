@@ -726,9 +726,22 @@ const tr = {
     tab: {
       overview: 'Genel Bakış',
       guardians: 'Veliler',
+      consents: 'Rızalar',
       programs: 'Programlar',
       caseManagement: 'Vaka Yönetimi',
       history: 'Geçmiş',
+    },
+    consent: {
+      description: 'Öğrencinin rıza (onam) kayıtları. Verilmiş rıza geri alınabilir; geri alınan rıza değişmez, yeniden rıza için yeni kayıt açılır.',
+      grant: 'Rıza ver',
+      withdraw: 'Rızayı geri al',
+      withdrawConfirm: 'Bu rıza geri alınacak. Geri alınan rıza yeniden açılamaz. Kamera izleme rızasıysa izleme başlatılamaz hale gelir. Devam edilsin mi?',
+      guardian: 'Veli',
+      withdrawnAt: 'Geri alma',
+      typeRequired: 'Rıza türü ya da şablon seçin.',
+      cameraGuardianRequired: 'Kamera izleme rızası bir veli adına verilir; veli seçin.',
+      cameraHint: 'Veliye kamera izleme yetkisi verilebilmesi için bu veli adına geçerli bir kamera izleme rızası gerekir.',
+      cameraNote: 'Kamera izleme yetkisinin ön koşulu; geri alınırsa izleme başlatılamaz.',
     },
     guardian: {
       link: 'Veli Bağla',
@@ -2229,10 +2242,34 @@ const tr = {
     template: {
       current: 'Güncel',
       historical: 'Arşiv',
+      showArchived: 'Arşiv sürümlerini de göster',
+      actions: {
+        create: 'Yeni şablon',
+        newVersion: 'Yeni sürüm',
+      },
+      form: {
+        title: {
+          create: 'Yeni şablon',
+          edit: 'Şablonu düzenle',
+          newVersion: 'Yeni sürüm oluştur',
+        },
+        newVersionHint: 'Güncel sürüm arşivlenir; bu metin v{version} olarak yayınlanır. İmzalı sözleşmeler eski sürümde kalır.',
+        titleField: 'Başlık',
+        body: 'Metin',
+        codeFormat: 'Kod yalnızca küçük harf, rakam ve alt çizgi içerebilir.',
+        textRequired: 'Başlık ve metin zorunlu.',
+      },
       contract: {
         list: {
           title: 'Sözleşme Şablonları',
           subtitle: 'Sözleşme şablon versiyonları',
+          noData: 'Şablon bulunamadı.',
+        },
+      },
+      consent: {
+        list: {
+          title: 'Onam Şablonları',
+          subtitle: 'Rıza (onam) şablon versiyonları',
           noData: 'Şablon bulunamadı.',
         },
       },
