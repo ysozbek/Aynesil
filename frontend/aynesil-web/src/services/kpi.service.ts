@@ -4,7 +4,9 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
-import type { SubmitParentFeedbackPayload } from '@/types/kpi.types'
+import type {
+  SubmitParentFeedbackPayload, CreateKpiDefinitionPayload, UpdateKpiDefinitionPayload,
+} from '@/types/kpi.types'
 import type {
   KpiCategoryDto, KpiDefinitionListItemDto, KpiDefinitionDto,
   KpiValueDto, EducatorPerformanceSnapshotListItemDto, EducatorPerformanceSnapshotDto,
@@ -36,6 +38,12 @@ export const kpiService = {
 
   getDefinition: (id: string) =>
     apiService.get<KpiDefinitionDto>(`/performance-kpi/definitions/${id}`),
+
+  createDefinition: (payload: CreateKpiDefinitionPayload) =>
+    apiService.post<KpiDefinitionDto>('/performance-kpi/definitions', payload),
+
+  updateDefinition: (id: string, payload: UpdateKpiDefinitionPayload) =>
+    apiService.put<KpiDefinitionDto>(`/performance-kpi/definitions/${id}`, payload),
 
   activateDefinition: (id: string) =>
     apiService.post(`/performance-kpi/definitions/${id}/activate`),

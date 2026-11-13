@@ -11,6 +11,7 @@ import type {
   ParentFeedbackDto, EducatorDashboardDto, ManagerDashboardDto, ExecutiveDashboardDto,
   RankingItemDto, KpiReportRowDto,
   KpiDefinitionListQuery, SnapshotListQuery, DashboardQuery, KpiValueListQuery,
+  CreateKpiDefinitionPayload, UpdateKpiDefinitionPayload,
 } from '@/types/kpi.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -57,6 +58,24 @@ export const useKpiStore = defineStore('kpi', () => {
       if (res.success && res.data) currentDefinition.value = res.data
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
+  }
+
+  async function createDefinition(payload: CreateKpiDefinitionPayload): Promise<KpiDefinitionDto> {
+    saving.value = true
+    try {
+      const res = await kpiService.createDefinition(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'KPI tanımı oluşturulamadı.')
+      return res.data
+    } finally { saving.value = false }
+  }
+
+  async function updateDefinition(id: string, payload: UpdateKpiDefinitionPayload): Promise<KpiDefinitionDto> {
+    saving.value = true
+    try {
+      const res = await kpiService.updateDefinition(id, payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'KPI tanımı güncellenemedi.')
+      return res.data
+    } finally { saving.value = false }
   }
 
   async function toggleDefinition(id: string, activate: boolean) {
@@ -158,7 +177,7 @@ export const useKpiStore = defineStore('kpi', () => {
     categories, definitions, currentDefinition, kpiValues, snapshots,
     parentFeedback, educatorDashboard, managerDashboard, executiveDashboard,
     ranking, kpiReport, loading, saving, error,
-    fetchCategories, fetchDefinitions, fetchDefinition, toggleDefinition,
+    fetchCategories, fetchDefinitions, fetchDefinition, createDefinition, updateDefinition, toggleDefinition,
     fetchSnapshots, fetchKpiValues, computeEducator, fetchParentFeedback,
     fetchEducatorDashboard, fetchManagerDashboard, fetchExecutiveDashboard,
     fetchRanking, fetchKpiReport,

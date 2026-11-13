@@ -26,6 +26,24 @@ export interface KpiDefinitionListItemDto {
   updatedAt: string
 }
 
+/** Mirrors CreateKpiDefinitionCommand. `spec` geçerli bir JSON nesnesi olmalı (boşsa "{}"). */
+export interface CreateKpiDefinitionPayload {
+  code: string
+  name: string
+  categoryId?: string
+  unit?: string
+  spec?: string
+}
+
+/** Mirrors UpdateKpiDefinitionCommand (Id route'tan gelir). */
+export interface UpdateKpiDefinitionPayload {
+  name: string
+  categoryId?: string
+  unit?: string
+  spec?: string
+  rowVersion: number
+}
+
 export interface KpiDefinitionDto {
   id: string
   corporationId?: string

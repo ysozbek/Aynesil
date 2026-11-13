@@ -2185,6 +2185,12 @@ const tr = {
       title: 'KPI Tanımları',
       subtitle: 'Performans göstergesi tanımları',
       noData: 'KPI tanımı bulunamadı.',
+      create: 'Yeni KPI tanımı',
+      editTitle: 'KPI tanımını düzenle',
+      codeFormat: 'Kod küçük harfle başlamalı; yalnızca küçük harf, rakam, nokta ve alt çizgi içerebilir.',
+      spec: 'Formül / toplulaştırma (JSON)',
+      specHint: 'İsteğe bağlı; geçerli bir JSON nesnesi olmalı. Boşsa {} kaydedilir. Platform tanımları değiştirilemez.',
+      specInvalid: 'Formül geçerli bir JSON nesnesi olmalı.',
     },
     snapshots: {
       title: 'Performans Anlık Görüntüleri',

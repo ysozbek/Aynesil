@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import { kpiService } from '@/services/kpi.service'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
@@ -32,6 +34,69 @@ const columns: Column<KpiDefinitionListItemDto>[] = [
   { key: 'isActive', label: t('common.status'), width: '110px' },
 ]
 
+// ── Oluştur / düzenle ────────────────────────────────────────────────────────
+// Platform (global) tanımlar salt okunur: corporationId boşsa düzenleme gösterilmez.
+const showForm = ref(false)
+const editTarget = ref<KpiDefinitionListItemDto | null>(null)
+const rowVersion = ref(0)
+const formError = ref('')
+const form = reactive({ code: '', name: '', categoryId: '', unit: '', spec: '' })
+
+function openCreate() {
+  editTarget.value = null
+  Object.assign(form, { code: '', name: '', categoryId: '', unit: '', spec: '' })
+  formError.value = ''
+  showForm.value = true
+}
+
+async function openEdit(row: KpiDefinitionListItemDto) {
+  formError.value = ''
+  try {
+    const res = await kpiService.getDefinition(row.id)
+    if (!res.success || !res.data) return
+    editTarget.value = row
+    rowVersion.value = res.data.rowVersion
+    Object.assign(form, {
+      code: res.data.code, name: res.data.name, categoryId: res.data.categoryId ?? '',
+      unit: res.data.unit ?? '', spec: res.data.spec && res.data.spec !== '{}' ? res.data.spec : '',
+    })
+    showForm.value = true
+  } catch (e: unknown) {
+    kpiStore.error = (e as Error).message
+  }
+}
+
+async function submitForm() {
+  formError.value = ''
+  if (!editTarget.value && !/^[a-z][a-z0-9_.]*$/.test(form.code)) { formError.value = t('kpi.definitions.codeFormat'); return }
+  if (!form.name.trim()) { formError.value = t('validation.required', { field: t('kpi.fields.name') }); return }
+  if (form.spec.trim()) {
+    try {
+      const parsed = JSON.parse(form.spec)
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not object')
+    } catch { formError.value = t('kpi.definitions.specInvalid'); return }
+  }
+  const common = {
+    name: form.name.trim(),
+    categoryId: form.categoryId || undefined,
+    unit: form.unit.trim() || undefined,
+    spec: form.spec.trim() || undefined,
+  }
+  try {
+    if (editTarget.value) {
+      await kpiStore.updateDefinition(editTarget.value.id, { ...common, rowVersion: rowVersion.value })
+    } else {
+      await kpiStore.createDefinition({ code: form.code.trim(), ...common })
+    }
+    showForm.value = false
+    await kpiStore.fetchDefinitions(filters)
+  } catch (e: unknown) {
+    formError.value = (e as Error).message
+  }
+}
+
+const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary'
+
 let debounceTimer: ReturnType<typeof setTimeout>
 function debouncedFetch() {
   clearTimeout(debounceTimer)
@@ -56,7 +121,17 @@ onMounted(async () => {
 
 <template>
   <div>
-    <PageHeader :title="t('kpi.definitions.title')" :description="t('kpi.definitions.subtitle')" />
+    <PageHeader :title="t('kpi.definitions.title')" :description="t('kpi.definitions.subtitle')">
+      <button
+        v-if="can(Permissions.Kpi.Manage)"
+        class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+        @click="openCreate"
+      >
+        {{ t('kpi.definitions.create') }}
+      </button>
+    </PageHeader>
+
+    <p v-if="kpiStore.error" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ kpiStore.error }}</p>
 
     <div class="mb-4 flex flex-wrap items-end gap-3">
       <div class="flex-1 min-w-[160px]">
@@ -127,6 +202,13 @@ onMounted(async () => {
             </svg>
           </button>
           <button
+            v-if="can(Permissions.Kpi.Manage) && row.corporationId"
+            @click="openEdit(row)"
+            class="px-2.5 py-1 text-xs rounded-lg border border-border hover:bg-accent"
+          >
+            {{ t('common.edit') }}
+          </button>
+          <button
             v-if="can(Permissions.Kpi.Manage)"
             @click="kpiStore.toggleDefinition(row.id, !row.isActive)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -142,6 +224,44 @@ onMounted(async () => {
         </div>
       </template>
     </DataTable>
+
+    <FormModal
+      :open="showForm"
+      :title="editTarget ? t('kpi.definitions.editTitle') : t('kpi.definitions.create')"
+      :saving="kpiStore.saving"
+      @submit="submitForm"
+      @close="showForm = false"
+    >
+      <div class="space-y-4">
+        <p v-if="formError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ formError }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('kpi.fields.code') }} *</label>
+          <input v-model="form.code" type="text" :disabled="!!editTarget" :class="inputClass" placeholder="ornek.kod" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('kpi.fields.name') }} *</label>
+          <input v-model="form.name" type="text" maxlength="200" :class="inputClass" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('kpi.fields.category') }}</label>
+            <select v-model="form.categoryId" :class="inputClass">
+              <option value="">—</option>
+              <option v-for="c in kpiStore.categories" :key="c.id" :value="c.id">{{ c.label || c.code }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('kpi.fields.unit') }}</label>
+            <input v-model="form.unit" type="text" maxlength="20" :class="inputClass" placeholder="%, count, hours" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('kpi.definitions.spec') }}</label>
+          <textarea v-model="form.spec" rows="6" :class="inputClass + ' font-mono'" placeholder="{}" />
+          <p class="mt-1 text-xs text-muted-foreground">{{ t('kpi.definitions.specHint') }}</p>
+        </div>
+      </div>
+    </FormModal>
 
     <div class="mt-4">
       <Pagination
