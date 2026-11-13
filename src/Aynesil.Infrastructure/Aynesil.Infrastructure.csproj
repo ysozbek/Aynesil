@@ -32,6 +32,11 @@
     <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
 
+    <!-- Geçişli açıklar için güvenli sürüm sabitleme (Hangfire → Newtonsoft.Json 11.0.1;
+         eski System.Text.Encodings.Web 4.5.0). Hangfire/BCL bu sürümlerle uyumlu. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.5" />
+
     <!-- File storage -->
     <PackageReference Include="AWSSDK.S3" Version="3.7.414.1" />
 

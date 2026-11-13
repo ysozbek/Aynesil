@@ -43,6 +43,10 @@ try
     var app = builder.Build();
 
     // ── Middleware pipeline ───────────────────────────────────────────────────
+    // Gerçek istemci IP'si: hız sınırı, etkinlik günlüğü ve giriş kayıtları RemoteIpAddress'e bakar,
+    // bu yüzden en başta. Yalnızca ForwardedHeaders:KnownProxies/KnownNetworks'ten gelen başlıklar işlenir.
+    app.UseForwardedHeaders();
+
     // Serilog's RequestLoggingMiddleware is registered OUTSIDE
     // ExceptionMiddleware so it logs the final HTTP status (401/404/422/…)
     // written by the exception handler, instead of seeing the raw exception

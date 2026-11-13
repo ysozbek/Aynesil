@@ -97,6 +97,11 @@ Vue 3 Composition API + Pinia + Vue Router + vue-i18n + Metronic 9 (Tailwind 4, 
 - **E-posta/SMS sağlayıcısı:** henüz bağlı değil. `INotificationService` için `LoggingNotificationService` kayıtlı: bildirimi göndermez, yalnızca şablon kodu + alıcıyı log'a yazar (token gibi değişken değerleri asla loglanmaz). Gerçek sağlayıcı (SMTP/outbox + Hangfire işçisi) eklendiğinde `Infrastructure/DependencyInjection.cs`'teki kayıt onunla değiştirilir; o zamana kadar davet/parola sıfırlama e-postaları gitmez.
 - **DI doğrulaması:** servis kayıtları `AddAynesilApi` içindedir; `ServiceRegistrationTests` ValidateOnBuild + ValidateScopes ile hepsini doğrular (eksik kayıt testte kırılır).
 
+## Dağıtım notları
+
+- **Hız sınırı sayaçları örnek başınadır.** Anonim auth uçlarının sınırı (`Api/RateLimiting/AuthRateLimiter`: giriş 10/dk, sıfırlama isteği 3/saat, sıfırlama onayı 10/dk) süreç belleğinde tutulur. API birden fazla örnekte çalışırsa her örnek kendi sayacını işletir, yani etkin sınır örnek sayısıyla çarpılır. Çok örnekli dağıtımdan önce Redis tabanlı bir sınırlayıcı (ör. `StackExchange.Redis` üzerinde sabit pencere sayacı; Redis zaten bağlı) gerekir. Tek örnekli dağıtımda sorun yok.
+- **Ters vekil ve gerçek istemci IP'si.** `UseForwardedHeaders` pipeline'ın en başında, hız sınırından önce çalışır. `X-Forwarded-For` yalnızca `ForwardedHeaders:KnownProxies` / `KnownNetworks`'teki bağlantılardan kabul edilir; bilinmeyen kaynaktan gelen başlık yok sayılır. Development'ta ikisi de boştur (yalnızca loopback güvenilir). Üretimde vekil adresi ya da ağı ortam değişkeniyle verilmelidir: `AYNESIL_ForwardedHeaders__KnownProxies__0=10.0.0.5`, `AYNESIL_ForwardedHeaders__KnownNetworks__0=172.18.0.0/16`. Vekil tanımlanmazsa hız sınırı vekilin IP'sine uygulanır ve tüm istemciler tek kovayı paylaşır.
+
 ## Working style (from .cursorrules)
 
 Generate one requested module at a time, layer by layer. After each major layer, stop, summarize the files, and wait for confirmation.

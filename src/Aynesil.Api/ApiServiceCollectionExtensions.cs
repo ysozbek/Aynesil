@@ -65,6 +65,9 @@ public static class ApiServiceCollectionExtensions
                 .RequireAuthenticatedUser()
                 .Build());
 
+        // ── Ters vekil arkasında gerçek istemci IP'si (hız sınırından önce çalışır; bkz. Program.cs) ──
+        services.AddAynesilForwardedHeaders(configuration);
+
         // ── Anonim auth uçlarının hız sınırı (Y7): IP + hedef kimlik başına sabit pencere ─────────
         services.Configure<AuthRateLimitOptions>(configuration.GetSection(AuthRateLimitOptions.Section));
         services.AddSingleton<AuthRateLimiter>();

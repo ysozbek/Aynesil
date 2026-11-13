@@ -17,12 +17,12 @@
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
-  <!-- NuGet denetimi: doğrudan referans verilen bir pakette yüksek/kritik bilinen açık derlemeyi kırar.
-       Geçişli paketler şimdilik yalnızca uyarı (all moduna geçmek için önce Hangfire/Testcontainers kaynaklı
-       Newtonsoft.Json, System.Text.Encodings.Web ve SSH.NET sürümlerinin sabitlenmesi gerekir). -->
+  <!-- NuGet denetimi: doğrudan ya da geçişli bir pakette yüksek/kritik bilinen açık derlemeyi kırar.
+       Hangfire/Testcontainers kaynaklı Newtonsoft.Json, System.Text.Encodings.Web ve SSH.NET doğrudan
+       referansla güvenli sürüme sabitlenmiştir (Infrastructure ve test csproj'ları). -->
   <PropertyGroup>
     <NuGetAudit>true</NuGetAudit>
-    <NuGetAuditMode>direct</NuGetAuditMode>
+    <NuGetAuditMode>all</NuGetAuditMode>
     <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
 </Project>
