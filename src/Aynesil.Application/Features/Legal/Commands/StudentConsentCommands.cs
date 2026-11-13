@@ -143,6 +143,24 @@ public sealed class WithdrawConsentCommandHandler : IRequestHandler<WithdrawCons
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentConsent"));
 
         consent.Withdraw(_currentUser.UserId);
+
+        // Kamera rızası geri alınınca o veliye (ve öğrenciye) ait açık izleme yetkileri iptal edilir.
+        if (consent.GuardianId.HasValue && consent.ConsentTypeId.HasValue)
+        {
+            var isCamera = await _db.RefValues.AnyAsync(
+                r => r.Id == consent.ConsentTypeId.Value && r.Code == "camera_viewing", ct);
+            if (isCamera)
+            {
+                var open = await _db.ViewingAuthorizations
+                    .Where(a => a.CorporationId == consent.CorporationId
+                             && a.GuardianId == consent.GuardianId.Value
+                             && a.StudentId == consent.StudentId
+                             && !a.IsRevoked)
+                    .ToListAsync(ct);
+                foreach (var a in open) a.Revoke("Rıza geri alındı");
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 }

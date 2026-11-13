@@ -50,6 +50,7 @@ create table media.viewing_authorization (
   valid_to       timestamptz,
   granted_by     uuid,
   is_revoked     boolean not null default false,
+  revoked_reason text,                                          -- V52
   created_at     timestamptz not null default now()
 );
 comment on table media.viewing_authorization is 'Authorizes a guardian to view a feed; should reference an active camera_viewing consent.';

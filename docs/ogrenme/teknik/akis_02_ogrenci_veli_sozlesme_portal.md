@@ -36,7 +36,7 @@
 
 ### D. Rıza (KVKK, kamera, foto-video …)
 - `Hukuk → Rızalar` **listeler** (öğrenci, tür, şablon, rıza tarihi, geçerlilik, zorunlu/opsiyonel). Rıza **verme** (`POST /api/legal/consents/grant`, `student_consent:grant`) ve **geri çekme** (`…/{id}/withdraw`, `:withdraw`) öğrenci kartındaki **Rızalar** sekmesindedir (`StudentConsentsPanel`; sekme `student_consent:read` ile görünür): tür ya da güncel şablon + veli + geçerlilik; kamera rızasında veli zorunlu. Kanıt dosyası ekleme (`…/{id}/evidence`) ekranda yok (dosya yükleme akışı yok).
-- Kamera izleme rızaya bağlıdır (Akış 9). Doğrulanan ilişki: `ViewingAuthorization` verilirken **o veli adına** verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2); izleme başlarken rıza yeniden kontrol edilir (öğrenci düzeyinde, `CameraConsentWithdrawn`). Rızayı geri almak açık yetki kaydını iptal etmez, izlemeyi engeller.
+- Kamera izleme rızaya bağlıdır (Akış 9). Doğrulanan ilişki: `ViewingAuthorization` verilirken **o veli adına** verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2); izleme başlarken yetkinin bağlı olduğu velinin **kendi** rızası yeniden kontrol edilir (`CameraConsentWithdrawn`). Kamera rızası geri alınınca o veliye + öğrenciye ait açık izleme yetkileri iptal edilir (`revoked_reason` = "Rıza geri alındı", V52); diğer velinin yetkisi sürer.
 
 ### E. Veli portal erişimi
 1. Veli kartı → **Portal Erişimi** sekmesi → öğrenci satırında **Erişim Aç** (`guardian:manage_portal`). Kutular: Oturumlar, Devam, Raporlar, BEP/IEP, Finans, Kamera. Sonradan **İzinleri Güncelle**, **Erişimi Kapat**.

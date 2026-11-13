@@ -275,6 +275,7 @@ public sealed class StartViewingSessionCommandHandler
             .AnyAsync(sc =>
                 sc.CorporationId == corporationId
                 && sc.StudentId  == auth.StudentId
+                && sc.GuardianId == auth.GuardianId   // yetkinin bağlı olduğu velinin KENDİ rızası
                 && sc.State      == "granted"
                 && (consentTypeId == null || sc.ConsentTypeId == consentTypeId)
                 && (sc.ValidUntil == null || sc.ValidUntil >= today), ct);

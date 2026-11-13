@@ -5,8 +5,8 @@
  * Kamera izleme ilişkisi (backend, Cameras/Commands/ViewingCommands.cs):
  *  - Veliye izleme yetkisi (ViewingAuthorization) verilirken, o veli adına verilmiş, geçerli
  *    `camera_viewing` rızası aranır (öğrenci + veli eşleşmeli). Bu yüzden kamera rızası veli seçilerek verilmelidir.
- *  - İzleme başlatılırken rıza yeniden kontrol edilir; rıza geri alınmışsa/süresi dolmuşsa izleme başlamaz.
- *    Geri almak açık bir yetki kaydını silmez; yetki kayıtlı kalır ama izleme engellenir.
+ *  - İzleme başlatılırken yetkinin bağlı olduğu velinin KENDİ rızası yeniden kontrol edilir; diğer velinin rızası yetmez.
+ *  - Rıza geri alınınca o veliye ait açık izleme yetkileri iptal edilir (gerekçe: rıza geri alındı; kayıt silinmez).
  * Geri alınan rıza değişmez; yeniden rıza için yeni kayıt oluşturulur.
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue'

@@ -321,4 +321,89 @@ public sealed class UserAccountLinkTests : IDisposable
         // The parent account is portal-only: staff screens stay closed.
         (await SendAsync(HttpMethod.Get, "/api/students", parentToken)).Status.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    // ── Camera consent is per guardian ────────────────────────────────────────
+
+    [Fact]
+    public async Task Withdrawing_the_mothers_camera_consent_stops_her_viewing_even_if_the_fathers_consent_stands()
+    {
+        var admin = $"admin-cam-{_suffix}@t.test";
+        var corp = await NewTenantAsync($"cm_{_suffix}", admin);
+        var token = await LoginAsync(admin, DryRunPassword);
+
+        Guid student, mother, father, consentType, motherConsent, motherAuth, fatherAuth;
+        await using (var owner = await _db.OpenAsync())
+        {
+            student = await ScalarAsync<Guid>(owner,
+                "insert into students.student(corporation_id, first_name, last_name) values (@c, 'Çocuk', 'Kamera') returning id", ("c", corp));
+            mother = await ScalarAsync<Guid>(owner,
+                "insert into students.guardian(corporation_id, first_name, last_name) values (@c, 'Anne', 'Kamera') returning id", ("c", corp));
+            father = await ScalarAsync<Guid>(owner,
+                "insert into students.guardian(corporation_id, first_name, last_name) values (@c, 'Baba', 'Kamera') returning id", ("c", corp));
+            consentType = await ScalarAsync<Guid>(owner,
+                "select id from ref.ref_value where code = 'camera_viewing' and deleted_at is null limit 1");
+            Task<Guid> Consent(Guid g) => ScalarAsync<Guid>(owner,
+                "insert into legal.student_consent(corporation_id, student_id, guardian_id, consent_type_id, state, granted_at) values (@c, @s, @g, @t, 'granted', now()) returning id",
+                ("c", corp), ("s", student), ("g", g), ("t", consentType));
+            Task<Guid> Auth(Guid g, Guid consent) => ScalarAsync<Guid>(owner,
+                "insert into media.viewing_authorization(corporation_id, guardian_id, student_id, consent_id, valid_from, valid_to) values (@c, @g, @s, @k, now() - interval '1 hour', now() + interval '30 days') returning id",
+                ("c", corp), ("g", g), ("s", student), ("k", consent));
+            motherConsent = await Consent(mother);
+            var fatherConsent = await Consent(father);
+            motherAuth = await Auth(mother, motherConsent);
+            fatherAuth = await Auth(father, fatherConsent);
+        }
+
+        // Both can start while both consents stand.
+        (await SendAsync(HttpMethod.Post, "/api/cameras/viewing/start", token, new { authorizationId = motherAuth, sessionId = (Guid?)null, cameraId = (Guid?)null }))
+            .Status.Should().Be(HttpStatusCode.OK);
+
+        var (wStatus, w) = await SendAsync(HttpMethod.Post, $"/api/legal/consents/{motherConsent}/withdraw", token);
+        wStatus.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
+
+        // The mother's open authorization is revoked with the reason; the father's is untouched.
+        await using (var owner = await _db.OpenAsync())
+        {
+            (await ScalarAsync<bool>(owner, "select is_revoked from media.viewing_authorization where id = @a", ("a", motherAuth))).Should().BeTrue();
+            (await ScalarAsync<string>(owner, "select revoked_reason from media.viewing_authorization where id = @a", ("a", motherAuth))).Should().Be("Rıza geri alındı");
+            (await ScalarAsync<bool>(owner, "select is_revoked from media.viewing_authorization where id = @a", ("a", fatherAuth))).Should().BeFalse();
+        }
+
+        var (mStatus, m) = await SendAsync(HttpMethod.Post, "/api/cameras/viewing/start", token, new { authorizationId = motherAuth, sessionId = (Guid?)null, cameraId = (Guid?)null });
+        mStatus.Should().NotBe(HttpStatusCode.OK, m.ToString());
+
+        (await SendAsync(HttpMethod.Post, "/api/cameras/viewing/start", token, new { authorizationId = fatherAuth, sessionId = (Guid?)null, cameraId = (Guid?)null }))
+            .Status.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Viewing_start_requires_the_authorized_guardians_own_consent_not_a_siblings()
+    {
+        var admin = $"admin-cm2-{_suffix}@t.test";
+        var corp = await NewTenantAsync($"c2_{_suffix}", admin);
+        var token = await LoginAsync(admin, DryRunPassword);
+
+        Guid mother, motherAuth;
+        await using (var owner = await _db.OpenAsync())
+        {
+            var student = await ScalarAsync<Guid>(owner,
+                "insert into students.student(corporation_id, first_name, last_name) values (@c, 'Çocuk', 'Kamera2') returning id", ("c", corp));
+            mother = await ScalarAsync<Guid>(owner,
+                "insert into students.guardian(corporation_id, first_name, last_name) values (@c, 'Anne', 'İki') returning id", ("c", corp));
+            var father = await ScalarAsync<Guid>(owner,
+                "insert into students.guardian(corporation_id, first_name, last_name) values (@c, 'Baba', 'İki') returning id", ("c", corp));
+            var type = await ScalarAsync<Guid>(owner, "select id from ref.ref_value where code = 'camera_viewing' and deleted_at is null limit 1");
+            // Only the father has a consent; the mother's authorization has none of her own.
+            await ScalarAsync<Guid>(owner,
+                "insert into legal.student_consent(corporation_id, student_id, guardian_id, consent_type_id, state, granted_at) values (@c, @s, @g, @t, 'granted', now()) returning id",
+                ("c", corp), ("s", student), ("g", father), ("t", type));
+            motherAuth = await ScalarAsync<Guid>(owner,
+                "insert into media.viewing_authorization(corporation_id, guardian_id, student_id, valid_from, valid_to) values (@c, @g, @s, now() - interval '1 hour', now() + interval '30 days') returning id",
+                ("c", corp), ("g", mother), ("s", student));
+        }
+
+        var (status, body) = await SendAsync(HttpMethod.Post, "/api/cameras/viewing/start", token, new { authorizationId = motherAuth, sessionId = (Guid?)null, cameraId = (Guid?)null });
+        status.Should().NotBe(HttpStatusCode.OK, body.ToString());
+        Strings(body).Should().Contain("Rule.CameraConsentWithdrawn");
+    }
 }

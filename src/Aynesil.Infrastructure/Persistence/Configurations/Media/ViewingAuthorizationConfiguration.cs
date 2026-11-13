@@ -36,6 +36,7 @@ public class ViewingAuthorizationConfiguration : IEntityTypeConfiguration<Viewin
         builder.Property(x => x.GrantedBy).HasColumnName("granted_by");
         builder.Property(x => x.IsRevoked).HasColumnName("is_revoked")
             .HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.RevokedReason).HasColumnName("revoked_reason");
         builder.Property(x => x.CreatedAt).HasColumnName("created_at")
             .HasDefaultValueSql("now()").IsRequired();
 

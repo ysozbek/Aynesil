@@ -36,6 +36,9 @@ public class ViewingAuthorization : TenantEntity
     public Guid? GrantedBy { get; private set; }
     public bool IsRevoked { get; private set; }
 
+    /// <summary>İptal gerekçesi (ör. rıza geri alındı).</summary>
+    public string? RevokedReason { get; private set; }
+
     // ── Computed ──────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -78,11 +81,12 @@ public class ViewingAuthorization : TenantEntity
 
     // ── Mutations ─────────────────────────────────────────────────────────────
 
-    public void Revoke()
+    public void Revoke(string? reason = null)
     {
         if (IsRevoked)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ViewingAuthAlreadyRevoked);
 
         IsRevoked = true;
+        RevokedReason = reason;
     }
 }

@@ -40,7 +40,7 @@ Hepsi mevcut ekran desenleriyle (StatusBadge, `utils/datetime`, `constants/permi
 
 Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken seansın katılımcısı talep sahibi öğrenci olmalı (`Rule.MakeupSessionStudentMismatch`); KPI `spec` geçerli JSON nesnesi olmalı, güncellemede platform tanımı salt okunur + `rowVersion` kontrolü.
 
-**Kamera izleme ↔ rıza ilişkisi (doğrulandı):** veliye izleme yetkisi (`ViewingAuthorization`) verilirken öğrenci + **o veli** adına verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2). İzleme başlatılırken rıza yeniden kontrol edilir; geri alınmışsa/süresi dolmuşsa izleme başlamaz (`Rule.CameraConsentWithdrawn`). Not: (1) yetkiyi veren kapı veliye özel, başlatma kontrolü öğrenci düzeyinde (o öğrenci için herhangi bir veli rızası yeter); (2) rızayı geri almak açık yetki kaydını iptal etmez, yalnızca izlemeyi engeller. Her ikisi de davranış olarak güvenli tarafta; sıkılaştırma kararı kullanıcıya bırakıldı.
+**Kamera izleme ↔ rıza ilişkisi (doğrulandı):** veliye izleme yetkisi (`ViewingAuthorization`) verilirken öğrenci + **o veli** adına verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2). İzleme başlatılırken **yetkinin bağlı olduğu velinin kendi** rızası yeniden kontrol edilir; geri alınmışsa/süresi dolmuşsa izleme başlamaz (`Rule.CameraConsentWithdrawn`). Rıza geri alınınca o veliye + öğrenciye ait açık izleme yetkileri iptal edilir (gerekçe "Rıza geri alındı", V52 `revoked_reason`); diğer velinin yetkisi etkilenmez. (Önceki turda öğrenci düzeyinde kontrol ediliyordu ve geri alma yetkiyi iptal etmiyordu; sıkılaştırıldı.)
 
 ## 3. (B) Belirli bir modül kullanılırsa gerekli
 
