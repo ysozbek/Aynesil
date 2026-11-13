@@ -105,6 +105,15 @@ export const useKpiStore = defineStore('kpi', () => {
     finally { loading.value = false }
   }
 
+  /** Tüm eğitmenler için dönem KPI'larını hesaplar (POST /performance-kpi/compute/bulk). */
+  async function bulkCompute(periodStart: string, periodEnd: string) {
+    saving.value = true
+    try {
+      const res = await kpiService.bulkCompute({ periodStart, periodEnd })
+      if (!res.success) throw new Error(res.message ?? 'KPI hesaplanamadı.')
+    } finally { saving.value = false }
+  }
+
   async function computeEducator(
     educatorId: string,
     periodStart: string,
@@ -178,7 +187,7 @@ export const useKpiStore = defineStore('kpi', () => {
     parentFeedback, educatorDashboard, managerDashboard, executiveDashboard,
     ranking, kpiReport, loading, saving, error,
     fetchCategories, fetchDefinitions, fetchDefinition, createDefinition, updateDefinition, toggleDefinition,
-    fetchSnapshots, fetchKpiValues, computeEducator, fetchParentFeedback,
+    fetchSnapshots, fetchKpiValues, bulkCompute, computeEducator, fetchParentFeedback,
     fetchEducatorDashboard, fetchManagerDashboard, fetchExecutiveDashboard,
     fetchRanking, fetchKpiReport,
   }

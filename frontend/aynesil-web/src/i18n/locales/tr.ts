@@ -2203,6 +2203,7 @@ const tr = {
       subtitle: 'Hesaplanmış performans dönem özetleri',
       noData: 'Anlık görüntü bulunamadı.',
       compute: 'Dönem Hesapla',
+      computed: 'Bu ayın KPI değerleri hesaplandı.',
     },
     period: {
       monthly: 'Aylık',

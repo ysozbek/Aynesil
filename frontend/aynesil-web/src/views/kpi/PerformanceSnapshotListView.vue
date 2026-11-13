@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
 import { usePermission } from '@/composables/usePermission'
@@ -8,6 +8,7 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { EducatorPerformanceSnapshotListItemDto, SnapshotListQuery } from '@/types/kpi.types'
+import { toLocalDateString } from '@/utils/datetime'
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
@@ -40,12 +41,23 @@ async function doFetch() {
   await kpiStore.fetchSnapshots(filters)
 }
 
+const computeError = ref('')
+const computeDone = ref(false)
+
+/** İçinde bulunulan ay için tüm eğitmenlerin KPI'larını hesaplar, sonra listeyi yeniler. */
 async function doBulkCompute() {
+  computeError.value = ''
+  computeDone.value = false
   const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().substring(0, 10)
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().substring(0, 10)
-  // bulk compute not directly in store — call service
-  await kpiStore.fetchSnapshots(filters)
+  const start = toLocalDateString(new Date(now.getFullYear(), now.getMonth(), 1))
+  const end = toLocalDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0))
+  try {
+    await kpiStore.bulkCompute(start, end)
+    computeDone.value = true
+    await kpiStore.fetchSnapshots(filters)
+  } catch (e: unknown) {
+    computeError.value = (e as Error).message
+  }
 }
 
 watch(
@@ -75,6 +87,9 @@ onMounted(doFetch)
         {{ t('kpi.snapshots.compute') }}
       </button>
     </PageHeader>
+
+    <p v-if="computeError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ computeError }}</p>
+    <p v-else-if="computeDone" class="mb-4 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">{{ t('kpi.snapshots.computed') }}</p>
 
     <div class="mb-4 flex flex-wrap items-end gap-3">
       <div>
