@@ -2,7 +2,7 @@
  * Contract & Consent Management type definitions.
  * Mirrors Aynesil.Application.Features.Legal.Dtos.LegalDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PageQuery } from './api.types'
 
 // ── Contract Template DTOs ────────────────────────────────────────────────────
 
@@ -202,24 +202,24 @@ export interface SignatureReportItemDto {
 
 // ── Query Types ───────────────────────────────────────────────────────────────
 
-export interface ContractListQuery extends PagedQuery {
+export interface ContractListQuery extends PageQuery {
   studentId?: string
   templateId?: string
   status?: string
 }
 
-export interface ConsentListQuery extends PagedQuery {
+export interface ConsentListQuery extends PageQuery {
   studentId?: string
   consentTypeId?: string
   state?: string
 }
 
-export interface ContractTemplateListQuery extends PagedQuery {
+export interface ContractTemplateListQuery extends PageQuery {
   contractTypeId?: string
   isCurrent?: boolean
 }
 
-export interface ConsentTemplateListQuery extends PagedQuery {
+export interface ConsentTemplateListQuery extends PageQuery {
   consentTypeId?: string
   isCurrent?: boolean
 }
@@ -249,4 +249,29 @@ export interface GrantConsentPayload {
   consentTypeId?: string
   validUntil?: string
   evidenceFileId?: string
+}
+
+// ── Template create payloads (hand-written: backend commands carry no tenant/actor fields) ──
+
+export interface TemplateTranslationPayload {
+  locale: string
+  title: string
+  body: string
+}
+
+/** Mirrors CreateContractTemplateCommand. */
+export interface CreateContractTemplatePayload {
+  code: string
+  contractTypeId?: string
+  effectiveFrom?: string
+  translations?: TemplateTranslationPayload[]
+}
+
+/** Mirrors CreateConsentTemplateCommand. */
+export interface CreateConsentTemplatePayload {
+  code: string
+  consentTypeId?: string
+  isMandatory: boolean
+  effectiveFrom?: string
+  translations?: TemplateTranslationPayload[]
 }

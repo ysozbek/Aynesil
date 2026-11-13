@@ -1,7 +1,7 @@
 // Program, Enrollment, and Student-Program types
 // Mirrors Aynesil.Application.Features.Programs.Dtos
 
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SortedPageQuery } from './api.types'
 
 // ── Program DTOs ──────────────────────────────────────────────────────────────
 
@@ -123,14 +123,14 @@ export interface ProgramListQuery extends PagedQuery {
   isActive?: boolean
 }
 
-export interface EnrollmentListQuery extends PagedQuery {
+export interface EnrollmentListQuery extends SortedPageQuery {
   studentId?: string
   campusId?: string
   statusId?: string
   isActive?: boolean
 }
 
-export interface StudentProgramListQuery extends PagedQuery {
+export interface StudentProgramListQuery extends SortedPageQuery {
   studentId?: string
   programId?: string
   campusId?: string

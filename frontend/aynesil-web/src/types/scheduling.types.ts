@@ -2,7 +2,7 @@
  * Scheduling & Session type definitions.
  * Mirrors Aynesil.Application.Features.Scheduling.Dtos.SchedulingDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SortedPageQuery } from './api.types'
 
 // ── Rooms ──────────────────────────────────────────────────────────────────────
 
@@ -76,7 +76,6 @@ export interface CreateCalendarEntryPayload {
   startsAt: string
   endsAt: string
   isAllDay: boolean
-  description?: string
 }
 
 // ── Recurring Schedules ────────────────────────────────────────────────────────
@@ -140,7 +139,7 @@ export interface RecurringScheduleListItemDto {
   byWeekday?: number[]
 }
 
-export interface RecurringScheduleListQuery extends PagedQuery {
+export interface RecurringScheduleListQuery extends SortedPageQuery {
   campusId?: string
   isActive?: boolean
 }
@@ -379,7 +378,7 @@ export interface BulkAttendancePayload {
   entries: RecordAttendancePayload[]
 }
 
-export interface StudentAttendanceQuery extends PagedQuery {
+export interface StudentAttendanceQuery extends SortedPageQuery {
   from?: string
   to?: string
 }
@@ -417,7 +416,7 @@ export interface MakeupRequestListItemDto {
   expiresOn?: string
 }
 
-export interface MakeupRequestListQuery extends PagedQuery {
+export interface MakeupRequestListQuery extends SortedPageQuery {
   studentId?: string
   status?: string
 }

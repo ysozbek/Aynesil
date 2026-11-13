@@ -4,6 +4,7 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
+import type { CreateConsentTemplatePayload, CreateContractTemplatePayload } from '@/types/legal.types'
 import type {
   ContractTemplateListItemDto, ContractTemplateDto,
   ConsentTemplateListItemDto, ConsentTemplateDto,
@@ -35,7 +36,7 @@ export const legalService = {
   getContractTemplate: (id: string) =>
     apiService.get<ContractTemplateDto>(`/legal/contract-templates/${id}`),
 
-  createContractTemplate: (payload: Partial<ContractTemplateDto>) =>
+  createContractTemplate: (payload: CreateContractTemplatePayload) =>
     apiService.post<ContractTemplateDto>('/legal/contract-templates', payload),
 
   // ── Student Contracts ──────────────────────────────────────────────────────
@@ -56,8 +57,9 @@ export const legalService = {
   signContract: (id: string, payload: SignContractPayload) =>
     apiService.post<void>(`/legal/contracts/${id}/sign`, payload),
 
-  activateContract: (id: string) =>
-    apiService.post(`/legal/contracts/${id}/activate`),
+  /** Backend binds a body (`ActivateStudentContractCommand`); `signedFileId` is optional. */
+  activateContract: (id: string, payload: { signedFileId?: string } = {}) =>
+    apiService.post(`/legal/contracts/${id}/activate`, payload),
 
   expireContract: (id: string) =>
     apiService.post(`/legal/contracts/${id}/expire`),
@@ -74,7 +76,7 @@ export const legalService = {
   getConsentTemplate: (id: string) =>
     apiService.get<ConsentTemplateDto>(`/legal/consent-templates/${id}`),
 
-  createConsentTemplate: (payload: Partial<ConsentTemplateDto>) =>
+  createConsentTemplate: (payload: CreateConsentTemplatePayload) =>
     apiService.post<ConsentTemplateDto>('/legal/consent-templates', payload),
 
   // ── Student Consents ───────────────────────────────────────────────────────
@@ -94,8 +96,8 @@ export const legalService = {
   withdrawConsent: (id: string) =>
     apiService.post(`/legal/consents/${id}/withdraw`),
 
-  addConsentEvidence: (id: string, fileId: string) =>
-    apiService.post(`/legal/consents/${id}/evidence`, { fileId }),
+  addConsentEvidence: (id: string, evidenceFileId: string) =>
+    apiService.post(`/legal/consents/${id}/evidence`, { evidenceFileId }),
 
   // ── Reports ────────────────────────────────────────────────────────────────
   getContractReport: (query: Record<string, unknown>) =>

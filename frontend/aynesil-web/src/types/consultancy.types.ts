@@ -438,3 +438,12 @@ export interface CompleteFollowUpPayload {
 export interface CancelFollowUpPayload {
   rowVersion: number
 }
+
+/** Mirrors CreateConsultancyReportCommand. A plan or a school visit is required. */
+export interface CreateConsultancyReportPayload {
+  title: string
+  consultancyPlanId?: string
+  schoolVisitId?: string
+  summary?: string
+  fileId?: string
+}

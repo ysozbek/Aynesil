@@ -100,8 +100,6 @@ export interface MeetingListQuery extends PagedQuery {
   from?: string
   to?: string
   organizerId?: string
-  participantUserId?: string
-  participantGuardianId?: string
 }
 
 export interface MeetingCalendarQuery {

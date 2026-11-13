@@ -2,7 +2,7 @@
  * Camera & Live Session Management type definitions.
  * Mirrors Aynesil.Application.Features.Cameras.Dtos.CameraDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PageQuery, PagedQuery } from './api.types'
 
 // ── Camera DTOs ───────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ export interface CameraListQuery extends PagedQuery {
   isActive?: boolean
 }
 
-export interface ViewingAuthorizationQuery extends PagedQuery {
+export interface ViewingAuthorizationQuery extends PageQuery {
   guardianId?: string
   studentId?: string
   sessionId?: string
@@ -112,7 +112,7 @@ export interface ViewingAuthorizationQuery extends PagedQuery {
   activeOnly?: boolean
 }
 
-export interface ViewingLogQuery extends PagedQuery {
+export interface ViewingLogQuery extends PageQuery {
   cameraId?: string
   guardianId?: string
   from?: string

@@ -29,10 +29,24 @@ export interface PaginatedResult<T> {
   hasNextPage: boolean
 }
 
-export interface PagedQuery {
+/** Pagination only. Base for lists whose backend query supports neither `search` nor `sortBy`. */
+export interface PageQuery {
   page?: number
   pageSize?: number
-  search?: string
+}
+
+/** Pagination + sorting, no free-text search (backend ignores `search`). */
+export interface SortedPageQuery extends PageQuery {
   sortBy?: string
   sortDirection?: 'asc' | 'desc'
+}
+
+/** Pagination + free-text search, no sorting (backend ignores `sortBy`). */
+export interface SearchPageQuery extends PageQuery {
+  search?: string
+}
+
+/** Pagination + search + sorting. Use only for lists whose handler honours both `search` and `sortBy`. */
+export interface PagedQuery extends SortedPageQuery {
+  search?: string
 }

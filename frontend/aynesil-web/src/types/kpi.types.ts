@@ -2,7 +2,7 @@
  * Educator Performance & KPI type definitions.
  * Mirrors Aynesil.Application.Features.PerformanceKpi.Dtos.KpiDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SortedPageQuery } from './api.types'
 
 // ── KPI Category ──────────────────────────────────────────────────────────────
 
@@ -238,7 +238,7 @@ export interface KpiReportQuery {
 }
 
 /** GET /performance-kpi/kpi-values (GetKpiValuesQuery). */
-export interface KpiValueListQuery extends PagedQuery {
+export interface KpiValueListQuery extends SortedPageQuery {
   kpiId?: string
   subjectType?: string
   subjectId?: string
@@ -268,4 +268,13 @@ export interface DashboardQuery {
   educatorId?: string
   periodStart?: string
   periodEnd?: string
+}
+
+/** Mirrors SubmitParentFeedbackCommand. A rating (1–5) or a comment is required. */
+export interface SubmitParentFeedbackPayload {
+  guardianId?: string
+  educatorId?: string
+  sessionId?: string
+  rating?: number
+  comment?: string
 }

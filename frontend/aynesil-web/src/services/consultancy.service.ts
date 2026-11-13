@@ -4,6 +4,7 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
+import type { CreateConsultancyReportPayload } from '@/types/consultancy.types'
 import type {
   InstitutionListItemDto, InstitutionDto,
   ConsultancyPlanListItemDto, ConsultancyPlanDto,
@@ -105,7 +106,7 @@ export const consultancyService = {
   getReport: (id: string) =>
     apiService.get<ConsultancyReportDto>(`/consultancy/reports/${id}`),
 
-  createReport: (payload: Partial<ConsultancyReportDto>) =>
+  createReport: (payload: CreateConsultancyReportPayload) =>
     apiService.post<ConsultancyReportDto>('/consultancy/reports', payload),
 
   // ── Agreements ─────────────────────────────────────────────────────────────
@@ -187,7 +188,7 @@ export const consultancyService = {
       `/consultancy/reporting/outcomes${qs(query)}`
     ),
 
-  getVisitHistory: (query: { institutionId?: string; from?: string; to?: string }) =>
+  getVisitHistory: (query: { institutionId?: string; dateFrom?: string; dateTo?: string }) =>
     apiService.get<unknown[]>(
       `/consultancy/reporting/visit-history${qs(query)}`
     ),

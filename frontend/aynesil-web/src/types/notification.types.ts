@@ -2,7 +2,7 @@
  * Notification type definitions.
  * Mirrors Aynesil.Application.Features.Notifications.Dtos.NotificationDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SortedPageQuery } from './api.types'
 
 // ── Notification DTOs ──────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ export interface NotificationPreferenceDto {
 
 // ── Query / Payload Types ──────────────────────────────────────────────────────
 
-export interface NotificationListQuery extends PagedQuery {
+export interface NotificationListQuery extends SortedPageQuery {
   isRead?: boolean
   categoryId?: string
   status?: string

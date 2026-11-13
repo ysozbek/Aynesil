@@ -23,6 +23,7 @@ import type {
   CreateAgreementPayload, UpdateAgreementPayload, SignAgreementPayload,
   CreateFollowUpPayload, UpdateFollowUpPayload,
   CompleteFollowUpPayload,
+  CreateConsultancyReportPayload,
 } from '@/types/consultancy.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -203,13 +204,7 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     finally { loading.value = false }
   }
 
-  async function createReport(payload: {
-    title: string
-    consultancyPlanId?: string
-    schoolVisitId?: string
-    summary?: string
-    fileId?: string
-  }) {
+  async function createReport(payload: CreateConsultancyReportPayload) {
     saving.value = true
     try {
       const res = await consultancyService.createReport(payload)

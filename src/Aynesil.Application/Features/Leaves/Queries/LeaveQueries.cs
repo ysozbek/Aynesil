@@ -73,6 +73,13 @@ public sealed class GetLeaveRequestsQueryHandler
             from typ in typGrp.DefaultIfEmpty()
             select new { lr, ed, typ };
 
+        // Free-text search over the educator's name (the list screen's search box).
+        if (!string.IsNullOrWhiteSpace(req.Search))
+        {
+            var search = req.Search.Trim().ToLower();
+            joined = joined.Where(x => (x.ed.FirstName + " " + x.ed.LastName).ToLower().Contains(search));
+        }
+
         var sorted = req.SortBy?.ToLowerInvariant() switch
         {
             "startsat"  => req.IsDescending ? joined.OrderByDescending(x => x.lr.StartsAt) : joined.OrderBy(x => x.lr.StartsAt),

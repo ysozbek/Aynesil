@@ -4,6 +4,7 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
+import type { AssignCampEducatorPayload, CreateCampActivityPayload } from '@/types/camp.types'
 import type {
   CampListItemDto, CampDto,
   CampPeriodDto,
@@ -101,14 +102,14 @@ export const campService = {
     apiService.get<PaginatedResult<CampActivityListItemDto>>(
       `/camps/activities${qs({ ...query, campPeriodId: periodId })}`),
 
-  createActivity: (periodId: string, payload: Partial<CampActivityDto>) =>
+  createActivity: (periodId: string, payload: CreateCampActivityPayload) =>
     apiService.post<CampActivityDto>(`/camps/periods/${periodId}/activities`, payload),
 
   // ── Educators ─────────────────────────────────────────────────────────────
   listEducators: (campId: string) =>
     apiService.get<CampEducatorDto[]>(`/camps/educators${qs({ campId })}`),
 
-  assignEducator: (campId: string, payload: Partial<CampEducatorDto>) =>
+  assignEducator: (campId: string, payload: AssignCampEducatorPayload) =>
     apiService.post<CampEducatorDto>(`/camps/${campId}/educators`, payload),
 
   // ── Participations ─────────────────────────────────────────────────────────

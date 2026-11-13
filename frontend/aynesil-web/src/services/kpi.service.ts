@@ -4,6 +4,7 @@
  */
 import { apiService } from '@/services/api.service'
 import type { PaginatedResult } from '@/types/api.types'
+import type { SubmitParentFeedbackPayload } from '@/types/kpi.types'
 import type {
   KpiCategoryDto, KpiDefinitionListItemDto, KpiDefinitionDto,
   KpiValueDto, EducatorPerformanceSnapshotListItemDto, EducatorPerformanceSnapshotDto,
@@ -82,7 +83,7 @@ export const kpiService = {
   listParentFeedback: (query: { educatorId?: string } & Record<string, unknown>) =>
     apiService.get<PaginatedResult<ParentFeedbackDto>>(`/performance-kpi/parent-feedback${qs(query)}`),
 
-  submitFeedback: (payload: Partial<ParentFeedbackDto>) =>
+  submitFeedback: (payload: SubmitParentFeedbackPayload) =>
     apiService.post<ParentFeedbackDto>('/performance-kpi/parent-feedback', payload),
 
   // ── Dashboards ─────────────────────────────────────────────────────────────

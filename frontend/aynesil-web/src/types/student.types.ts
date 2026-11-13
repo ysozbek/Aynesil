@@ -1,7 +1,7 @@
 // Student, Guardian, and Case Management types
 // Mirrors Aynesil.Application.Features.Students.Dtos
 
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SearchPageQuery } from './api.types'
 
 // ── Student DTOs ──────────────────────────────────────────────────────────────
 
@@ -264,7 +264,7 @@ export interface StudentListQuery extends PagedQuery {
   birthDateTo?: string
 }
 
-export interface GuardianListQuery extends PagedQuery {
+export interface GuardianListQuery extends SearchPageQuery {
   hasPortalAccount?: boolean
 }
 

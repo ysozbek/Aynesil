@@ -2,7 +2,7 @@
  * Camp Management type definitions.
  * Mirrors Aynesil.Application.Features.Camps.Dtos.CampDtos
  */
-import type { PagedQuery } from './api.types'
+import type { PagedQuery, SortedPageQuery } from './api.types'
 
 // ── Camp DTOs ─────────────────────────────────────────────────────────────────
 
@@ -213,7 +213,7 @@ export interface CampListQuery extends PagedQuery {
   isActive?: boolean
 }
 
-export interface CampEnrollmentQuery extends PagedQuery {
+export interface CampEnrollmentQuery extends SortedPageQuery {
   campPeriodId?: string
   studentId?: string
   status?: string
@@ -262,7 +262,7 @@ export interface CampActivityListQuery extends PagedQuery {
   isActive?: boolean
 }
 
-export interface CampParticipationListQuery extends PagedQuery {
+export interface CampParticipationListQuery extends SortedPageQuery {
   campEnrollmentId?: string
   status?: string
 }
@@ -272,4 +272,26 @@ export interface RecordAttendancePayload {
   attendanceDate: string
   status: string
   reasonId?: string
+}
+
+// ── Create payloads (hand-written: no tenant/actor fields, route ids supplied by the service) ──
+
+/** Mirrors CreateCampActivityCommand; `campPeriodId` comes from the route. */
+export interface CreateCampActivityPayload {
+  name: string
+  activityTypeId?: string
+  description?: string
+  startsAt?: string
+  endsAt?: string
+  location?: string
+  capacity?: number
+  sessionId?: string
+}
+
+/** Mirrors AssignCampEducatorCommand; `campId` comes from the route. Role defaults to `lead` server-side. */
+export interface AssignCampEducatorPayload {
+  educatorId: string
+  role?: string
+  campPeriodId?: string
+  campActivityId?: string
 }
