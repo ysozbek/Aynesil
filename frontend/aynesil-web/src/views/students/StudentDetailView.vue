@@ -25,6 +25,7 @@ import type {
   EmergencyContactInput,
 } from '@/types/student.types'
 import { Permissions } from '@/constants/permissions'
+import StudentConsentsPanel from '@/components/students/StudentConsentsPanel.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -39,10 +40,13 @@ const { can } = usePermission()
 const id = computed(() => route.params.id as string)
 const student = computed(() => store.current)
 
-type MainTab = 'overview' | 'guardians' | 'programs' | 'case-management' | 'history'
+type MainTab = 'overview' | 'guardians' | 'consents' | 'programs' | 'case-management' | 'history'
 type CaseTab = 'case-notes' | 'medical-reports' | 'development-reports' | 'external-reports'
 
 const activeTab = ref<MainTab>('overview')
+const visibleTabs = computed<MainTab[]>(() =>
+  (['overview', 'guardians', 'consents', 'programs', 'case-management', 'history'] as MainTab[])
+    .filter((tab) => tab !== 'consents' || can(Permissions.StudentConsents.Read)))
 const caseTab = ref<CaseTab>('case-notes')
 const caseManagementLoaded = ref(false)
 const programsLoaded = ref(false)
@@ -756,7 +760,7 @@ function formatDateTime(val: string | null): string {
       <div class="mb-4 border-b border-border">
         <nav class="-mb-px flex gap-6 overflow-x-auto">
           <button
-            v-for="tab in (['overview', 'guardians', 'programs', 'case-management', 'history'] as MainTab[])"
+            v-for="tab in visibleTabs"
             :key="tab"
             @click="activeTab = tab"
             :class="['pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors', activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground']"
@@ -1045,6 +1049,13 @@ function formatDateTime(val: string | null): string {
           </div>
         </div>
       </div>
+
+      <!-- ── Consents Tab ── -->
+      <StudentConsentsPanel
+        v-else-if="activeTab === 'consents'"
+        :student-id="id"
+        :guardians="student.guardians"
+      />
 
       <!-- ── Programs Tab ── -->
       <div v-else-if="activeTab === 'programs'">
