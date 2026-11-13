@@ -22,6 +22,9 @@ const id = route.params.id as string
 const contract = computed(() => contractStore.currentContract)
 const showSignModal = ref(false)
 const showTerminateConfirm = ref(false)
+const showActivateConfirm = ref(false)
+const showExpireConfirm = ref(false)
+const actionError = ref('')
 const signForm = reactive<{ method: SignContractPayload['signatureMethod']; signedByName: string }>({ method: 'wet', signedByName: '' })
 
 function formatDate(dt: string) {
@@ -32,22 +35,43 @@ function formatDatetime(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
 }
 
+/** Durum geçişi hatasını (ör. geçersiz geçiş) sayfada göster. */
+async function run(action: () => Promise<void>) {
+  actionError.value = ''
+  try {
+    await action()
+  } catch (e: unknown) {
+    actionError.value = (e as Error).message
+  }
+}
+
 async function doSend() {
-  await contractStore.sendContract(id)
+  await run(() => contractStore.sendContract(id))
+}
+
+async function doActivate() {
+  await run(() => contractStore.activateContract(id))
+  showActivateConfirm.value = false
+}
+
+async function doExpire() {
+  await run(() => contractStore.expireContract(id))
+  showExpireConfirm.value = false
 }
 
 async function doSign() {
   if (!contract.value || !signForm.signedByName.trim()) return
-  await contractStore.signContract(id, {
+  const current = contract.value
+  await run(() => contractStore.signContract(id, {
     signedByName: signForm.signedByName.trim(),
     signatureMethod: signForm.method,
-    rowVersion: contract.value.rowVersion,
-  })
+    rowVersion: current.rowVersion,
+  }))
   showSignModal.value = false
 }
 
 async function doTerminate() {
-  await contractStore.terminateContract(id)
+  await run(() => contractStore.terminateContract(id))
   showTerminateConfirm.value = false
 }
 
@@ -86,6 +110,22 @@ onMounted(() => {
             {{ t('legal.contract.actions.sign') }}
           </button>
           <button
+            v-if="contract.status === ContractStatus.Signed && can(Permissions.StudentContracts.Activate)"
+            :disabled="contractStore.saving"
+            @click="showActivateConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {{ t('legal.contract.actions.activate') }}
+          </button>
+          <button
+            v-if="contract.status === ContractStatus.Active && can(Permissions.StudentContracts.Expire)"
+            :disabled="contractStore.saving"
+            @click="showExpireConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent disabled:opacity-50"
+          >
+            {{ t('legal.contract.actions.expire') }}
+          </button>
+          <button
             v-if="contract.status === ContractStatus.Active && can(Permissions.StudentContracts.Terminate)"
             :disabled="contractStore.saving"
             @click="showTerminateConfirm = true"
@@ -95,6 +135,8 @@ onMounted(() => {
           </button>
         </div>
       </PageHeader>
+
+      <p v-if="actionError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ actionError }}</p>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm p-5">
@@ -209,6 +251,27 @@ onMounted(() => {
         </button>
       </template>
     </FormModal>
+
+    <ConfirmModal
+      :open="showActivateConfirm"
+      :title="t('legal.contract.actions.activate')"
+      :message="t('legal.contract.detail.activateConfirm')"
+      :confirm-label="t('legal.contract.actions.activate')"
+      confirm-class="bg-primary text-primary-foreground hover:opacity-90"
+      :loading="contractStore.saving"
+      @confirm="doActivate"
+      @cancel="showActivateConfirm = false"
+    />
+
+    <ConfirmModal
+      :open="showExpireConfirm"
+      :title="t('legal.contract.actions.expire')"
+      :message="t('legal.contract.detail.expireConfirm')"
+      :confirm-label="t('legal.contract.actions.expire')"
+      :loading="contractStore.saving"
+      @confirm="doExpire"
+      @cancel="showExpireConfirm = false"
+    />
 
     <ConfirmModal
       :open="showTerminateConfirm"

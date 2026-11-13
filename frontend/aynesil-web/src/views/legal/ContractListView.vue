@@ -1,20 +1,26 @@
 <script setup lang="ts">
 import { ContractStatus } from '@/constants/statuses'
-import { reactive, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useContractStore } from '@/stores/contract.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import { legalService } from '@/services/legal.service'
+import { studentService } from '@/services/student.service'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
-import type { ContractListQuery, StudentContractListItemDto } from '@/types/legal.types'
+import type { ContractListQuery, ContractTemplateListItemDto, StudentContractListItemDto } from '@/types/legal.types'
+import type { StudentGuardianDto } from '@/types/student.types'
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const contractStore = useContractStore()
 const { can } = usePermission()
 
@@ -54,7 +60,70 @@ watch(
   () => contractStore.fetchContracts(filters)
 )
 
-onMounted(() => contractStore.fetchContracts(filters))
+// ── Yeni sözleşme (taslak) ───────────────────────────────────────────────────
+// /legal/contracts/new rotası bu görünümü açar ve formu gösterir. Oluşan sözleşme taslaktır;
+// gönder → imzala → etkinleştir adımları detay sayfasındadır.
+const showCreate = ref(false)
+const createError = ref('')
+const templates = ref<ContractTemplateListItemDto[]>([])
+const guardians = ref<StudentGuardianDto[]>([])
+const createForm = reactive({ studentId: '', templateId: '', guardianId: '', startsOn: '', endsOn: '' })
+
+async function openCreate() {
+  Object.assign(createForm, { studentId: '', templateId: '', guardianId: '', startsOn: '', endsOn: '' })
+  createError.value = ''
+  guardians.value = []
+  showCreate.value = true
+  try {
+    const res = await legalService.listContractTemplates({ isCurrent: true, pageSize: 100 })
+    if (res.success && res.data) templates.value = res.data.items
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
+}
+
+function closeCreate() {
+  showCreate.value = false
+  if (route.name === 'contract-new') router.replace({ name: 'contracts' })
+}
+
+watch(() => createForm.studentId, async (id) => {
+  createForm.guardianId = ''
+  guardians.value = []
+  if (!id) return
+  try {
+    const res = await studentService.getGuardians(id)
+    if (res.success && res.data) guardians.value = res.data
+  } catch { /* veli listesi yüklenemezse veli seçimi boş kalır */ }
+})
+
+async function submitCreate() {
+  createError.value = ''
+  if (!createForm.studentId) { createError.value = t('validation.required', { field: t('legal.contract.fields.student') }); return }
+  if (createForm.startsOn && createForm.endsOn && createForm.endsOn < createForm.startsOn) {
+    createError.value = t('legal.contract.form.dateOrder'); return
+  }
+  try {
+    const created = await contractStore.createContract({
+      studentId: createForm.studentId,
+      templateId: createForm.templateId || undefined,
+      guardianId: createForm.guardianId || undefined,
+      startsOn: createForm.startsOn || undefined,
+      endsOn: createForm.endsOn || undefined,
+    })
+    showCreate.value = false
+    router.push({ name: 'contract-detail', params: { id: created.id } })
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
+}
+
+const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary'
+
+onMounted(() => {
+  contractStore.fetchContracts(filters)
+  if (route.name === 'contract-new') openCreate()
+})
 </script>
 
 <template>
@@ -62,7 +131,7 @@ onMounted(() => contractStore.fetchContracts(filters))
     <PageHeader :title="t('legal.contract.list.title')" :description="t('legal.contract.list.subtitle')">
       <button
         v-if="can(Permissions.StudentContracts.Generate)"
-        @click="router.push({ name: 'contract-new' })"
+        @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,5 +215,45 @@ onMounted(() => contractStore.fetchContracts(filters))
         @update:page-size="(s) => { filters.pageSize = s; filters.page = 1; contractStore.fetchContracts(filters) }"
       />
     </div>
+
+    <FormModal
+      :open="showCreate"
+      :title="t('legal.contract.new')"
+      :saving="contractStore.saving"
+      @submit="submitCreate"
+      @close="closeCreate"
+    >
+      <div class="space-y-4">
+        <p v-if="createError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ createError }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.student') }} *</label>
+          <StudentPicker v-model="createForm.studentId" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.template') }}</label>
+          <select v-model="createForm.templateId" :class="inputClass">
+            <option value="">—</option>
+            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">{{ tpl.code }} v{{ tpl.version }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.form.guardian') }}</label>
+          <select v-model="createForm.guardianId" :disabled="!guardians.length" :class="inputClass">
+            <option value="">—</option>
+            <option v-for="g in guardians" :key="g.guardianId" :value="g.guardianId">{{ g.guardianFullName }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.startsOn') }}</label>
+            <input v-model="createForm.startsOn" type="date" :class="inputClass" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.endsOn') }}</label>
+            <input v-model="createForm.endsOn" type="date" :class="inputClass" />
+          </div>
+        </div>
+      </div>
+    </FormModal>
   </div>
 </template>

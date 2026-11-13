@@ -132,6 +132,24 @@ export const useContractStore = defineStore('contract', () => {
     } finally { saving.value = false }
   }
 
+  async function activateContract(id: string) {
+    saving.value = true
+    try {
+      const res = await legalService.activateContract(id)
+      if (!res.success) throw new Error(res.message ?? 'Sözleşme etkinleştirilemedi.')
+      await fetchContract(id, true)
+    } finally { saving.value = false }
+  }
+
+  async function expireContract(id: string) {
+    saving.value = true
+    try {
+      const res = await legalService.expireContract(id)
+      if (!res.success) throw new Error(res.message ?? 'Sözleşme sona erdirilemedi.')
+      await fetchContract(id, true)
+    } finally { saving.value = false }
+  }
+
   async function fetchContractReport(query: Record<string, unknown>) {
     loading.value = true
     try {
@@ -156,7 +174,7 @@ export const useContractStore = defineStore('contract', () => {
     templates, currentTemplate, contracts, currentContract,
     contractReport, signatureReport, loading, saving, error,
     fetchTemplates, createTemplate, updateTemplate, newTemplateVersion, fetchTemplate, fetchContracts, fetchContract,
-    createContract, sendContract, signContract, terminateContract,
+    createContract, sendContract, activateContract, expireContract, signContract, terminateContract,
     fetchContractReport, fetchSignatureReport, clearCurrent,
   }
 })

@@ -2241,6 +2241,10 @@ const tr = {
     },
     contract: {
       new: 'Yeni Sözleşme',
+      form: {
+        guardian: 'Veli (imzalayan)',
+        dateOrder: 'Bitiş tarihi başlangıçtan önce olamaz.',
+      },
       list: {
         title: 'Sözleşmeler',
         subtitle: 'Öğrenci sözleşme kayıtları',
@@ -2252,6 +2256,8 @@ const tr = {
         metadata: 'Kayıt Bilgileri',
         signWarning: 'Bu işlem geri alınamaz. Sözleşme imzalanmış olarak işaretlenecektir.',
         terminateConfirm: 'Bu sözleşme feshedilecek. Onaylıyor musunuz?',
+        activateConfirm: 'İmzalanmış sözleşme yürürlüğe alınacak. Devam edilsin mi?',
+        expireConfirm: 'Sözleşme süresi doldu olarak işaretlenecek. Devam edilsin mi?',
       },
       fields: {
         student: 'Öğrenci',
@@ -2268,6 +2274,8 @@ const tr = {
       actions: {
         send: 'Gönder',
         sign: 'İmzala',
+        activate: 'Etkinleştir',
+        expire: 'Süresini bitir',
         terminate: 'Feshet',
       },
     },
