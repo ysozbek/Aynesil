@@ -1,5 +1,5 @@
 // Kullanıcılar, derslikler, eğitmenler, veliler, öğrenciler, programlar/kayıtlar.
-import { step, info, idOf, sql, sqlStep, q, rng, pick, trAscii, dayStr, fx } from '../lib.mjs'
+import { step, info, idOf, rng, pick, trAscii, dayStr, fx } from '../lib.mjs'
 import { POOLS } from '../data.mjs'
 import { ensureRoles } from './identity.mjs'
 
@@ -57,10 +57,9 @@ export async function setupPeople(ctx) {
     }
     if (user) ids.users[key] = user.id
   }
-  // Eğitmen kullanıcısı ↔ eğitmen kaydı bağı (API'de yok)
+  // Eğitmen kullanıcısı ↔ eğitmen kaydı bağı (aynı kullanıcıyla tekrar bağlamak idempotent)
   if (ids.users.educator && ids.educators[0]) {
-    sqlStep('educators.educator.user_id (eğitmen kullanıcısı ↔ eğitmen kaydı bağı)',
-      `update educators.educator set user_id=${q(ids.users.educator)} where id=${q(ids.educators[0].id)} and user_id is null`)
+    await step('eğitmen ↔ kullanıcı bağı', () => c.put(`/educators/${ids.educators[0].id}/user-account`, { userId: ids.users.educator }))
   }
 
   // ── Veliler + öğrenciler ──
@@ -105,14 +104,14 @@ export async function setupPeople(ctx) {
     if (!(d.campuses ?? d.campusEnrollments ?? []).length) await c.post(`/students/${s.id}/campuses`, { campusId: s.campusId, isPrimary: true, activeFrom: '2026-01-05' })
   })
 
-  // ── Portal veli kullanıcıları: ilk iki veli kaydı ↔ kullanıcı (API'de yok) ──
+  // ── Portal veli kullanıcıları: ilk iki veli kaydı ↔ kullanıcı ──
   const portals = [['guardian1', [0, 1]], ['guardian2', [2]]]   // veli1: kardeş iki öğrenci (kamera yetkili); veli2: tek öğrenci
   ids.portal = {}
   for (const [key, studIdx] of portals) {
     const uid = ids.users[key]; if (!uid) continue
     const first = ids.students[studIdx[0]]
     const gid = first?.guardianIds[0]; if (!gid) continue
-    sqlStep('students.guardian.user_id (veli portalı kullanıcısı ↔ veli kaydı bağı)', `update students.guardian set user_id=${q(uid)} where id=${q(gid)} and user_id is null`)
+    await step(`veli ↔ kullanıcı bağı ${key}`, () => c.put(`/guardians/${gid}/user-account`, { userId: uid }))
     ids.portal[key] = { userId: uid, guardianId: gid, studentIds: [] }
     for (const si of studIdx) {
       const s = ids.students[si]; if (!s) continue

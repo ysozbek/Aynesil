@@ -48,7 +48,6 @@ Her şey mümkün olduğunca **gerçek API** üzerinden oluşturulur (iş kurall
 ## SQL ile yapılanlar (API'nin yapamadığı)
 | Ne | Neden |
 |---|---|
-| `educators.educator.user_id`, `students.guardian.user_id` | Eğitmen/veli kaydı ↔ kullanıcı bağını kuran API yok (veli portalı girişi için şart) |
 | `crm.interview.scheduled_at` (geçmişe çekme) | API geçmiş tarihli görüşme planlamayı reddediyor; sonra normal `complete`/`no-show` API'si ile kapatılır |
 | `core.notification` (7 örnek) | Bildirimi yalnızca sistem olayları üretiyor, oluşturma ucu yok |
 
@@ -56,7 +55,8 @@ Geçmiş seanslar, yoklamalar, toplantılar, BEP ölçümleri ve KPI değerleri 
 
 ## Bilinen sınırlar
 - Sanal derslik kampüse bağlanamıyor (API kuralı) → kampüs başına sanal oda `campusId = null` ile oluşturulur.
-- Seans notları eğitmen kullanıcısı (`egitmen@…`, `educators[0]` ile bağlı) adına API ile yazılır: not yazarı oturumdaki kullanıcıya bağlı eğitmen kaydıdır.
+- Seans notları ve BEP onayları eğitmen kullanıcısı (`egitmen@…`, `educators[0]` ile bağlı) adına API ile yapılır: yazar/onaylayan oturumdaki kullanıcıya bağlı eğitmen kaydıdır. Bu yüzden demo `educator` rolü `education_plan:approve` içerir.
+- Eğitmen/veli kaydı ↔ kullanıcı bağı API ile kurulur (`PUT /educators/{id}/user-account`, `PUT /guardians/{id}/user-account`). Kullanıcılar sabit demo şifresiyle `/users` üzerinden açılır; ekrandaki "Yeni kullanıcı oluştur" akışı ise geçici şifre üretir (girişler tablodaki şifreyle kalsın diye burada kullanılmaz).
 - Fatura satırı/kesme/iptal/indirim, ödeme onayı, rapor kesinleştirme ve danışmanlık planı aktifleştirme artık API ile yapılır (eski `CreatedBy` EF eşleme hatası giderildi).
 
 ## Dosyalar

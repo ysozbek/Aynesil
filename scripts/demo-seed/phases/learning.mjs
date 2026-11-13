@@ -1,5 +1,5 @@
 // BEP: dönem, hedefler, ilerleme kayıtları, planlar (taslak→onaylı→aktif), gözden geçirme; değerlendirme şablonu + oturumlar + raporlar.
-import { step, info, idOf, dayStr, count, rng } from '../lib.mjs'
+import { step, info, idOf, dayStr, count, rng, Client, fx } from '../lib.mjs'
 import { BEP_GOALS } from '../data.mjs'
 
 export async function setupLearning(ctx) {
@@ -18,6 +18,11 @@ async function bep(ctx) {
     return list.find((p) => p.name === '2026-2027 Güz') ?? await c.post('/education-plans/academic-periods', { name: '2026-2027 Güz', startDate: '2026-09-07', endDate: '2027-01-22', termId: await ctx.ref('academic_term', 'fall'), isCurrent: true })
   })
   const approver = ctx.c.me.userId
+  let ec = null
+  const educatorClient = async () => {
+    if (!ec) { ec = new Client(`${ctx.code}-egitmen`); await ec.login(`${fx.users.educator.local}@${ctx.t.domain}`, fx.password) }
+    return ec
+  }
   const made = { plans: 0, goals: 0, progress: 0 }
   for (const s of ids.students.slice(0, 8)) {
     const goalIds = []
@@ -47,7 +52,8 @@ async function bep(ctx) {
     for (let i = 0; i < goalIds.length; i++) await step('plana hedef', () => c.post(`/education-plans/${plan.id}/goals`, { studentGoalId: goalIds[i].id, horizon: goalIds[i].horizon, sortOrder: i + 1 }))
     // durum: 0-1 taslak; 2-3 incelemede; 4-5 onaylı; 6-7 aktif (+ gözden geçirme)
     if (s.idx >= 2) await step('plan gönder', () => c.post(`/education-plans/${plan.id}/submit`, {}))
-    if (s.idx >= 4) await step('plan onayla', () => c.post(`/education-plans/${plan.id}/approve`, { approverId: ids.educators[0].id, comment: 'Hedefler yaş düzeyine uygun.' }))
+    // Onaylayan = oturumdaki kullanıcıya bağlı eğitmen kaydı (ActingEducator); yönetici değil eğitmen kullanıcısı onaylar.
+    if (s.idx >= 4) await step('plan onayla', async () => (await educatorClient()).post(`/education-plans/${plan.id}/approve`, { approverId: ids.educators[0].id, comment: 'Hedefler yaş düzeyine uygun.' }))
     if (s.idx >= 6) {
       await step('plan aktif', () => c.post(`/education-plans/${plan.id}/activate`, {}))
       await step('plan veliye aç', () => c.patch(`/education-plans/${plan.id}/guardian-visibility`, { visible: true }))

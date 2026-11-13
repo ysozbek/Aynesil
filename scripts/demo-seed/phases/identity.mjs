@@ -8,7 +8,7 @@ const ROLE_RULES = {
   },
   educator: {
     name: 'Eğitmen', desc: 'Demo: eğitmen',
-    allow: (c) => /^(student:read|guardian:read|session:read|session_note:|attendance:|student_goal:|goal_progress:|goal_template:read|goal_library:read|education_plan:(read|add_review)|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:|camp_participation:|notification:read|parent_feedback:read|enrollment:read|program:read)/.test(c),
+    allow: (c) => /^(student:read|guardian:read|session:read|session_note:|attendance:|student_goal:|goal_progress:|goal_template:read|goal_library:read|education_plan:(read|add_review|approve)|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:|camp_participation:|notification:read|parent_feedback:read|enrollment:read|program:read)/.test(c),
   },
   finance: {
     name: 'Muhasebe', desc: 'Demo: muhasebe / finans',
