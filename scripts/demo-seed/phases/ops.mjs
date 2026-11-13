@@ -3,7 +3,7 @@ import { step, info, idOf, at, dayStr, count } from '../lib.mjs'
 import { POOLS } from '../data.mjs'
 
 export async function setupOps(ctx) {
-  await meetings(ctx); await leaves(ctx); await consultancy(ctx); await cameras(ctx); await kpi(ctx)
+  await meetings(ctx); await leaves(ctx); await consultancy(ctx); await cameras(ctx); await kpi(ctx); await developmentReports(ctx)
 }
 
 async function meetings(ctx) {
@@ -96,4 +96,19 @@ async function kpi(ctx) {
   const pm = (offset) => { const s = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + offset, 1)); const e = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + offset + 1, 0)); return [s.toISOString().slice(0, 10), e.toISOString().slice(0, 10)] }
   for (const off of [-2, -1]) { const [s, e] = pm(off); await step(`KPI hesapla ${s}`, () => c.post('/performance-kpi/compute/bulk', { periodStart: s, periodEnd: e })) }
   info('KPI: geçen ay ve önceki ay için toplu hesaplama (API)')
+}
+
+// Gelişim raporları (Y15): her öğrenci için biri kesinleşmiş, biri taslak. Veli portalı yalnızca kesinleşmiş olanı görmeli.
+async function developmentReports(ctx) {
+  const { c, ids } = ctx
+  for (const s of ids.students ?? []) {
+    const existing = await c.get(`/students/${s.id}/development-reports`)
+    if (Array.isArray(existing) && existing.length > 0) continue
+    const final = await step(`gelişim raporu (kesinleşmiş) ${s.no}`, () => c.post(`/students/${s.id}/development-reports`, {
+      periodLabel: 'Güz dönemi', reportDate: dayStr(-20), content: `KESINLESMIS: ${s.no} güz dönemi gelişim özeti.`, fileId: null }))
+    if (final?.id) await step(`gelişim raporu kesinleştir ${s.no}`, () => c.post(`/students/${s.id}/development-reports/${final.id}/finalize`, { rowVersion: final.rowVersion }))
+    await step(`gelişim raporu (taslak) ${s.no}`, () => c.post(`/students/${s.id}/development-reports`, {
+      periodLabel: 'Kış dönemi (taslak)', reportDate: dayStr(-2), content: `TASLAK: ${s.no} kış dönemi, henüz kesinleşmedi.`, fileId: null }))
+  }
+  info(`gelişim raporları: ${(ids.students ?? []).length} öğrenci × (1 kesinleşmiş + 1 taslak)`)
 }

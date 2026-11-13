@@ -39,7 +39,7 @@ export async function setupFinance(ctx) {
     let invDto = await step(`fatura satırı ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/lines`, { description: def.name, unitPrice: def.price, quantity: 1, studentPackageId: sp.id, sortOrder: 1 }))
     if (!invDto) continue
     if (s.idx !== 7) invDto = await step(`fatura kes ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/issue`, { invoiceNo: invNo, rowVersion: invDto.rowVersion }))
-    if (s.idx === 6 && invDto) await step(`fatura iptal ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/void`, { rowVersion: invDto.rowVersion }))
+    if (s.idx === 6 && invDto) await step(`fatura iptal ${s.no}`, () => c.post(`/payments/invoices/${inv.id}/void`, { reason: "Demo: hatalı düzenlenen fatura iptal edildi.", rowVersion: invDto.rowVersion }))
     if (s.idx === 7 || s.idx === 6) continue
     // ödemeler: idx 0-2 tam, 3-4 kısmi, 5 bekleyen (pending kalır)
     const amount = s.idx <= 2 ? def.price : s.idx <= 4 ? Math.round(def.price / 2) : def.price

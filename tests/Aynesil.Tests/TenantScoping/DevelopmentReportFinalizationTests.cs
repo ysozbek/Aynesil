@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Exceptions;
+using Aynesil.Application.Features.Portal.Queries;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Queries;
 using Aynesil.Domain.Common;
@@ -29,6 +31,50 @@ public class DevelopmentReportFinalizationTests
         return ctx;
     }
 
+    /// <summary>Guardian linked to the signed-in user with portal access to the student; no care-team bypass, no assignment.</summary>
+    private static async Task SeedGuardianAccessAsync(
+        TenantTestContext ctx, Guid studentId, bool canViewReports, params object[] extra)
+    {
+        var guardian = Guardian.Create(TenantA, "Ayşe", "Kaya");
+        guardian.LinkPortalAccount(ctx.UserId);
+        var access = new GuardianPortalAccess
+        {
+            CorporationId = TenantA, GuardianId = guardian.Id, StudentId = studentId, CanViewReports = canViewReports,
+        };
+        await ctx.SeedAsync([guardian, access, .. extra]);
+    }
+
+    [Fact]
+    public async Task A_guardian_without_care_team_access_sees_finalized_reports()
+    {
+        // Regression: the portal used the staff query, whose care-team filter hid every report from guardians.
+        using var ctx = new TenantTestContext();   // no care_team:bypass, no care assignment
+        var studentId = Guid.CreateVersion7();
+        var published = Report(studentId, "Yayımlanan");
+        published.Finalize(null);
+        await SeedGuardianAccessAsync(ctx, studentId, canViewReports: true, Report(studentId, "Taslak"), published);
+
+        var portal = await ctx.Handler<GetPortalDevelopmentReportsQueryHandler>()
+            .Handle(new GetPortalDevelopmentReportsQuery(studentId, ctx.UserId), default);
+
+        portal.Should().ContainSingle().Which.PeriodLabel.Should().Be("Yayımlanan");
+    }
+
+    [Fact]
+    public async Task Portal_rejects_another_guardians_child_and_respects_CanViewReports()
+    {
+        using var ctx = new TenantTestContext();
+        var studentId = Guid.CreateVersion7();
+        var report = Report(studentId, "Yayımlanan");
+        report.Finalize(null);
+        await SeedGuardianAccessAsync(ctx, studentId, canViewReports: false, report);
+
+        var handler = ctx.Handler<GetPortalDevelopmentReportsQueryHandler>();
+        (await handler.Handle(new GetPortalDevelopmentReportsQuery(studentId, ctx.UserId), default)).Should().BeEmpty();
+        await handler.Invoking(h => h.Handle(new GetPortalDevelopmentReportsQuery(Guid.CreateVersion7(), ctx.UserId), default))
+            .Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
     [Fact]
     public async Task Draft_report_is_hidden_from_the_portal_but_visible_to_staff()
     {
@@ -37,11 +83,11 @@ public class DevelopmentReportFinalizationTests
         var draft = Report(studentId, "Taslak dönem");
         var published = Report(studentId, "Yayımlanan dönem");
         published.Finalize(ctx.UserId);
-        await ctx.SeedAsync(draft, published);
+        await SeedGuardianAccessAsync(ctx, studentId, canViewReports: true, draft, published);
 
-        var handler = ctx.Handler<GetDevelopmentReportsQueryHandler>();
-        var portal = await handler.Handle(new GetDevelopmentReportsQuery(studentId, FinalizedOnly: true), default);
-        var staff = await handler.Handle(new GetDevelopmentReportsQuery(studentId), default);
+        var staff = await ctx.Handler<GetDevelopmentReportsQueryHandler>().Handle(new GetDevelopmentReportsQuery(studentId), default);
+        var portal = await ctx.Handler<GetPortalDevelopmentReportsQueryHandler>()
+            .Handle(new GetPortalDevelopmentReportsQuery(studentId, ctx.UserId), default);
 
         portal.Should().ContainSingle().Which.PeriodLabel.Should().Be("Yayımlanan dönem");
         portal.Single().IsFinalized.Should().BeTrue();
@@ -55,7 +101,7 @@ public class DevelopmentReportFinalizationTests
         using var ctx = ContextWithStaffAccess();
         var studentId = Guid.CreateVersion7();
         var report = Report(studentId, "Güz");
-        await ctx.SeedAsync(report);
+        await SeedGuardianAccessAsync(ctx, studentId, canViewReports: true, report);
 
         var dto = await ctx.Handler<FinalizeDevelopmentReportCommandHandler>()
             .Handle(new FinalizeDevelopmentReportCommand(report.Id, report.RowVersion), default);
@@ -65,8 +111,8 @@ public class DevelopmentReportFinalizationTests
         var stored = await ctx.Db.DevelopmentReports.SingleAsync();
         stored.FinalizedBy.Should().Be(ctx.UserId);
 
-        var portal = await ctx.Handler<GetDevelopmentReportsQueryHandler>()
-            .Handle(new GetDevelopmentReportsQuery(studentId, FinalizedOnly: true), default);
+        var portal = await ctx.Handler<GetPortalDevelopmentReportsQueryHandler>()
+            .Handle(new GetPortalDevelopmentReportsQuery(studentId, ctx.UserId), default);
         portal.Should().ContainSingle();
     }
 

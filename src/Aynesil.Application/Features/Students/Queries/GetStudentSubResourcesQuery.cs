@@ -248,8 +248,8 @@ public sealed class GetMedicalReportsQueryHandler
 
 // ── GetDevelopmentReportsQuery ────────────────────────────────────────────────
 
-/// <param name="FinalizedOnly">Parent portal sets this: guardians see finalized reports only (Y15); staff see drafts too.</param>
-public record GetDevelopmentReportsQuery(Guid StudentId, bool FinalizedOnly = false)
+/// <summary>Staff view (care-team filtered): drafts and finalized reports. The parent portal has its own query.</summary>
+public record GetDevelopmentReportsQuery(Guid StudentId)
     : IRequest<IReadOnlyList<DevelopmentReportDto>>;
 
 public sealed class GetDevelopmentReportsQueryHandler
@@ -272,7 +272,7 @@ public sealed class GetDevelopmentReportsQueryHandler
             return [];
 
         return await _db.DevelopmentReports.AsNoTracking()
-            .Where(r => r.StudentId == req.StudentId && (!req.FinalizedOnly || r.IsFinalized))
+            .Where(r => r.StudentId == req.StudentId)
             .OrderByDescending(r => r.ReportDate)
             .Select(r => new DevelopmentReportDto(
                 r.Id, r.StudentId, r.PeriodLabel, r.ReportDate,

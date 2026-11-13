@@ -59,8 +59,7 @@ public sealed class PortalController : BaseController
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<DevelopmentReportDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDevelopmentReports(Guid studentId, CancellationToken ct)
     {
-        await VerifyPortalAccess(studentId, ct);
-        return OkResult(await Sender.Send(new GetDevelopmentReportsQuery(studentId, FinalizedOnly: true), ct));
+        return OkResult(await Sender.Send(new GetPortalDevelopmentReportsQuery(studentId, GetCurrentUserId()), ct));
     }
 
     /// <summary>Session history for a student (guarded by CanViewSessions flag).</summary>

@@ -3,6 +3,7 @@ using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Notifications.Dtos;
 using Aynesil.Application.Features.Portal.Dtos;
+using Aynesil.Application.Features.Students.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -377,5 +378,42 @@ public sealed class GetPortalMeetingHistoryQueryHandler
                 m.Id, m.Title, m.ScheduledAt, m.EndsAt,
                 m.Status, m.Location, mp.Attendance)
         ).Skip((req.Page - 1) * req.PageSize).Take(req.PageSize).ToListAsync(ct);
+    }
+}
+
+// ── GetPortalDevelopmentReportsQuery (Y15) ────────────────────────────────────
+
+/// <summary>
+/// Development reports for a guardian: FINALIZED reports only, never drafts. Access is the guardian's
+/// portal access to the student (CanViewReports), not the staff care-team filter: a guardian is not
+/// on the care team, so reusing the staff query would always return an empty list.
+/// </summary>
+public record GetPortalDevelopmentReportsQuery(Guid StudentId, Guid GuardianUserId)
+    : IRequest<IReadOnlyList<DevelopmentReportDto>>;
+
+public sealed class GetPortalDevelopmentReportsQueryHandler
+    : IRequestHandler<GetPortalDevelopmentReportsQuery, IReadOnlyList<DevelopmentReportDto>>
+{
+    private readonly IAppDbContext _db;
+
+    public GetPortalDevelopmentReportsQueryHandler(IAppDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<DevelopmentReportDto>> Handle(
+        GetPortalDevelopmentReportsQuery req, CancellationToken ct)
+    {
+        var (_, _, _, canViewReports, _, _) =
+            await PortalAccessHelper.VerifyAsync(_db, req.StudentId, req.GuardianUserId, ct);
+
+        if (!canViewReports)
+            return [];
+
+        return await _db.DevelopmentReports.AsNoTracking()
+            .Where(r => r.StudentId == req.StudentId && r.IsFinalized)
+            .OrderByDescending(r => r.ReportDate)
+            .Select(r => new DevelopmentReportDto(
+                r.Id, r.StudentId, r.PeriodLabel, r.ReportDate,
+                r.AuthoredBy, r.Content, r.FileId, r.CreatedAt, r.RowVersion,
+                r.IsFinalized, r.FinalizedAt))
+            .ToListAsync(ct);
     }
 }

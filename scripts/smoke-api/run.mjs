@@ -379,10 +379,22 @@ async function guardianRound() {
   listCache.clear(); paramOverride = { studentId: '/portal/my-students' }
   await sweep((e) => e.id.startsWith('portal.'), 'GET (veli)')
   paramOverride = {}
+  // Y15: veli kendi çocuklarının yalnızca kesinleşmiş gelişim raporlarını görür (taslaklar gizli)
+  const mine = (await http('GET', '/portal/my-students')).json?.data ?? []
+  if (!mine.length) record({ phase: 'izolasyon', id: 'isolation.portal.development-reports (veli1 → kendi çocukları)', verb: 'GET', url: '/portal/students/{id}/development-reports', status: null, outcome: 'skip', note: 'veli1 çocuğu bulunamadı', mismatches: [] })
+  for (const child of mine) {
+    const r = await http('GET', `/portal/students/${child.id ?? child.studentId}/development-reports`)
+    const items = r.json?.data ?? []
+    const ok = r.status === 200 && items.length >= 1 && items.every(x => x.isFinalized === true) && !items.some(x => /TASLAK/.test(x.content ?? ''))
+      && items.some(x => /KESINLESMIS/.test(x.content ?? ''))
+    record({ phase: 'izolasyon', id: `isolation.portal.development-reports (veli1 → kendi çocuğu ${child.firstName ?? ''})`, verb: 'GET', url: '/portal/students/{id}/development-reports', status: r.status,
+      outcome: ok ? 'ok' : items.some(x => x.isFinalized === false) ? 'leak' : r.status >= 500 ? '5xx' : '4xx',
+      note: ok ? 'beklenen: yalnızca kesinleşmiş rapor(lar) görünür' : `beklenen: ≥1 kesinleşmiş, taslak yok; gelen ${r.status}, ${items.length} rapor (${items.map(x => x.isFinalized ? 'kesinleşmiş' : 'TASLAK').join(', ')})`, mismatches: [] })
+  }
   const checks = [['aynı kurumda başka velinin çocuğu', own], ['başka kurumun öğrencisi', other]]
   for (const [what, sid] of checks) {
     if (!sid) { record({ phase: 'izolasyon', id: `isolation.portal (${what})`, verb: 'GET', url: '/portal/students/{id}', status: null, outcome: 'skip', note: 'kayıt bulunamadı', mismatches: [] }); continue }
-    for (const sub of ['', '/dashboard', '/sessions', '/bep', '/packages']) {
+    for (const sub of ['', '/dashboard', '/sessions', '/bep', '/packages', '/development-reports']) {
       const r = await http('GET', `/portal/students/${sid}${sub}`)
       isoRec(`isolation.portal${sub || '/student'} (veli1 → ${what})`, `/portal/students/{id}${sub}`, r, [403, 404], what)
     }

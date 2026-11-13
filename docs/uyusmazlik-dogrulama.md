@@ -226,3 +226,15 @@ Kapanan bulgular: **Y10, Y12, Y13, Y14, Y15, #71, #83** (✅) ve birinci partini
 | #71, #83 | `MeetingListQuery.participantUserId/participantGuardianId` ve `CreateCalendarEntryPayload.description` tipten kaldırıldı (backend'de karşılıkları yok) | `vue-tsc` |
 
 Doğrulama: `dotnet build` 0 hata · `dotnet test Aynesil.sln` 537/537 + entegrasyon 58/58 · `dotnet list package --vulnerable --include-transitive` temiz · `npm run type-check` ve `npm run build` temiz · `db/validation/smoke_test.sh` GREEN (şema kayması yok, yeni "global satır DELETE" değişmezi dahil) · `scripts/smoke-api/run.sh` 243 çağrı, 4xx/5xx/tip uyuşmazlığı/sızıntı 0, izolasyon 19/19.
+
+### Y15 gerçek veli hesabıyla doğrulama (2026-11-13)
+
+Demo-seed'e her öğrenci için 1 kesinleşmiş + 1 taslak gelişim raporu eklendi; smoke-api veli turu veli1'in her çocuğunda yalnızca kesinleşmiş raporu görmesini, başka velinin çocuğunun raporunda 403/404'ü denetliyor.
+
+**İlk çalıştırma kırmızı çıktı: veli1 kesinleşmiş raporu da göremedi (0 rapor).** Neden: portal ucu personel sorgusunu (`GetDevelopmentReportsQuery`) yeniden kullanıyordu; bu sorgunun uygulama katmanı bakım-ekibi süzgeci (`CareTeamFilter`) veliyi (bakım ekibinde değil, `care_team:bypass` yok) her zaman eler. DB RLS'i engel değildi (kiracıda ABAC kapalıyken `user_can_access_student()` true döner). Yani Y15'ten önce de bu uç gerçek velilere boş dönüyordu; birim testim süzgeci mock'ladığı için bunu yakalayamamıştı.
+Düzeltme: veliye özel `GetPortalDevelopmentReportsQuery` (diğer portal uçlarındaki `PortalAccessHelper.VerifyAsync` ile erişim, yalnızca `is_finalized`). Bu sorgu portal erişimindeki `CanViewReports` bayrağına da uyuyor (bayrak kapalıysa boş liste); bu, #15 notundaki "CanView* bayrağına bakmıyor" boşluğunu da kapatır. Staff sorgusundaki geçici `FinalizedOnly` parametresi kaldırıldı. Testler: bakım ekibi erişimi olmayan veli kesinleşmiş raporu görür, taslağı görmez; `CanViewReports=false` → boş; başka velinin çocuğu → 403.
+
+Yan bulgu: demo-seed'in fatura iptali Y10'dan sonra gerekçesiz olduğu için 400 veriyordu; seed gerekçe gönderecek şekilde düzeltildi.
+
+Sonuç: `dotnet test` 539/539 + entegrasyon 58/58; `demo-seed --reset` + `smoke-api/run.sh`: 247 çağrı, 4xx/5xx/tip/sızıntı 0, izolasyon 23/23.
+
