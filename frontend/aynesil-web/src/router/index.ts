@@ -43,6 +43,12 @@ const routes: RouteRecordRaw[] = [
         name: 'dashboard',
         component: () => import('@/views/DashboardView.vue'),
       },
+      // Own password (no permission: every signed-in user, incl. portal parents)
+      {
+        path: 'account/password',
+        name: 'account-password',
+        component: () => import('@/views/account/ChangePasswordView.vue'),
+      },
       {
         path: 'settings',
         name: 'settings',

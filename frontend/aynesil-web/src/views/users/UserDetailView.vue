@@ -11,6 +11,8 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import type { UserRoleDto } from '@/types/user.types'
+import type { LinkedEducator, LinkedGuardian } from '@/types/userAccountLink.types'
+import { userAccountLinkService } from '@/services/userAccountLink.service'
 import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
@@ -24,8 +26,22 @@ const { can } = usePermission()
 const id = computed(() => route.params.id as string)
 const activeTab = ref<'info' | 'roles'>('info')
 
+// ── Linked educator / guardian records (set from the educator or guardian screen) ──
+const linkedEducator = ref<LinkedEducator | null>(null)
+const linkedGuardian = ref<LinkedGuardian | null>(null)
+
+async function loadLinkedRecords() {
+  const [educator, guardian] = await Promise.all([
+    can(Permissions.Educators.Read) ? userAccountLinkService.educatorByUser(id.value).catch(() => null) : null,
+    can(Permissions.Guardians.Read) ? userAccountLinkService.guardianByUser(id.value).catch(() => null) : null,
+  ])
+  linkedEducator.value = educator?.data ?? null
+  linkedGuardian.value = guardian?.data ?? null
+}
+
 onMounted(async () => {
   await store.fetchOne(id.value)
+  loadLinkedRecords()
   await store.fetchRoles(id.value)
   if (!roleStore.list.items.length) await roleStore.fetchList({ pageSize: 200 })
   if (!branchStore.list.items.length) await branchStore.fetchList({ pageSize: 200 })
@@ -205,6 +221,22 @@ function getBranchName(campusId?: string) {
         <div class="bg-card rounded-xl p-4 border border-border shadow-sm">
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('common.createdAt') }}</p>
           <p class="text-sm font-semibold text-foreground">{{ formatDate(store.current.createdAt) }}</p>
+        </div>
+        <div v-if="can(Permissions.Educators.Read)" class="bg-card rounded-xl p-4 border border-border shadow-sm">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('userLink.linkedEducator') }}</p>
+          <button v-if="linkedEducator" class="text-sm font-semibold text-primary hover:underline"
+            @click="router.push({ name: 'educator-detail', params: { id: linkedEducator.id } })">
+            {{ linkedEducator.fullName }}<span v-if="!linkedEducator.isActive" class="text-muted-foreground font-normal"> · {{ t('common.inactive') }}</span>
+          </button>
+          <p v-else class="text-sm text-muted-foreground">{{ t('userLink.noLinkedRecord') }}</p>
+        </div>
+        <div v-if="can(Permissions.Guardians.Read)" class="bg-card rounded-xl p-4 border border-border shadow-sm">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{{ t('userLink.linkedGuardian') }}</p>
+          <button v-if="linkedGuardian" class="text-sm font-semibold text-primary hover:underline"
+            @click="router.push({ name: 'guardian-detail', params: { id: linkedGuardian.id } })">
+            {{ linkedGuardian.fullName }}
+          </button>
+          <p v-else class="text-sm text-muted-foreground">{{ t('userLink.noLinkedRecord') }}</p>
         </div>
       </div>
     </div>

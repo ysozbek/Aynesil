@@ -286,6 +286,58 @@ const tr = {
     },
   },
 
+  // ── Kendi hesabım ──────────────────────────────────────────────────────────
+  account: {
+    password: {
+      title: 'Şifre Değiştir',
+      description: 'Yöneticinizin verdiği geçici şifreyi ilk girişten sonra değiştirin. Değişiklikten sonra yeniden giriş yaparsınız.',
+      current: 'Mevcut şifre',
+      new: 'Yeni şifre',
+      confirm: 'Yeni şifre (tekrar)',
+      submit: 'Şifreyi değiştir',
+      required: 'Mevcut ve yeni şifre zorunlu.',
+      tooShort: 'Yeni şifre en az 8 karakter olmalı.',
+      mismatch: 'Yeni şifreler eşleşmiyor.',
+      changed: 'Şifreniz değiştirildi. Yeni şifrenizle giriş yapın.',
+    },
+  },
+
+  // ── Kullanıcı hesabı bağı (eğitmen / veli kaydı) ─────────────────────────
+  userLink: {
+    title: 'Kullanıcı hesabı',
+    kind: {
+      educators: 'eğitmen',
+      guardians: 'veli',
+    },
+    none: {
+      educators: 'Bu eğitmen bir kullanıcı hesabına bağlı değil. Bağlanmadan seans notu yazamaz, BEP onaylayamaz.',
+      guardians: 'Bu velinin portal hesabı yok. Hesap açılmadan "Erişim Aç" ile verilen portal izinleri kullanılamaz.',
+    },
+    linkExisting: 'Mevcut kullanıcıyı bağla',
+    createNew: 'Yeni kullanıcı oluştur',
+    unlink: 'Bağlantıyı kaldır',
+    unlinkMessage: 'Kullanıcı hesabının bu {kind} kaydıyla bağı kaldırılacak. Hesap ve rolleri silinmez.',
+    linkHint: 'Kullanıcı aynı kurumda olmalı ve başka bir {kind} kaydına bağlı olmamalı.',
+    selectUser: 'Bir kullanıcı seçin.',
+    createHint: 'Hesap etkin açılır; geçici şifre bir kez gösterilir (e-posta henüz gönderilmiyor).',
+    createRequired: 'Kullanıcı adı, ad soyad ve rol zorunlu.',
+    role: 'Rol',
+    roleHint: {
+      educators: 'Eğitmenin seans notu, yoklama vb. izinlerini içeren rolü seçin.',
+      guardians: 'Rol "portal:access" iznini içermeli (ör. Veli (portal)).',
+    },
+    passwordTitle: 'Geçici şifre',
+    passwordIntro: '{username} hesabı açıldı. Geçici şifre:',
+    passwordWarning: 'Bu şifre bir daha gösterilmeyecek. Kişiye güvenli bir yoldan iletin; ilk girişten sonra sağ üstteki baş harfine tıklayıp Şifre Değiştir ile değiştirmesini isteyin.',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+    linkedRecords: 'Bağlı kayıtlar',
+    linkedEducator: 'Eğitmen kaydı',
+    linkedGuardian: 'Veli kaydı',
+    noLinkedRecord: 'Bağlı değil',
+    noPortalAccountWarning: 'Bu velinin portal hesabı yok: aşağıdaki erişimler hesap açılana kadar kullanılamaz. Hesabı Genel Bakış → Kullanıcı hesabı bölümünden açın.',
+  },
+
   // ── Role ───────────────────────────────────────────────────────────────────
   role: {
     title: 'Roller',

@@ -50,6 +50,13 @@ async function handleLogin() {
           <p class="text-sm text-muted-foreground mt-1">{{ t('auth.signInTo') }}</p>
         </div>
 
+        <div
+          v-if="route.query.passwordChanged && !error"
+          class="mb-5 p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm"
+        >
+          {{ t('account.password.changed') }}
+        </div>
+
         <!-- Error alert -->
         <div
           v-if="error"

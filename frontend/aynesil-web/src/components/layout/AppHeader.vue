@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { AuthUser } from '@/types/auth.types'
 
 defineProps<{
@@ -9,6 +10,8 @@ defineEmits<{
   'toggle-sidebar': []
   'logout': []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -55,10 +58,14 @@ defineEmits<{
           <p class="text-xs text-muted-foreground">{{ user.email }}</p>
         </div>
 
-        <!-- Avatar -->
-        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0 cursor-pointer">
+        <!-- Avatar → own password -->
+        <RouterLink
+          :to="{ name: 'account-password' }"
+          :title="t('account.password.title')"
+          class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0 cursor-pointer"
+        >
           {{ user.fullName.charAt(0).toUpperCase() }}
-        </div>
+        </RouterLink>
 
         <!-- Logout -->
         <button

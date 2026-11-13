@@ -8,6 +8,7 @@ import { useRefDataStore } from '@/stores/refdata.store'
 import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import UserAccountLinkCard from '@/components/shared/UserAccountLinkCard.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import type {
   EducatorCertificationDto,
@@ -400,6 +401,14 @@ async function doUnlinkHierarchy() {
             </div>
           </dl>
         </div>
+
+        <UserAccountLinkCard
+          resource="educators"
+          :record-id="educator.id"
+          :manage-permission="Permissions.Educators.Update"
+          :suggested-full-name="educator.fullName"
+          :suggested-email="educator.email"
+        />
       </div>
 
       <!-- Specialties Tab -->

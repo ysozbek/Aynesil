@@ -6,6 +6,7 @@ import { useGuardianStore } from '@/stores/guardian.store'
 import { usePermission } from '@/composables/usePermission'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
+import UserAccountLinkCard from '@/components/shared/UserAccountLinkCard.vue'
 import type { StudentGuardianDto, GuardianPortalAccessDto, GrantPortalAccessPayload } from '@/types/student.types'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
@@ -233,6 +234,17 @@ async function doDelete() {
             </div>
           </dl>
         </div>
+
+        <!-- Parent-portal login: "Erişim Aç" alone does not create an account. -->
+        <UserAccountLinkCard
+          resource="guardians"
+          :record-id="guardian.id"
+          :manage-permission="Permissions.Guardians.ManagePortal"
+          :suggested-full-name="guardian.fullName"
+          :suggested-email="guardian.email"
+          default-role-code="guardian"
+          @changed="store.fetchOne(id)"
+        />
       </div>
 
       <!-- Students Tab -->
@@ -282,6 +294,12 @@ async function doDelete() {
 
       <!-- Portal Access Tab -->
       <div v-else-if="activeTab === 'portal-access'">
+        <div
+          v-if="!guardian.hasPortalAccount && guardian.students.length"
+          class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          {{ t('userLink.noPortalAccountWarning') }}
+        </div>
         <div v-if="guardian.students.length === 0" class="text-center py-12 text-muted-foreground">
           {{ t('common.noData') }}
         </div>
