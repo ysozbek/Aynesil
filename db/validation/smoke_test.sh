@@ -88,6 +88,9 @@ end $$;
 drop database if exists akran_flyway;
 create database akran_flyway;
 SQL
+# Same app-role grants as Flyway's afterMigrate callback, so drift.sql can check aynesil_app's
+# access (RLS-less tables, partitions) in the layer-DDL database too.
+"${PSQL_QUIET[@]}" -q -f /repo/db/migrations/afterMigrate__app_role_grants.sql
 if ! docker run --rm --network "$NETWORK" \
       -v "$REPO_ROOT/db/migrations:/flyway/sql:ro" \
       -v "$REPO_ROOT/docker/flyway.conf:/flyway/conf/flyway.conf:ro" \

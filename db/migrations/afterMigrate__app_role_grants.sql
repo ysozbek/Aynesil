@@ -17,6 +17,7 @@ DECLARE
     'scheduling','finance','legal','media','ops','camps','consultancy'
   ];
   v_schema   text;
+  v_part     record;
 BEGIN
   -- Flyway config'den app role oku; yoksa varsayılan kullan
   IF v_app_role IS NULL OR v_app_role = '' THEN
@@ -67,8 +68,33 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- ── Y11: partition'lara doğrudan erişim yok ──────────────────────────────
+  -- Yukarıdaki "ALL TABLES" partition'ları da kapsar. Partition'larda RLS yoktur; doğrudan
+  -- sorgulanırsa üst tablonun log_read/log_write politikası uygulanmaz (tüm kiracıların audit
+  -- kayıtları). Üst tablo üzerinden erişimde yalnızca üst tablonun yetkisi aranır, bu yüzden
+  -- uygulama etkilenmez. db/validation/drift.sql bunu denetler.
+  FOR v_part IN
+    SELECT c.oid::regclass AS rel
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE c.relispartition AND c.relkind IN ('r', 'p') AND n.nspname = ANY (v_schemas)
+  LOOP
+    EXECUTE format('REVOKE ALL ON %s FROM %I', v_part.rel, v_app_role);
+  END LOOP;
+
+  -- ── Global kataloglar uygulama için salt okunur (V44) ───────────────────
+  -- Kiracı verisi içermez, RLS'siz kalır (drift.sql istisna listesi); yalnızca Flyway/seed yazar.
+  FOR v_part IN
+    SELECT to_regclass(t) AS rel
+      FROM unnest(ARRAY['ref.locale', 'ref.i18n_message', 'ref.ref_type', 'iam.permission',
+                        'core.setting_definition', 'core.integration_provider']) AS t
+  LOOP
+    IF v_part.rel IS NOT NULL THEN
+      EXECUTE format('REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON %s FROM %I', v_part.rel, v_app_role);
+    END IF;
+  END LOOP;
+
   -- public schema: flyway_schema_history tablosuna okuma izni (opsiyonel)
-  IF EXISTS (SELECT FROM pg_roles WHERE rolname = v_app_role) THEN
+  IF to_regclass('public.flyway_schema_history') IS NOT NULL THEN  -- yoksa (layer DDL doğrulaması) atla
     EXECUTE format('GRANT SELECT ON public.flyway_schema_history TO %I', v_app_role);
   END IF;
 

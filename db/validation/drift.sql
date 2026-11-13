@@ -18,6 +18,13 @@
 -- tenant_isolation policy, except the deliberate exceptions listed in
 -- tenant_rls_exceptions below — and those are verified against their own expected setup.
 --
+-- A second invariant (Y2–Y4/Y11 root cause) covers tables WITHOUT corporation_id too: every
+-- table — partitions included — that has RLS disabled while aynesil_app holds any of
+-- SELECT/INSERT/UPDATE/DELETE on it must be listed in rls_off_exceptions with its reason (and
+-- the expected app access); an unlisted one, or a stale entry, fails the check. Both databases
+-- get the app grants from afterMigrate__app_role_grants.sql (smoke_test.sh applies it to the
+-- layer-DDL database as well).
+--
 -- Intentionally excluded (present only in the migration-built database by design):
 --   public.flyway_schema_history  Flyway's own bookkeeping table
 --   schema hangfire               Hangfire job store (V3), owned by the job runtime, not domain DDL
@@ -136,11 +143,83 @@ delete from rls_violations where problem is null;
 \echo '== Invariant: every tenant table is RLS-isolated (both databases) =='
 select db, tbl, problem from rls_violations order by db, tbl;
 
+-- ── Invariant: no RLS-less table reachable by aynesil_app without a justified exception ──
+-- access: 'read' = SELECT only, 'write' = SELECT + DML. Schema-wide entries use 'schema.*'.
+create temp table rls_off_exceptions (tbl text primary key, access text not null, reason text not null);
+insert into rls_off_exceptions values
+  ('ref.locale',                'read',  'global locale catalog, no tenant data; written only by Flyway/seed'),
+  ('ref.i18n_message',          'read',  'global message catalog, no tenant data; written only by Flyway/seed'),
+  ('ref.ref_type',              'read',  'global classification catalog (tenant values live in RLS-protected ref.ref_value)'),
+  ('iam.permission',            'read',  'global permission catalog seeded by migrations; role grants are RLS-protected (role_permission)'),
+  ('core.setting_definition',   'read',  'global setting schema; tenant values live in RLS-protected tables'),
+  ('core.integration_provider', 'read',  'global integration provider catalog (code/kind/name), no tenant data or secrets'),
+  ('core.outbox_event',         'write', 'system outbox written in the request transaction and drained across tenants by the background dispatcher (99)'),
+  ('public.flyway_schema_history', 'read', 'Flyway bookkeeping, no tenant data'),
+  ('hangfire.*',                'write', 'Hangfire job store, created and owned by the API runtime; job arguments carry ids only');
+
+create temp table app_access_sql as select $acc$
+  select n.nspname || '.' || c.relname as tbl, n.nspname as sch,
+         has_table_privilege('aynesil_app', c.oid, 'INSERT')
+           or has_table_privilege('aynesil_app', c.oid, 'UPDATE')
+           or has_table_privilege('aynesil_app', c.oid, 'DELETE') as can_write
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where c.relkind in ('r', 'p')
+     and not c.relrowsecurity
+     and n.nspname not in ('pg_catalog', 'information_schema')
+     and n.nspname not like 'pg\_%'
+     and (has_table_privilege('aynesil_app', c.oid, 'SELECT')
+          or has_table_privilege('aynesil_app', c.oid, 'INSERT')
+          or has_table_privilege('aynesil_app', c.oid, 'UPDATE')
+          or has_table_privilege('aynesil_app', c.oid, 'DELETE'))
+$acc$ as q;
+
+create temp table rls_off_violations as
+  with exposed as (
+    select 'akran (layer DDL)' as db, * from dblink('dbname=akran user=postgres', (select q from app_access_sql))
+      as t(tbl text, sch text, can_write boolean)
+    union all
+    select 'akran_flyway (migrations)', * from dblink('dbname=akran_flyway user=postgres', (select q from app_access_sql))
+      as t(tbl text, sch text, can_write boolean)
+  ),
+  matched as (
+    select x.*, e.tbl as exception, e.access
+      from exposed x
+      left join rls_off_exceptions e on e.tbl = x.tbl or e.tbl = x.sch || '.*'
+  )
+  select db, tbl,
+         case
+           when exception is null
+             then 'RLS disabled but aynesil_app can ' || case when can_write then 'read/write' else 'read' end
+                  || ' it: enable RLS or add a justified entry to rls_off_exceptions'
+           when access = 'read' and can_write
+             then 'exception expects read-only access for aynesil_app, but it can write'
+         end as problem
+    from matched
+  union all
+  -- Stale entries (table now has RLS, or the app lost access) keep the list honest.
+  select d.db, e.tbl, 'stale exception: not an RLS-less table reachable by aynesil_app'
+    from rls_off_exceptions e
+   cross join (values ('akran (layer DDL)'), ('akran_flyway (migrations)')) d(db)
+   where e.tbl not like '%.*'
+     and not exists (select 1 from exposed x where x.db = d.db and x.tbl = e.tbl)
+     -- Flyway's own table and the Hangfire schema exist only in the migration-built database.
+     and not (d.db = 'akran (layer DDL)' and e.tbl = 'public.flyway_schema_history');
+delete from rls_off_violations where problem is null;
+
+\echo '== Invariant: every RLS-less table reachable by aynesil_app is a listed exception (both databases) =='
+select db, tbl, problem from rls_off_violations order by db, tbl;
+
 do $$
 declare
   n int;
   v int;
 begin
+  select count(*) into v from rls_off_violations;
+  if v > 0 then
+    raise exception 'FAIL app-access invariant: % RLS-less table(s) reachable by aynesil_app without a valid exception (listed above)', v;
+  end if;
+  raise notice 'APP ACCESS INVARIANT OK (RLS-less exceptions: %)', (select string_agg(tbl, ', ' order by tbl) from rls_off_exceptions);
+
   select count(*) into v from rls_violations;
   if v > 0 then
     raise exception 'FAIL tenant RLS invariant: % table(s) without the expected isolation (listed above)', v;
