@@ -583,6 +583,12 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: Permissions.FinancePayments.Read },
       },
       {
+        path: 'finance/refunds',
+        name: 'refunds',
+        component: () => import('@/views/finance/RefundListView.vue'),
+        meta: { permission: Permissions.Refunds.Read },
+      },
+      {
         path: 'finance/payments/new',
         name: 'payment-new',
         component: () => import('@/views/finance/PaymentFormView.vue'),

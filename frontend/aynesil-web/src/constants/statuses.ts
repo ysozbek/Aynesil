@@ -228,6 +228,14 @@ export const PaymentStatus = {
 } as const
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
+/** finance.refund.status (07_finance.sql) */
+export const RefundStatus = {
+  Pending: 'pending',
+  Processed: 'processed',
+  Failed: 'failed',
+} as const
+export type RefundStatus = (typeof RefundStatus)[keyof typeof RefundStatus]
+
 /** crm.interview.status (03_crm.sql) */
 export const LeadInterviewStatus = {
   Scheduled: 'scheduled',
@@ -290,6 +298,7 @@ export const StatusEntities = {
   studentPackage: StudentPackageStatus,
   invoice: InvoiceStatus,
   payment: PaymentStatus,
+  refund: RefundStatus,
   leadInterview: LeadInterviewStatus,
   viewingAuthorization: ViewingAuthorizationState,
   meetingAttendance: MeetingAttendance,

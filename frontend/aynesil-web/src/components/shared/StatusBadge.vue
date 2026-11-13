@@ -56,6 +56,7 @@ const tones: { [E in StatusEntity]: Record<StatusOf<E>, Tone> } = {
   studentPackage: { active: 'success', exhausted: 'warning', expired: 'neutral', cancelled: 'danger' },
   invoice: { draft: 'neutral', issued: 'info', paid: 'success', partial: 'warning', overdue: 'danger', void: 'neutral' },
   payment: { pending: 'warning', authorized: 'info', captured: 'success', failed: 'danger', refunded: 'neutral' },
+  refund: { pending: 'warning', processed: 'success', failed: 'danger' },
   leadInterview: { scheduled: 'info', completed: 'success', no_show: 'warning', cancelled: 'danger' },
   viewingAuthorization: { active: 'success', expired: 'warning', revoked: 'danger' },
   meetingAttendance: { invited: 'neutral', attended: 'success', absent: 'danger', tentative: 'warning' },

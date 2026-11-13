@@ -141,6 +141,18 @@ export const usePaymentStore = defineStore('payment', () => {
     }
   }
 
+  async function failRefund(id: string): Promise<RefundDto> {
+    saving.value = true
+    try {
+      const res = await financeService.failRefund(id)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'İade başarısız olarak işaretlenemedi.')
+      currentRefund.value = res.data
+      return res.data
+    } finally {
+      saving.value = false
+    }
+  }
+
   function clearCurrent() {
     currentTransaction.value = null
     currentRefund.value = null
@@ -151,7 +163,7 @@ export const usePaymentStore = defineStore('payment', () => {
     refundList, currentRefund,
     loading, saving, error,
     fetchTransactions, fetchTransaction, createTransaction, captureTransaction, failTransaction,
-    fetchRefunds, fetchRefund, createRefund, processRefund,
+    fetchRefunds, fetchRefund, createRefund, processRefund, failRefund,
     clearCurrent,
   }
 })
