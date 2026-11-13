@@ -162,28 +162,12 @@ onMounted(() => {
         </div>
       </div>
 
-      <div
-        v-if="cam.streamRef && cam.isActive"
-        class="mt-6 rounded-xl border border-red-200 bg-red-50/50 p-5 flex items-center justify-between"
-      >
-        <div class="flex items-center gap-3">
-          <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-          </span>
-          <h3 class="font-semibold text-red-700">{{ t('camera.detail.liveView') }}</h3>
-        </div>
-        <button
-          @click="router.push(`/cameras/${cam.id}/live`)"
-          class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-          {{ t('camera.detail.watchLive') }}
-        </button>
-      </div>
+      <!--
+        "Canlı İzle" düğmesi kaldırıldı: /cameras/:id/live diye bir sayfa yok (router'da tanımsız → 404) ve
+        uygulamada akış oynatıcısı bulunmuyor. streamRef yalnızca bir akış referansı (URL/ID) saklıyor;
+        backend'deki izleme günlüğü uçları (/cameras/viewing/start|end) bir oynatıcı ekranı yazıldığında
+        oradan çağrılacak. O zamana kadar düğme kullanıcıyı boş sayfaya göndermesin diye gösterilmiyor.
+      -->
     </template>
 
     <FormModal

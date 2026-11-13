@@ -1787,8 +1787,6 @@ const tr = {
       noRooms: 'Oda ataması bulunmuyor.',
       noSessions: 'Seans ataması bulunmuyor.',
       assignRoom: 'Oda Ata',
-      liveView: 'Canlı Yayın',
-      watchLive: 'Canlı İzle',
     },
     form: {
       newTitle: 'Yeni Kamera',
