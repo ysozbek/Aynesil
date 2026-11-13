@@ -15,6 +15,8 @@ node scripts/demo-seed/seed.mjs          # API zaten ayaktaysa (DEMO_API ile adr
 ## Giriş bilgileri
 Ortak yerel şifre: **`DemoSifre!2026`** (`fixtures.json`; yalnızca yerel/geliştirme DB'si için).
 
+> **İlk giriş zorunluluğu (V50):** yönetici/API ile açılan hesaplar varsayılan olarak `must_change_password = true` olur. Demo kullanıcılarında takılmamak için seed bayrağı SQL ile kapatır (`lib.mjs → clearMustChange`; `new_tenant.py` yöneticisi dahil, oturum açılmadan önce). Tek istisna bilerek açık bırakılan **`ilkgiris@demo-a.test` / `ilkgiris@demo-b.test`** (koordinatör rolü): ilk girişte şifre değiştirme akışını denemek için.
+
 | Rol | demo_a (Demo Gökkuşağı Merkezi) | demo_b (Demo Papatya Merkezi) |
 |---|---|---|
 | Kurum yöneticisi | `admin@demo-a.test` | `admin@demo-b.test` |
@@ -23,6 +25,7 @@ Ortak yerel şifre: **`DemoSifre!2026`** (`fixtures.json`; yalnızca yerel/geli�
 | Muhasebe | `muhasebe@demo-a.test` | `muhasebe@demo-b.test` |
 | Veli portalı 1 (kamera yetkili, 2 kardeş) | `veli1@demo-a.test` | `veli1@demo-b.test` |
 | Veli portalı 2 (tek öğrenci) | `veli2@demo-a.test` | `veli2@demo-b.test` |
+| İlk giriş örneği (`must_change_password` açık) | `ilkgiris@demo-a.test` | `ilkgiris@demo-b.test` |
 
 Kullanıcı adı **globalde benzersiz** olduğundan alan adı kuruma özeldir. Roller: `admin` (kurulumla gelir), `coordinator`, `educator`, `finance`, `guardian` (izin alt kümeleri `phases/identity.mjs` içinde).
 Kurum kodları `demo_a` / `demo_b` (alt çizgili; `new_tenant.py` tire kabul etmez).
@@ -45,11 +48,16 @@ Her şey mümkün olduğunca **gerçek API** üzerinden oluşturulur (iş kurall
 
 **İdempotentlik:** *var olanı atla* yöntemi seçildi (kopya üretmez, silmez). Varlıklar doğal anahtarla bulunur (öğrenci no, e-posta, kod…); olay verisi (seans, fatura, aday…) bölümler halinde "bu kurumda zaten var mı?" diye kontrol edilir. Temiz kurulum için `--reset`: owner rolüyle SQL üzerinden **yalnızca** `demo_a`/`demo_b` kurumunun tüm satırlarını (RLS'yi aşarak, tetikleyiciler kapalı) siler ve baştan kurar. Finansal kayıtlar bu yüzden `--reset` ile bile ancak demo kurumlar için silinir.
 
+## Yeni akış örnekleri (ekransız uçları kapatan işler)
+`phases/extras.mjs → newFlowExamples` (her biri kendi idempotency kontrolüyle) ve ilgili fazlar:
+sözleşme şablonu **yeni sürüm** (KVKK şablonu v1→v2) · telafi talebi **seans ata → tamamla** · ikinci iade talebi **başarısız işaretle** (ilki finans fazında işleme alınır) · kuruma özel **KPI tanımı** (`demo.veli_geri_bildirim_orani`) · CRM'de gelecek görüşmelerden biri **ertelendi**, geçmişte **gelmedi** işaretli · ilk giriş örneği kullanıcısı. Zaten seed'de olanlar: rıza verme/geri alma, sözleşme oluştur/gönder/imzala/etkinleştir/fesih, fatura oluştur/kes/iptal, izin bakiyesi tanımlama, iade işleme.
+
 ## SQL ile yapılanlar (API'nin yapamadığı)
 | Ne | Neden |
 |---|---|
 | `crm.interview.scheduled_at` (geçmişe çekme) | API geçmiş tarihli görüşme planlamayı reddediyor; sonra normal `complete`/`no-show` API'si ile kapatılır |
 | `core.notification` (7 örnek) | Bildirimi yalnızca sistem olayları üretiyor, oluşturma ucu yok |
+| `iam.user_account.must_change_password = false` (demo kullanıcıları) | API'den açılan hesaplar ilk girişte şifre değiştirmeye zorlanır (V50); seed'in kendi oturumları ve elle gezme takılmasın |
 
 Geçmiş seanslar, yoklamalar, toplantılar, BEP ölçümleri ve KPI değerleri API ile üretilir (API geçmiş tarihi kabul ediyor); KPI `compute/bulk` ile hesaplanır.
 

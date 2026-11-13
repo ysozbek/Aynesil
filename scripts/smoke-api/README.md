@@ -19,6 +19,14 @@ node scripts/smoke-api/run.mjs --strict  # API zaten ayaktaysa; 4xx/5xx/tip hata
 3. Sonuç sınıfları: `ok`, `4xx`, `5xx`, `type` (2xx ama frontend tipiyle uyuşmuyor), `skip` (veri/kimlik yok ya da beklenen durum).
    Atlanan uç noktalarda sahte GUID ile **rota yoklaması** yapılır; backend'de rota yoksa `4xx / ROTA YOK` olarak raporlanır.
 
+## Yazma akışları (yönetici turunda, `newFlows`)
+Ekransız uçları kapatan işlerin API düzeyi kanıtı (her çalıştırmada `Smoke …` kayıtları ekler):
+- **must_change_password:** `/users` ile açılan hesap girişte `mustChangePassword=true` alır; `/students`, `/menus/me`, `/campuses`, `/settings` → **403 `Auth.PasswordChangeRequired`**; `change-password` izinli; yeni şifreyle girişte bayrak kapalı ve uçlar açık. Geçersiz sıfırlama token'ı → 422 `Auth.InvalidResetToken`.
+- **Hukuk:** sözleşme/onam şablonu oluştur → güncelle → yeni sürüm → sürümler; sözleşme oluştur → gönder → imzala → etkinleştir → süresini bitir; rıza ver → geri al (ikinci geri alma reddedilir).
+- **Telafi:** talep → onay → telafi seansı → ata → tamamla; başka öğrencinin seansı atanamaz (reddedilir).
+- **İade:** fatura → satır → kes → ödeme → onay → iade → işleme al; ikinci iade → başarısız işaretle (tekrar işlenemez).
+- **İzin bakiyesi:** tanımla (aynı eğitmen/tür/yıl ikinci kez reddedilir). **KPI tanımı:** oluştur → güncelle (geçersiz `spec` reddedilir).
+
 ## Turlar
 1. **Yönetici turu** (demo_a `admin@demo-a.test`): hazırlık + yazma akışları + tüm GET'ler (portal hariç).
 2. **İzolasyon**: demo_a yöneticisiyle demo_b kayıtlarının id'lerine (öğrenci, seans, fatura, toplantı) detay isteği → **404** beklenir; demo_b öğrencisine PUT → 404. Kurumlar: demo_a yöneticisi kurum listesinde yalnızca kendini görür; demo_b kurumuna GET (detay, ayarlar) ve PUT → 404. Beklenmeyen 2xx `leak` (izolasyon ihlali) olarak raporlanır.

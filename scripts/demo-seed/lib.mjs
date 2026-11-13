@@ -87,6 +87,15 @@ export function sql(query) {
   return execFileSync('docker', ['exec', '-i', DB_CONTAINER, 'psql', '-U', user, '-d', process.env.POSTGRES_DB || 'aynesil', '-v', 'ON_ERROR_STOP=1', '-Atq'],
     { input: query, encoding: 'utf8' }).trim()
 }
+/**
+ * Demo kullanıcılarında must_change_password = false (V50): yönetici/API ile açılan hesaplar varsayılan olarak
+ * ilk girişte parola değiştirmek zorundadır; seed'in kendi oturumları ile elle gezme/smoke takılmasın.
+ * `keep`: bilerek açık bırakılan örnek kullanıcı adları ("ilk giriş" akışı örneği).
+ */
+export function clearMustChange(code, keep = []) {
+  const not = keep.length ? ` and username not in (${keep.map((k) => `'${String(k).replace(/'/g, "''")}'`).join(',')})` : ''
+  sql(`update iam.user_account set must_change_password = false where must_change_password and corporation_id = (select id from core.corporation where code='${String(code).replace(/'/g, "''")}')${not}`)
+}
 export const q = (s) => `'${String(s).replace(/'/g, "''")}'`
 export const sqlLog = []   // README'ye / konsola: SQL ile yapılanlar
 export function sqlStep(what, query) { sqlLog.push(what); return sql(query) }

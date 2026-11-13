@@ -50,6 +50,8 @@ export async function setupCrm(ctx) {
       const itv = await step('görüşme', () => c.post(`/leads/${lead.id}/interviews`, { campusId: campus.id, scheduledAt: at(itvDays < 0 ? 1 : itvDays, 14) }))
       if (itv?.id) {
         made.itv++
+        // Yeni akış örneği: gelecekteki görüşmelerden birini ertele (POST /interviews/{id}/reschedule)
+        if (itvDays > 0 && i % 4 === 1) await step('görüşme ertele', () => c.post(`/interviews/${itv.id}/reschedule`, { newScheduledAt: at(itvDays + 2, 15), rowVersion: itv.rowVersion }))
         if (itvDays < 0) {
           // API geçmiş tarihli görüşme planlamayı reddediyor → planlandıktan sonra tarih SQL ile geçmişe çekilir
           sqlStep('crm.interview.scheduled_at (geçmiş tarihli görüşmeler; API gelecek tarih şartı koyuyor)', `update crm.interview set scheduled_at=${q(at(itvDays, 14))} where id=${q(itv.id)}`)

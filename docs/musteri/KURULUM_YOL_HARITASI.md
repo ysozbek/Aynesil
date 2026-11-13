@@ -24,7 +24,7 @@ python3 devops/new_tenant.py --check \
 # Sorun yoksa aynı komutu --check olmadan çalıştırın
 ```
 
-Komut kurumu, kampüsleri, platform işlemleri (kurum açma, etkinleştirme/pasifleştirme) dışındaki tüm izinlere sahip **Yönetici** rolünü ve ilk yönetici kullanıcıyı açar. Geçici şifreyi bir kez ekrana yazar; müşteriye bu kullanıcı adı ve şifreyi iletin.
+Komut kurumu, kampüsleri, platform işlemleri (kurum açma, etkinleştirme/pasifleştirme) dışındaki tüm izinlere sahip **Yönetici** rolünü ve ilk yönetici kullanıcıyı açar. Geçici şifreyi bir kez ekrana yazar; yönetici ilk girişte şifresini değiştirmeye **zorlanır** (V50). Müşteriye bu kullanıcı adı ve şifreyi iletin.
 
 **Bilmeniz gerekenler:**
 - Seans türleri, ödeme yöntemleri, aday kaynakları gibi listeler ve menüler platform genelidir; kurum ilk girişten itibaren görür. Kurum isterse kendine özel değer ekler.

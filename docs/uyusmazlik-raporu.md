@@ -124,7 +124,7 @@ Toplam **88** bulgu: Kritik: **20**, Yüksek: **36**, Orta: **19**, Düşük: **
 
 ## 3. Kategori (j) — Backend'de olup frontend'in hiç çağırmadığı endpoint'ler
 
-Hata sayılmaz; bilgi amaçlıdır. Toplam **79** endpoint (579 backend endpoint'inden).
+Hata sayılmaz; bilgi amaçlıdır. Toplam **79** endpoint (579 backend endpoint'inden). **Güncel ve gruplanmış liste (A/B/C, gerekçeli): [ekransiz-endpointler.md](ekransiz-endpointler.md)** — bu tablo yalnızca "frontend hiç çağırmıyor" seviyesini kapsıyordu; servis var/ekran yok olanlar orada.
 
 | Controller | Metot | Route | Satır | İzin |
 |---|---|---|---|---|

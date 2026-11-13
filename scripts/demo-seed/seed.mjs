@@ -6,7 +6,7 @@
  */
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
-import { Client, fx, here, log, sql, sqlLog, section, info, q } from './lib.mjs'
+import { Client, fx, here, log, sql, sqlLog, section, info, q, clearMustChange } from './lib.mjs'
 import { setupIdentity } from './phases/identity.mjs'
 import { setupPeople } from './phases/people.mjs'
 import { setupSessions } from './phases/sessions.mjs'
@@ -64,12 +64,16 @@ for (const [code, t] of tenants) {
   section(`${code} — ${t.name}`)
   if (flag('--reset')) resetTenant(code)
   await ensureTenant(code, t)
+  // new_tenant.py yöneticisi must_change_password=true açar; seed'in oturumu açılabilsin diye demo kullanıcılarında kapatılır.
+  const firstLogin = `${fx.users.firstLogin.local}@${t.domain}`
+  clearMustChange(code, [firstLogin])
   const c = new Client(code)
   await c.login(`${fx.users.admin.local}@${t.domain}`, fx.password)
   const ctx = { code, t, c, ref: null, ids: {} }
   const run = async (name, fn) => { if (want(name)) { section(`${code} · ${name}`); try { await fn(ctx) } catch (e) { log.fail.push(`${code}/${name}: ${e.message}`); console.log(`   ✗ FAZ DURDU (${name}): ${e.message}`) } } }
   await setupIdentity(ctx)           // her zaman: ref, roller, kampüs/derslik haritası
   section(`${code} · people`); await setupPeople(ctx)
+  clearMustChange(code, [firstLogin])   // /users ile açılan demo kullanıcıları (ilk giriş örneği hariç)
   await run('sessions', setupSessions)
   await run('learning', setupLearning)
   await run('crm', setupCrm)
@@ -78,6 +82,7 @@ for (const [code, t] of tenants) {
   await run('ops', setupOps)
   await run('camp', setupCamp)
   await run('extras', setupExtras)
+  clearMustChange(code, [firstLogin])
   summary[code] = ctx.ids.summary || {}
 }
 console.log(`\n══ Özet ══\nbaşarılı adım: ${log.ok} · atlanan (zaten var): ${log.skip} · hata: ${log.fail.length}`)

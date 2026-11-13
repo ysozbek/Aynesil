@@ -1,5 +1,5 @@
 // Bildirim şablonları/tetikleyiciler (API) + örnek bildirim kutusu (SQL) + anketler ve yanıtlar (API, veli portalı kullanıcısıyla).
-import { step, info, idOf, count, sqlStep, q, Client, fx } from '../lib.mjs'
+import { step, info, idOf, count, sqlStep, q, Client, fx, dayStr } from '../lib.mjs'
 
 export async function setupExtras(ctx) {
   const { c, code, t, ids } = ctx
@@ -43,6 +43,61 @@ export async function setupExtras(ctx) {
     })
   } else info('anketler zaten var — atlandı')
   info('bildirim şablonu/tetikleyici, 7 örnek bildirim, 2 anket, yanıt ve geri bildirim')
+  await newFlowExamples(ctx)
+}
+
+// ── Ekransız uç noktaları kapatan akışlardan birer örnek (her biri kendi idempotency kontrolüyle) ──
+async function newFlowExamples(ctx) {
+  const { c, code, t, ids } = ctx
+  const pk = code.slice(-1).toLowerCase()
+
+  // Şablon yeni sürümü: KVKK şablonu v1 → v2 (v1 arşivlenir)
+  await step('şablon yeni sürüm', async () => {
+    const tpl = (await c.list('/legal/contract-templates?isCurrent=true')).find((x) => x.code === `kvkk_${pk}`)
+    if (!tpl) return
+    const versions = await c.get(`/legal/contract-templates/${tpl.code}/versions`)
+    if (versions.length > 1) return
+    await c.post(`/legal/contract-templates/${tpl.id}/new-version`, { effectiveFrom: '2026-09-01',
+      translations: [{ locale: 'tr', title: 'KVKK Aydınlatma Metni (Demo) — güncel', body: 'Kişisel verileriniz yalnızca hizmet sunumu amacıyla işlenir; saklama süresi güncellendi. (Demo metin, v2)' }] })
+  })
+
+  // Telafi: onaylı talebe seans ata → tamamla (öğrencinin ileri tarihli planlı seansı)
+  await step('telafi seans atama/tamamlama', async () => {
+    const done = await c.get('/scheduling/makeup-requests?status=completed&page=1&pageSize=1')
+    if ((done.totalCount ?? done.items?.length ?? 0) > 0) return
+    const approved = (await c.get('/scheduling/makeup-requests?status=approved&page=1&pageSize=20')).items ?? []
+    for (const req of approved) {
+      const cal = await c.get(`/scheduling/calendar/student/${req.studentId}?from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 60 * 864e5).toISOString())}`)
+      const target = cal.find((s) => s.status === 'scheduled' && s.id !== req.missedSessionId)
+      if (!target) continue
+      const full = await c.get(`/scheduling/makeup-requests/${req.id}`)
+      const assigned = await c.post(`/scheduling/makeup-requests/${req.id}/assign-session`, { makeupSessionId: target.id, rowVersion: full.rowVersion })
+      await c.post(`/scheduling/makeup-requests/${req.id}/complete`, { rowVersion: assigned.rowVersion })
+      return
+    }
+  })
+
+  // İade: ikinci bir talep başarısız işaretlenir (ilki finance fazında işleme alınır)
+  await step('iade başarısız işaretleme', async () => {
+    const refunds = (await c.get('/payments/refunds?page=1&pageSize=50')).items ?? []
+    if (refunds.some((r) => r.status === 'failed')) return
+    const pays = (await c.get('/payments/transactions?status=captured&page=1&pageSize=5')).items ?? []
+    const pay = pays.find((p) => !refunds.some((r) => r.paymentId === p.id)) ?? pays[0]
+    if (!pay) return
+    const r = await c.post('/payments/refunds', { paymentId: pay.id, amount: 100, reason: 'Demo: banka iadeyi reddetti' })
+    await c.post(`/payments/refunds/${r.id}/fail`, {})
+  })
+
+  // KPI: kuruma özel tanım
+  await step('KPI tanımı', async () => {
+    const code2 = 'demo.veli_geri_bildirim_orani'
+    const defs = await c.list('/performance-kpi/definitions')
+    if (defs.some((d) => d.code === code2)) return
+    await c.post('/performance-kpi/definitions', { code: code2, name: 'Veli geri bildirim oranı (demo)', unit: '%', spec: '{"source":"parent_feedback"}' })
+  })
+
+  // İlk giriş örneği: ilkgiris@… kullanıcısı must_change_password=true ile açık bırakılır (seed.mjs temizlemez).
+  info(`ilk giriş örneği: ${fx.users.firstLogin.local}@${t.domain} (must_change_password açık; diğer demo kullanıcılarında kapalı)`)
 }
 function sql0(q) { return sqlRun(q) }
 import { sql as sqlRun } from '../lib.mjs'

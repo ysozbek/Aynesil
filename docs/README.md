@@ -35,6 +35,7 @@ Ekip içi, güncel iş takibi ve karar kayıtları.
 | [EKRAN_IYILESTIRME_LISTESI.md](calisma/EKRAN_IYILESTIRME_LISTESI.md) | Ekran sorunları listesi ve durumları; bekleyen terim kararları (Bölüm 3) |
 | [MIGRATION_ONERISI_V35_tekrar_eden_plan.md](calisma/MIGRATION_ONERISI_V35_tekrar_eden_plan.md) | V35 migration'ının gerekçesi (uygulandı; karar kaydı) |
 | [FLYWAY_NOTLARI.md](calisma/FLYWAY_NOTLARI.md) | Flyway komutları için kısa notlar |
+| [../ekransiz-endpointler.md](ekransiz-endpointler.md) | Ekranı olmayan endpoint'ler: A (canlıdan önce) / B (modüle bağlı) / C (ölü), gerekçeli; hangileri kapatıldı |
 
 ## Raporlar — `raporlar/`
 

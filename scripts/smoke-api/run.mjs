@@ -214,6 +214,176 @@ async function setup() {
   ctx.leadId = idOf(r.json?.data)
 }
 
+// ── Ekransız uçları kapatan akışlar (yazma): must_change_password, şablon sürümleri, rıza, telafi, iade, izin bakiyesi, KPI tanımı, sözleşme ──
+/** Beklenen durum/kod denetimi: sapma `leak` (yetki/koruma delinmesi) ya da 4xx/5xx olarak raporlanır. */
+function expectStatus(phase, id, verb, urlPath, res, statuses, code) {
+  const okStatus = statuses.includes(res.status)
+  const okCode = !code || res.json?.code === code
+  record({ phase, id, verb, url: urlPath, status: res.status,
+    outcome: okStatus && okCode ? 'ok' : res.status < 300 ? 'leak' : res.status >= 500 || res.status === 0 ? '5xx' : '4xx',
+    note: okStatus && okCode ? `beklenen ${statuses.join('/')}${code ? ' ' + code : ''}` : `beklenen ${statuses.join('/')}${code ? ' ' + code : ''}; gelen ${res.status} ${res.json?.code ?? ''}`, mismatches: [] })
+}
+
+async function newFlows() {
+  const tag = RUN.toLowerCase()
+  const adminToken = token
+  const ref = async (type) => (await http('GET', `/reference-data/${type}?activeOnly=true`)).json?.data ?? []
+
+  // 1) must_change_password: yönetici açtığı hesap parola değişene kadar yalnızca parola değiştirme/çıkış uçlarını kullanabilir
+  const mustUser = `smoke.mcp.${tag}@demo-a.test`, tempPw = 'GeciciSifre!2026', newPw = 'YeniSifre!2026x'
+  let r = await write('yazma', 'user.create (must_change_password)', 'POST', '/users', {
+    username: mustUser, fullName: `Smoke İlk Giriş ${RUN}`, email: mustUser, phone: null, password: tempPw, preferredLocale: 'tr',
+    primaryCampusId: ctx.campusId ?? null, activateImmediately: true })
+  if (r.status && r.status < 300) {
+    const login1 = await http('POST', '/auth/login', { username: mustUser, password: tempPw })
+    const flagged = login1.json?.data?.mustChangePassword === true
+    record({ phase: 'yazma', id: 'auth.login (must_change_password bayrağı açık)', verb: 'POST', url: '/auth/login', status: login1.status,
+      outcome: login1.status === 200 && flagged ? 'ok' : 'type', note: flagged ? 'beklenen: mustChangePassword=true' : 'mustChangePassword=true bekleniyordu', mismatches: [] })
+    token = login1.json?.data?.accessToken
+    for (const [verb, p] of [['GET', '/students?page=1&pageSize=1'], ['GET', '/menus/me'], ['GET', '/campuses?page=1&pageSize=1'], ['GET', '/settings']])
+      expectStatus('yazma', `must_change_password: ${p.split('?')[0]} reddedilir`, verb, p, await http(verb, p), [403], 'Auth.PasswordChangeRequired')
+    expectStatus('yazma', 'auth.changePassword (must_change_password açıkken izinli)', 'POST', '/auth/change-password',
+      await http('POST', '/auth/change-password', { currentPassword: tempPw, newPassword: newPw }), [200, 204])
+    const login2 = await http('POST', '/auth/login', { username: mustUser, password: newPw })
+    token = login2.json?.data?.accessToken
+    record({ phase: 'yazma', id: 'auth.login (parola değişti, bayrak kapandı)', verb: 'POST', url: '/auth/login', status: login2.status,
+      outcome: login2.status === 200 && login2.json?.data?.mustChangePassword === false ? 'ok' : 'type', note: 'beklenen: mustChangePassword=false', mismatches: [] })
+    expectStatus('yazma', 'must_change_password kapandıktan sonra /menus/me erişilir', 'GET', '/menus/me', await http('GET', '/menus/me'), [200])
+    token = adminToken
+  } else record({ phase: 'yazma', id: 'must_change_password akışı', verb: 'POST', url: '/users', status: null, outcome: 'skip', note: 'kullanıcı oluşmadı', mismatches: [] })
+  token = adminToken
+  // şifremi unuttum: geçersiz token → 422 Auth.InvalidResetToken
+  expectStatus('yazma', 'auth.confirmPasswordReset (geçersiz token)', 'POST', '/auth/confirm-password-reset',
+    await http('POST', '/auth/confirm-password-reset', { token: `gecersiz-${tag}`, newPassword: 'YeniSifre!2026x' }), [422], 'Auth.InvalidResetToken')
+
+  // 2) sözleşme şablonu: oluştur → güncelle → yeni sürüm → sürümler
+  const consentTypes = await ref('consent_type'), contractTypes = await ref('contract_type')
+  const tplCode = `smoke_tpl_${tag}`
+  r = await write('yazma', 'legal.createContractTemplate', 'POST', '/legal/contract-templates', {
+    code: tplCode, contractTypeId: contractTypes[0]?.id ?? null, effectiveFrom: day(0),
+    translations: [{ locale: 'tr', title: `Smoke Şablon ${RUN}`, body: 'Smoke şablon metni.' }] })
+  const tpl = r.json?.data
+  if (tpl?.id) {
+    await write('yazma', 'legal.updateContractTemplate', 'PUT', `/legal/contract-templates/${tpl.id}`, {
+      contractTypeId: contractTypes[0]?.id ?? null, effectiveFrom: day(0),
+      translations: [{ locale: 'tr', title: `Smoke Şablon ${RUN} (güncel)`, body: 'Smoke şablon metni, güncellendi.' }], rowVersion: tpl.rowVersion })
+    r = await write('yazma', 'legal.newContractTemplateVersion', 'POST', `/legal/contract-templates/${tpl.id}/new-version`, {
+      effectiveFrom: day(1), translations: [{ locale: 'tr', title: `Smoke Şablon ${RUN} v2`, body: 'Smoke şablon metni v2.' }] })
+    const v = await http('GET', `/legal/contract-templates/${tplCode}/versions`)
+    const versions = v.json?.data ?? []
+    record({ phase: 'yazma', id: 'legal.listContractTemplateVersions (v1 arşiv + v2 güncel)', verb: 'GET', url: `/legal/contract-templates/${tplCode}/versions`, status: v.status,
+      outcome: v.status === 200 && versions.length === 2 && versions.filter(x => x.isCurrent).length === 1 ? 'ok' : 'type', note: `sürüm sayısı ${versions.length}`, mismatches: [] })
+    // 2b) sözleşme: oluştur → gönder → imzala → etkinleştir → süresini bitir (güncel şablonla)
+    const cur = r.json?.data
+    if (ctx.studentId && cur?.id) {
+      const c = await write('yazma', 'legal.createContract', 'POST', '/legal/contracts', { studentId: ctx.studentId, templateId: cur.id, guardianId: null, startsOn: day(0), endsOn: day(200) })
+      const cid = idOf(c.json?.data)
+      if (cid) {
+        await write('yazma', 'legal.sendContract', 'POST', `/legal/contracts/${cid}/send`, {})
+        const g = await http('GET', `/legal/contracts/${cid}`)
+        await write('yazma', 'legal.signContract', 'POST', `/legal/contracts/${cid}/sign`, { signedByName: 'Smoke Veli', signatureMethod: 'wet', signatureRef: `SMOKE-${RUN}`, signedFileId: null })
+        await write('yazma', 'legal.activateContract', 'POST', `/legal/contracts/${cid}/activate`, {})
+        await write('yazma', 'legal.expireContract', 'POST', `/legal/contracts/${cid}/expire`, {})
+        void g
+      }
+    }
+  } else record({ phase: 'yazma', id: 'legal.updateContractTemplate', verb: 'PUT', url: '/legal/contract-templates/{id}', status: null, outcome: 'skip', note: 'şablon oluşmadı', mismatches: [] })
+  // onam şablonu + rıza ver / geri al
+  const ctpl = await write('yazma', 'legal.createConsentTemplate', 'POST', '/legal/consent-templates', {
+    code: `smoke_consent_${tag}`, consentTypeId: consentTypes.find(x => x.code === 'data_processing')?.id ?? consentTypes[0]?.id ?? null, isMandatory: false, effectiveFrom: day(0),
+    translations: [{ locale: 'tr', title: `Smoke Onam ${RUN}`, body: 'Smoke onam metni.' }] })
+  const ctplDto = ctpl.json?.data
+  if (ctplDto?.id) {
+    await write('yazma', 'legal.updateConsentTemplate', 'PUT', `/legal/consent-templates/${ctplDto.id}`, {
+      consentTypeId: ctplDto.consentTypeId ?? null, isMandatory: true, effectiveFrom: day(0),
+      translations: [{ locale: 'tr', title: `Smoke Onam ${RUN} (güncel)`, body: 'Güncellendi.' }], rowVersion: ctplDto.rowVersion })
+    await write('yazma', 'legal.newConsentTemplateVersion', 'POST', `/legal/consent-templates/${ctplDto.id}/new-version`, {
+      effectiveFrom: day(1), translations: [{ locale: 'tr', title: `Smoke Onam ${RUN} v2`, body: 'v2.' }] })
+  }
+  if (ctx.studentId) {
+    const g = await write('yazma', 'legal.grantConsent', 'POST', '/legal/consents/grant', {
+      studentId: ctx.studentId, guardianId: null, templateId: null, consentTypeId: consentTypes.find(x => x.code === 'media_release')?.id ?? consentTypes[0]?.id, validUntil: day(30), evidenceFileId: null })
+    const gid = idOf(g.json?.data)
+    if (gid) {
+      await write('yazma', 'legal.withdrawConsent', 'POST', `/legal/consents/${gid}/withdraw`, {})
+      // geri alınan rıza değişmez: ikinci geri alma reddedilir
+      expectStatus('yazma', 'legal.withdrawConsent (zaten geri alınmış → reddedilir)', 'POST', `/legal/consents/${gid}/withdraw`, await http('POST', `/legal/consents/${gid}/withdraw`, {}), [400, 422])
+    }
+  }
+
+  // 3) telafi: talep → onay → seans ata → tamamla
+  if (ctx.studentId && ctx.sessionTypeId && ctx.educatorId) {
+    const mr = await write('yazma', 'scheduling.createMakeupRequest', 'POST', '/scheduling/makeup-requests', { studentId: ctx.studentId, missedSessionId: null, missedReasonId: null, note: `Smoke telafi ${RUN}`, expiresOn: day(30) })
+    const mrDto = mr.json?.data
+    if (mrDto?.id) {
+      const ap = await write('yazma', 'scheduling.approveMakeupRequest', 'POST', `/scheduling/makeup-requests/${mrDto.id}/approve`, { rowVersion: mrDto.rowVersion })
+      const sess = await write('yazma', 'scheduling.createSession (telafi seansı)', 'POST', '/scheduling/sessions', {
+        sessionTypeId: ctx.sessionTypeId, startsAt: at(12, 9), endsAt: at(12, 10), campusId: ctx.campusId, roomId: ctx.roomId,
+        title: `Smoke Telafi ${RUN}`, isMakeup: true, participantStudentIds: [ctx.studentId], educatorAssignments: [{ educatorId: ctx.educatorId, role: 'lead' }] })
+      const sid = idOf(sess.json?.data)
+      if (sid && ap.json?.data) {
+        const as = await write('yazma', 'scheduling.assignMakeupSession', 'POST', `/scheduling/makeup-requests/${mrDto.id}/assign-session`, { makeupSessionId: sid, rowVersion: ap.json.data.rowVersion })
+        if (as.json?.data) await write('yazma', 'scheduling.completeMakeupRequest', 'POST', `/scheduling/makeup-requests/${mrDto.id}/complete`, { rowVersion: as.json.data.rowVersion })
+      }
+      // başka öğrencinin seansı atanamaz: ikinci bir talep → öğrencisi olmayan seans → reddedilir
+      const mr2 = await http('POST', '/scheduling/makeup-requests', { studentId: ctx.studentId, missedSessionId: null, missedReasonId: null, note: `Smoke telafi 2 ${RUN}`, expiresOn: day(30) })
+      const mr2Dto = mr2.json?.data
+      const foreignSession = (await http('GET', '/scheduling/sessions?page=1&pageSize=50')).json?.data?.items?.find(x => x.participantCount > 0 && x.id !== sid)
+      if (mr2Dto?.id && foreignSession) {
+        const ap2 = await http('POST', `/scheduling/makeup-requests/${mr2Dto.id}/approve`, { rowVersion: mr2Dto.rowVersion })
+        const mine = await http('GET', `/scheduling/calendar/student/${ctx.studentId}?from=${encodeURIComponent(at(-1, 0))}&to=${encodeURIComponent(at(60, 0))}`)
+        const notMine = !((mine.json?.data ?? []).some(x => x.id === foreignSession.id))
+        if (notMine && ap2.json?.data) expectStatus('yazma', 'scheduling.assignMakeupSession (başka öğrencinin seansı → reddedilir)', 'POST', `/scheduling/makeup-requests/${mr2Dto.id}/assign-session`,
+          await http('POST', `/scheduling/makeup-requests/${mr2Dto.id}/assign-session`, { makeupSessionId: foreignSession.id, rowVersion: ap2.json.data.rowVersion }), [400, 422], 'Rule.MakeupSessionStudentMismatch')
+      }
+    }
+  } else record({ phase: 'yazma', id: 'scheduling.assignMakeupSession', verb: 'POST', url: '/scheduling/makeup-requests/{id}/assign-session', status: null, outcome: 'skip', note: 'ön koşul eksik', mismatches: [] })
+
+  // 4) iade: fatura → satır → kes → ödeme → onay → iade talebi → işleme al; ikinci talep → başarısız
+  if (ctx.studentId) {
+    const inv = await write('yazma', 'finance.createInvoice', 'POST', '/payments/invoices', { issueDate: day(0), currency: 'TRY', studentId: ctx.studentId, guardianId: null, dueDate: day(14) })
+    const invDto = inv.json?.data
+    if (invDto?.id) {
+      const line = await write('yazma', 'finance.addInvoiceLine', 'POST', `/payments/invoices/${invDto.id}/lines`, { description: 'Smoke paket', unitPrice: 1000, quantity: 1, studentPackageId: null, sortOrder: 1 })
+      const issued = line.json?.data ? await write('yazma', 'finance.issueInvoice', 'POST', `/payments/invoices/${invDto.id}/issue`, { invoiceNo: `SMK-${RUN}`, rowVersion: line.json.data.rowVersion }) : null
+      const method = (await ref('payment_method'))[0]?.id
+      if (issued?.json?.data && method) {
+        const pay = await write('yazma', 'finance.createTransaction', 'POST', '/payments/transactions', { amount: 1000, currency: 'TRY', invoiceId: invDto.id, studentId: ctx.studentId,
+          paymentMethodId: method, gatewayProviderId: null, gatewayReference: `SMK-${RUN}`, idempotencyKey: `smoke-${RUN}`, paidAt: iso(new Date()) })
+        const payDto = pay.json?.data
+        if (payDto?.id) {
+          await write('yazma', 'finance.captureTransaction', 'POST', `/payments/transactions/${payDto.id}/capture`, { gatewayReference: null, paidAt: null, rowVersion: payDto.rowVersion })
+          const rf = await write('yazma', 'finance.requestRefund', 'POST', '/payments/refunds', { paymentId: payDto.id, amount: 200, reason: 'Smoke iade (işlenecek)' })
+          if (rf.json?.data?.id) await write('yazma', 'finance.processRefund', 'POST', `/payments/refunds/${rf.json.data.id}/process`, {})
+          const rf2 = await write('yazma', 'finance.requestRefund (ikinci)', 'POST', '/payments/refunds', { paymentId: payDto.id, amount: 100, reason: 'Smoke iade (başarısız)' })
+          if (rf2.json?.data?.id) {
+            await write('yazma', 'finance.failRefund', 'POST', `/payments/refunds/${rf2.json.data.id}/fail`, {})
+            expectStatus('yazma', 'finance.processRefund (başarısız iade tekrar işlenemez)', 'POST', `/payments/refunds/${rf2.json.data.id}/process`, await http('POST', `/payments/refunds/${rf2.json.data.id}/process`, {}), [400, 422])
+          }
+        }
+      }
+    }
+  }
+
+  // 5) izin bakiyesi tanımla (+ aynı kombinasyon ikinci kez reddedilir)
+  const annual = (await ref('leave_type')).find(x => x.code === 'annual') ?? (await ref('leave_type'))[0]
+  if (ctx.educatorId && annual) {
+    const body = { educatorId: ctx.educatorId, leaveTypeId: annual.id, periodYear: new Date().getFullYear(), entitled: 14, unit: 'day' }
+    await write('yazma', 'leave.initializeBalance', 'POST', '/leave/balances', body)
+    expectStatus('yazma', 'leave.initializeBalance (aynı eğitmen/tür/yıl → reddedilir)', 'POST', '/leave/balances', await http('POST', '/leave/balances', body), [400, 409, 422])
+  } else record({ phase: 'yazma', id: 'leave.initializeBalance', verb: 'POST', url: '/leave/balances', status: null, outcome: 'skip', note: 'eğitmen/izin türü yok', mismatches: [] })
+
+  // 6) KPI tanımı: oluştur → güncelle; geçersiz spec reddedilir
+  const kc = `smoke.kpi_${tag}`
+  const kd = await write('yazma', 'kpi.createDefinition', 'POST', '/performance-kpi/definitions', { code: kc, name: `Smoke KPI ${RUN}`, categoryId: null, unit: '%', spec: '{"source":"smoke"}' })
+  if (kd.json?.data?.id) {
+    await write('yazma', 'kpi.updateDefinition', 'PUT', `/performance-kpi/definitions/${kd.json.data.id}`, { name: `Smoke KPI ${RUN} (güncel)`, categoryId: null, unit: 'adet', spec: '{"source":"smoke","v":2}', rowVersion: kd.json.data.rowVersion })
+    expectStatus('yazma', 'kpi.createDefinition (geçersiz spec → reddedilir)', 'POST', '/performance-kpi/definitions',
+      await http('POST', '/performance-kpi/definitions', { code: `${kc}_x`, name: 'x', categoryId: null, unit: null, spec: '[1,2]' }), [400, 422])
+  }
+  token = adminToken
+}
+
 async function writeFlows() {
   // 0) kullanıcı kaydı (davet) + parola sıfırlama isteği — INotificationService kaydı eksikse 500 verir
   const regUser = `smoke.reg.${RUN.toLowerCase()}@demo-a.test`
@@ -433,6 +603,7 @@ async function finish(abort = false) {
 await login()
 await setup()
 await writeFlows()
+await newFlows()
 await sweep()
 await isolation()
 await guardianRound()
