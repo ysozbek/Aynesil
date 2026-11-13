@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Application.Common.Identity;
 using Aynesil.Application.Features.Educators.Commands;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Application.Features.Educators.Queries;
@@ -222,6 +223,58 @@ public sealed class EducatorsController : BaseController
     {
         await Sender.Send(new DeleteCertificationCommand(certId), ct);
         return NoContentResult(MsgKeys.Success.CertificationDeleted);
+    }
+
+    // ── User account link (Educator) ──────────────────────────────────────────────
+    // ActingEducator resolves the signed-in educator from this link (session notes, BEP approval).
+
+    [HttpGet("{id:guid}/user-account")]
+    [HasPermission(Permissions.Educators.Read)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedUserAccountDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserAccount(Guid id, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetEducatorUserAccountQuery(id), ct));
+
+    /// <summary>The educator record linked to a user account (null when none) — shown on the user detail screen.</summary>
+    [HttpGet("by-user/{userId:guid}")]
+    [HasPermission(Permissions.Educators.Read)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedEducatorDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByUser(Guid userId, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetEducatorByUserQuery(userId), ct));
+
+    /// <summary>Links an existing user of the same corporation. 409 when the user already backs another educator.</summary>
+    [HttpPut("{id:guid}/user-account")]
+    [HasPermission(Permissions.Educators.Update)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedUserAccountDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> LinkUserAccount(Guid id, [FromBody] LinkUserAccountRequest req, CancellationToken ct)
+        => OkResult(await Sender.Send(new LinkEducatorUserAccountCommand(id, req.UserId), ct));
+
+    /// <summary>Removes the link; the user account and its roles are kept.</summary>
+    [HttpDelete("{id:guid}/user-account")]
+    [HasPermission(Permissions.Educators.Update)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UnlinkUserAccount(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new UnlinkEducatorUserAccountCommand(id), ct);
+        return NoContentResult(MsgKeys.Success.UserAccountUnlinked);
+    }
+
+    /// <summary>
+    /// Creates a new user with the chosen role and links it. The response carries a temporary password
+    /// exactly once (no e-mail provider yet): the admin hands it over and the user changes it after login.
+    /// </summary>
+    [HttpPost("{id:guid}/user-account")]
+    [HasPermission(Permissions.Educators.Update)]
+    [HasPermission(Permissions.Users.Create)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse<CreatedLinkedUserAccountDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> CreateUserAccount(Guid id, [FromBody] CreateLinkedUserAccountRequest req, CancellationToken ct)
+    {
+        var result = await Sender.Send(new CreateEducatorUserAccountCommand(id, req.ToModel()), ct);
+        return CreatedResult(result, $"/api/users/{result.User.Id}");
     }
 
     // ── Hierarchy (Educator Assignment Workflow) ──────────────────────────────

@@ -44,7 +44,7 @@
   <data name="Error.Unexpected" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Doğrulama hatası.</value></data>
   <data name="Rule.AcademicPeriodInUse" xml:space="preserve"><value>Eğitim planlarının atandığı bir akademik dönem silinemez.</value></data>
-  <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>Bu işlem için oturumdaki kullanıcıya bağlı bir eğitmen kaydı gerekir.</value></data>
+  <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>Oturumdaki kullanıcı hiçbir eğitmen kaydına bağlı değil; bu işlem eğitmen adına yapılır. Bir yönetici Eğitmenler → eğitmen detayı → "Kullanıcı hesabı" bölümünden bu kullanıcıyı eğitmen kaydına bağlamalıdır.</value></data>
   <data name="Rule.ActivePortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için aktif portal erişim kaydı bulunamadı.</value></data>
   <data name="Rule.ActivityActionStatus" xml:space="preserve"><value>'{1}' durumundaki bir etkinlik için '{0}' işlemi yapılamaz.</value></data>
   <data name="Rule.ActivityAlreadyActive" xml:space="preserve"><value>Etkinlik zaten aktif.</value></data>
@@ -368,4 +368,9 @@
   <data name="Success.UserSuspended" xml:space="preserve"><value>Kullanıcı askıya alındı.</value></data>
   <data name="Rule.DevelopmentReportAlreadyFinalized" xml:space="preserve"><value>Gelişim raporu zaten kesinleşmiş.</value></data>
   <data name="Rule.DevelopmentReportFinalized" xml:space="preserve"><value>Kesinleşmiş gelişim raporu değiştirilemez.</value></data>
+  <data name="Rule.RecordAlreadyLinkedToUser" xml:space="preserve"><value>Bu kayıt zaten '{0}' kullanıcısına bağlı; başka bir kullanıcı bağlamadan önce mevcut bağlantıyı kaldırın.</value></data>
+  <data name="Rule.UserAlreadyLinkedToEducator" xml:space="preserve"><value>'{0}' kullanıcısı zaten {1} eğitmen kaydına bağlı. Bir kullanıcı en fazla bir eğitmen kaydına bağlanabilir.</value></data>
+  <data name="Rule.UserAlreadyLinkedToGuardian" xml:space="preserve"><value>'{0}' kullanıcısı zaten {1} veli kaydına bağlı. Bir kullanıcı en fazla bir veli kaydına bağlanabilir.</value></data>
+  <data name="Rule.RoleLacksPermission" xml:space="preserve"><value>Seçilen rol '{0}' iznini içermiyor; bu izni içeren bir rol seçin (ör. Veli (portal)).</value></data>
+  <data name="Success.UserAccountUnlinked" xml:space="preserve"><value>Kullanıcı hesabı bağlantısı kaldırıldı.</value></data>
 </root>

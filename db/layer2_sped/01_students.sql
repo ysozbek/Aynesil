@@ -73,6 +73,8 @@ create table students.guardian (
   deleted_at  timestamptz,
   row_version integer not null default 1
 );
+-- A portal user account backs at most one (live) guardian record (V48).
+create unique index uq_guardian_user on students.guardian (user_id) where user_id is not null and deleted_at is null;
 
 create table students.student_guardian (
   id              uuid primary key default core.uuid_generate_v7(),

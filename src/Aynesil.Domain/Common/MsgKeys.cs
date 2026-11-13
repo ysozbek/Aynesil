@@ -92,6 +92,10 @@ public static class MsgKeys
         public static readonly MsgKey ViewingLogNotFound = new("Rule.ViewingLogNotFound");
         public static readonly MsgKey VisitNotFoundOrCancelled = new("Rule.VisitNotFoundOrCancelled");
         public static readonly MsgKey ActingEducatorRequired = new("Rule.ActingEducatorRequired");
+        public static readonly MsgKey RecordAlreadyLinkedToUser = new("Rule.RecordAlreadyLinkedToUser");
+        public static readonly MsgKey UserAlreadyLinkedToEducator = new("Rule.UserAlreadyLinkedToEducator");
+        public static readonly MsgKey UserAlreadyLinkedToGuardian = new("Rule.UserAlreadyLinkedToGuardian");
+        public static readonly MsgKey RoleLacksPermission = new("Rule.RoleLacksPermission");
         public static readonly MsgKey CampusCodeExists = new("Rule.CampusCodeExists");
         public static readonly MsgKey CannotDeleteSelf = new("Rule.CannotDeleteSelf");
         public static readonly MsgKey CannotSuspendSelf = new("Rule.CannotSuspendSelf");
@@ -349,6 +353,7 @@ public static class MsgKeys
         public static readonly MsgKey PasswordReset = new("Success.PasswordReset");
         public static readonly MsgKey PasswordResetRequested = new("Success.PasswordResetRequested");
         public static readonly MsgKey PortalAccessRevoked = new("Success.PortalAccessRevoked");
+        public static readonly MsgKey UserAccountUnlinked = new("Success.UserAccountUnlinked");
         public static readonly MsgKey ProgramDeleted = new("Success.ProgramDeleted");
         public static readonly MsgKey ProgramServiceDeleted = new("Success.ProgramServiceDeleted");
         public static readonly MsgKey PromotionActivated = new("Success.PromotionActivated");

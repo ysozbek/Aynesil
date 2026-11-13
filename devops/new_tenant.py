@@ -8,7 +8,8 @@ Oluşturulanlar:
   2. core.campus         — bir veya daha fazla kampüs (şube)
   3. iam.role 'admin'    — kurum yöneticisi rolü: platform işlemleri (corporation:create/delete)
                            dışındaki tüm izinler
-  4. iam.user_account    — ilk yönetici kullanıcı (+ iam.user_role ataması)
+  4. iam.role 'guardian' — veli portalı rolü (yalnızca portal izinleri; veli hesapları bununla açılır)
+  5. iam.user_account    — ilk yönetici kullanıcı (+ iam.user_role ataması)
 
 Referans veriler (seans türleri, ödeme yöntemleri vb.), izin kataloğu ve menüler
 platform genelidir (corporation_id NULL), Flyway ile zaten yüklüdür; kurum
@@ -186,6 +187,16 @@ begin
   select v_role, p.id from iam.permission p
    where p.code not in ('corporation:create', 'corporation:delete');
   get diagnostics v_perms = row_count;
+
+  -- ── Guardian (parent portal) role: portal-only permissions (V48) ────────
+  -- Parent accounts opened from a guardian record (Guardians → Kullanıcı hesabı) get this role.
+  insert into iam.role (corporation_id, code, name, description, is_system)
+  values (v_corp, 'guardian', 'Veli (portal)', 'Veli portalı hesabı: yalnızca portal izinleri', false);
+
+  insert into iam.role_permission (role_id, permission_id)
+  select r.id, p.id from iam.role r
+    join iam.permission p on p.code in ('portal:access', 'parent_feedback:create', 'survey:respond', 'notification:read')
+   where r.corporation_id = v_corp and r.code = 'guardian';
 
   -- ── First admin user ────────────────────────────────────────────────────
   insert into iam.user_account (corporation_id, username, email, full_name, password_hash,

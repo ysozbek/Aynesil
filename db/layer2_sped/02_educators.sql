@@ -25,6 +25,8 @@ create table educators.educator (
   row_version integer not null default 1
 );
 comment on table educators.educator is 'Educator master record. Title is configurable reference data (therapist, psychologist, consultant, ...).';
+-- A user account backs at most one (live) educator record: ActingEducator resolves the author from it (V48).
+create unique index uq_educator_user on educators.educator (user_id) where user_id is not null and deleted_at is null;
 
 create table educators.educator_campus (
   id             uuid primary key default core.uuid_generate_v7(),

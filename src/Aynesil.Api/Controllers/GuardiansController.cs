@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Application.Common.Identity;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Application.Features.Students.Queries;
@@ -134,6 +135,58 @@ public sealed class GuardiansController : BaseController
             req.CanViewSessions, req.CanViewAttendance, req.CanViewReports,
             req.CanViewPlan, req.CanViewFinance, req.CanViewCamera), ct);
         return OkResult(result);
+    }
+
+    // ── User account link (Guardian) ──────────────────────────────────────────────
+    // Parent-portal login. Per-student visibility is granted separately (portal-access).
+
+    [HttpGet("{id:guid}/user-account")]
+    [HasPermission(Permissions.Guardians.Read)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedUserAccountDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserAccount(Guid id, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetGuardianUserAccountQuery(id), ct));
+
+    /// <summary>The guardian record linked to a user account (null when none) — shown on the user detail screen.</summary>
+    [HttpGet("by-user/{userId:guid}")]
+    [HasPermission(Permissions.Guardians.Read)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedGuardianDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByUser(Guid userId, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetGuardianByUserQuery(userId), ct));
+
+    /// <summary>Links an existing user of the same corporation. 409 when the user already backs another guardian.</summary>
+    [HttpPut("{id:guid}/user-account")]
+    [HasPermission(Permissions.Guardians.ManagePortal)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse<LinkedUserAccountDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> LinkUserAccount(Guid id, [FromBody] LinkUserAccountRequest req, CancellationToken ct)
+        => OkResult(await Sender.Send(new LinkGuardianUserAccountCommand(id, req.UserId), ct));
+
+    /// <summary>Removes the link; the user account and its roles are kept.</summary>
+    [HttpDelete("{id:guid}/user-account")]
+    [HasPermission(Permissions.Guardians.ManagePortal)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UnlinkUserAccount(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new UnlinkGuardianUserAccountCommand(id), ct);
+        return NoContentResult(MsgKeys.Success.UserAccountUnlinked);
+    }
+
+    /// <summary>
+    /// Creates a new user with the chosen role and links it. The response carries a temporary password
+    /// exactly once (no e-mail provider yet): the admin hands it over and the user changes it after login.
+    /// </summary>
+    [HttpPost("{id:guid}/user-account")]
+    [HasPermission(Permissions.Guardians.ManagePortal)]
+    [HasPermission(Permissions.Users.Create)]
+    [HasPermission(Permissions.Users.Update)]
+    [ProducesResponseType(typeof(ApiResponse<CreatedLinkedUserAccountDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> CreateUserAccount(Guid id, [FromBody] CreateLinkedUserAccountRequest req, CancellationToken ct)
+    {
+        var result = await Sender.Send(new CreateGuardianUserAccountCommand(id, req.ToModel()), ct);
+        return CreatedResult(result, $"/api/users/{result.User.Id}");
     }
 }
 
