@@ -1353,6 +1353,8 @@ const tr = {
       title: 'Faturalar',
       description: 'Fatura oluşturma ve takibini yönetin.',
       create: 'Fatura Oluştur',
+      createHint: 'Fatura taslak olarak açılır; kalemleri ekleyip kesme işlemini fatura detayında yaparsınız.',
+      dueBeforeIssue: 'Vade tarihi düzenleme tarihinden önce olamaz.',
       detail: 'Fatura Detayı',
       no: 'Fatura No',
       issueDate: 'Düzenleme Tarihi',

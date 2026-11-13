@@ -566,7 +566,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'finance/invoices/new',
         name: 'invoice-new',
-        component: () => import('@/views/finance/InvoiceDetailView.vue'),
+        component: () => import('@/views/finance/InvoiceListView.vue'),
         meta: { permission: Permissions.Invoices.Create },
       },
       {

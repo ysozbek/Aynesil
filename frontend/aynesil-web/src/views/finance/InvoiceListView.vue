@@ -7,6 +7,9 @@ import { usePermission } from '@/composables/usePermission'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import StudentPicker from '@/components/pickers/StudentPicker.vue'
+import { toLocalDateString } from '@/utils/datetime'
 import type { Column } from '@/components/shared/DataTable.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { InvoiceListItemDto } from '@/types/finance.types'
@@ -28,7 +31,48 @@ const query = reactive({
 })
 
 watch(() => [query.status, query.studentId, query.from, query.to, query.page], () => loadList())
-onMounted(() => loadList())
+onMounted(() => {
+  loadList()
+  if (route.name === 'invoice-new') openCreate()
+})
+
+// ── Yeni fatura (taslak) ─────────────────────────────────────────────────────
+// /finance/invoices/new bu görünümü açar ve formu gösterir. Kalemler ve kesme işlemi detay sayfasındadır.
+const showCreate = ref(false)
+const createError = ref('')
+const createForm = reactive({ studentId: '', issueDate: '', dueDate: '', currency: 'TRY' })
+
+function openCreate() {
+  Object.assign(createForm, { studentId: '', issueDate: toLocalDateString(), dueDate: '', currency: 'TRY' })
+  createError.value = ''
+  showCreate.value = true
+}
+
+function closeCreate() {
+  showCreate.value = false
+  if (route.name === 'invoice-new') router.replace({ name: 'invoices' })
+}
+
+async function submitCreate() {
+  createError.value = ''
+  if (!createForm.studentId) { createError.value = t('validation.required', { field: t('student.fullName') }); return }
+  if (!createForm.issueDate) { createError.value = t('validation.required', { field: t('finance.invoice.issueDate') }); return }
+  if (createForm.dueDate && createForm.dueDate < createForm.issueDate) { createError.value = t('finance.invoice.dueBeforeIssue'); return }
+  try {
+    const created = await store.createInvoice({
+      studentId: createForm.studentId,
+      issueDate: createForm.issueDate,
+      dueDate: createForm.dueDate || undefined,
+      currency: createForm.currency,
+    })
+    showCreate.value = false
+    router.push({ name: 'invoice-detail', params: { id: created.id } })
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
+}
+
+const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary'
 
 async function loadList() {
   await store.fetchInvoices({
@@ -70,7 +114,7 @@ function formatCurrency(val: number, currency = 'TRY'): string {
     <PageHeader :title="t('finance.invoice.title')" :description="t('finance.invoice.description')">
       <button
         v-if="can(Permissions.Invoices.Create)"
-        @click="router.push({ name: 'invoice-new' })"
+        @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,5 +197,32 @@ function formatCurrency(val: number, currency = 'TRY'): string {
         @update:page-size="(s) => { query.pageSize = s; query.page = 1 }"
       />
     </div>
+
+    <FormModal
+      :open="showCreate"
+      :title="t('finance.invoice.create')"
+      :saving="store.saving"
+      @submit="submitCreate"
+      @close="closeCreate"
+    >
+      <div class="space-y-4">
+        <p v-if="createError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ createError }}</p>
+        <p class="text-xs text-muted-foreground">{{ t('finance.invoice.createHint') }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('student.fullName') }} *</label>
+          <StudentPicker v-model="createForm.studentId" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('finance.invoice.issueDate') }} *</label>
+            <input v-model="createForm.issueDate" type="date" :class="inputClass" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('finance.invoice.dueDate') }}</label>
+            <input v-model="createForm.dueDate" type="date" :class="inputClass" />
+          </div>
+        </div>
+      </div>
+    </FormModal>
   </div>
 </template>
