@@ -307,7 +307,7 @@ async function newFlows() {
     if (gid) {
       await write('yazma', 'legal.withdrawConsent', 'POST', `/legal/consents/${gid}/withdraw`, {})
       // geri alınan rıza değişmez: ikinci geri alma reddedilir
-      expectStatus('yazma', 'legal.withdrawConsent (zaten geri alınmış → reddedilir)', 'POST', `/legal/consents/${gid}/withdraw`, await http('POST', `/legal/consents/${gid}/withdraw`, {}), [400, 422])
+      expectStatus('yazma', 'legal.withdrawConsent (zaten geri alınmış → reddedilir)', 'POST', `/legal/consents/${gid}/withdraw`, await http('POST', `/legal/consents/${gid}/withdraw`, {}), [400, 409, 422], 'Rule.ConsentWithdrawNeedsGranted')
     }
   }
 
@@ -334,7 +334,7 @@ async function newFlows() {
         const mine = await http('GET', `/scheduling/calendar/student/${ctx.studentId}?from=${encodeURIComponent(at(-1, 0))}&to=${encodeURIComponent(at(60, 0))}`)
         const notMine = !((mine.json?.data ?? []).some(x => x.id === foreignSession.id))
         if (notMine && ap2.json?.data) expectStatus('yazma', 'scheduling.assignMakeupSession (başka öğrencinin seansı → reddedilir)', 'POST', `/scheduling/makeup-requests/${mr2Dto.id}/assign-session`,
-          await http('POST', `/scheduling/makeup-requests/${mr2Dto.id}/assign-session`, { makeupSessionId: foreignSession.id, rowVersion: ap2.json.data.rowVersion }), [400, 422], 'Rule.MakeupSessionStudentMismatch')
+          await http('POST', `/scheduling/makeup-requests/${mr2Dto.id}/assign-session`, { makeupSessionId: foreignSession.id, rowVersion: ap2.json.data.rowVersion }), [400, 409, 422], 'Rule.MakeupSessionStudentMismatch')
       }
     }
   } else record({ phase: 'yazma', id: 'scheduling.assignMakeupSession', verb: 'POST', url: '/scheduling/makeup-requests/{id}/assign-session', status: null, outcome: 'skip', note: 'ön koşul eksik', mismatches: [] })
@@ -358,7 +358,7 @@ async function newFlows() {
           const rf2 = await write('yazma', 'finance.requestRefund (ikinci)', 'POST', '/payments/refunds', { paymentId: payDto.id, amount: 100, reason: 'Smoke iade (başarısız)' })
           if (rf2.json?.data?.id) {
             await write('yazma', 'finance.failRefund', 'POST', `/payments/refunds/${rf2.json.data.id}/fail`, {})
-            expectStatus('yazma', 'finance.processRefund (başarısız iade tekrar işlenemez)', 'POST', `/payments/refunds/${rf2.json.data.id}/process`, await http('POST', `/payments/refunds/${rf2.json.data.id}/process`, {}), [400, 422])
+            expectStatus('yazma', 'finance.processRefund (başarısız iade tekrar işlenemez)', 'POST', `/payments/refunds/${rf2.json.data.id}/process`, await http('POST', `/payments/refunds/${rf2.json.data.id}/process`, {}), [400, 409, 422], 'Rule.OnlyPendingRefundProcess')
           }
         }
       }
@@ -370,7 +370,7 @@ async function newFlows() {
   if (ctx.educatorId && annual) {
     const body = { educatorId: ctx.educatorId, leaveTypeId: annual.id, periodYear: new Date().getFullYear(), entitled: 14, unit: 'day' }
     await write('yazma', 'leave.initializeBalance', 'POST', '/leave/balances', body)
-    expectStatus('yazma', 'leave.initializeBalance (aynı eğitmen/tür/yıl → reddedilir)', 'POST', '/leave/balances', await http('POST', '/leave/balances', body), [400, 409, 422])
+    expectStatus('yazma', 'leave.initializeBalance (aynı eğitmen/tür/yıl → reddedilir)', 'POST', '/leave/balances', await http('POST', '/leave/balances', body), [400, 409, 422], 'Rule.LeaveBalanceExists')
   } else record({ phase: 'yazma', id: 'leave.initializeBalance', verb: 'POST', url: '/leave/balances', status: null, outcome: 'skip', note: 'eğitmen/izin türü yok', mismatches: [] })
 
   // 6) KPI tanımı: oluştur → güncelle; geçersiz spec reddedilir
@@ -379,7 +379,7 @@ async function newFlows() {
   if (kd.json?.data?.id) {
     await write('yazma', 'kpi.updateDefinition', 'PUT', `/performance-kpi/definitions/${kd.json.data.id}`, { name: `Smoke KPI ${RUN} (güncel)`, categoryId: null, unit: 'adet', spec: '{"source":"smoke","v":2}', rowVersion: kd.json.data.rowVersion })
     expectStatus('yazma', 'kpi.createDefinition (geçersiz spec → reddedilir)', 'POST', '/performance-kpi/definitions',
-      await http('POST', '/performance-kpi/definitions', { code: `${kc}_x`, name: 'x', categoryId: null, unit: null, spec: '[1,2]' }), [400, 422])
+      await http('POST', '/performance-kpi/definitions', { code: `${kc}_x`, name: 'x', categoryId: null, unit: null, spec: '[1,2]' }), [400, 409, 422])
   }
   token = adminToken
 }

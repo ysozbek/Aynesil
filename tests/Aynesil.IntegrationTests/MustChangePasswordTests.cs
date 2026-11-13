@@ -136,6 +136,17 @@ public sealed class MustChangePasswordTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task A_stale_flagged_token_does_not_block_anonymous_login()
+    {
+        var data = await LoginDataAsync(Flagged, Password);
+        var client = Authed(data.GetProperty("accessToken").GetString()!);
+
+        // Giriş anonim uçtur: başlıkta eski bir "mcp" token'ı olsa bile engellenmemeli.
+        using var login = await client.PostAsJsonAsync("/api/auth/login", new { username = Normal, password = Password });
+        login.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task Unflagged_user_is_not_restricted()
     {
         var data = await LoginDataAsync(Normal, Password);
