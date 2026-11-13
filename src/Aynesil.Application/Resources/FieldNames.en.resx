@@ -158,4 +158,5 @@
   <data name="Word.Total" xml:space="preserve"><value>Total</value></data>
   <data name="Word.Type" xml:space="preserve"><value>Type</value></data>
   <data name="Word.Url" xml:space="preserve"><value>URL</value></data>
+  <data name="Reason" xml:space="preserve"><value>Void reason</value></data>
 </root>

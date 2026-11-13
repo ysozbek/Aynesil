@@ -119,7 +119,7 @@ public class Invoice : TenantEntity
     public void Void(string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))
-            throw new ArgumentException("A void reason is required.", nameof(reason));
+            throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Reason"));
 
         if (Status == "void")
             throw new BusinessRuleViolationException(MsgKeys.Rule.InvoiceAlreadyVoid);

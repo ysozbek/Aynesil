@@ -158,4 +158,5 @@
   <data name="Word.Total" xml:space="preserve"><value>Toplam</value></data>
   <data name="Word.Type" xml:space="preserve"><value>Tür</value></data>
   <data name="Word.Url" xml:space="preserve"><value>Bağlantı</value></data>
+  <data name="Reason" xml:space="preserve"><value>İptal gerekçesi</value></data>
 </root>

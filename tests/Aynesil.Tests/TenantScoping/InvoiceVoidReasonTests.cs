@@ -49,7 +49,7 @@ public class InvoiceVoidReasonTests
     {
         var invoice = DraftInvoice();
         var act = () => invoice.Void(" ");
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<Aynesil.Domain.Common.InvalidArgumentException>();
         invoice.Status.Should().Be("draft");
     }
 }
