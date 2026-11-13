@@ -331,7 +331,8 @@ const isoRec = (id, url, res, okStatuses, what) => {
 async function isolation() {
   const iso = fx.isolation, mainToken = token
   // diğer kurumun kayıt id'lerini kendi yöneticisiyle topla
-  await login(iso.otherTenantAdmin.username, iso.otherTenantAdmin.password, 'izolasyon-hazırlık')
+  const otherLogin = await login(iso.otherTenantAdmin.username, iso.otherTenantAdmin.password, 'izolasyon-hazırlık')
+  const otherCorporationId = otherLogin?.corporationId
   const first = async (p) => { const r = await http('GET', p + '?page=1&pageSize=5'); const d = r.json?.data; return (Array.isArray(d) ? d : d?.items ?? [])[0]?.id }
   const foreign = { student: await first('/students'), session: await first('/scheduling/sessions'), invoice: await first('/payments/invoices'), meeting: await first('/meetings') }
   token = mainToken
@@ -340,6 +341,25 @@ async function isolation() {
     if (!foreign[k]) { record({ phase: 'izolasyon', id: `isolation.${k}`, verb: 'GET', url: base, status: null, outcome: 'skip', note: `${iso.otherTenantCode} kurumunda ${k} bulunamadı (demo-seed çalıştırılmamış olabilir)`, mismatches: [] }); continue }
     const r = await http('GET', `${base}/${foreign[k]}`)
     isoRec(`isolation.${k} (demo_a yöneticisi → demo_b ${k})`, `${base}/{demo_b ${k}}`, r, [404], 'başka kurumun kaydı')
+  }
+  // Kurumlar (Y1): liste yalnızca kendi kurumunu içerir; diğer kuruma GET/ayar/PUT → 404
+  const corpList = await http('GET', '/corporations?page=1&pageSize=50')
+  const corpItems = corpList.json?.data?.items ?? []
+  const onlyOwn = corpList.status === 200 && corpItems.length === 1 && corpList.json?.data?.totalCount === 1
+    && !corpItems.some(c => c.id === otherCorporationId)
+  record({ phase: 'izolasyon', id: 'isolation.corporations (demo_a yöneticisi → kurum listesi)', verb: 'GET', url: '/corporations', status: corpList.status,
+    outcome: onlyOwn ? 'ok' : corpList.status < 300 ? 'leak' : corpList.status >= 500 ? '5xx' : '4xx',
+    note: onlyOwn ? 'beklenen: yalnızca kendi kurumu' : `beklenen: yalnızca kendi kurumu; gelen ${corpItems.length} kurum (${corpItems.map(c => c.code).join(', ')})`, mismatches: [] })
+  if (!otherCorporationId) {
+    record({ phase: 'izolasyon', id: 'isolation.corporation', verb: 'GET', url: '/corporations/{id}', status: null, outcome: 'skip', note: `${iso.otherTenantCode} kurum id'si alınamadı`, mismatches: [] })
+  } else {
+    for (const sub of ['', '/settings'])
+      isoRec(`isolation.corporation${sub} (demo_a yöneticisi → demo_b kurumu)`, `/corporations/{demo_b}${sub}`,
+        await http('GET', `/corporations/${otherCorporationId}${sub}`), [404], 'başka kurumun kurum kaydı')
+    const r = await http('PUT', `/corporations/${otherCorporationId}`, { legalName: 'Smoke', displayName: 'Smoke', defaultLocale: 'tr',
+      defaultCurrency: 'TRY', timezone: 'Europe/Istanbul', taxOffice: null, taxNumber: null, rowVersion: 1 })
+    record({ phase: 'izolasyon', id: 'isolation.corporation.PUT (demo_a yöneticisi → demo_b kurumu)', verb: 'PUT', url: '/corporations/{demo_b}', status: r.status,
+      outcome: r.status === 404 ? 'ok' : r.status < 300 ? 'leak' : r.status >= 500 ? '5xx' : '4xx', note: r.status === 404 ? 'beklenen 404' : `beklenen 404, gelen ${r.status}`, mismatches: [] })
   }
   // yazma yönü: başka kurumun öğrencisini güncellemeyi dene (PUT) → 404 beklenir
   if (foreign.student) {

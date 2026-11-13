@@ -21,7 +21,7 @@ node scripts/smoke-api/run.mjs --strict  # API zaten ayaktaysa; 4xx/5xx/tip hata
 
 ## Turlar
 1. **Yönetici turu** (demo_a `admin@demo-a.test`): hazırlık + yazma akışları + tüm GET'ler (portal hariç).
-2. **İzolasyon**: demo_a yöneticisiyle demo_b kayıtlarının id'lerine (öğrenci, seans, fatura, toplantı) detay isteği → **404** beklenir; demo_b öğrencisine PUT → 404. Beklenmeyen 2xx `leak` (izolasyon ihlali) olarak raporlanır.
+2. **İzolasyon**: demo_a yöneticisiyle demo_b kayıtlarının id'lerine (öğrenci, seans, fatura, toplantı) detay isteği → **404** beklenir; demo_b öğrencisine PUT → 404. Kurumlar: demo_a yöneticisi kurum listesinde yalnızca kendini görür; demo_b kurumuna GET (detay, ayarlar) ve PUT → 404. Beklenmeyen 2xx `leak` (izolasyon ihlali) olarak raporlanır.
 3. **Veli turu** (demo_a `veli1@demo-a.test`): `portal.*` uçları, `studentId` `/portal/my-students` listesinden. Ek olarak veli1 → aynı kurumda başka velinin çocuğu (GK-2603) ve demo_b öğrencisi için portal uçları → **403/404** beklenir.
 
 > Not: yazma akışları ("hazırlık", "yazma") her çalıştırmada demo_a'ya `Smoke …` adlı kayıtlar ekler; temizlemek için `scripts/demo-seed/run.sh --reset`.
