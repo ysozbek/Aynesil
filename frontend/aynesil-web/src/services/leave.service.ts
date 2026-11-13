@@ -25,6 +25,7 @@ import type {
   CancelLeavePayload,
   SetLeaveEntitlementPayload,
   CarryForwardPayload,
+  InitializeLeaveBalancePayload,
 } from '@/types/leave.types'
 
 function qs(params: object): string {
@@ -84,6 +85,10 @@ export const leaveService = {
     apiService.get<LeaveBalanceDto[]>(
       `/leave/balances${qs(query)}`
     ),
+
+  /** Eğitmen için yıllık izin hakkı tanımlar; id döner (aynı eğitmen/tür/yıl için ikinci kayıt reddedilir). */
+  initializeBalance: (payload: InitializeLeaveBalancePayload) =>
+    apiService.post<string>('/leave/balances', payload),
 
   setEntitlement: (balanceId: string, payload: SetLeaveEntitlementPayload) =>
     apiService.patch<void>(`/leave/balances/${balanceId}/entitlement`, payload),

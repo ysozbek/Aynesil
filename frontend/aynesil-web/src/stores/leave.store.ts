@@ -9,6 +9,7 @@ import type {
   LeaveRequestListItemDto,
   LeaveRequestDto,
   LeaveBalanceDto,
+  InitializeLeaveBalancePayload,
   LeaveCalendarItemDto,
   LeaveSessionImpactDto,
   LeaveUsageReportItemDto,
@@ -179,6 +180,17 @@ export const useLeaveStore = defineStore('leave', () => {
     }
   }
 
+  async function initializeBalance(payload: InitializeLeaveBalancePayload): Promise<string> {
+    saving.value = true
+    try {
+      const res = await leaveService.initializeBalance(payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Bakiye tanımlanamadı.')
+      return res.data
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function setEntitlement(balanceId: string, payload: SetLeaveEntitlementPayload) {
     saving.value = true
     try {
@@ -237,7 +249,7 @@ export const useLeaveStore = defineStore('leave', () => {
     loading, saving, error,
     fetchLeaves, fetchLeave, createLeave, updateLeave,
     approveLeave, rejectLeave, cancelLeave, fetchSessionImpact,
-    fetchCalendar, fetchBalances, setEntitlement, carryForward,
+    fetchCalendar, fetchBalances, initializeBalance, setEntitlement, carryForward,
     fetchUsageReport, fetchTrendReport, clearCurrent,
   }
 })

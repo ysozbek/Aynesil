@@ -194,6 +194,15 @@ export interface SetLeaveEntitlementPayload {
   entitled: number
 }
 
+/** Mirrors InitializeLeaveBalanceCommand: eğitmen + izin türü + yıl için yıllık hak. */
+export interface InitializeLeaveBalancePayload {
+  educatorId: string
+  leaveTypeId?: string
+  periodYear: number
+  entitled: number
+  unit: 'day' | 'hour'
+}
+
 export interface CarryForwardPayload {
   educatorId: string
   fromYear: number

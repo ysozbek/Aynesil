@@ -22,6 +22,11 @@ const filters = reactive({ periodYear: new Date().getFullYear(), leaveTypeId: ''
 const leaveTypes = ref<RefValueItem[]>([])
 const showEntitlementModal = ref(false)
 const showCarryForwardModal = ref(false)
+const showCreateModal = ref(false)
+const createError = ref('')
+const createForm = reactive({
+  educatorId: '', leaveTypeId: '', periodYear: new Date().getFullYear(), entitled: 0, unit: LeaveUnit.Day as 'day' | 'hour',
+})
 const selectedBalance = ref<LeaveBalanceDto | null>(null)
 const newEntitled = ref(0)
 const cfEducatorId = ref('')
@@ -58,6 +63,30 @@ async function doSetEntitlement() {
   await doFetch()
 }
 
+function openCreate() {
+  Object.assign(createForm, { educatorId: '', leaveTypeId: '', periodYear: filters.periodYear || new Date().getFullYear(), entitled: 0, unit: LeaveUnit.Day })
+  createError.value = ''
+  showCreateModal.value = true
+}
+
+async function doCreate() {
+  createError.value = ''
+  if (!createForm.educatorId || !createForm.leaveTypeId) { createError.value = t('leave.balance.createRequired'); return }
+  try {
+    await leaveStore.initializeBalance({
+      educatorId: createForm.educatorId,
+      leaveTypeId: createForm.leaveTypeId,
+      periodYear: createForm.periodYear,
+      entitled: createForm.entitled,
+      unit: createForm.unit,
+    })
+    showCreateModal.value = false
+    await doFetch()
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
+}
+
 async function doCarryForward() {
   if (!cfEducatorId.value) return
   await leaveStore.carryForward({
@@ -78,6 +107,13 @@ onMounted(async () => {
 <template>
   <div>
     <PageHeader :title="t('leave.balance.title')" :description="t('leave.balance.subtitle')">
+      <button
+        v-if="can(Permissions.LeaveBalances.Manage)"
+        @click="openCreate"
+        class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 font-medium"
+      >
+        {{ t('leave.balance.create') }}
+      </button>
       <button
         v-if="can(Permissions.LeaveBalances.Manage) || can(Permissions.LeaveRequests.Approve)"
         @click="showCarryForwardModal = true"
@@ -143,6 +179,47 @@ onMounted(async () => {
         </div>
       </template>
     </DataTable>
+
+    <FormModal
+      :open="showCreateModal"
+      :title="t('leave.balance.create')"
+      :subtitle="t('leave.balance.createHint')"
+      :saving="leaveStore.saving"
+      @submit="doCreate"
+      @close="showCreateModal = false"
+    >
+      <div class="space-y-4">
+        <p v-if="createError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ createError }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.educator') }} *</label>
+          <EducatorPicker v-model="createForm.educatorId" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.leaveType') }} *</label>
+          <select v-model="createForm.leaveTypeId" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="lt in leaveTypes" :key="lt.id" :value="lt.id">{{ lt.label || lt.code }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.periodYear') }} *</label>
+            <input v-model.number="createForm.periodYear" type="number" min="2000" max="2100" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.balance.entitled') }} *</label>
+            <input v-model.number="createForm.entitled" type="number" step="0.5" min="0" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('leave.fields.unit') }}</label>
+            <select v-model="createForm.unit" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
+              <option :value="LeaveUnit.Day">{{ t('leave.unit.day') }}</option>
+              <option :value="LeaveUnit.Hour">{{ t('leave.unit.hour') }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </FormModal>
 
     <FormModal
       :open="showEntitlementModal"
