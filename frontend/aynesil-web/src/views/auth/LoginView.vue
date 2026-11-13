@@ -129,6 +129,12 @@ async function handleLogin() {
             </div>
           </div>
 
+          <div class="text-right -mt-1">
+            <router-link :to="{ name: 'forgot-password' }" class="text-xs text-primary hover:underline">
+              {{ t('auth.forgotPassword') }}
+            </router-link>
+          </div>
+
           <!-- Submit -->
           <button
             type="submit"

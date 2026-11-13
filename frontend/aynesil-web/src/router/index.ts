@@ -20,6 +20,18 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresGuest: true, layout: 'auth' },
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/views/auth/ForgotPasswordView.vue'),
+    meta: { requiresGuest: true, layout: 'auth' },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('@/views/auth/ResetPasswordView.vue'),
+    meta: { requiresGuest: true, layout: 'auth' },
+  },
+  {
     path: '/403',
     name: 'forbidden',
     component: () => import('@/views/errors/ForbiddenView.vue'),
