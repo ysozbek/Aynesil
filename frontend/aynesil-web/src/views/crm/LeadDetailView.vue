@@ -12,6 +12,7 @@ import FormModal from '@/components/shared/FormModal.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import { Permissions } from '@/constants/permissions'
+import { localInputToIso } from '@/utils/datetime'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -172,6 +173,45 @@ function openCompleteInterview(interviewId: string, rowVersion: number) {
   completeInterviewTarget.value = interviewId
   completeInterviewForm.value = { outcome: '', recommendation: '', rowVersion }
   completeInterviewError.value = ''
+}
+
+// ── Ertele / Gelmedi ─────────────────────────────────────────────────────────
+const rescheduleTarget = ref<{ id: string; rowVersion: number } | null>(null)
+const rescheduleAt = ref('')
+const rescheduleError = ref('')
+const noShowTarget = ref<{ id: string; rowVersion: number } | null>(null)
+const noShowError = ref('')
+
+function openReschedule(interviewId: string, rowVersion: number) {
+  rescheduleTarget.value = { id: interviewId, rowVersion }
+  rescheduleAt.value = ''
+  rescheduleError.value = ''
+}
+
+async function submitReschedule() {
+  if (!rescheduleTarget.value) return
+  if (!rescheduleAt.value) { rescheduleError.value = t('validation.required', { field: t('crm.interview.newScheduledAt') }); return }
+  try {
+    await activityStore.rescheduleInterview(rescheduleTarget.value.id, {
+      newScheduledAt: localInputToIso(rescheduleAt.value),
+      rowVersion: rescheduleTarget.value.rowVersion,
+    })
+    rescheduleTarget.value = null
+    await activityStore.fetchInterviews(id.value)
+  } catch (e: unknown) {
+    rescheduleError.value = (e as Error).message
+  }
+}
+
+async function confirmNoShow() {
+  if (!noShowTarget.value) return
+  try {
+    await activityStore.markNoShow(noShowTarget.value.id, noShowTarget.value.rowVersion)
+    noShowTarget.value = null
+    await activityStore.fetchInterviews(id.value)
+  } catch (e: unknown) {
+    noShowError.value = (e as Error).message
+  }
 }
 
 async function submitCompleteInterview() {
@@ -401,6 +441,14 @@ async function submitCompleteInterview() {
                   class="px-2 py-1 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
                   {{ t('crm.interview.complete') }}
                 </button>
+                <button @click="openReschedule(iv.id, iv.rowVersion)"
+                  class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
+                  {{ t('crm.interview.reschedule') }}
+                </button>
+                <button @click="noShowTarget = { id: iv.id, rowVersion: iv.rowVersion }; noShowError = ''"
+                  class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
+                  {{ t('crm.interview.noShow') }}
+                </button>
                 <button @click="activityStore.cancelInterview(iv.id, iv.rowVersion).then(() => activityStore.fetchInterviews(id))"
                   class="px-2 py-1 text-xs rounded-lg border border-border hover:bg-accent transition-colors">
                   {{ t('crm.interview.cancel') }}
@@ -498,6 +546,28 @@ async function submitCompleteInterview() {
         </div>
       </div>
     </FormModal>
+
+    <!-- Reschedule Interview Modal -->
+    <FormModal :open="!!rescheduleTarget" :title="t('crm.interview.reschedule')" :saving="activityStore.saving" @submit="submitReschedule" @close="rescheduleTarget = null">
+      <div class="space-y-4">
+        <p v-if="rescheduleError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ rescheduleError }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('crm.interview.newScheduledAt') }} *</label>
+          <input v-model="rescheduleAt" type="datetime-local" class="w-full px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+        </div>
+      </div>
+    </FormModal>
+
+    <ConfirmModal
+      :open="!!noShowTarget"
+      :title="t('crm.interview.noShow')"
+      :message="noShowError || t('crm.interview.noShowConfirm')"
+      :confirm-label="t('crm.interview.noShow')"
+      confirm-class="bg-primary text-primary-foreground hover:opacity-90"
+      :loading="activityStore.saving"
+      @confirm="confirmNoShow"
+      @cancel="noShowTarget = null"
+    />
 
     <!-- Schedule Interview Modal -->
     <FormModal :open="showInterviewModal" :title="t('crm.interview.schedule')" :saving="activityStore.saving" @submit="submitInterview" @close="showInterviewModal = false">
