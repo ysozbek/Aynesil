@@ -146,6 +146,12 @@ public sealed class AssignMakeupSessionCommandHandler
         if (!sessionExists)
             throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
+        // Başka öğrencinin seansı telafi olarak atanamaz.
+        var studentInSession = await _db.SessionParticipants.AnyAsync(
+            p => p.SessionId == req.MakeupSessionId && p.StudentId == makeup.StudentId, ct);
+        if (!studentInSession)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MakeupSessionStudentMismatch);
+
         makeup.AssignMakeupSession(req.MakeupSessionId);
         await _db.SaveChangesAsync(ct);
         return await RequestMakeupCommandHandler.LoadDtoAsync(_db, makeup.Id, ct);

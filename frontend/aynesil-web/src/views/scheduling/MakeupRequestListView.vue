@@ -12,7 +12,9 @@ import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
-import type { MakeupRequestListItemDto } from '@/types/scheduling.types'
+import { schedulingService } from '@/services/scheduling.service'
+import { endOfDayIso, startOfDayIso, toLocalDateString } from '@/utils/datetime'
+import type { MakeupRequestListItemDto, SessionListItemDto } from '@/types/scheduling.types'
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
@@ -121,6 +123,78 @@ async function doApprove() {
   }
 }
 
+// ── Telafi seansı ata (onaylı talep) ─────────────────────────────────────────
+// Seans, öğrencinin takviminden seçilir (backend, seansın katılımcıları arasında öğrenci yoksa reddeder).
+const assignTarget = ref<MakeupRequestListItemDto | null>(null)
+const assignSessions = ref<SessionListItemDto[]>([])
+const assignSessionId = ref('')
+const assignError = ref('')
+const assignLoadingSessions = ref(false)
+
+async function openAssign(row: MakeupRequestListItemDto) {
+  assignTarget.value = row
+  assignSessionId.value = ''
+  assignError.value = ''
+  assignSessions.value = []
+  assignLoadingSessions.value = true
+  try {
+    const from = new Date()
+    const to = new Date()
+    to.setDate(to.getDate() + 90)
+    const res = await schedulingService.getStudentCalendar(row.studentId, {
+      from: startOfDayIso(toLocalDateString(from)),
+      to: endOfDayIso(toLocalDateString(to)),
+    })
+    if (res.success && res.data) {
+      assignSessions.value = res.data
+        .filter((s) => s.id !== row.missedSessionId && (s.status === 'scheduled' || s.status === 'rescheduled'))
+        .sort((a, b) => Number(b.isMakeup) - Number(a.isMakeup) || a.startsAt.localeCompare(b.startsAt))
+    }
+  } catch (e: unknown) {
+    assignError.value = (e as Error).message
+  } finally {
+    assignLoadingSessions.value = false
+  }
+}
+
+async function doAssign() {
+  if (!assignTarget.value) return
+  if (!assignSessionId.value) { assignError.value = t('scheduling.makeup.assignSessionRequired'); return }
+  assignError.value = ''
+  try {
+    await store.fetchMakeupRequest(assignTarget.value.id)
+    await store.assignMakeupSession(assignTarget.value.id, {
+      makeupSessionId: assignSessionId.value,
+      rowVersion: store.currentRequest!.rowVersion,
+    })
+    assignTarget.value = null
+    await loadList()
+  } catch (e: unknown) {
+    assignError.value = (e as Error).message
+  }
+}
+
+// ── Tamamla (seans atanmış talep) ────────────────────────────────────────────
+const completeTarget = ref<MakeupRequestListItemDto | null>(null)
+const completeError = ref('')
+
+async function doComplete() {
+  if (!completeTarget.value) return
+  completeError.value = ''
+  try {
+    await store.fetchMakeupRequest(completeTarget.value.id)
+    await store.completeMakeupRequest(completeTarget.value.id, store.currentRequest!.rowVersion)
+    completeTarget.value = null
+    await loadList()
+  } catch (e: unknown) {
+    completeError.value = (e as Error).message
+  }
+}
+
+function formatDateTime(val: string): string {
+  return new Date(val).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
 const rejectModal = ref(false)
 const rejectTarget = ref<MakeupRequestListItemDto | null>(null)
 const rejectReason = ref('')
@@ -210,6 +284,20 @@ async function doReject() {
             </svg>
           </button>
           <button
+            v-if="can(Permissions.MakeupRequests.Manage) && row.status === 'approved'"
+            @click="openAssign(row)"
+            class="px-2.5 py-1 text-xs rounded-lg border border-border hover:bg-accent"
+          >
+            {{ t('scheduling.makeup.assignSession') }}
+          </button>
+          <button
+            v-if="can(Permissions.MakeupRequests.Manage) && row.status === 'scheduled'"
+            @click="completeTarget = row; completeError = ''"
+            class="px-2.5 py-1 text-xs rounded-lg border border-border hover:bg-accent"
+          >
+            {{ t('scheduling.makeup.complete') }}
+          </button>
+          <button
             @click="router.push({ name: 'makeup-request-detail', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.view')"
@@ -243,6 +331,43 @@ async function doReject() {
       :loading="approveLoading"
       @confirm="doApprove"
       @cancel="approveTarget = null"
+    />
+
+    <FormModal
+      :open="!!assignTarget"
+      :title="t('scheduling.makeup.assignTitle')"
+      :subtitle="assignTarget?.studentFullName"
+      :saving="store.saving"
+      @submit="doAssign"
+      @close="assignTarget = null"
+    >
+      <div class="space-y-3">
+        <p v-if="assignError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ assignError }}</p>
+        <p class="text-xs text-muted-foreground">{{ t('scheduling.makeup.assignHint') }}</p>
+        <p v-if="assignLoadingSessions" class="text-sm text-muted-foreground">{{ t('common.loading') }}</p>
+        <p v-else-if="!assignSessions.length" class="text-sm text-muted-foreground">{{ t('scheduling.makeup.noSessions') }}</p>
+        <select
+          v-else
+          v-model="assignSessionId"
+          class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">{{ t('common.select') }}</option>
+          <option v-for="s in assignSessions" :key="s.id" :value="s.id">
+            {{ formatDateTime(s.startsAt) }} · {{ s.sessionTypeName ?? s.title ?? '—' }}<template v-if="s.roomName"> · {{ s.roomName }}</template><template v-if="s.isMakeup"> · {{ t('scheduling.makeup.makeupSession') }}</template>
+          </option>
+        </select>
+      </div>
+    </FormModal>
+
+    <ConfirmModal
+      :open="!!completeTarget"
+      :title="t('scheduling.makeup.completeTitle')"
+      :message="completeError || t('scheduling.makeup.completeMessage', { student: completeTarget?.studentFullName })"
+      :confirm-label="t('scheduling.makeup.complete')"
+      confirm-class="bg-primary text-primary-foreground hover:opacity-90"
+      :loading="store.saving"
+      @confirm="doComplete"
+      @cancel="completeTarget = null"
     />
 
     <!-- Create modal (no dedicated form view). -->

@@ -165,6 +165,7 @@
   <data name="Rule.LeaveOverlap" xml:space="preserve"><value>Aynı eğitimci için bu dönemde bekleyen veya onaylı bir izin talebi zaten var.</value></data>
   <data name="Rule.LeaveRejectStatus" xml:space="preserve"><value>'{0}' durumundaki bir izin talebi reddedilemez.</value></data>
   <data name="Rule.LocaleNotSupported" xml:space="preserve"><value>'{0}' dili desteklenmiyor.</value></data>
+  <data name="Rule.MakeupSessionStudentMismatch" xml:space="preserve"><value>Seçilen seansın katılımcıları arasında bu talebin öğrencisi yok.</value></data>
   <data name="Rule.MakeupExpireStatus" xml:space="preserve"><value>'{0}' durumundaki telafi talebi süresi doldu olarak işaretlenemez.</value></data>
   <data name="Rule.MakeupRejectStatus" xml:space="preserve"><value>'{0}' durumundaki bir telafi talebi reddedilemez.</value></data>
   <data name="Rule.MakeupWrongStatus" xml:space="preserve"><value>Telafi talebi bu işlem için '{0}' durumunda olmalıdır. Mevcut durum: '{1}'.</value></data>

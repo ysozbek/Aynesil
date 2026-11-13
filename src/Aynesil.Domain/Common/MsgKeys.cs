@@ -207,6 +207,8 @@ public static class MsgKeys
         public static readonly MsgKey LeaveOverlap = new("Rule.LeaveOverlap");
         public static readonly MsgKey LeaveRejectStatus = new("Rule.LeaveRejectStatus");
         public static readonly MsgKey MakeupExpireStatus = new("Rule.MakeupExpireStatus");
+        /// <summary>Telafi seansı atanırken seansın katılımcıları arasında talep sahibi öğrenci yok.</summary>
+        public static readonly MsgKey MakeupSessionStudentMismatch = new("Rule.MakeupSessionStudentMismatch");
         public static readonly MsgKey MakeupRejectStatus = new("Rule.MakeupRejectStatus");
         public static readonly MsgKey MakeupWrongStatus = new("Rule.MakeupWrongStatus");
         public static readonly MsgKey MeetingAlreadyCancelled = new("Rule.MeetingAlreadyCancelled");
