@@ -1,6 +1,7 @@
 using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Leads.Commands;
 using Aynesil.Application.Features.Leads.Dtos;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public sealed class InterviewsController : BaseController
     public async Task<IActionResult> Cancel(Guid id, [FromBody] RowVersionRequest req, CancellationToken ct)
     {
         await Sender.Send(new CancelInterviewCommand(id, req.RowVersion), ct);
-        return NoContentResult("Interview cancelled.");
+        return NoContentResult(MsgKeys.Success.InterviewCancelled);
     }
 
     /// <summary>Reschedules the interview to a new date/time.</summary>
@@ -63,7 +64,7 @@ public sealed class InterviewsController : BaseController
     public async Task<IActionResult> MarkNoShow(Guid id, [FromBody] RowVersionRequest req, CancellationToken ct)
     {
         await Sender.Send(new MarkInterviewNoShowCommand(id, req.RowVersion), ct);
-        return NoContentResult("Interview marked as no-show.");
+        return NoContentResult(MsgKeys.Success.InterviewNoShow);
     }
 }
 

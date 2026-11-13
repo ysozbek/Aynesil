@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Finance.Commands;
 using Aynesil.Application.Features.Finance.Dtos;
 using Aynesil.Application.Features.Finance.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -83,7 +84,7 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> ActivatePackageDefinition(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivatePackageDefinitionCommand(id), ct);
-        return NoContentResult("Package definition activated.");
+        return NoContentResult(MsgKeys.Success.PackageDefinitionActivated);
     }
 
     [HttpPost("package-definitions/{id:guid}/deactivate")]
@@ -92,7 +93,7 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> DeactivatePackageDefinition(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivatePackageDefinitionCommand(id), ct);
-        return NoContentResult("Package definition deactivated.");
+        return NoContentResult(MsgKeys.Success.PackageDefinitionDeactivated);
     }
 
     [HttpDelete("package-definitions/{id:guid}")]
@@ -101,7 +102,7 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> DeletePackageDefinition(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeletePackageDefinitionCommand(id), ct);
-        return NoContentResult("Package definition deleted.");
+        return NoContentResult(MsgKeys.Success.PackageDefinitionDeleted);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -606,7 +607,7 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> ActivatePromotion(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivatePromotionCommand(id), ct);
-        return NoContentResult("Promotion activated.");
+        return NoContentResult(MsgKeys.Success.PromotionActivated);
     }
 
     [HttpPost("promotions/{id:guid}/deactivate")]
@@ -615,7 +616,7 @@ public sealed class PaymentsController : BaseController
     public async Task<IActionResult> DeactivatePromotion(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivatePromotionCommand(id), ct);
-        return NoContentResult("Promotion deactivated.");
+        return NoContentResult(MsgKeys.Success.PromotionDeactivated);
     }
 
     // ══════════════════════════════════════════════════════════════════════════

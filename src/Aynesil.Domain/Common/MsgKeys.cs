@@ -302,5 +302,75 @@ public static class MsgKeys
         public static readonly MsgKey InvalidCredentials = new("Auth.InvalidCredentials");
         public static readonly MsgKey AccountLocked = new("Auth.AccountLocked");
         public static readonly MsgKey AccountDisabled = new("Auth.AccountDisabled");
+        /// <summary>Parola sıfırlama token'ı geçersiz, süresi dolmuş ya da kullanıcı bulunamadı (422).</summary>
+        public static readonly MsgKey InvalidResetToken = new("Auth.InvalidResetToken");
+    }
+
+    /// <summary>Başarı yanıtlarının mesajları (<c>message</c>); anahtar aynı zamanda yanıt kodudur (<c>code</c>).</summary>
+    public static class Success
+    {
+        public static readonly MsgKey AcademicPeriodDeleted = new("Success.AcademicPeriodDeleted");
+        public static readonly MsgKey AssessmentSessionDeleted = new("Success.AssessmentSessionDeleted");
+        public static readonly MsgKey CalendarEntryDeleted = new("Success.CalendarEntryDeleted");
+        public static readonly MsgKey CampusActivated = new("Success.CampusActivated");
+        public static readonly MsgKey CampusDeactivated = new("Success.CampusDeactivated");
+        public static readonly MsgKey CampusDeleted = new("Success.CampusDeleted");
+        public static readonly MsgKey CareAssignmentEnded = new("Success.CareAssignmentEnded");
+        public static readonly MsgKey CaseNoteDeleted = new("Success.CaseNoteDeleted");
+        public static readonly MsgKey CertificationDeleted = new("Success.CertificationDeleted");
+        public static readonly MsgKey CorporationActivated = new("Success.CorporationActivated");
+        public static readonly MsgKey CorporationSuspended = new("Success.CorporationSuspended");
+        public static readonly MsgKey DevelopmentReportDeleted = new("Success.DevelopmentReportDeleted");
+        public static readonly MsgKey DiagnosisDeleted = new("Success.DiagnosisDeleted");
+        public static readonly MsgKey EducationPlanDeleted = new("Success.EducationPlanDeleted");
+        public static readonly MsgKey EducatorDeleted = new("Success.EducatorDeleted");
+        public static readonly MsgKey EmailVerified = new("Success.EmailVerified");
+        public static readonly MsgKey ExternalReportDeleted = new("Success.ExternalReportDeleted");
+        public static readonly MsgKey GoalLibraryDeleted = new("Success.GoalLibraryDeleted");
+        public static readonly MsgKey GoalTemplateDeleted = new("Success.GoalTemplateDeleted");
+        public static readonly MsgKey GuardianDeleted = new("Success.GuardianDeleted");
+        public static readonly MsgKey GuardianUnlinked = new("Success.GuardianUnlinked");
+        public static readonly MsgKey HierarchyEdgeRemoved = new("Success.HierarchyEdgeRemoved");
+        public static readonly MsgKey InterviewCancelled = new("Success.InterviewCancelled");
+        public static readonly MsgKey InterviewNoShow = new("Success.InterviewNoShow");
+        public static readonly MsgKey ItemDeleted = new("Success.ItemDeleted");
+        public static readonly MsgKey LeadDeleted = new("Success.LeadDeleted");
+        public static readonly MsgKey LoggedOut = new("Success.LoggedOut");
+        public static readonly MsgKey MedicalReportDeleted = new("Success.MedicalReportDeleted");
+        public static readonly MsgKey MenuItemActivated = new("Success.MenuItemActivated");
+        public static readonly MsgKey MenuItemDeactivated = new("Success.MenuItemDeactivated");
+        public static readonly MsgKey MenuItemDeleted = new("Success.MenuItemDeleted");
+        public static readonly MsgKey PackageDefinitionActivated = new("Success.PackageDefinitionActivated");
+        public static readonly MsgKey PackageDefinitionDeactivated = new("Success.PackageDefinitionDeactivated");
+        public static readonly MsgKey PackageDefinitionDeleted = new("Success.PackageDefinitionDeleted");
+        public static readonly MsgKey PasswordChanged = new("Success.PasswordChanged");
+        public static readonly MsgKey PasswordReset = new("Success.PasswordReset");
+        public static readonly MsgKey PasswordResetRequested = new("Success.PasswordResetRequested");
+        public static readonly MsgKey PortalAccessRevoked = new("Success.PortalAccessRevoked");
+        public static readonly MsgKey ProgramDeleted = new("Success.ProgramDeleted");
+        public static readonly MsgKey ProgramServiceDeleted = new("Success.ProgramServiceDeleted");
+        public static readonly MsgKey PromotionActivated = new("Success.PromotionActivated");
+        public static readonly MsgKey PromotionDeactivated = new("Success.PromotionDeactivated");
+        public static readonly MsgKey RecurrenceExceptionAdded = new("Success.RecurrenceExceptionAdded");
+        public static readonly MsgKey RecurringScheduleDeactivated = new("Success.RecurringScheduleDeactivated");
+        public static readonly MsgKey RoleDeleted = new("Success.RoleDeleted");
+        public static readonly MsgKey RolePermissionRemoved = new("Success.RolePermissionRemoved");
+        public static readonly MsgKey RoomDeactivated = new("Success.RoomDeactivated");
+        public static readonly MsgKey RoomDeleted = new("Success.RoomDeleted");
+        public static readonly MsgKey SectionDeleted = new("Success.SectionDeleted");
+        public static readonly MsgKey SessionDeleted = new("Success.SessionDeleted");
+        public static readonly MsgKey SessionEducatorRemoved = new("Success.SessionEducatorRemoved");
+        public static readonly MsgKey SessionGoalRemoved = new("Success.SessionGoalRemoved");
+        public static readonly MsgKey SessionNoteDeleted = new("Success.SessionNoteDeleted");
+        public static readonly MsgKey SessionParticipantRemoved = new("Success.SessionParticipantRemoved");
+        public static readonly MsgKey SpecialtyRemoved = new("Success.SpecialtyRemoved");
+        public static readonly MsgKey StudentDeleted = new("Success.StudentDeleted");
+        public static readonly MsgKey StudentGoalDeleted = new("Success.StudentGoalDeleted");
+        public static readonly MsgKey StudentProgramRemoved = new("Success.StudentProgramRemoved");
+        public static readonly MsgKey TranslationSaved = new("Success.TranslationSaved");
+        public static readonly MsgKey UserActivated = new("Success.UserActivated");
+        public static readonly MsgKey UserDeleted = new("Success.UserDeleted");
+        public static readonly MsgKey UserRoleRemoved = new("Success.UserRoleRemoved");
+        public static readonly MsgKey UserSuspended = new("Success.UserSuspended");
     }
 }

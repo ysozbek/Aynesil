@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.CareTeam.Commands;
 using Aynesil.Application.Features.CareTeam.Dtos;
 using Aynesil.Application.Features.CareTeam.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -123,7 +124,7 @@ public sealed class CareTeamController : BaseController
         await Sender.Send(
             new RemoveCareTeamAssignmentCommand(
                 assignmentId, body?.Reason, body?.RowVersion ?? 0), ct);
-        return NoContentResult("Assignment ended successfully.");
+        return NoContentResult(MsgKeys.Success.CareAssignmentEnded);
     }
 
     // ── Educator-scoped endpoint ──────────────────────────────────────────────

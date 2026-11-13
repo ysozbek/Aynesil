@@ -1,3 +1,5 @@
+using Aynesil.Application.Common.Localization;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -26,6 +28,10 @@ public abstract class BaseController : ControllerBase
     protected IActionResult CreatedResult<T>(T data, string location, string? message = null) =>
         Created(location, ApiResponse<T>.Ok(data, message));
 
-    protected IActionResult NoContentResult(string? message = null) =>
-        Ok(ApiResponse.OkNoContent(message));
+    protected IActionResult NoContentResult() =>
+        Ok(ApiResponse.OkNoContent());
+
+    /// <summary>Başarı yanıtı: mesaj istek dilinde <see cref="MsgKeys.Success"/> anahtarından çözülür, anahtar <c>code</c> olur.</summary>
+    protected IActionResult NoContentResult(MsgKey message) =>
+        Ok(ApiResponse.OkNoContent(Msg.Get(message)) with { Code = message.Value });
 }

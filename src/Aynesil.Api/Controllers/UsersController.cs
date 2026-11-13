@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Users.Commands;
 using Aynesil.Application.Features.Users.Dtos;
 using Aynesil.Application.Features.Users.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -110,7 +111,7 @@ public sealed class UsersController : BaseController
     public async Task<IActionResult> Delete(Guid id, [FromQuery] int rowVersion, CancellationToken ct)
     {
         await Sender.Send(new DeleteUserCommand(id, rowVersion), ct);
-        return NoContentResult("User deleted.");
+        return NoContentResult(MsgKeys.Success.UserDeleted);
     }
 
     /// <summary>Transitions the user's status to 'active'.</summary>
@@ -121,7 +122,7 @@ public sealed class UsersController : BaseController
     public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivateUserCommand(id), ct);
-        return NoContentResult("User activated.");
+        return NoContentResult(MsgKeys.Success.UserActivated);
     }
 
     /// <summary>Transitions the user's status to 'suspended'. Active sessions are revoked.</summary>
@@ -132,7 +133,7 @@ public sealed class UsersController : BaseController
     public async Task<IActionResult> Suspend(Guid id, CancellationToken ct)
     {
         await Sender.Send(new SuspendUserCommand(id), ct);
-        return NoContentResult("User suspended.");
+        return NoContentResult(MsgKeys.Success.UserSuspended);
     }
 
     /// <summary>Grants a role to a user, optionally scoped to a specific campus.</summary>
@@ -156,7 +157,7 @@ public sealed class UsersController : BaseController
     public async Task<IActionResult> RemoveRole(Guid id, Guid userRoleId, CancellationToken ct)
     {
         await Sender.Send(new RemoveUserRoleCommand(userRoleId), ct);
-        return NoContentResult("Role removed.");
+        return NoContentResult(MsgKeys.Success.UserRoleRemoved);
     }
 }
 

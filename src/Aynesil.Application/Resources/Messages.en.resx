@@ -302,4 +302,68 @@
   <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Specify either a percentage or a fixed amount, not both and not neither.</value></data>
   <data name="Validation.UsernameFormat" xml:space="preserve"><value>Username must start with a letter or digit and contain only lowercase letters, digits, dots, hyphens, underscores, @ or +. An e-mail address is recommended.</value></data>
   <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Virtual rooms cannot be assigned to a campus.</value></data>
+  <data name="Auth.InvalidResetToken" xml:space="preserve"><value>The password reset link is invalid or has expired. Please request a new one.</value></data>
+  <data name="Success.AcademicPeriodDeleted" xml:space="preserve"><value>Academic period deleted.</value></data>
+  <data name="Success.AssessmentSessionDeleted" xml:space="preserve"><value>Session deleted.</value></data>
+  <data name="Success.CalendarEntryDeleted" xml:space="preserve"><value>Calendar entry deleted.</value></data>
+  <data name="Success.CampusActivated" xml:space="preserve"><value>Campus activated.</value></data>
+  <data name="Success.CampusDeactivated" xml:space="preserve"><value>Campus deactivated.</value></data>
+  <data name="Success.CampusDeleted" xml:space="preserve"><value>Campus deleted.</value></data>
+  <data name="Success.CareAssignmentEnded" xml:space="preserve"><value>Assignment ended.</value></data>
+  <data name="Success.CaseNoteDeleted" xml:space="preserve"><value>Case note deleted.</value></data>
+  <data name="Success.CertificationDeleted" xml:space="preserve"><value>Certification deleted.</value></data>
+  <data name="Success.CorporationActivated" xml:space="preserve"><value>Corporation activated.</value></data>
+  <data name="Success.CorporationSuspended" xml:space="preserve"><value>Corporation suspended.</value></data>
+  <data name="Success.DevelopmentReportDeleted" xml:space="preserve"><value>Development report deleted.</value></data>
+  <data name="Success.DiagnosisDeleted" xml:space="preserve"><value>Diagnosis deleted.</value></data>
+  <data name="Success.EducationPlanDeleted" xml:space="preserve"><value>Education plan deleted.</value></data>
+  <data name="Success.EducatorDeleted" xml:space="preserve"><value>Educator deleted.</value></data>
+  <data name="Success.EmailVerified" xml:space="preserve"><value>Email verified successfully.</value></data>
+  <data name="Success.ExternalReportDeleted" xml:space="preserve"><value>External institution report deleted.</value></data>
+  <data name="Success.GoalLibraryDeleted" xml:space="preserve"><value>Goal library deleted.</value></data>
+  <data name="Success.GoalTemplateDeleted" xml:space="preserve"><value>Goal template deleted.</value></data>
+  <data name="Success.GuardianDeleted" xml:space="preserve"><value>Guardian deleted.</value></data>
+  <data name="Success.GuardianUnlinked" xml:space="preserve"><value>Guardian unlinked.</value></data>
+  <data name="Success.HierarchyEdgeRemoved" xml:space="preserve"><value>Hierarchy edge removed.</value></data>
+  <data name="Success.InterviewCancelled" xml:space="preserve"><value>Interview cancelled.</value></data>
+  <data name="Success.InterviewNoShow" xml:space="preserve"><value>Interview marked as no-show.</value></data>
+  <data name="Success.ItemDeleted" xml:space="preserve"><value>Item deleted.</value></data>
+  <data name="Success.LeadDeleted" xml:space="preserve"><value>Lead deleted.</value></data>
+  <data name="Success.LoggedOut" xml:space="preserve"><value>Logged out successfully.</value></data>
+  <data name="Success.MedicalReportDeleted" xml:space="preserve"><value>Medical report deleted.</value></data>
+  <data name="Success.MenuItemActivated" xml:space="preserve"><value>Menu item activated.</value></data>
+  <data name="Success.MenuItemDeactivated" xml:space="preserve"><value>Menu item deactivated.</value></data>
+  <data name="Success.MenuItemDeleted" xml:space="preserve"><value>Menu item deleted.</value></data>
+  <data name="Success.PackageDefinitionActivated" xml:space="preserve"><value>Package definition activated.</value></data>
+  <data name="Success.PackageDefinitionDeactivated" xml:space="preserve"><value>Package definition deactivated.</value></data>
+  <data name="Success.PackageDefinitionDeleted" xml:space="preserve"><value>Package definition deleted.</value></data>
+  <data name="Success.PasswordChanged" xml:space="preserve"><value>Password changed. Please log in again.</value></data>
+  <data name="Success.PasswordReset" xml:space="preserve"><value>Password reset successfully.</value></data>
+  <data name="Success.PasswordResetRequested" xml:space="preserve"><value>If an account with that email exists, a reset link has been sent.</value></data>
+  <data name="Success.PortalAccessRevoked" xml:space="preserve"><value>Portal access revoked.</value></data>
+  <data name="Success.ProgramDeleted" xml:space="preserve"><value>Program deleted.</value></data>
+  <data name="Success.ProgramServiceDeleted" xml:space="preserve"><value>Program service deleted.</value></data>
+  <data name="Success.PromotionActivated" xml:space="preserve"><value>Promotion activated.</value></data>
+  <data name="Success.PromotionDeactivated" xml:space="preserve"><value>Promotion deactivated.</value></data>
+  <data name="Success.RecurrenceExceptionAdded" xml:space="preserve"><value>Recurrence exception added.</value></data>
+  <data name="Success.RecurringScheduleDeactivated" xml:space="preserve"><value>Recurring schedule deactivated.</value></data>
+  <data name="Success.RoleDeleted" xml:space="preserve"><value>Role deleted.</value></data>
+  <data name="Success.RolePermissionRemoved" xml:space="preserve"><value>Permission removed from role.</value></data>
+  <data name="Success.RoomDeactivated" xml:space="preserve"><value>Room deactivated.</value></data>
+  <data name="Success.RoomDeleted" xml:space="preserve"><value>Room deleted.</value></data>
+  <data name="Success.SectionDeleted" xml:space="preserve"><value>Section deleted.</value></data>
+  <data name="Success.SessionDeleted" xml:space="preserve"><value>Session deleted.</value></data>
+  <data name="Success.SessionEducatorRemoved" xml:space="preserve"><value>Educator removed from the session.</value></data>
+  <data name="Success.SessionGoalRemoved" xml:space="preserve"><value>Goal removed from session.</value></data>
+  <data name="Success.SessionNoteDeleted" xml:space="preserve"><value>Note deleted.</value></data>
+  <data name="Success.SessionParticipantRemoved" xml:space="preserve"><value>Participant removed.</value></data>
+  <data name="Success.SpecialtyRemoved" xml:space="preserve"><value>Specialty removed.</value></data>
+  <data name="Success.StudentDeleted" xml:space="preserve"><value>Student deleted.</value></data>
+  <data name="Success.StudentGoalDeleted" xml:space="preserve"><value>Student goal deleted.</value></data>
+  <data name="Success.StudentProgramRemoved" xml:space="preserve"><value>Student program assignment removed.</value></data>
+  <data name="Success.TranslationSaved" xml:space="preserve"><value>Translation saved.</value></data>
+  <data name="Success.UserActivated" xml:space="preserve"><value>User activated.</value></data>
+  <data name="Success.UserDeleted" xml:space="preserve"><value>User deleted.</value></data>
+  <data name="Success.UserRoleRemoved" xml:space="preserve"><value>Role removed from the user.</value></data>
+  <data name="Success.UserSuspended" xml:space="preserve"><value>User suspended.</value></data>
 </root>

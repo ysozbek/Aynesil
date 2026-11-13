@@ -1,3 +1,4 @@
+using Aynesil.Application.Common.Exceptions;
 using System.Security.Cryptography;
 using System.Text;
 using Aynesil.Application.Common.Interfaces;
@@ -56,7 +57,7 @@ public sealed class ConfirmPasswordResetCommandHandler : IRequestHandler<Confirm
         var cacheKey = CacheKeys.PasswordResetToken(tokenHash);
 
         var tokenData = await _cache.GetAsync<TokenCacheData>(cacheKey, ct)
-            ?? throw new UnauthorizedAccessException("Password reset token is invalid or has expired.");
+            ?? throw new InvalidResetTokenException();
 
         // Set tenant GUC so that EF/RLS permits the read and subsequent write
         await _db.Database.ExecuteSqlRawAsync(
@@ -64,7 +65,7 @@ public sealed class ConfirmPasswordResetCommandHandler : IRequestHandler<Confirm
             tokenData.CorporationId.ToString(), tokenData.UserId.ToString());
 
         var user = await _db.UserAccounts.FirstOrDefaultAsync(u => u.Id == tokenData.UserId, ct)
-            ?? throw new UnauthorizedAccessException("Password reset token is invalid or has expired.");
+            ?? throw new InvalidResetTokenException();
 
         user.ChangePassword(_passwords.Hash(req.NewPassword), updatedBy: null);
         await _db.SaveChangesAsync(ct);

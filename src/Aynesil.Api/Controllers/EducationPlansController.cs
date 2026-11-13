@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Plans.Commands;
 using Aynesil.Application.Features.Plans.Dtos;
 using Aynesil.Application.Features.Plans.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +80,7 @@ public sealed class EducationPlansController : BaseController
     public async Task<IActionResult> DeleteAcademicPeriod(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteAcademicPeriodCommand(id), ct);
-        return NoContentResult("Academic period deleted.");
+        return NoContentResult(MsgKeys.Success.AcademicPeriodDeleted);
     }
 
     // ── Education Plans — List & Detail ───────────────────────────────────────
@@ -161,7 +162,7 @@ public sealed class EducationPlansController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteEducationPlanCommand(id), ct);
-        return NoContentResult("Education plan deleted.");
+        return NoContentResult(MsgKeys.Success.EducationPlanDeleted);
     }
 
     // ── Plan Workflow ─────────────────────────────────────────────────────────

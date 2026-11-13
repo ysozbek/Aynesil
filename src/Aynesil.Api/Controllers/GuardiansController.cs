@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Application.Features.Students.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -85,7 +86,7 @@ public sealed class GuardiansController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteGuardianCommand(id), ct);
-        return NoContentResult("Guardian deleted.");
+        return NoContentResult(MsgKeys.Success.GuardianDeleted);
     }
 
     // ── Portal Access ─────────────────────────────────────────────────────────
@@ -117,7 +118,7 @@ public sealed class GuardiansController : BaseController
         Guid id, Guid studentId, CancellationToken ct)
     {
         await Sender.Send(new RevokePortalAccessCommand(id, studentId), ct);
-        return NoContentResult("Portal access revoked.");
+        return NoContentResult(MsgKeys.Success.PortalAccessRevoked);
     }
 
     /// <summary>Updates which sections the guardian can see in the parent portal for this student.</summary>

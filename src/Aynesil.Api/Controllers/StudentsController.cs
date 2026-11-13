@@ -3,6 +3,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Application.Features.Students.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -218,7 +219,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteStudentCommand(id), ct);
-        return NoContentResult("Student deleted.");
+        return NoContentResult(MsgKeys.Success.StudentDeleted);
     }
 
     // ── Workflow Commands ─────────────────────────────────────────────────────
@@ -303,7 +304,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> UnlinkGuardian(Guid id, Guid linkId, CancellationToken ct)
     {
         await Sender.Send(new UnlinkGuardianFromStudentCommand(linkId), ct);
-        return NoContentResult("Guardian unlinked.");
+        return NoContentResult(MsgKeys.Success.GuardianUnlinked);
     }
 
     // ── Emergency Contacts ────────────────────────────────────────────────────
@@ -364,7 +365,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> DeleteDiagnosis(Guid id, Guid diagnosisId, CancellationToken ct)
     {
         await Sender.Send(new DeleteDiagnosisCommand(diagnosisId), ct);
-        return NoContentResult("Diagnosis deleted.");
+        return NoContentResult(MsgKeys.Success.DiagnosisDeleted);
     }
 
     // ── Medical Reports ───────────────────────────────────────────────────────
@@ -397,7 +398,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> DeleteMedicalReport(Guid id, Guid reportId, CancellationToken ct)
     {
         await Sender.Send(new DeleteMedicalReportCommand(reportId), ct);
-        return NoContentResult("Medical report deleted.");
+        return NoContentResult(MsgKeys.Success.MedicalReportDeleted);
     }
 
     // ── Development Reports ───────────────────────────────────────────────────
@@ -430,7 +431,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> DeleteDevelopmentReport(Guid id, Guid reportId, CancellationToken ct)
     {
         await Sender.Send(new DeleteDevelopmentReportCommand(reportId), ct);
-        return NoContentResult("Development report deleted.");
+        return NoContentResult(MsgKeys.Success.DevelopmentReportDeleted);
     }
 
     // ── External Institution Reports ──────────────────────────────────────────
@@ -452,7 +453,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> DeleteExternalReport(Guid id, Guid reportId, CancellationToken ct)
     {
         await Sender.Send(new DeleteExternalInstitutionReportCommand(reportId), ct);
-        return NoContentResult("External institution report deleted.");
+        return NoContentResult(MsgKeys.Success.ExternalReportDeleted);
     }
 
     // ── Case Notes ────────────────────────────────────────────────────────────
@@ -485,7 +486,7 @@ public sealed class StudentsController : BaseController
     public async Task<IActionResult> DeleteCaseNote(Guid id, Guid noteId, CancellationToken ct)
     {
         await Sender.Send(new DeleteCaseNoteCommand(noteId), ct);
-        return NoContentResult("Case note deleted.");
+        return NoContentResult(MsgKeys.Success.CaseNoteDeleted);
     }
 }
 

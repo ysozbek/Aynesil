@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Educators.Commands;
 using Aynesil.Application.Features.Educators.Dtos;
 using Aynesil.Application.Features.Educators.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -120,7 +121,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteEducatorCommand(id), ct);
-        return NoContentResult("Educator deleted.");
+        return NoContentResult(MsgKeys.Success.EducatorDeleted);
     }
 
     // ── Activate / Deactivate ─────────────────────────────────────────────────
@@ -161,7 +162,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> RemoveSpecialty(Guid id, Guid assignmentId, CancellationToken ct)
     {
         await Sender.Send(new RemoveSpecialtyCommand(assignmentId), ct);
-        return NoContentResult("Specialty removed.");
+        return NoContentResult(MsgKeys.Success.SpecialtyRemoved);
     }
 
     // ── Campus Assignment Workflow ────────────────────────────────────────────
@@ -220,7 +221,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> DeleteCertification(Guid id, Guid certId, CancellationToken ct)
     {
         await Sender.Send(new DeleteCertificationCommand(certId), ct);
-        return NoContentResult("Certification deleted.");
+        return NoContentResult(MsgKeys.Success.CertificationDeleted);
     }
 
     // ── Hierarchy (Educator Assignment Workflow) ──────────────────────────────
@@ -252,7 +253,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> UnlinkHierarchy(Guid id, Guid edgeId, CancellationToken ct)
     {
         await Sender.Send(new UnlinkHierarchyCommand(edgeId), ct);
-        return NoContentResult("Hierarchy edge removed.");
+        return NoContentResult(MsgKeys.Success.HierarchyEdgeRemoved);
     }
 }
 

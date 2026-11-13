@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Menus.Commands;
 using Aynesil.Application.Features.Menus.Dtos;
 using Aynesil.Application.Features.Menus.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -167,7 +168,7 @@ public sealed class MenusController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteMenuItemCommand(id), ct);
-        return NoContentResult("Menu item deleted.");
+        return NoContentResult(MsgKeys.Success.MenuItemDeleted);
     }
 
     /// <summary>
@@ -201,7 +202,7 @@ public sealed class MenusController : BaseController
     public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivateMenuItemCommand(id), ct);
-        return NoContentResult("Menu item activated.");
+        return NoContentResult(MsgKeys.Success.MenuItemActivated);
     }
 
     /// <summary>Hides the menu item from navigation without deleting it. Idempotent.</summary>
@@ -212,7 +213,7 @@ public sealed class MenusController : BaseController
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivateMenuItemCommand(id), ct);
-        return NoContentResult("Menu item deactivated.");
+        return NoContentResult(MsgKeys.Success.MenuItemDeactivated);
     }
 }
 

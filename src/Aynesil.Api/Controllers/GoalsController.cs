@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Goals.Commands;
 using Aynesil.Application.Features.Goals.Dtos;
 using Aynesil.Application.Features.Goals.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -70,7 +71,7 @@ public sealed class GoalsController : BaseController
     public async Task<IActionResult> DeleteLibrary(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteGoalLibraryCommand(id), ct);
-        return NoContentResult("Goal library deleted.");
+        return NoContentResult(MsgKeys.Success.GoalLibraryDeleted);
     }
 
     // ── Goal Templates ────────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ public sealed class GoalsController : BaseController
     public async Task<IActionResult> DeleteTemplate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteGoalTemplateCommand(id), ct);
-        return NoContentResult("Goal template deleted.");
+        return NoContentResult(MsgKeys.Success.GoalTemplateDeleted);
     }
 
     // ── Student Goals ─────────────────────────────────────────────────────────
@@ -225,7 +226,7 @@ public sealed class GoalsController : BaseController
     public async Task<IActionResult> DeleteStudentGoal(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteStudentGoalCommand(id), ct);
-        return NoContentResult("Student goal deleted.");
+        return NoContentResult(MsgKeys.Success.StudentGoalDeleted);
     }
 
     // ── Goal Progress ─────────────────────────────────────────────────────────

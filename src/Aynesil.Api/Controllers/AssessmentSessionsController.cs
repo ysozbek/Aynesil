@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Assessment.Commands;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Application.Features.Assessment.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -139,7 +140,7 @@ public sealed class AssessmentSessionsController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteAssessmentSessionCommand(id), ct);
-        return NoContentResult("Session deleted.");
+        return NoContentResult(MsgKeys.Success.AssessmentSessionDeleted);
     }
 
     // ── Workflow Transitions ──────────────────────────────────────────────────

@@ -78,6 +78,11 @@ public class ExceptionMiddleware
                 StatusCodes.Status401Unauthorized,
                 Localized(afe, MsgKeys.Error.Unauthorized, null)),
 
+            // Geçersiz/süresi dolmuş sıfırlama token'ı: 401 değil (oturum yenileme akışını tetiklemesin).
+            InvalidResetTokenException irt => (
+                StatusCodes.Status422UnprocessableEntity,
+                Localized(irt, MsgKeys.Auth.InvalidResetToken, null)),
+
             UnauthorizedAccessException => (
                 StatusCodes.Status401Unauthorized,
                 Fail(MsgKeys.Error.Unauthorized)),

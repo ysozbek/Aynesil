@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Assessment.Commands;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Application.Features.Assessment.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -141,7 +142,7 @@ public sealed class AssessmentTemplatesController : BaseController
     {
         await Sender.Send(
             new UpsertTemplateTranslationCommand(id, locale, req.Name, req.Description), ct);
-        return NoContentResult("Translation saved.");
+        return NoContentResult(MsgKeys.Success.TranslationSaved);
     }
 
     // ── Section Commands ──────────────────────────────────────────────────────
@@ -183,7 +184,7 @@ public sealed class AssessmentTemplatesController : BaseController
     public async Task<IActionResult> DeleteSection(Guid sectionId, CancellationToken ct)
     {
         await Sender.Send(new DeleteAssessmentSectionCommand(sectionId), ct);
-        return NoContentResult("Section deleted.");
+        return NoContentResult(MsgKeys.Success.SectionDeleted);
     }
 
     // ── Item Commands ─────────────────────────────────────────────────────────
@@ -227,7 +228,7 @@ public sealed class AssessmentTemplatesController : BaseController
     public async Task<IActionResult> DeleteItem(Guid itemId, CancellationToken ct)
     {
         await Sender.Send(new DeleteAssessmentItemCommand(itemId), ct);
-        return NoContentResult("Item deleted.");
+        return NoContentResult(MsgKeys.Success.ItemDeleted);
     }
 }
 

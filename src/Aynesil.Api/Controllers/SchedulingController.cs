@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Scheduling.Commands;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Application.Features.Scheduling.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -82,7 +83,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> DeactivateRoom(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivateRoomCommand(id), ct);
-        return NoContentResult("Room deactivated.");
+        return NoContentResult(MsgKeys.Success.RoomDeactivated);
     }
 
     [HttpDelete("rooms/{id:guid}")]
@@ -91,7 +92,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> DeleteRoom(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteRoomCommand(id), ct);
-        return NoContentResult("Room deleted.");
+        return NoContentResult(MsgKeys.Success.RoomDeleted);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -128,7 +129,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> DeleteCalendarEntry(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteCalendarEntryCommand(id), ct);
-        return NoContentResult("Calendar entry deleted.");
+        return NoContentResult(MsgKeys.Success.CalendarEntryDeleted);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -187,7 +188,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> DeactivateRecurringSchedule(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivateRecurringScheduleCommand(id), ct);
-        return NoContentResult("Recurring schedule deactivated.");
+        return NoContentResult(MsgKeys.Success.RecurringScheduleDeactivated);
     }
 
     [HttpPost("recurring-schedules/{id:guid}/exceptions")]
@@ -199,7 +200,7 @@ public sealed class SchedulingController : BaseController
         await Sender.Send(
             new AddRecurrenceExceptionCommand(id, req.ExceptionDate, req.Action,
                 req.NewStartAt, req.Reason), ct);
-        return NoContentResult("Recurrence exception added.");
+        return NoContentResult(MsgKeys.Success.RecurrenceExceptionAdded);
     }
 
     [HttpPost("recurring-schedules/{id:guid}/generate")]
@@ -327,7 +328,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> DeleteSession(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteSessionCommand(id), ct);
-        return NoContentResult("Session deleted.");
+        return NoContentResult(MsgKeys.Success.SessionDeleted);
     }
 
     // ── Participants ──────────────────────────────────────────────────────────
@@ -351,7 +352,7 @@ public sealed class SchedulingController : BaseController
         Guid sessionId, Guid studentId, CancellationToken ct)
     {
         await Sender.Send(new RemoveSessionParticipantCommand(sessionId, studentId), ct);
-        return NoContentResult("Participant removed.");
+        return NoContentResult(MsgKeys.Success.SessionParticipantRemoved);
     }
 
     // ── Educators ─────────────────────────────────────────────────────────────
@@ -374,7 +375,7 @@ public sealed class SchedulingController : BaseController
         Guid sessionId, Guid educatorId, CancellationToken ct)
     {
         await Sender.Send(new RemoveSessionEducatorCommand(sessionId, educatorId), ct);
-        return NoContentResult("Educator removed.");
+        return NoContentResult(MsgKeys.Success.SessionEducatorRemoved);
     }
 
     // ── Goals ─────────────────────────────────────────────────────────────────
@@ -397,7 +398,7 @@ public sealed class SchedulingController : BaseController
         Guid sessionId, Guid studentGoalId, CancellationToken ct)
     {
         await Sender.Send(new RemoveSessionGoalCommand(sessionId, studentGoalId), ct);
-        return NoContentResult("Goal removed from session.");
+        return NoContentResult(MsgKeys.Success.SessionGoalRemoved);
     }
 
     // ── Notes ─────────────────────────────────────────────────────────────────
@@ -428,7 +429,7 @@ public sealed class SchedulingController : BaseController
         Guid sessionId, Guid noteId, CancellationToken ct)
     {
         await Sender.Send(new DeleteSessionNoteCommand(noteId), ct);
-        return NoContentResult("Note deleted.");
+        return NoContentResult(MsgKeys.Success.SessionNoteDeleted);
     }
 
     // ══════════════════════════════════════════════════════════════════════════

@@ -3,6 +3,7 @@ using Aynesil.Application.Features.Permissions.Dtos;
 using Aynesil.Application.Features.Roles.Commands;
 using Aynesil.Application.Features.Roles.Dtos;
 using Aynesil.Application.Features.Roles.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -102,7 +103,7 @@ public sealed class RolesController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteRoleCommand(id), ct);
-        return NoContentResult("Role deleted.");
+        return NoContentResult(MsgKeys.Success.RoleDeleted);
     }
 
     /// <summary>Assigns a permission to a role. Idempotent — silently succeeds if already assigned.</summary>
@@ -124,7 +125,7 @@ public sealed class RolesController : BaseController
     public async Task<IActionResult> RemovePermission(Guid id, Guid permissionId, CancellationToken ct)
     {
         await Sender.Send(new RemoveRolePermissionCommand(id, permissionId), ct);
-        return NoContentResult("Permission removed from role.");
+        return NoContentResult(MsgKeys.Success.RolePermissionRemoved);
     }
 }
 

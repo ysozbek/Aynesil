@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Corporations.Commands;
 using Aynesil.Application.Features.Corporations.Dtos;
 using Aynesil.Application.Features.Corporations.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -143,7 +144,7 @@ public sealed class CorporationsController : BaseController
     public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivateCorporationCommand(id), ct);
-        return NoContentResult("Corporation activated.");
+        return NoContentResult(MsgKeys.Success.CorporationActivated);
     }
 
     /// <summary>Transitions the corporation status to 'suspended'.</summary>
@@ -155,7 +156,7 @@ public sealed class CorporationsController : BaseController
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivateCorporationCommand(id), ct);
-        return NoContentResult("Corporation suspended.");
+        return NoContentResult(MsgKeys.Success.CorporationSuspended);
     }
 }
 

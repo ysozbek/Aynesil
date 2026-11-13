@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Campuses.Commands;
 using Aynesil.Application.Features.Campuses.Dtos;
 using Aynesil.Application.Features.Campuses.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -118,7 +119,7 @@ public sealed class CampusesController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteCampusCommand(id), ct);
-        return NoContentResult("Campus deleted.");
+        return NoContentResult(MsgKeys.Success.CampusDeleted);
     }
 
     /// <summary>Activates a previously deactivated campus.</summary>
@@ -129,7 +130,7 @@ public sealed class CampusesController : BaseController
     public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new ActivateCampusCommand(id), ct);
-        return NoContentResult("Campus activated.");
+        return NoContentResult(MsgKeys.Success.CampusActivated);
     }
 
     /// <summary>Deactivates the campus. Existing data is preserved; new operations referencing it are blocked.</summary>
@@ -140,7 +141,7 @@ public sealed class CampusesController : BaseController
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeactivateCampusCommand(id), ct);
-        return NoContentResult("Campus deactivated.");
+        return NoContentResult(MsgKeys.Success.CampusDeactivated);
     }
 }
 

@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Programs.Commands;
 using Aynesil.Application.Features.Programs.Dtos;
 using Aynesil.Application.Features.Programs.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -82,7 +83,7 @@ public sealed class ProgramsController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteProgramCommand(id), ct);
-        return NoContentResult("Program deleted.");
+        return NoContentResult(MsgKeys.Success.ProgramDeleted);
     }
 
     // ── Program Translation Workflow ──────────────────────────────────────────
@@ -130,7 +131,7 @@ public sealed class ProgramsController : BaseController
     public async Task<IActionResult> DeleteService(Guid id, Guid serviceId, CancellationToken ct)
     {
         await Sender.Send(new DeleteProgramServiceCommand(serviceId), ct);
-        return NoContentResult("Program service deleted.");
+        return NoContentResult(MsgKeys.Success.ProgramServiceDeleted);
     }
 }
 
@@ -242,7 +243,7 @@ public sealed class EnrollmentsController : BaseController
     public async Task<IActionResult> RemoveStudentProgram(Guid id, Guid spId, CancellationToken ct)
     {
         await Sender.Send(new RemoveStudentFromProgramCommand(spId), ct);
-        return NoContentResult("Student program assignment removed.");
+        return NoContentResult(MsgKeys.Success.StudentProgramRemoved);
     }
 }
 

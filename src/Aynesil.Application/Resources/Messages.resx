@@ -302,4 +302,68 @@
   <data name="Validation.ScholarshipPercentOrAmount" xml:space="preserve"><value>Yüzde veya sabit tutardan yalnızca biri belirtilmelidir.</value></data>
   <data name="Validation.UsernameFormat" xml:space="preserve"><value>Kullanıcı adı harf veya rakamla başlamalı; yalnızca küçük harf, rakam, nokta, tire, alt çizgi, @ veya + içermelidir. E-posta adresi önerilir.</value></data>
   <data name="Validation.VirtualRoomNoCampus" xml:space="preserve"><value>Sanal odalar bir kampüse atanamaz.</value></data>
+  <data name="Auth.InvalidResetToken" xml:space="preserve"><value>Parola sıfırlama bağlantısı geçersiz ya da süresi dolmuş. Lütfen yeni bir bağlantı isteyin.</value></data>
+  <data name="Success.AcademicPeriodDeleted" xml:space="preserve"><value>Akademik dönem silindi.</value></data>
+  <data name="Success.AssessmentSessionDeleted" xml:space="preserve"><value>Değerlendirme oturumu silindi.</value></data>
+  <data name="Success.CalendarEntryDeleted" xml:space="preserve"><value>Takvim kaydı silindi.</value></data>
+  <data name="Success.CampusActivated" xml:space="preserve"><value>Kampüs etkinleştirildi.</value></data>
+  <data name="Success.CampusDeactivated" xml:space="preserve"><value>Kampüs devre dışı bırakıldı.</value></data>
+  <data name="Success.CampusDeleted" xml:space="preserve"><value>Kampüs silindi.</value></data>
+  <data name="Success.CareAssignmentEnded" xml:space="preserve"><value>Atama sonlandırıldı.</value></data>
+  <data name="Success.CaseNoteDeleted" xml:space="preserve"><value>Vaka notu silindi.</value></data>
+  <data name="Success.CertificationDeleted" xml:space="preserve"><value>Sertifika silindi.</value></data>
+  <data name="Success.CorporationActivated" xml:space="preserve"><value>Kurum etkinleştirildi.</value></data>
+  <data name="Success.CorporationSuspended" xml:space="preserve"><value>Kurum askıya alındı.</value></data>
+  <data name="Success.DevelopmentReportDeleted" xml:space="preserve"><value>Gelişim raporu silindi.</value></data>
+  <data name="Success.DiagnosisDeleted" xml:space="preserve"><value>Tanı silindi.</value></data>
+  <data name="Success.EducationPlanDeleted" xml:space="preserve"><value>Eğitim planı silindi.</value></data>
+  <data name="Success.EducatorDeleted" xml:space="preserve"><value>Eğitmen silindi.</value></data>
+  <data name="Success.EmailVerified" xml:space="preserve"><value>E-posta adresiniz doğrulandı.</value></data>
+  <data name="Success.ExternalReportDeleted" xml:space="preserve"><value>Dış kurum raporu silindi.</value></data>
+  <data name="Success.GoalLibraryDeleted" xml:space="preserve"><value>Hedef kütüphanesi silindi.</value></data>
+  <data name="Success.GoalTemplateDeleted" xml:space="preserve"><value>Hedef şablonu silindi.</value></data>
+  <data name="Success.GuardianDeleted" xml:space="preserve"><value>Veli silindi.</value></data>
+  <data name="Success.GuardianUnlinked" xml:space="preserve"><value>Veli bağlantısı kaldırıldı.</value></data>
+  <data name="Success.HierarchyEdgeRemoved" xml:space="preserve"><value>Hiyerarşi bağlantısı kaldırıldı.</value></data>
+  <data name="Success.InterviewCancelled" xml:space="preserve"><value>Görüşme iptal edildi.</value></data>
+  <data name="Success.InterviewNoShow" xml:space="preserve"><value>Görüşme 'gelmedi' olarak işaretlendi.</value></data>
+  <data name="Success.ItemDeleted" xml:space="preserve"><value>Madde silindi.</value></data>
+  <data name="Success.LeadDeleted" xml:space="preserve"><value>Aday silindi.</value></data>
+  <data name="Success.LoggedOut" xml:space="preserve"><value>Oturumunuz kapatıldı.</value></data>
+  <data name="Success.MedicalReportDeleted" xml:space="preserve"><value>Sağlık raporu silindi.</value></data>
+  <data name="Success.MenuItemActivated" xml:space="preserve"><value>Menü öğesi etkinleştirildi.</value></data>
+  <data name="Success.MenuItemDeactivated" xml:space="preserve"><value>Menü öğesi devre dışı bırakıldı.</value></data>
+  <data name="Success.MenuItemDeleted" xml:space="preserve"><value>Menü öğesi silindi.</value></data>
+  <data name="Success.PackageDefinitionActivated" xml:space="preserve"><value>Paket tanımı etkinleştirildi.</value></data>
+  <data name="Success.PackageDefinitionDeactivated" xml:space="preserve"><value>Paket tanımı devre dışı bırakıldı.</value></data>
+  <data name="Success.PackageDefinitionDeleted" xml:space="preserve"><value>Paket tanımı silindi.</value></data>
+  <data name="Success.PasswordChanged" xml:space="preserve"><value>Parolanız değiştirildi. Lütfen tekrar giriş yapın.</value></data>
+  <data name="Success.PasswordReset" xml:space="preserve"><value>Parolanız sıfırlandı.</value></data>
+  <data name="Success.PasswordResetRequested" xml:space="preserve"><value>Bu e-posta ile kayıtlı bir hesap varsa sıfırlama bağlantısı gönderildi.</value></data>
+  <data name="Success.PortalAccessRevoked" xml:space="preserve"><value>Portal erişimi kaldırıldı.</value></data>
+  <data name="Success.ProgramDeleted" xml:space="preserve"><value>Program silindi.</value></data>
+  <data name="Success.ProgramServiceDeleted" xml:space="preserve"><value>Program hizmeti silindi.</value></data>
+  <data name="Success.PromotionActivated" xml:space="preserve"><value>Promosyon etkinleştirildi.</value></data>
+  <data name="Success.PromotionDeactivated" xml:space="preserve"><value>Promosyon devre dışı bırakıldı.</value></data>
+  <data name="Success.RecurrenceExceptionAdded" xml:space="preserve"><value>Yineleme istisnası eklendi.</value></data>
+  <data name="Success.RecurringScheduleDeactivated" xml:space="preserve"><value>Yinelenen program devre dışı bırakıldı.</value></data>
+  <data name="Success.RoleDeleted" xml:space="preserve"><value>Rol silindi.</value></data>
+  <data name="Success.RolePermissionRemoved" xml:space="preserve"><value>İzin roldan kaldırıldı.</value></data>
+  <data name="Success.RoomDeactivated" xml:space="preserve"><value>Derslik devre dışı bırakıldı.</value></data>
+  <data name="Success.RoomDeleted" xml:space="preserve"><value>Derslik silindi.</value></data>
+  <data name="Success.SectionDeleted" xml:space="preserve"><value>Bölüm silindi.</value></data>
+  <data name="Success.SessionDeleted" xml:space="preserve"><value>Seans silindi.</value></data>
+  <data name="Success.SessionEducatorRemoved" xml:space="preserve"><value>Eğitmen seanstan kaldırıldı.</value></data>
+  <data name="Success.SessionGoalRemoved" xml:space="preserve"><value>Hedef seanstan kaldırıldı.</value></data>
+  <data name="Success.SessionNoteDeleted" xml:space="preserve"><value>Not silindi.</value></data>
+  <data name="Success.SessionParticipantRemoved" xml:space="preserve"><value>Katılımcı kaldırıldı.</value></data>
+  <data name="Success.SpecialtyRemoved" xml:space="preserve"><value>Uzmanlık kaldırıldı.</value></data>
+  <data name="Success.StudentDeleted" xml:space="preserve"><value>Öğrenci silindi.</value></data>
+  <data name="Success.StudentGoalDeleted" xml:space="preserve"><value>Öğrenci hedefi silindi.</value></data>
+  <data name="Success.StudentProgramRemoved" xml:space="preserve"><value>Öğrenci program ataması kaldırıldı.</value></data>
+  <data name="Success.TranslationSaved" xml:space="preserve"><value>Çeviri kaydedildi.</value></data>
+  <data name="Success.UserActivated" xml:space="preserve"><value>Kullanıcı etkinleştirildi.</value></data>
+  <data name="Success.UserDeleted" xml:space="preserve"><value>Kullanıcı silindi.</value></data>
+  <data name="Success.UserRoleRemoved" xml:space="preserve"><value>Rol kullanıcıdan kaldırıldı.</value></data>
+  <data name="Success.UserSuspended" xml:space="preserve"><value>Kullanıcı askıya alındı.</value></data>
 </root>

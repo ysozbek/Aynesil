@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Application.Features.Leads.Commands;
 using Aynesil.Application.Features.Leads.Dtos;
 using Aynesil.Application.Features.Leads.Queries;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -207,7 +208,7 @@ public sealed class LeadsController : BaseController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await Sender.Send(new DeleteLeadCommand(id), ct);
-        return NoContentResult("Lead deleted.");
+        return NoContentResult(MsgKeys.Success.LeadDeleted);
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using Aynesil.Api.Authorization;
 using Aynesil.Api.RateLimiting;
 using Aynesil.Application.Features.Auth.Commands;
 using Aynesil.Application.Features.Users.Dtos;
+using Aynesil.Domain.Common;
 using Aynesil.Shared;
 using Aynesil.Shared.Constants;
 using Microsoft.AspNetCore.Authorization;
@@ -56,7 +57,7 @@ public class AuthController : BaseController
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken ct)
     {
         await Sender.Send(new LogoutCommand(request.RefreshToken), ct);
-        return NoContentResult("Logged out successfully.");
+        return NoContentResult(MsgKeys.Success.LoggedOut);
     }
 
     // ── Registration & invite flow ────────────────────────────────────────────
@@ -91,7 +92,7 @@ public class AuthController : BaseController
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request, CancellationToken ct)
     {
         await Sender.Send(new VerifyEmailCommand(request.Token), ct);
-        return NoContentResult("Email verified successfully.");
+        return NoContentResult(MsgKeys.Success.EmailVerified);
     }
 
     // ── Password reset flow ────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ public class AuthController : BaseController
         [FromBody] RequestPasswordResetRequest request, CancellationToken ct)
     {
         await Sender.Send(new RequestPasswordResetCommand(request.Email), ct);
-        return NoContentResult("If an account with that email exists, a reset link has been sent.");
+        return NoContentResult(MsgKeys.Success.PasswordResetRequested);
     }
 
     /// <summary>
@@ -126,7 +127,7 @@ public class AuthController : BaseController
         [FromBody] ConfirmPasswordResetRequest request, CancellationToken ct)
     {
         await Sender.Send(new ConfirmPasswordResetCommand(request.Token, request.NewPassword), ct);
-        return NoContentResult("Password reset successfully.");
+        return NoContentResult(MsgKeys.Success.PasswordReset);
     }
 
     // ── Authenticated password management ─────────────────────────────────────
@@ -142,7 +143,7 @@ public class AuthController : BaseController
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
     {
         await Sender.Send(new ChangePasswordCommand(request.CurrentPassword, request.NewPassword), ct);
-        return NoContentResult("Password changed. Please log in again.");
+        return NoContentResult(MsgKeys.Success.PasswordChanged);
     }
 }
 
