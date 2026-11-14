@@ -112,7 +112,7 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
         if (note.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
-        note.Edit(req.Body, req.ParentVisible);
+        note.Edit(req.Body, req.ParentVisible, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
 
         // Düzenleyen değil, notu yazan eğitmenin adı (authored_by → educators.educator).
@@ -123,7 +123,8 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
             note.Id, note.SessionId, note.AuthoredBy,
             note.Body, note.ParentVisible,
             note.CreatedAt, note.UpdatedAt, note.RowVersion,
-            note.AuthoredBy.HasValue ? authors.GetValueOrDefault(note.AuthoredBy.Value) : null);
+            note.AuthoredBy.HasValue ? authors.GetValueOrDefault(note.AuthoredBy.Value) : null,
+            note.EditedAt);
     }
 }
 

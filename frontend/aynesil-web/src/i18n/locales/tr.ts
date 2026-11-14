@@ -1737,6 +1737,8 @@ const tr = {
       title: 'Başlık',
       date: 'Tarih',
       noUpcoming: 'Yaklaşan seans bulunmuyor.',
+      notes: 'Eğitmen notları',
+      noteEdited: 'düzenlendi',
     },
     goals: {
       total: 'Toplam Hedef',

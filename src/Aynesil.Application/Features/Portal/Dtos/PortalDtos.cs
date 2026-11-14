@@ -11,12 +11,20 @@ public record PortalDashboardDto(
 
 // ── Portal Sessions ───────────────────────────────────────────────────────────
 
+/// <summary>Veliye görünür (parent_visible) seans notu. EditedAt doluysa metin sonradan değişmiştir.</summary>
+public record PortalSessionNoteDto(
+    Guid Id,
+    string Body,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? EditedAt);
+
 public record PortalSessionDto(
     Guid Id,
     string? Title,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
-    string Status);
+    string Status,
+    IReadOnlyList<PortalSessionNoteDto> Notes);
 
 // ── Portal Attendance ─────────────────────────────────────────────────────────
 

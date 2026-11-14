@@ -115,16 +115,32 @@ public sealed class GetPortalSessionHistoryQueryHandler
         if (!canView)
             return [];
 
-        return await (
+        var sessions = await (
             from s in _db.Sessions.AsNoTracking()
             join sp in _db.SessionParticipants.AsNoTracking()
                 on s.Id equals sp.SessionId
             where sp.StudentId == req.StudentId
                && s.DeletedAt == null
             orderby s.StartsAt descending
-            select new PortalSessionDto(
-                s.Id, s.Title, s.StartsAt, s.EndsAt, s.Status)
+            select new { s.Id, s.Title, s.StartsAt, s.EndsAt, s.Status }
         ).Skip((req.Page - 1) * req.PageSize).Take(req.PageSize).ToListAsync(ct);
+
+        // Yalnızca veliye görünür (parent_visible) ve silinmemiş notlar; erişim kontrolü yukarıdaki
+        // CanViewSessions kapısıyla aynıdır. Görünürlüğü sonradan kapatılan not burada kendiliğinden düşer.
+        var ids = sessions.Select(s => s.Id).ToList();
+        var notes = ids.Count == 0
+            ? new Dictionary<Guid, List<PortalSessionNoteDto>>()
+            : (await _db.SessionNotes.AsNoTracking()
+                    .Where(n => ids.Contains(n.SessionId) && n.ParentVisible && n.DeletedAt == null)
+                    .OrderBy(n => n.CreatedAt)
+                    .Select(n => new { n.SessionId, Dto = new PortalSessionNoteDto(n.Id, n.Body, n.CreatedAt, n.EditedAt) })
+                    .ToListAsync(ct))
+                .GroupBy(n => n.SessionId)
+                .ToDictionary(g => g.Key, g => g.Select(n => n.Dto).ToList());
+
+        return sessions.Select(s => new PortalSessionDto(
+            s.Id, s.Title, s.StartsAt, s.EndsAt, s.Status,
+            notes.TryGetValue(s.Id, out var list) ? list : [])).ToList();
     }
 }
 

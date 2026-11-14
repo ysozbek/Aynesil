@@ -177,7 +177,9 @@ create table scheduling.session_note (
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   deleted_at  timestamptz,
-  row_version integer not null default 1
+  row_version integer not null default 1,
+  edited_at   timestamptz,                                      -- V55: last body edit (NULL = never edited)
+  edited_by   uuid                                              -- V55: iam.user_account.id of the editor
 );
 
 -- ---------------------------------------------------------------------

@@ -136,9 +136,9 @@ function openEditNote(note: { id: string; body: string; parentVisible: boolean; 
   noteModal.value = true
 }
 
-/** Düzenlenmiş mi? (updated_at, oluşturmadan 2 sn'den fazla sonra). Sunucu tarafı yazar kontrolünü yapar. */
-function isEdited(note: { createdAt: string; updatedAt: string }) {
-  return new Date(note.updatedAt).getTime() - new Date(note.createdAt).getTime() > 2000
+/** Metni düzenlenmiş mi? (V55 edited_at; yalnızca metin değişince dolar). Yazar kontrolünü sunucu yapar. */
+function isEdited(note: { editedAt?: string | null }) {
+  return !!note.editedAt
 }
 
 async function doSaveNote() {
@@ -490,7 +490,7 @@ function getAttendance(studentId: string) {
               <span
                 v-if="isEdited(note)"
                 class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
-                :title="t('scheduling.session.noteEditedAt', { at: new Date(note.updatedAt).toLocaleString('tr-TR') })"
+                :title="t('scheduling.session.noteEditedAt', { at: new Date(note.editedAt!).toLocaleString('tr-TR') })"
               >
                 {{ t('scheduling.session.noteEdited') }}
               </span>

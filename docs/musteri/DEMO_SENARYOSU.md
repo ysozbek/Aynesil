@@ -106,7 +106,7 @@ Aşağıdakileri sisteme önceden girin. Hiçbir ekran ID istemiyor; kişi ve ka
 | # | Ne yapılır | Nasıl | Söylenecek |
 |---|---|---|---|
 | 1 | Veli anasayfası | **Veli Portalı → Anasayfa**. Yaklaşan Seans, Paket Bakiyesi ve Aktif Hedef kartlarını gösterin. | "Veli giriş yaptığında ilk bunu görüyor: kaç seansı kaldı, sıradaki seans ne zaman." |
-| 2 | Çocuğun detayı | **Çocuklarım** → çocuğa tıklayın. Seanslar, Hedefler, Paketler, Belgeler. | "Hocanın 'veliye görünür' dediği notlar, onaylı BEP hedefleri ve ilerleme burada." |
+| 2 | Çocuğun detayı | **Çocuklarım** → çocuğa tıklayın. Seanslar, Hedefler, Paketler, Belgeler. | "Hocanın 'veliye görünür' dediği notlar (Seanslar sekmesinde seansın altında; düzenlenmişse 'düzenlendi' yazar), onaylı BEP hedefleri ve ilerleme burada." |
 | 3 | Gizlilik | **Söyleyin.** | "Veli yalnızca kendi çocuğunu görüyor. Neyi görebileceğine de kurum karar veriyor: finans, kamera, raporlar ayrı ayrı açılıp kapatılabiliyor." |
 
 ### 4b. Yönetici gözünden

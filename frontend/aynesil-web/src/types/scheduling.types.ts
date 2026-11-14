@@ -228,6 +228,8 @@ export interface SessionNoteDto {
   authorName?: string
   createdAt: string
   updatedAt: string
+  /** Metin son düzenleme zamanı (V55); null = hiç düzenlenmedi. */
+  editedAt?: string | null
   rowVersion: number
 }
 

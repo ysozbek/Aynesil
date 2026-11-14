@@ -20,6 +20,12 @@ public class SessionNote : TenantEntity
     /// <summary>When true the note is visible in the guardian/parent portal.</summary>
     public bool ParentVisible { get; private set; }
 
+    /// <summary>Last time the note's text was changed (V55); null = never edited.</summary>
+    public DateTimeOffset? EditedAt { get; private set; }
+
+    /// <summary>iam.user_account.id of the user who last changed the text.</summary>
+    public Guid? EditedBy { get; private set; }
+
     // ── Factory ───────────────────────────────────────────────────────────────
 
     public static SessionNote Write(
@@ -46,10 +52,17 @@ public class SessionNote : TenantEntity
 
     // ── Domain methods ────────────────────────────────────────────────────────
 
-    public void Edit(string body, bool parentVisible)
+    /// <summary>Metin değişirse edited_at/edited_by dolar; yalnızca görünürlük değişimi düzenleme sayılmaz.</summary>
+    public void Edit(string body, bool parentVisible, Guid? editedBy = null)
     {
         if (string.IsNullOrWhiteSpace(body))
             throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
+
+        if (!string.Equals(Body, body, StringComparison.Ordinal))
+        {
+            EditedAt = DateTimeOffset.UtcNow;
+            EditedBy = editedBy;
+        }
 
         Body          = body;
         ParentVisible = parentVisible;

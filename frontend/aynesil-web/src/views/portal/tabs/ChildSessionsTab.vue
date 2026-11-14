@@ -39,11 +39,27 @@
               <tr v-if="!store.sessionList.length">
                 <td colspan="3" class="text-center text-gray-400 py-6">{{ $t('common.noData') }}</td>
               </tr>
-              <tr v-for="s in store.sessionList" :key="s.id">
-                <td>{{ s.title ?? $t('portal.sessions.session') }}</td>
-                <td>{{ formatDateTime(s.startsAt) }}</td>
-                <td><StatusBadge entity="session" :status="s.status" /></td>
-              </tr>
+              <template v-for="s in store.sessionList" :key="s.id">
+                <tr>
+                  <td>{{ s.title ?? $t('portal.sessions.session') }}</td>
+                  <td>{{ formatDateTime(s.startsAt) }}</td>
+                  <td><StatusBadge entity="session" :status="s.status" /></td>
+                </tr>
+                <tr v-if="s.notes?.length">
+                  <td colspan="3" class="bg-base-200/40">
+                    <p class="text-xs font-semibold text-gray-500 mb-1">{{ $t('portal.sessions.notes') }}</p>
+                    <div v-for="n in s.notes" :key="n.id" class="mb-2 last:mb-0">
+                      <p class="text-sm whitespace-pre-line">{{ n.body }}</p>
+                      <p class="text-xs text-gray-500">
+                        {{ formatDateTime(n.createdAt) }}
+                        <span v-if="n.editedAt" class="ml-2 italic" :title="formatDateTime(n.editedAt)">
+                          · {{ $t('portal.sessions.noteEdited') }}
+                        </span>
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>

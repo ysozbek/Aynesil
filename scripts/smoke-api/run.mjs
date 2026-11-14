@@ -419,13 +419,12 @@ async function closureFlows() {
         const n = await write('yazma', 'scheduling.writeNote', 'POST', `/scheduling/sessions/${sid}/notes`, { body: 'Smoke not', parentVisible: true })
         const note = n.json?.data
         if (note?.id) {
-          await new Promise(ok => setTimeout(ok, 2200)) // düzenlendi rozeti: updated_at - created_at > 2 sn
           const e = await write('yazma', 'scheduling.editNote (yazan eğitmen)', 'PUT', `/scheduling/sessions/${sid}/notes/${note.id}`, { body: 'Smoke not (düzenlendi)', parentVisible: false, rowVersion: note.rowVersion })
           const list = (await http('GET', `/scheduling/sessions/${sid}`)).json?.data?.notes ?? []
           const got = list.find(x => x.id === note.id)
-          const edited = got && got.body === 'Smoke not (düzenlendi)' && got.parentVisible === false && new Date(got.updatedAt) - new Date(got.createdAt) > 2000
+          const edited = got && got.body === 'Smoke not (düzenlendi)' && got.parentVisible === false && !!got.editedAt
           record({ phase: 'yazma', id: 'scheduling.editNote (kalıcılık + düzenlendi bilgisi)', verb: 'GET', url: `/scheduling/sessions/${sid}`, status: 200,
-            outcome: edited ? 'ok' : 'type', note: edited ? 'gövde güncel, updatedAt > createdAt' : 'düzenleme okunamadı', mismatches: [] })
+            outcome: edited ? 'ok' : 'type', note: edited ? 'gövde güncel, editedAt dolu' : 'düzenleme okunamadı', mismatches: [] })
           // eski rowVersion ile ikinci düzenleme reddedilir
           expectStatus('yazma', 'scheduling.editNote (eski rowVersion → reddedilir)', 'PUT', `/scheduling/sessions/${sid}/notes/${note.id}`,
             await http('PUT', `/scheduling/sessions/${sid}/notes/${note.id}`, { body: 'x', parentVisible: false, rowVersion: note.rowVersion }), [400, 409, 422])
@@ -708,6 +707,20 @@ async function guardianRound() {
       outcome: ok ? 'ok' : items.some(x => x.isFinalized === false) ? 'leak' : r.status >= 500 ? '5xx' : '4xx',
       note: ok ? 'beklenen: yalnızca kesinleşmiş rapor(lar) görünür' : `beklenen: ≥1 kesinleşmiş, taslak yok; gelen ${r.status}, ${items.length} rapor (${items.map(x => x.isFinalized ? 'kesinleşmiş' : 'TASLAK').join(', ')})`, mismatches: [] })
   }
+  // V55: portal seans geçmişinde yalnızca veliye görünür notlar gelir; düzenlenen notta editedAt dolu
+  let sawEdited = false
+  for (const child of mine) {
+    const r = await http('GET', `/portal/students/${child.id ?? child.studentId}/sessions?page=1&pageSize=200`)
+    const notes = (r.json?.data ?? []).flatMap(x => x.notes ?? [])
+    const leak = notes.some(n => /Dahili not/.test(n.body))
+    const seen = notes.some(n => /^Veliye açık not/.test(n.body))
+    sawEdited ||= notes.some(n => n.editedAt)
+    record({ phase: 'izolasyon', id: `isolation.portal.session-notes (veli1 → ${child.firstName ?? ''})`, verb: 'GET', url: '/portal/students/{id}/sessions', status: r.status,
+      outcome: leak ? 'leak' : r.status === 200 && seen ? 'ok' : r.status >= 500 ? '5xx' : '4xx',
+      note: leak ? 'dahili (parent_visible=false) not veliye göründü' : seen ? `beklenen: yalnızca görünür not(lar) (${notes.length})` : `görünür not gelmedi (${r.status}, ${notes.length} not)`, mismatches: [] })
+  }
+  if (mine.length) record({ phase: 'izolasyon', id: 'isolation.portal.session-notes (düzenlenen not editedAt)', verb: 'GET', url: '/portal/students/{id}/sessions', status: 200,
+    outcome: sawEdited ? 'ok' : '4xx', note: sawEdited ? 'düzenlenmiş notta editedAt dolu' : 'düzenlenmiş not bulunamadı', mismatches: [] })
   const checks = [['aynı kurumda başka velinin çocuğu', own], ['başka kurumun öğrencisi', other]]
   for (const [what, sid] of checks) {
     if (!sid) { record({ phase: 'izolasyon', id: `isolation.portal (${what})`, verb: 'GET', url: '/portal/students/{id}', status: null, outcome: 'skip', note: 'kayıt bulunamadı', mismatches: [] }); continue }

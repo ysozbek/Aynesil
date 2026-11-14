@@ -15,7 +15,7 @@ Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen
    - *Her hafta tekrarlayan:* `Tekrar Eden Planlar → Plan Oluştur` (öğrenci, program, eğitmen, oda, günler, saat), sonra listede **Seansları Oluştur** ile tarih aralığı verin. Sistem kaç seans oluşturduğunu, oda ya da eğitmen dolu olduğu için kaç tarihi atladığını yazar.
 5. **Seansa hedef bağla:** seans sayfası → **Hedefler** sekmesi → **Hedef Ekle**. Önce seansa öğrenci eklenmiş olmalı. Böylece seansta çalışılan BEP hedefi kayda geçer. Yanlış bağlanan hedef, kartındaki **✕** ile seanstan çıkarılır (onay sorulur); öğrencinin hedefi silinmez, yalnızca bu seanstaki ilerleme notu ve ölçüm kalkar.
 6. **Ders günü yoklama al:** seans sayfası → **Yoklama** sekmesi: her öğrenci için Katıldı, Gelmedi veya Geç Geldi seçin; gelmeyene mazeret yazabilirsiniz. Kredi düşümü yoklamaya bakar, bu yüzden tamamlamadan önce yapın.
-7. **Not yaz:** **Notlar** sekmesi → **Not Ekle**. Eğitmenin görüşü ve gözlemi burada kalır. Notu **kalem simgesiyle düzenleyebilirsiniz**: yalnızca notu yazan eğitmen düzenler; başkasının notunu notları silebilen yönetici düzeltebilir, diğerleri "yalnızca yazan eğitmen ya da yönetici düzenleyebilir" uyarısı alır. Düzenlenen notta **Düzenlendi** rozeti çıkar (üzerine gelince son düzenleme zamanı).
+7. **Not yaz:** **Notlar** sekmesi → **Not Ekle**. Eğitmenin görüşü ve gözlemi burada kalır. Notu **kalem simgesiyle düzenleyebilirsiniz**: yalnızca notu yazan eğitmen düzenler; başkasının notunu notları silebilen yönetici düzeltebilir, diğerleri "yalnızca yazan eğitmen ya da yönetici düzenleyebilir" uyarısı alır. Metni düzenlenen notta **Düzenlendi** rozeti çıkar (üzerine gelince son düzenleme zamanı); yalnızca görünürlüğü değiştirmek düzenleme sayılmaz. **Veliye Görünür** işaretli not, velinin portalında çocuğun **Seanslar** sekmesinde o seansın altında görünür; düzenlenmişse velide de "düzenlendi" yazar; işareti kaldırırsanız veliden kalkar.
 8. **Seansı tamamla:** **Tamamla**. Yoklamada "geldi" olan her öğrenci için, seansın programına bağlı paketinden 1 seans hakkı düşer. Gerekirse **İptal Et** (gerekçe yazılır) veya **Yeniden Planla**.
 9. **Telafi iste:** gelmeyen öğrenci için `Seans Planlama → Telafi Talepleri → Talep Oluştur`; kaçırılan seansı seçin.
 10. **Telafiyi karara bağla:** koordinatör bekleyen talepte **Onayla** ya da **Reddet** (gerekçeyle). Onaylanan talepte **Seans ata**: öğrencinin önümüzdeki 90 gündeki planlı seansları listelenir (telafi seansını önce Seanslar'dan öğrenciyle oluşturup telafi olarak işaretlersiniz); seçince talep "Planlandı" olur. Telafi gerçekleşince **Tamamla** ile "Tamamlandı" yapılır. Seansın katılımcıları arasında talebin öğrencisi yoksa sistem atamayı reddeder.
@@ -25,7 +25,7 @@ Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen
 - Tamamlanmış, iptal edilmiş ya da "Gelmedi" yapılmış seansın durumu bir daha değişmez.
 - Oda veya eğitmen o saatte doluysa kayıt reddedilir: "… odası istenen zaman diliminde zaten dolu." ya da "… eğitimcisi … zaten meşgul."
 - Yoklamada ekranda yalnızca Katıldı / Gelmedi / Geç Geldi görünüyor; Mazeretli ve Erken Ayrıldı sistemde var ama bu ekrandan seçilemiyor gibi [doğrulanacak].
-- Notu yazan kişi, giriş yapan kullanıcıya bağlı eğitmen kaydıdır; bağlı değilse not yazılamaz ("Oturumdaki kullanıcı hiçbir eğitmen kaydına bağlı değil…"). Düzenlenmiş notun eski hâli ekranda tutulmaz; değişiklik denetim kaydına (`audit_log`) düşer. Veli portalı bugün seans notlarını göstermiyor, bu yüzden "veliye görünür not düzenlendi" bilgisi velide görünmez.
+- Notu yazan kişi, giriş yapan kullanıcıya bağlı eğitmen kaydıdır; bağlı değilse not yazılamaz ("Oturumdaki kullanıcı hiçbir eğitmen kaydına bağlı değil…"). Düzenlenmiş notun eski hâli ekranda tutulmaz; değişiklik denetim kaydına (`audit_log`) düşer. Veli, notu yalnızca kurum o veliye **Seanslar** bölümünü açtıysa görür; grup seansında bir not, seansın tüm katılımcılarının velilerine görünür olacağından veliye açık notta başka çocuğun adını yazmayın.
 
 ## Kendin dene
 `demo_a`'da yaklaşık 225 seans, tekrarlayan plan ve telafi talebi var.
@@ -33,6 +33,7 @@ Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen
 2. `Tekrar Eden Planlar`'dan bir planla **Seansları Oluştur** (iki haftalık aralık) ve atlanan tarihleri izleyin.
 3. `Telafi Talepleri`: bekleyen talepte **Onayla** veya **Reddet**; onaylı talepte **Seans ata**, planlı talepte **Tamamla** (demo'da bir talep tamamlanmış durumda).
 4. `egitmen@demo-a.test`: kendi seansında yoklama ve not; "Seans Oluştur" düğmesinin olmadığına dikkat edin.
-5. Seansa hedef ekleyip **✕** ile çıkarın. Bir not yazıp kalemle düzenleyin ve **Düzenlendi** rozetini görün; sonra `admin@demo-a.test` ile başka eğitmenin notunu düzeltmeyi deneyin (yönetici yapabilir).
+5. `veli1@demo-a.test` ile Portal → çocuk → **Seanslar**: iki çocukta da seansın altında "Veliye açık not…" görünür, "Dahili not…" görünmez; ilk çocukta not "düzenlendi" işaretlidir.
+6. Seansa hedef ekleyip **✕** ile çıkarın. Bir not yazıp kalemle düzenleyin ve **Düzenlendi** rozetini görün; sonra `admin@demo-a.test` ile başka eğitmenin notunu düzeltmeyi deneyin (yönetici yapabilir).
 
 Teknik ayrıntılar: [teknik/akis_04_program_seans_yoklama_telafi.md](teknik/akis_04_program_seans_yoklama_telafi.md)

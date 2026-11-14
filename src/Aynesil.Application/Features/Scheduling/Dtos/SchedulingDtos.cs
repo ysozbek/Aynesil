@@ -174,7 +174,8 @@ public record SessionNoteDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     int RowVersion,
-    string? AuthorName = null);
+    string? AuthorName = null,
+    DateTimeOffset? EditedAt = null);
 
 // ── Attendance DTOs ───────────────────────────────────────────────────────────
 
@@ -360,7 +361,8 @@ internal static class SchedulingProjection
             s.Notes.Select(n => new SessionNoteDto(
                 n.Id, n.SessionId, n.AuthoredBy, n.Body, n.ParentVisible,
                 n.CreatedAt, n.UpdatedAt, n.RowVersion,
-                n.AuthoredBy.HasValue ? authorMap?.GetValueOrDefault(n.AuthoredBy.Value) : null)).ToList(),
+                n.AuthoredBy.HasValue ? authorMap?.GetValueOrDefault(n.AuthoredBy.Value) : null,
+                n.EditedAt)).ToList(),
             s.Attendances.Select(a => new AttendanceDto(
                 a.Id, a.SessionId, a.StudentId,
                 studentMap.GetValueOrDefault(a.StudentId, ""),

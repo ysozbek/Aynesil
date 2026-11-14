@@ -34,12 +34,21 @@ export interface PortalDashboardDto {
 
 // ── Sessions ───────────────────────────────────────────────────────────────────
 
+/** Veliye görünür seans notu; editedAt doluysa metin sonradan değişmiştir. */
+export interface PortalSessionNoteDto {
+  id: string
+  body: string
+  createdAt: string
+  editedAt?: string | null
+}
+
 export interface PortalSessionDto {
   id: string
   title?: string
   startsAt: string
   endsAt: string
   status: string
+  notes: PortalSessionNoteDto[]
 }
 
 // ── Attendance ─────────────────────────────────────────────────────────────────

@@ -92,6 +92,17 @@ export async function setupSessions(ctx) {
     const note = await step('seans notu', () => ec.post(`/scheduling/sessions/${p.id}/notes`, { body: NOTES[i], parentVisible: i % 2 === 0 }))
     if (note?.id) made.notes++
   }
+  // ── veli1'in çocukları (portal): her birine bir veliye görünür + bir dahili (veliye kapalı) not; ilk çocuğun görünür notu düzenlenir ──
+  // Portal seans geçmişi yalnızca parent_visible notları gösterir; düzenlenen notta "düzenlendi" çıkar (V55 edited_at).
+  const p1 = ids.portal?.guardian1
+  for (const [k, sid] of (p1?.studentIds ?? []).entries()) {
+    const ps = pastSessions.find((x) => x.studentId === sid && x.status === 'present') ?? pastSessions.find((x) => x.studentId === sid)
+    if (!ps) continue
+    const vis = await step('veli notu (görünür)', () => ec.post(`/scheduling/sessions/${ps.id}/notes`, { body: 'Veliye açık not: bugünkü çalışmada hedef davranış desteksiz sürdürüldü; evde kısa tekrar önerilir.', parentVisible: true }))
+    await step('dahili not (veliye kapalı)', () => ec.post(`/scheduling/sessions/${ps.id}/notes`, { body: 'Dahili not (veliye kapalı): ekip içi değerlendirme, velilere gösterilmez.', parentVisible: false }))
+    if (vis?.id) made.notes += 2
+    if (k === 0 && vis?.id) await step('veli notu düzenleme', () => ec.put(`/scheduling/sessions/${ps.id}/notes/${vis.id}`, { body: 'Veliye açık not (güncellendi): hedef davranış desteksiz sürdürüldü; evde 5 dk tekrar önerilir.', parentVisible: true, rowVersion: vis.rowVersion }))
+  }
   // ── Ertelenen seans: gelecekteki iki seansı ertele ──
   const future = (await c.list('/scheduling/sessions?from=' + dayStr(1) + '&to=' + dayStr(13))).filter((x) => x.status === 'scheduled' || !x.status).slice(0, 2)
   for (const f of future) await step('erteleme', async () => {

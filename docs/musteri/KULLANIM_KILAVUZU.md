@@ -259,7 +259,7 @@ Kurum
 - **Seans eğitimcisi** — Seansı yürüten eğitimci(ler). Sorumlu eğitimcinin yanında yardımcı, gözlemci veya süpervizör de eklenebilir.
 - **Yoklama** — Öğrenci geldi mi? Her öğrenci ve seans için bir kayıt.
 - **Seans Hedefi** — "Bu seansta hangi BEP hedefleri üzerinde çalışıldı?" Seans ile öğrencinin hedefi arasındaki köprü.
-- **Seans Notu** — Eğitimcinin notu. **Veliye Görünür** işaretliyse veli portalında görünür.
+- **Seans Notu** — Eğitimcinin notu. **Veliye Görünür** işaretliyse veli portalında, çocuğun **Seanslar** sekmesinde ilgili seansın altında görünür (Seanslar bölümü kurum tarafından o veliye açıksa). Not sonradan düzenlenirse velide **düzenlendi** yazar; görünürlük kapatılırsa not portaldan kalkar.
 - **Telafi Talebi** — Kaçırılan seansın telafisi.
 
 ### 8.4 Program ≠ BEP (çok karıştırılır)
