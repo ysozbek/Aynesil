@@ -17,7 +17,7 @@ Portal iki ayrı adımdan oluşur ve **ikisi de** gerekir:
 2. **Karşılama sayfası:** `Portal` açılış sayfası yaklaşan seansı, okunmamış bildirimleri, paket bakiyesini ve aktif hedef sayısını gösterir. Bağlı çocuk yoksa "Kurum yöneticinizle iletişime geçin." yazar.
 3. **Çocuğu seç:** `Portal → Çocuklarım`; kayıtlı çocukların listesi. Birine tıklayınca çocuğun sayfası açılır.
 4. **Sekmeleri gez** (hangi sekmelerin göründüğünü kurum belirler):
-   - **Seanslar:** yaklaşan seanslar ve geçmiş. Eğitmenin **Veliye Görünür** işaretlediği notlar geçmişteki seansın altında görünür; sonradan düzenlenmişse "düzenlendi" yazar. Dahili notlar görünmez.
+   - **Seanslar:** yaklaşan seanslar ve geçmiş. Eğitmenin **Veliye Görünür** işaretlediği notlar geçmişteki seansın altında görünür; sonradan düzenlenmişse "düzenlendi" yazar. Dahili notlar görünmez; grup seansında yalnızca o çocuğa bağlanan notlar gelir, diğer çocuklar için yazılanlar görünmez.
    - **Hedefler:** hedefler, ilerleme ve tamamlananlar (BEP/IEP kutusu açıksa; yalnızca veliye açılmış onaylı plan görünür).
    - **Paketler:** aktif paketler, son kullanım tarihi, kalan seans hakkı (Finans kutusu açıksa).
    - **Belgeler:** paylaşılan belgeler ve raporlar (Raporlar kutusu açıksa). Veli yalnızca **kesinleşmiş** gelişim raporlarını görür.

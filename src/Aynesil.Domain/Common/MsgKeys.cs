@@ -94,6 +94,8 @@ public static class MsgKeys
         public static readonly MsgKey VisitNotFoundOrCancelled = new("Rule.VisitNotFoundOrCancelled");
         public static readonly MsgKey ActingEducatorRequired = new("Rule.ActingEducatorRequired");
         public static readonly MsgKey SessionNoteAuthorOnly = new("Rule.SessionNoteAuthorOnly");
+        public static readonly MsgKey SessionNoteStudentRequired = new("Rule.SessionNoteStudentRequired");
+        public static readonly MsgKey SessionNoteStudentNotParticipant = new("Rule.SessionNoteStudentNotParticipant");
         public static readonly MsgKey RecordAlreadyLinkedToUser = new("Rule.RecordAlreadyLinkedToUser");
         public static readonly MsgKey UserAlreadyLinkedToEducator = new("Rule.UserAlreadyLinkedToEducator");
         public static readonly MsgKey UserAlreadyLinkedToGuardian = new("Rule.UserAlreadyLinkedToGuardian");

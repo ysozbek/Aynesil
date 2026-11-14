@@ -410,7 +410,7 @@ public sealed class SchedulingController : BaseController
         Guid sessionId, [FromBody] WriteNoteRequest req, CancellationToken ct)
     {
         var result = await Sender.Send(
-            new WriteSessionNoteCommand(sessionId, req.Body, req.ParentVisible), ct);
+            new WriteSessionNoteCommand(sessionId, req.Body, req.ParentVisible, req.StudentId), ct);
         return CreatedResult(result, $"/api/scheduling/sessions/{sessionId}");
     }
 
@@ -420,7 +420,7 @@ public sealed class SchedulingController : BaseController
     public async Task<IActionResult> EditNote(
         Guid sessionId, Guid noteId, [FromBody] EditNoteRequest req, CancellationToken ct)
         => OkResult(await Sender.Send(
-            new EditSessionNoteCommand(noteId, req.Body, req.ParentVisible, req.RowVersion), ct));
+            new EditSessionNoteCommand(noteId, req.Body, req.ParentVisible, req.RowVersion, req.StudentId), ct));
 
     [HttpDelete("sessions/{sessionId:guid}/notes/{noteId:guid}")]
     [HasPermission(Permissions.SessionNotes.Delete)]
@@ -721,8 +721,8 @@ public record UpsertSessionGoalRequest(
     string? ProgressNote,
     decimal? MeasuredValue);
 
-public record WriteNoteRequest(string Body, bool ParentVisible);
-public record EditNoteRequest(string Body, bool ParentVisible, int RowVersion);
+public record WriteNoteRequest(string Body, bool ParentVisible, Guid? StudentId = null);
+public record EditNoteRequest(string Body, bool ParentVisible, int RowVersion, Guid? StudentId = null);
 
 // Attendance
 public record RecordAttendanceRequest(

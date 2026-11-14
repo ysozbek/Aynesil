@@ -20,6 +20,12 @@ public class SessionNote : TenantEntity
     /// <summary>When true the note is visible in the guardian/parent portal.</summary>
     public bool ParentVisible { get; private set; }
 
+    /// <summary>
+    /// Student the note is about (a session participant; V56). The guardian portal shows a parent-visible
+    /// note only to that student's guardians; null + parent_visible is never shown.
+    /// </summary>
+    public Guid? StudentId { get; private set; }
+
     /// <summary>Last time the note's text was changed (V55); null = never edited.</summary>
     public DateTimeOffset? EditedAt { get; private set; }
 
@@ -33,7 +39,8 @@ public class SessionNote : TenantEntity
         Guid sessionId,
         string body,
         bool parentVisible = false,
-        Guid? authoredBy = null)
+        Guid? authoredBy = null,
+        Guid? studentId = null)
     {
         if (string.IsNullOrWhiteSpace(body))
             throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
@@ -43,6 +50,7 @@ public class SessionNote : TenantEntity
             CorporationId = corporationId,
             SessionId     = sessionId,
             AuthoredBy    = authoredBy,
+            StudentId     = studentId,
             Body          = body,
             ParentVisible = parentVisible,
             CreatedAt     = DateTimeOffset.UtcNow,
@@ -53,7 +61,7 @@ public class SessionNote : TenantEntity
     // ── Domain methods ────────────────────────────────────────────────────────
 
     /// <summary>Metin değişirse edited_at/edited_by dolar; yalnızca görünürlük değişimi düzenleme sayılmaz.</summary>
-    public void Edit(string body, bool parentVisible, Guid? editedBy = null)
+    public void Edit(string body, bool parentVisible, Guid? studentId, Guid? editedBy = null)
     {
         if (string.IsNullOrWhiteSpace(body))
             throw new InvalidArgumentException(MsgKeys.Validation.Required, MsgArg.Field("Body"));
@@ -66,6 +74,7 @@ public class SessionNote : TenantEntity
 
         Body          = body;
         ParentVisible = parentVisible;
+        StudentId     = studentId;
         UpdatedAt     = DateTimeOffset.UtcNow;
     }
 }

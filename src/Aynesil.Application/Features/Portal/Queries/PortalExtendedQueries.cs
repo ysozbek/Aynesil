@@ -125,13 +125,15 @@ public sealed class GetPortalSessionHistoryQueryHandler
             select new { s.Id, s.Title, s.StartsAt, s.EndsAt, s.Status }
         ).Skip((req.Page - 1) * req.PageSize).Take(req.PageSize).ToListAsync(ct);
 
-        // Yalnızca veliye görünür (parent_visible) ve silinmemiş notlar; erişim kontrolü yukarıdaki
+        // Yalnızca veliye görünür (parent_visible), silinmemiş ve BU ÇOCUĞA bağlı (student_id = çocuk) notlar;
+        // student_id boş not (grup seansı dahil) hiçbir veliye gösterilmez (V56); erişim kontrolü yukarıdaki
         // CanViewSessions kapısıyla aynıdır. Görünürlüğü sonradan kapatılan not burada kendiliğinden düşer.
         var ids = sessions.Select(s => s.Id).ToList();
         var notes = ids.Count == 0
             ? new Dictionary<Guid, List<PortalSessionNoteDto>>()
             : (await _db.SessionNotes.AsNoTracking()
-                    .Where(n => ids.Contains(n.SessionId) && n.ParentVisible && n.DeletedAt == null)
+                    .Where(n => ids.Contains(n.SessionId) && n.ParentVisible && n.DeletedAt == null
+                                && n.StudentId == req.StudentId)
                     .OrderBy(n => n.CreatedAt)
                     .Select(n => new { n.SessionId, Dto = new PortalSessionNoteDto(n.Id, n.Body, n.CreatedAt, n.EditedAt) })
                     .ToListAsync(ct))

@@ -719,6 +719,20 @@ async function guardianRound() {
       outcome: leak ? 'leak' : r.status === 200 && seen ? 'ok' : r.status >= 500 ? '5xx' : '4xx',
       note: leak ? 'dahili (parent_visible=false) not veliye göründü' : seen ? `beklenen: yalnızca görünür not(lar) (${notes.length})` : `görünür not gelmedi (${r.status}, ${notes.length} not)`, mismatches: [] })
   }
+  // V56: grup seansında veli1 yalnızca kendi çocuğuna bağlı notu görür; B (veli2'nin çocuğu) ve öğrencisiz not sızmaz
+  {
+    let sawGroupA = false, leakedB = false, leakedInternal = false
+    for (const child of mine) {
+      const r = await http('GET', `/portal/students/${child.id ?? child.studentId}/sessions?page=1&pageSize=200`)
+      const notes = (r.json?.data ?? []).flatMap(x => x.notes ?? [])
+      sawGroupA ||= notes.some(n => /^Grup-A:/.test(n.body))
+      leakedB ||= notes.some(n => /Grup-B-ÖZEL/.test(n.body))
+      leakedInternal ||= notes.some(n => /Grup-DAHİLİ/.test(n.body))
+    }
+    if (mine.length) record({ phase: 'izolasyon', id: 'isolation.portal.group-session-notes (veli1 → B ve öğrencisiz not sızmaz)', verb: 'GET', url: '/portal/students/{id}/sessions', status: 200,
+      outcome: leakedB || leakedInternal ? 'leak' : sawGroupA ? 'ok' : '4xx',
+      note: leakedB ? 'B için yazılan not A velisine göründü' : leakedInternal ? 'öğrencisiz grup notu göründü' : sawGroupA ? 'beklenen: yalnızca Grup-A notu görünür' : 'Grup-A notu görünmedi', mismatches: [] })
+  }
   if (mine.length) record({ phase: 'izolasyon', id: 'isolation.portal.session-notes (düzenlenen not editedAt)', verb: 'GET', url: '/portal/students/{id}/sessions', status: 200,
     outcome: sawEdited ? 'ok' : '4xx', note: sawEdited ? 'düzenlenmiş notta editedAt dolu' : 'düzenlenmiş not bulunamadı', mismatches: [] })
   const checks = [['aynı kurumda başka velinin çocuğu', own], ['başka kurumun öğrencisi', other]]

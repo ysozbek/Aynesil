@@ -256,7 +256,7 @@ public sealed class UserAccountLinkTests : IDisposable
 
         var educatorToken = await LoginAsync($"notcu-{_suffix}@t.test", temporaryPassword);
         var (noteStatus, note) = await SendAsync(HttpMethod.Post, $"/api/scheduling/sessions/{session}/notes", educatorToken,
-            new { body = "Seans iyi geçti.", parentVisible = true });
+            new { body = "Seans iyi geçti.", parentVisible = false });
         noteStatus.Should().Be(HttpStatusCode.Created, note.ToString());
         note.GetProperty("data").GetProperty("authoredBy").GetGuid().Should().Be(educator);
     }

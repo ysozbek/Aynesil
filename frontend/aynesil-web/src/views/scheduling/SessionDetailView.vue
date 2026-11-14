@@ -41,6 +41,9 @@ const removeGoalTarget = ref<{ studentGoalId: string; goalStatement: string } | 
 const goalError = ref('')
 const newNoteBody = ref('')
 const newNoteParentVisible = ref(false)
+const newNoteStudentId = ref('')
+/** Grup seansı: veliye görünür not için öğrenci seçimi zorunlu (sunucu da doğrular). */
+const isGroupSession = computed(() => (session.value?.participants.length ?? 0) > 1)
 const addParticipantId = ref('')
 const addEducatorId = ref('')
 
@@ -124,14 +127,16 @@ function openAddNote() {
   editingNote.value = null
   newNoteBody.value = ''
   newNoteParentVisible.value = false
+  newNoteStudentId.value = 
   noteError.value = ''
   noteModal.value = true
 }
 
-function openEditNote(note: { id: string; body: string; parentVisible: boolean; rowVersion: number }) {
+function openEditNote(note: { id: string; body: string; parentVisible: boolean; rowVersion: number; studentId?: string | null }) {
   editingNote.value = { id: note.id, rowVersion: note.rowVersion }
   newNoteBody.value = note.body
   newNoteParentVisible.value = note.parentVisible
+  newNoteStudentId.value = note.studentId ?? ''
   noteError.value = ''
   noteModal.value = true
 }
@@ -144,15 +149,21 @@ function isEdited(note: { editedAt?: string | null }) {
 async function doSaveNote() {
   if (!newNoteBody.value.trim()) return
   noteError.value = ''
+  if (isGroupSession.value && newNoteParentVisible.value && !newNoteStudentId.value) {
+    noteError.value = t('scheduling.session.noteStudentRequired')
+    return
+  }
+  const studentId = newNoteStudentId.value || null
   try {
     if (editingNote.value) {
       await store.updateNote(sessionId, editingNote.value.id, {
         body: newNoteBody.value,
         parentVisible: newNoteParentVisible.value,
+        studentId,
         rowVersion: editingNote.value.rowVersion,
       })
     } else {
-      await store.addNote(sessionId, { body: newNoteBody.value, parentVisible: newNoteParentVisible.value })
+      await store.addNote(sessionId, { body: newNoteBody.value, parentVisible: newNoteParentVisible.value, studentId })
     }
     noteModal.value = false
     editingNote.value = null
@@ -494,6 +505,9 @@ function getAttendance(studentId: string) {
               >
                 {{ t('scheduling.session.noteEdited') }}
               </span>
+              <span v-if="note.studentName" class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
+                {{ note.studentName }}
+              </span>
               <span v-if="note.parentVisible" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
                 {{ t('scheduling.session.parentVisible') }}
               </span>
@@ -627,6 +641,16 @@ function getAttendance(studentId: string) {
           <input type="checkbox" v-model="newNoteParentVisible" class="rounded" />
           {{ t('scheduling.session.parentVisible') }}
         </label>
+        <div v-if="isGroupSession" class="mt-3">
+          <label class="block text-sm mb-1">
+            {{ t('scheduling.session.noteStudent') }}<span v-if="newNoteParentVisible" class="text-red-500"> *</span>
+          </label>
+          <select v-model="newNoteStudentId" class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent">
+            <option value="">{{ t('scheduling.session.noteStudentNone') }}</option>
+            <option v-for="p in session?.participants ?? []" :key="p.studentId" :value="p.studentId">{{ p.studentFullName }}</option>
+          </select>
+          <p class="mt-1 text-xs text-muted-foreground">{{ t('scheduling.session.noteStudentHint') }}</p>
+        </div>
         <div class="flex justify-end gap-2 mt-4">
           <button @click="noteModal = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
           <button @click="doSaveNote" :disabled="!newNoteBody.trim() || store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">

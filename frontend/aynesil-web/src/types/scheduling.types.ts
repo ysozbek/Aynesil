@@ -230,6 +230,9 @@ export interface SessionNoteDto {
   updatedAt: string
   /** Metin son düzenleme zamanı (V55); null = hiç düzenlenmedi. */
   editedAt?: string | null
+  /** Notun ilgili olduğu öğrenci (V56); veli portalı yalnızca bu öğrencinin velilerine gösterir. */
+  studentId?: string | null
+  studentName?: string | null
   rowVersion: number
 }
 
@@ -347,11 +350,14 @@ export interface UpdateSessionGoalPayload {
 export interface CreateSessionNotePayload {
   body: string
   parentVisible: boolean
+  /** Grup seansında veliye görünür not için zorunlu; tek öğrencili seansta sunucu otomatik doldurur. */
+  studentId?: string | null
 }
 
 export interface UpdateSessionNotePayload {
   body: string
   parentVisible: boolean
+  studentId?: string | null
   rowVersion: number
 }
 

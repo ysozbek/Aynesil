@@ -103,6 +103,19 @@ export async function setupSessions(ctx) {
     if (vis?.id) made.notes += 2
     if (k === 0 && vis?.id) await step('veli notu düzenleme', () => ec.put(`/scheduling/sessions/${ps.id}/notes/${vis.id}`, { body: 'Veliye açık not (güncellendi): hedef davranış desteksiz sürdürüldü; evde 5 dk tekrar önerilir.', parentVisible: true, rowVersion: vis.rowVersion }))
   }
+  // ── Grup seansı notu sızıntı örneği (V56): veli1'in çocuğu (A) + veli2'nin çocuğu (B) aynı seansta ──
+  // Veliye görünür her not bir öğrenciye bağlıdır; A'nın velisi B'ye yazılan notu görmez. Öğrencisiz not API'den
+  // veliye görünür yapılamaz (grup seansında 422), bu yüzden öğrencisiz dahili not da eklenir (kimseye gösterilmez).
+  const gA = ids.students[0], gB = ids.students[2]
+  const grp = await step('grup seansı', () => c.post('/scheduling/sessions', { sessionTypeId: groupType, startsAt: at(-3, 20), endsAt: at(-3, 20, 45), campusId: gA.campusId, roomId: null,
+    title: 'Demo grup seansı (sosyal beceri)', isMakeup: false, participantStudentIds: [gA.id, gB.id], educatorAssignments: [{ educatorId: ids.educators[0].id, role: 'lead' }] }))
+  if (grp?.id) {
+    const gn = (body, parentVisible, studentId) => step('grup notu', () => ec.post(`/scheduling/sessions/${grp.id}/notes`, { body, parentVisible, studentId }))
+    await gn('Grup-A: sıra bekleme çalışmasında akranına yardım etti (yalnızca bu öğrencinin velisine açık).', true, gA.id)
+    await gn('Grup-B-ÖZEL: bu not yalnızca B öğrencisinin velisine açıktır; A velisi görmemelidir.', true, gB.id)
+    await gn('Grup-DAHİLİ: öğrencisiz iç not, hiçbir veliye gösterilmez.', false, null)
+    made.notes += 3
+  }
   // ── Ertelenen seans: gelecekteki iki seansı ertele ──
   const future = (await c.list('/scheduling/sessions?from=' + dayStr(1) + '&to=' + dayStr(13))).filter((x) => x.status === 'scheduled' || !x.status).slice(0, 2)
   for (const f of future) await step('erteleme', async () => {

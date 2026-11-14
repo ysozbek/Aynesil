@@ -247,6 +247,8 @@
   <data name="Rule.SessionCompleteStatus" xml:space="preserve"><value>Cannot complete a session in '{0}' status. Only 'in progress' sessions can be completed.</value></data>
   <data name="Rule.SessionCompletedLocked" xml:space="preserve"><value>Completed sessions cannot change status.</value></data>
   <data name="Rule.SessionNoteAuthorOnly" xml:space="preserve"><value>Only the educator who wrote this session note, or an administrator, can edit it.</value></data>
+  <data name="Rule.SessionNoteStudentNotParticipant" xml:space="preserve"><value>The selected student is not a participant of this session.</value></data>
+  <data name="Rule.SessionNoteStudentRequired" xml:space="preserve"><value>A parent-visible session note must be linked to one student: pick one of the session participants (required for group sessions).</value></data>
   <data name="Rule.SessionRescheduleClosed" xml:space="preserve"><value>Cannot reschedule a completed or cancelled session.</value></data>
   <data name="Rule.SessionStartStatus" xml:space="preserve"><value>Cannot start a session in '{0}' status. Only 'planned' sessions can be started.</value></data>
   <data name="Rule.SessionTerminalStatus" xml:space="preserve"><value>Session is in terminal status '{0}' and cannot be modified.</value></data>

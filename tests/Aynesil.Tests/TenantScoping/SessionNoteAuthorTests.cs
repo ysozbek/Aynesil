@@ -33,7 +33,8 @@ public class SessionNoteAuthorTests
         using var ctx = new TenantTestContext();
         var session = NewSession();
         var educator = LinkedEducator(ctx.UserId);
-        await ctx.SeedAsync(session, educator, Educator.Create(TenantA, "Başka", "Eğitmen"));
+        await ctx.SeedAsync(session, educator, Educator.Create(TenantA, "Başka", "Eğitmen"),
+            SessionParticipant.Create(TenantA, session.Id, Guid.CreateVersion7())); // veliye görünür not bir öğrenciye bağlanmalı (V56)
 
         var dto = await ctx.Handler<WriteSessionNoteCommandHandler>().Handle(
             new WriteSessionNoteCommand(session.Id, "Seans iyi geçti.", true), default);
@@ -78,7 +79,7 @@ public class SessionNoteAuthorTests
         var session = NewSession();
         var author = LinkedEducator(ctx.UserId); // düzenleyen = notu yazan eğitmen
         var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
-        await ctx.SeedAsync(session, author, note);
+        await ctx.SeedAsync(session, author, note, SessionParticipant.Create(TenantA, session.Id, Guid.CreateVersion7()));
 
         var dto = await ctx.Handler<EditSessionNoteCommandHandler>().Handle(
             new EditSessionNoteCommand(note.Id, "Düzenlendi", true, note.RowVersion), default);

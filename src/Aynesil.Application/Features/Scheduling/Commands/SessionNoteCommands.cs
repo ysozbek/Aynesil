@@ -2,6 +2,8 @@ using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Validation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
 
@@ -16,7 +18,37 @@ namespace Aynesil.Application.Features.Scheduling.Commands;
 public record WriteSessionNoteCommand(
     Guid SessionId,
     string Body,
-    bool ParentVisible) : IRequest<SessionNoteDto>;
+    bool ParentVisible,
+    Guid? StudentId = null) : IRequest<SessionNoteDto>;
+
+/// <summary>
+/// Notun bağlandığı öğrenciyi çözer (V56). Kurallar:
+///  • verilen öğrenci seansın katılımcısı olmalı;
+///  • verilmezse: tek katılımcılı seansta o öğrenci otomatik seçilir;
+///  • veliye görünür not bir öğrenciye bağlanmak zorundadır (grup seansında seçim zorunlu, katılımcısız seansta yapılamaz).
+/// </summary>
+internal static class SessionNoteStudent
+{
+    public static async Task<Guid?> ResolveAsync(
+        IAppDbContext db, Guid sessionId, Guid? requested, bool parentVisible, CancellationToken ct)
+    {
+        var participants = await db.SessionParticipants.AsNoTracking()
+            .Where(p => p.SessionId == sessionId).Select(p => p.StudentId).ToListAsync(ct);
+
+        if (requested.HasValue)
+        {
+            if (!participants.Contains(requested.Value))
+                throw new ValidationException([ValidationFailures.For("studentId", MsgKeys.Rule.SessionNoteStudentNotParticipant)]);
+            return requested;
+        }
+
+        if (participants.Count == 1) return participants[0];
+
+        if (parentVisible)
+            throw new ValidationException([ValidationFailures.For("studentId", MsgKeys.Rule.SessionNoteStudentRequired)]);
+        return null;
+    }
+}
 
 public class WriteSessionNoteCommandValidator : AbstractValidator<WriteSessionNoteCommand>
 {
@@ -40,6 +72,14 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
         _tenant = tenant;
     }
 
+    internal static async Task<string?> StudentNameAsync(IAppDbContext db, Guid? studentId, CancellationToken ct)
+    {
+        if (!studentId.HasValue) return null;
+        var n = await db.Students.AsNoTracking().Where(s => s.Id == studentId.Value)
+            .Select(s => new { s.FirstName, s.LastName }).FirstOrDefaultAsync(ct);
+        return n is null ? null : $"{n.FirstName} {n.LastName}".Trim();
+    }
+
     public async Task<SessionNoteDto> Handle(WriteSessionNoteCommand req, CancellationToken ct)
     {
         var session = await _db.Sessions.AsNoTracking()
@@ -51,10 +91,12 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
             _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
         var educators = await ActingEducator.LoadNamesAsync(_db, [educatorId], ct);
 
+        var studentId = await SessionNoteStudent.ResolveAsync(_db, req.SessionId, req.StudentId, req.ParentVisible, ct);
+
         var note = SessionNote.Write(
             session.CorporationId, req.SessionId,
             req.Body, req.ParentVisible,
-            educatorId);
+            educatorId, studentId);
 
         _db.SessionNotes.Add(note);
         await _db.SaveChangesAsync(ct);
@@ -63,7 +105,8 @@ public sealed class WriteSessionNoteCommandHandler : IRequestHandler<WriteSessio
             note.Id, req.SessionId, note.AuthoredBy,
             note.Body, note.ParentVisible,
             note.CreatedAt, note.UpdatedAt, note.RowVersion,
-            educators.GetValueOrDefault(educatorId));
+            educators.GetValueOrDefault(educatorId), null,
+            note.StudentId, await StudentNameAsync(_db, note.StudentId, ct));
     }
 }
 
@@ -73,7 +116,8 @@ public record EditSessionNoteCommand(
     Guid Id,
     string Body,
     bool ParentVisible,
-    int RowVersion) : IRequest<SessionNoteDto>;
+    int RowVersion,
+    Guid? StudentId = null) : IRequest<SessionNoteDto>;
 
 public class EditSessionNoteCommandValidator : AbstractValidator<EditSessionNoteCommand>
 {
@@ -112,7 +156,14 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
         if (note.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
-        note.Edit(req.Body, req.ParentVisible, _currentUser.UserId);
+        // Öğrenci verilmezse mevcut bağ korunur; katılımcılıktan çıkmış öğrenciye bağlı not yeniden doğrulanır.
+        Guid? requested = req.StudentId;
+        if (!requested.HasValue && note.StudentId.HasValue
+            && await _db.SessionParticipants.AnyAsync(p => p.SessionId == note.SessionId && p.StudentId == note.StudentId.Value, ct))
+            requested = note.StudentId;
+        var studentId = await SessionNoteStudent.ResolveAsync(_db, note.SessionId, requested, req.ParentVisible, ct);
+
+        note.Edit(req.Body, req.ParentVisible, studentId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
 
         // Düzenleyen değil, notu yazan eğitmenin adı (authored_by → educators.educator).
@@ -124,7 +175,7 @@ public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionN
             note.Body, note.ParentVisible,
             note.CreatedAt, note.UpdatedAt, note.RowVersion,
             note.AuthoredBy.HasValue ? authors.GetValueOrDefault(note.AuthoredBy.Value) : null,
-            note.EditedAt);
+            note.EditedAt, note.StudentId, await WriteSessionNoteCommandHandler.StudentNameAsync(_db, note.StudentId, ct));
     }
 }
 

@@ -27,6 +27,7 @@ public class SessionNoteConfiguration : IEntityTypeConfiguration<SessionNote>
         builder.Property(x => x.Body).HasColumnName("body").IsRequired();
         builder.Property(x => x.ParentVisible).HasColumnName("parent_visible").HasDefaultValue(false).IsRequired();
 
+        builder.Property(x => x.StudentId).HasColumnName("student_id");
         builder.Property(x => x.EditedAt).HasColumnName("edited_at");
         builder.Property(x => x.EditedBy).HasColumnName("edited_by");
 

@@ -307,6 +307,7 @@ select pg_temp.to_tenant_fk('scheduling.session_educator', 'session_id', 'schedu
 select pg_temp.to_tenant_fk('scheduling.session_goal', 'session_id', 'scheduling.session', 'session_goal_session_id_fkey', 'fk_session_goal_session_id_tnt', 'c', 'CASCADE', false);
 select pg_temp.to_tenant_fk('scheduling.session_goal', 'student_goal_id', 'education.student_goal', 'session_goal_student_goal_id_fkey', 'fk_session_goal_student_goal_id_tnt', 'a', 'NO ACTION', false);
 select pg_temp.to_tenant_fk('scheduling.session_note', 'authored_by', 'educators.educator', 'session_note_authored_by_fkey', 'fk_session_note_authored_by_tnt', 'a', 'NO ACTION', false);
+select pg_temp.to_tenant_fk('scheduling.session_note', 'student_id', 'students.student', 'session_note_student_id_fkey', 'fk_session_note_student_id_tnt', 'a', 'NO ACTION', false);
 select pg_temp.to_tenant_fk('scheduling.session_note', 'session_id', 'scheduling.session', 'session_note_session_id_fkey', 'fk_session_note_session_id_tnt', 'c', 'CASCADE', false);
 select pg_temp.to_tenant_fk('scheduling.session_participant', 'session_id', 'scheduling.session', 'session_participant_session_id_fkey', 'fk_session_participant_session_id_tnt', 'c', 'CASCADE', false);
 select pg_temp.to_tenant_fk('scheduling.session_participant', 'student_id', 'students.student', 'session_participant_student_id_fkey', 'fk_session_participant_student_id_tnt', 'a', 'NO ACTION', false);

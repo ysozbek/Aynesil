@@ -247,6 +247,8 @@
   <data name="Rule.SessionCompleteStatus" xml:space="preserve"><value>'{0}' durumundaki bir seans tamamlanamaz. Yalnızca 'devam ediyor' durumundaki seanslar tamamlanabilir.</value></data>
   <data name="Rule.SessionCompletedLocked" xml:space="preserve"><value>Tamamlanmış seansların durumu değiştirilemez.</value></data>
   <data name="Rule.SessionNoteAuthorOnly" xml:space="preserve"><value>Bu seans notunu yalnızca notu yazan eğitmen ya da yönetici düzenleyebilir.</value></data>
+  <data name="Rule.SessionNoteStudentNotParticipant" xml:space="preserve"><value>Seçilen öğrenci bu seansın katılımcısı değil.</value></data>
+  <data name="Rule.SessionNoteStudentRequired" xml:space="preserve"><value>Veliye görünür bir seans notu bir öğrenciye bağlanmalıdır: seansın katılımcılarından birini seçin (grup seansında seçim zorunludur).</value></data>
   <data name="Rule.SessionRescheduleClosed" xml:space="preserve"><value>Tamamlanmış veya iptal edilmiş bir seans yeniden planlanamaz.</value></data>
   <data name="Rule.SessionStartStatus" xml:space="preserve"><value>'{0}' durumundaki bir seans başlatılamaz. Yalnızca 'planlandı' durumundaki seanslar başlatılabilir.</value></data>
   <data name="Rule.SessionTerminalStatus" xml:space="preserve"><value>Seans '{0}' son durumunda olduğu için değiştirilemez.</value></data>

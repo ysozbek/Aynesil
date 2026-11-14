@@ -179,7 +179,8 @@ create table scheduling.session_note (
   deleted_at  timestamptz,
   row_version integer not null default 1,
   edited_at   timestamptz,                                      -- V55: last body edit (NULL = never edited)
-  edited_by   uuid                                              -- V55: iam.user_account.id of the editor
+  edited_by   uuid,                                             -- V55: iam.user_account.id of the editor
+  student_id  uuid references students.student(id)              -- V56: student the note is about (session participant); portal shows only to that student's guardians
 );
 
 -- ---------------------------------------------------------------------

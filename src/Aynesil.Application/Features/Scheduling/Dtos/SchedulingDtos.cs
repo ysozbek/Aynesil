@@ -175,7 +175,9 @@ public record SessionNoteDto(
     DateTimeOffset UpdatedAt,
     int RowVersion,
     string? AuthorName = null,
-    DateTimeOffset? EditedAt = null);
+    DateTimeOffset? EditedAt = null,
+    Guid? StudentId = null,
+    string? StudentName = null);
 
 // ── Attendance DTOs ───────────────────────────────────────────────────────────
 
@@ -289,7 +291,8 @@ internal static class SchedulingProjection
         var refMap = await RefLabelLoader.LoadAsync(db, refIds, locale, ct);
 
         // Load student names for participants
-        var studentIds = session.Participants.Select(p => p.StudentId).ToList();
+        var studentIds = session.Participants.Select(p => p.StudentId)
+            .Concat(session.Notes.Where(n => n.StudentId.HasValue).Select(n => n.StudentId!.Value)).Distinct().ToList();
         var students = await db.Students.AsNoTracking()
             .Where(s => studentIds.Contains(s.Id))
             .Select(s => new { s.Id, s.FirstName, s.LastName })
@@ -362,7 +365,9 @@ internal static class SchedulingProjection
                 n.Id, n.SessionId, n.AuthoredBy, n.Body, n.ParentVisible,
                 n.CreatedAt, n.UpdatedAt, n.RowVersion,
                 n.AuthoredBy.HasValue ? authorMap?.GetValueOrDefault(n.AuthoredBy.Value) : null,
-                n.EditedAt)).ToList(),
+                n.EditedAt,
+                n.StudentId,
+                n.StudentId.HasValue ? studentMap.GetValueOrDefault(n.StudentId.Value) : null)).ToList(),
             s.Attendances.Select(a => new AttendanceDto(
                 a.Id, a.SessionId, a.StudentId,
                 studentMap.GetValueOrDefault(a.StudentId, ""),
