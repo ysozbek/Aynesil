@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         Common.Validation.ValidationLocalization.Configure();
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<Common.Interfaces.IModuleAccess, Common.TenantModules.ModuleAccess>();
 
         return services;
     }

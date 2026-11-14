@@ -53,7 +53,8 @@ async function ensureTenant(code, t) {
   info(`${code}: kurum oluşturuluyor (devops/new_tenant.py)`)
   const adminU = fx.users.admin
   const a = ['devops/new_tenant.py', '--code', code, '--name', t.name,
-    '--admin-username', `${adminU.local}@${t.domain}`, '--admin-name', adminU.fullName[code], '--admin-password', fx.password]
+    '--admin-username', `${adminU.local}@${t.domain}`, '--admin-name', adminU.fullName[code], '--admin-password', fx.password,
+    '--enable-modules', 'all'] // demo kurumlarında yarım modüller (kamp, danışmanlık, kamera, anket, bakım ekibi, KPI) açık
   for (const c of t.campuses) a.push('--campus', c)
   execFileSync('python3', a, { cwd: ROOT, stdio: 'pipe' })
 }

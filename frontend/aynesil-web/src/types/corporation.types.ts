@@ -31,6 +31,8 @@ export interface CorporationSettingsDto {
   taxOffice?: string
   taxNumber?: string
   settings: string
+  /** Modül durumu (salt okunur; platform yönetir: devops/set_modules.py). */
+  modules: Record<string, boolean>
 }
 
 export interface CreateCorporationRequest {

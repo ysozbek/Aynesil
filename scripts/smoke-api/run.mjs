@@ -12,6 +12,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const fx = JSON.parse(fs.readFileSync(path.join(here, 'fixtures.json'), 'utf8'))
@@ -384,6 +385,152 @@ async function newFlows() {
   token = adminToken
 }
 
+// ── B→A kapanışı: seans notu/hedefi, akademik dönem, taslak sözleşme, modül görünürlüğü ──
+async function closureFlows() {
+  const tag = RUN.toLowerCase()
+  const adminToken = token
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+
+  // 1) seans: hedef bağla → çıkar; not yaz → düzenle (düzenlendi bilgisi updated_at ile görünür)
+  if (ctx.studentId && ctx.sessionTypeId && ctx.educatorId && ctx.roomId) {
+    let r = await write('yazma', 'scheduling.createSession (not/hedef)', 'POST', '/scheduling/sessions', {
+      sessionTypeId: ctx.sessionTypeId, startsAt: at(20, 9), endsAt: at(20, 10), campusId: ctx.campusId, roomId: ctx.roomId,
+      title: `Smoke Not ${RUN}`, isMakeup: false, participantStudentIds: [ctx.studentId],
+      educatorAssignments: [{ educatorId: ctx.educatorId, role: 'lead' }] })
+    const sid = idOf(r.json?.data)
+    r = await write('yazma', 'goals.createStudentGoal (seans hedefi için)', 'POST', '/goals/student-goals', {
+      studentId: ctx.studentId, statement: `Smoke hedef ${RUN}`, horizon: 'short_term', templateId: null, categoryId: null,
+      developmentAreaId: null, parentGoalId: null, masteryCriteria: null, baseline: null, targetValue: null, startDate: day(0), targetDate: day(60) })
+    const gid = idOf(r.json?.data)
+    if (sid && gid) {
+      await write('yazma', 'scheduling.upsertSessionGoal', 'PUT', `/scheduling/sessions/${sid}/goals/${gid}`, { workedOn: true, progressNote: 'smoke', measuredValue: null })
+      await write('yazma', 'scheduling.removeSessionGoal', 'DELETE', `/scheduling/sessions/${sid}/goals/${gid}`)
+      const after = await http('GET', `/scheduling/sessions/${sid}`)
+      const still = (after.json?.data?.goals ?? []).some(g => g.studentGoalId === gid)
+      record({ phase: 'yazma', id: 'scheduling.removeSessionGoal (seanstan çıktı)', verb: 'GET', url: `/scheduling/sessions/${sid}`, status: after.status,
+        outcome: !still && after.status === 200 ? 'ok' : 'type', note: still ? 'hedef hâlâ seansta' : 'hedef çıkarıldı', mismatches: [] })
+      expectStatus('yazma', 'scheduling.removeSessionGoal (bağlı olmayan hedef → 404)', 'DELETE', `/scheduling/sessions/${sid}/goals/${gid}`,
+        await http('DELETE', `/scheduling/sessions/${sid}/goals/${gid}`), [404], 'Rule.GoalNotInSession')
+    }
+    // not yazmak için oturum açan kullanıcı bir eğitmen kaydına bağlı olmalı (ActingEducator): yönetici geçici bağlanır
+    if (sid && ctx.adminUserId) {
+      const link = await write('yazma', 'educators.linkUserAccount (not yazarı)', 'PUT', `/educators/${ctx.educatorId}/user-account`, { userId: ctx.adminUserId })
+      if (link.status < 300) {
+        const n = await write('yazma', 'scheduling.writeNote', 'POST', `/scheduling/sessions/${sid}/notes`, { body: 'Smoke not', parentVisible: true })
+        const note = n.json?.data
+        if (note?.id) {
+          await new Promise(ok => setTimeout(ok, 2200)) // düzenlendi rozeti: updated_at - created_at > 2 sn
+          const e = await write('yazma', 'scheduling.editNote (yazan eğitmen)', 'PUT', `/scheduling/sessions/${sid}/notes/${note.id}`, { body: 'Smoke not (düzenlendi)', parentVisible: false, rowVersion: note.rowVersion })
+          const list = (await http('GET', `/scheduling/sessions/${sid}`)).json?.data?.notes ?? []
+          const got = list.find(x => x.id === note.id)
+          const edited = got && got.body === 'Smoke not (düzenlendi)' && got.parentVisible === false && new Date(got.updatedAt) - new Date(got.createdAt) > 2000
+          record({ phase: 'yazma', id: 'scheduling.editNote (kalıcılık + düzenlendi bilgisi)', verb: 'GET', url: `/scheduling/sessions/${sid}`, status: 200,
+            outcome: edited ? 'ok' : 'type', note: edited ? 'gövde güncel, updatedAt > createdAt' : 'düzenleme okunamadı', mismatches: [] })
+          // eski rowVersion ile ikinci düzenleme reddedilir
+          expectStatus('yazma', 'scheduling.editNote (eski rowVersion → reddedilir)', 'PUT', `/scheduling/sessions/${sid}/notes/${note.id}`,
+            await http('PUT', `/scheduling/sessions/${sid}/notes/${note.id}`, { body: 'x', parentVisible: false, rowVersion: note.rowVersion }), [400, 409, 422])
+          void e
+        }
+        await http('DELETE', `/educators/${ctx.educatorId}/user-account`)
+      }
+    } else if (sid) skip('scheduling.editNote', 'PUT', '/scheduling/sessions/{id}/notes/{noteId}', 'yönetici kullanıcı kimliği yok')
+  } else skip('scheduling.removeSessionGoal / editNote', 'DELETE', '/scheduling/sessions/{id}/goals/{goalId}', 'ön koşul eksik')
+
+  // 2) akademik dönem: oluştur → düzenle → güncel yap → güncel dönem silinemez → sil
+  const terms = (await http('GET', '/reference-data/ACADEMIC_TERM?activeOnly=true')).json?.data ?? []
+  const periods = (await http('GET', '/education-plans/academic-periods?page=1&pageSize=200')).json?.data?.items ?? []
+  const originalCurrent = periods.find(x => x.isCurrent)
+  const p1 = await write('yazma', 'plans.createAcademicPeriod', 'POST', '/education-plans/academic-periods', {
+    name: `Smoke Dönem ${RUN}`, startDate: day(400), endDate: day(500), termId: terms[0]?.id ?? null, isCurrent: false })
+  const p2 = await write('yazma', 'plans.createAcademicPeriod (2)', 'POST', '/education-plans/academic-periods', {
+    name: `Smoke Dönem ${RUN} B`, startDate: day(510), endDate: day(600), termId: null, isCurrent: false })
+  const d1 = p1.json?.data, d2 = p2.json?.data
+  if (d1?.id) {
+    await write('yazma', 'plans.updateAcademicPeriod', 'PUT', `/education-plans/academic-periods/${d1.id}`, {
+      name: `Smoke Dönem ${RUN} (güncel)`, startDate: day(400), endDate: day(520), termId: null, rowVersion: d1.rowVersion })
+    expectStatus('yazma', 'plans.updateAcademicPeriod (eski rowVersion → reddedilir)', 'PUT', `/education-plans/academic-periods/${d1.id}`,
+      await http('PUT', `/education-plans/academic-periods/${d1.id}`, { name: 'x', startDate: day(400), endDate: day(520), termId: null, rowVersion: d1.rowVersion }), [400, 409, 422])
+    if (originalCurrent) {
+      await write('yazma', 'plans.setCurrentAcademicPeriod', 'POST', `/education-plans/academic-periods/${d1.id}/set-current`)
+      expectStatus('yazma', 'plans.deleteAcademicPeriod (güncel dönem → reddedilir)', 'DELETE', `/education-plans/academic-periods/${d1.id}`,
+        await http('DELETE', `/education-plans/academic-periods/${d1.id}`), [400, 409, 422], 'Rule.AcademicPeriodCurrentDelete')
+      await write('yazma', 'plans.setCurrentAcademicPeriod (eski döneme dön)', 'POST', `/education-plans/academic-periods/${originalCurrent.id}/set-current`)
+    } else skip('plans.setCurrentAcademicPeriod', 'POST', '/education-plans/academic-periods/{id}/set-current', 'kurumda güncel dönem yok; demo verisi değiştirilmedi')
+    await write('yazma', 'plans.deleteAcademicPeriod', 'DELETE', `/education-plans/academic-periods/${d1.id}`)
+  }
+  if (d2?.id) await write('yazma', 'plans.deleteAcademicPeriod (2)', 'DELETE', `/education-plans/academic-periods/${d2.id}`)
+
+  // 3) taslak sözleşme: düzenle → sil; gönderilmiş sözleşme düzenlenemez/silinemez
+  if (ctx.studentId) {
+    const c1 = await write('yazma', 'legal.createContract (taslak düzenleme)', 'POST', '/legal/contracts', { studentId: ctx.studentId, templateId: null, guardianId: null, startsOn: day(0), endsOn: day(100) })
+    const k1 = c1.json?.data
+    if (k1?.id) {
+      await write('yazma', 'legal.updateContract (taslak)', 'PUT', `/legal/contracts/${k1.id}`, { guardianId: null, startsOn: day(1), endsOn: day(120), rowVersion: k1.rowVersion })
+      const got = (await http('GET', `/legal/contracts/${k1.id}`)).json?.data
+      record({ phase: 'yazma', id: 'legal.updateContract (kalıcılık)', verb: 'GET', url: `/legal/contracts/${k1.id}`, status: 200,
+        outcome: got?.startsOn === day(1) && got?.endsOn === day(120) ? 'ok' : 'type', note: 'tarihler güncellendi', mismatches: [] })
+      await write('yazma', 'legal.deleteContract (taslak)', 'DELETE', `/legal/contracts/${k1.id}`)
+      expectStatus('yazma', 'legal.getContract (silinen taslak → 404)', 'GET', `/legal/contracts/${k1.id}`, await http('GET', `/legal/contracts/${k1.id}`), [404])
+    }
+    const c2 = await write('yazma', 'legal.createContract (gönderilecek)', 'POST', '/legal/contracts', { studentId: ctx.studentId, templateId: null, guardianId: null, startsOn: day(0), endsOn: day(100) })
+    const k2 = c2.json?.data
+    if (k2?.id) {
+      await write('yazma', 'legal.sendContract (kilit için)', 'POST', `/legal/contracts/${k2.id}/send`, {})
+      const sent = (await http('GET', `/legal/contracts/${k2.id}`)).json?.data
+      expectStatus('yazma', 'legal.updateContract (gönderilmiş → reddedilir)', 'PUT', `/legal/contracts/${k2.id}`,
+        await http('PUT', `/legal/contracts/${k2.id}`, { guardianId: null, startsOn: day(2), endsOn: day(90), rowVersion: sent?.rowVersion ?? k2.rowVersion }), [400, 409, 422], 'Rule.ContractModifyStatus')
+      expectStatus('yazma', 'legal.deleteContract (gönderilmiş → reddedilir)', 'DELETE', `/legal/contracts/${k2.id}`,
+        await http('DELETE', `/legal/contracts/${k2.id}`), [400, 409, 422], 'Rule.OnlyDraftContractDelete')
+    }
+  } else skip('legal.updateContract / deleteContract', 'PUT', '/legal/contracts/{id}', 'öğrenci yok')
+
+  // 4) modül görünürlüğü: kapat → menü gizlenir, uçlar 403; aç → geri gelir (demo_a, işlem sonunda hepsi açık bırakılır)
+  const setModules = (...a) => execFileSync('python3', ['devops/set_modules.py', '--code', 'demo_a', ...a], { cwd: path.resolve(here, '../..'), stdio: 'pipe' })
+  const menuCodes = async () => {
+    const out = new Set(), walk = (ns) => (ns ?? []).forEach(n => { out.add(n.code); walk(n.children) })
+    walk((await http('GET', '/menus/me')).json?.data)
+    return out
+  }
+  const gated = [['camps', '/camps', ['camps']], ['surveys', '/surveys', ['students-surveys']], ['consultancy', '/consultancy/institutions', ['consultancy']],
+    ['camera', '/cameras', ['cameras']], ['kpi', '/performance-kpi/definitions', ['performance']], ['care_team', '/care-team/my-students', ['students-care-team']]]
+  try {
+    setModules('--enable', 'all')
+    const openMenu = await menuCodes()
+    for (const [m, url] of gated) {
+      const res = await http('GET', url)
+      record({ phase: 'yazma', id: `modül açık: ${m}`, verb: 'GET', url, status: res.status, outcome: res.status !== 403 || res.json?.code !== 'Error.ModuleDisabled' ? 'ok' : '4xx',
+        note: res.status !== 403 || res.json?.code !== 'Error.ModuleDisabled' ? 'modül engeli yok' : 'açık modül engellendi', mismatches: [] })
+    }
+    setModules('--disable', gated.map(g => g[0]).join(','))
+    const closedMenu = await menuCodes()
+    for (const [m, url, menus] of gated) {
+      expectStatus('yazma', `modül kapalı: ${m} (uç → 403)`, 'GET', url, await http('GET', url), [403], 'Error.ModuleDisabled')
+      for (const code of menus) {
+        const hidden = !closedMenu.has(code)
+        record({ phase: 'yazma', id: `modül kapalı: ${m} (menü '${code}' gizli)`, verb: 'GET', url: '/menus/me', status: 200,
+          outcome: hidden ? 'ok' : 'leak', note: openMenu.has(code) ? (hidden ? 'açıkken vardı, kapalıyken yok' : 'kapalıyken hâlâ görünüyor') : 'menü bu rol/kurumda zaten yok (bayrak testi API ucuyla)', mismatches: [] })
+      }
+    }
+    // kurum yöneticisi settings ile modülü açamaz (gönderilen modules yok sayılır)
+    const corpId = (await http('GET', '/corporations?page=1&pageSize=5')).json?.data?.items?.[0]?.id
+    const cs = corpId ? (await http('GET', `/corporations/${corpId}/settings`)).json?.data : null
+    if (cs) {
+      const sent = JSON.stringify({ ...JSON.parse(cs.settings || '{}'), modules: { camps: true, surveys: true } })
+      await write('yazma', 'corporations.updateSettings (modules gönderilir → yok sayılır)', 'PUT', `/corporations/${corpId}/settings`, {
+        defaultLocale: cs.defaultLocale, defaultCurrency: cs.defaultCurrency, timezone: cs.timezone, taxOffice: cs.taxOffice ?? null, taxNumber: cs.taxNumber ?? null,
+        settings: sent, rowVersion: (await http('GET', `/corporations/${corpId}`)).json?.data?.rowVersion })
+      const again = (await http('GET', `/corporations/${corpId}/settings`)).json?.data
+      record({ phase: 'yazma', id: 'corporations.updateSettings (modules korunur)', verb: 'GET', url: `/corporations/${corpId}/settings`, status: 200,
+        outcome: again?.modules?.camps === false && again?.modules?.surveys === false ? 'ok' : 'leak', note: JSON.stringify(again?.modules ?? null), mismatches: [] })
+    }
+  } catch (e) {
+    skip('modül görünürlüğü', 'GET', '/menus/me', `set_modules.py çalıştırılamadı: ${String(e.message).split('\n')[0]}`)
+  } finally {
+    try { setModules('--enable', 'all') } catch { /* docker yoksa sweep zaten uyarır */ }
+  }
+  token = adminToken
+}
+
 async function writeFlows() {
   // 0) kullanıcı kaydı (davet) + parola sıfırlama isteği — INotificationService kaydı eksikse 500 verir
   const regUser = `smoke.reg.${RUN.toLowerCase()}@demo-a.test`
@@ -600,10 +747,12 @@ async function finish(abort = false) {
   process.exit(abort || (strict && bad.some(r => r.outcome !== 'skip')) ? 1 : 0)
 }
 
-await login()
+const me = await login()
+ctx.adminUserId = me?.userId
 await setup()
 await writeFlows()
 await newFlows()
+await closureFlows()
 await sweep()
 await isolation()
 await guardianRound()

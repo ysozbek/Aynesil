@@ -14,6 +14,7 @@ namespace Aynesil.Api.Controllers;
 /// Route: /api/consultancy
 /// </summary>
 [Route("api/consultancy")]
+[RequireModule(Modules.Consultancy)]
 public sealed class ConsultancyController : BaseController
 {
     // ═══════════════════════════════════════════════════════════════════════════

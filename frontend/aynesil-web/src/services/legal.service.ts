@@ -16,7 +16,7 @@ import type {
   ContractReportItemDto, ConsentReportItemDto, SignatureReportItemDto,
   ContractListQuery, ConsentListQuery,
   ContractTemplateListQuery, ConsentTemplateListQuery,
-  CreateContractPayload, SignContractPayload,
+  CreateContractPayload, UpdateContractPayload, SignContractPayload,
   GrantConsentPayload,
 } from '@/types/legal.types'
 
@@ -65,6 +65,14 @@ export const legalService = {
 
   createContract: (payload: CreateContractPayload) =>
     apiService.post<StudentContractDto>('/legal/contracts', payload),
+
+  /** Yalnızca taslak sözleşme: veli ve tarihler (`UpdateStudentContractCommand`, rowVersion zorunlu). */
+  updateContract: (id: string, payload: UpdateContractPayload) =>
+    apiService.put<void>(`/legal/contracts/${id}`, payload),
+
+  /** Yalnızca taslak sözleşme (soft delete). */
+  deleteContract: (id: string) =>
+    apiService.delete(`/legal/contracts/${id}`),
 
   sendContract: (id: string) =>
     apiService.post(`/legal/contracts/${id}/send`),

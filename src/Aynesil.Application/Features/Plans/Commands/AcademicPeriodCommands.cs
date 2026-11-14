@@ -188,6 +188,9 @@ public sealed class DeleteAcademicPeriodCommandHandler : IRequestHandler<DeleteA
         var period = await _db.AcademicPeriods.FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AcademicPeriod"));
 
+        if (period.IsCurrent)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.AcademicPeriodCurrentDelete);
+
         var hasPlan = await _db.EducationPlans.AnyAsync(
             p => p.AcademicPeriodId == req.Id, ct);
 

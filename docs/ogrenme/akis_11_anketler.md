@@ -1,5 +1,7 @@
 # Akış 11 — Anketler ve veli geri bildirimi (ekranı yok)
 
+> **Modül anahtarı: `surveys` (Anketler).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable surveys` (Akış 16). Menüsü zaten pasif olduğundan bayrak şimdilik yalnızca `/api/surveys` uçlarını kapatır.
+
 > **Bu modülün ekranı yok.** Sistem tarafı hazır; ama menüde ya da ekranlarda anket oluşturacak, doldurulacak ya da sonuçlarını gösterecek bir sayfa bulunmuyor. Aşağıdakiler, ekran eklendiğinde (ya da arka plandan kullanıldığında) nasıl işleyeceğini anlatır.
 
 ## Bu akış ne anlatıyor?

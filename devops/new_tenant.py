@@ -27,6 +27,10 @@ Kullanım:
   --dry-run   Üretilen SQL'i ekrana basar, veritabanına bağlanmaz
   --local     Docker yerine yerel psql kullanır (PGHOST/PGUSER/PGDATABASE/PGPASSWORD)
 
+İsteğe bağlı modüller (kamp, okul danışmanlığı, kamera, anketler, bakım ekibi, KPI) yeni kurumda
+KAPALI başlar (`settings.modules`, bkz. devops/set_modules.py). Açmak için kurulumda
+`--enable-modules camps,kpi` (ya da `all`), sonradan `set_modules.py --code <kod> --enable ...`.
+
 Şifre verilmezse güçlü bir geçici şifre üretilir ve yalnızca bir kez ekrana yazılır.
 
 Not: Giriş ekranı yalnızca kullanıcı adıyla çalışır; bu yüzden kullanıcı adı tüm
@@ -45,8 +49,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from set_modules import MODULES, parse_modules  # aynı dizin; modül kodları tek yerde
+
 ROOT = Path(__file__).parent.parent
-CONTAINER = "aynesil-db"
+CONTAINER = os.environ.get("AYNESIL_DB_CONTAINER", "aynesil-db")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -110,7 +116,11 @@ def parse_campuses(values: list[str] | None) -> list[dict[str, str | None]]:
 # ── SQL ───────────────────────────────────────────────────────────────────────
 
 def build_sql(args: argparse.Namespace, campuses: list[dict], password: str, commit: bool) -> str:
+    # İsteğe bağlı modüller varsayılan kapalı; --enable-modules ile açılanlar true.
+    enabled = parse_modules(args.enable_modules)
+    modules = {m: (m in enabled) for m in MODULES}
     settings = {
+        "nt.modules": json.dumps(modules),
         "nt.code": args.code,
         "nt.legal_name": args.legal_name or args.name,
         "nt.display_name": args.name,
@@ -164,9 +174,10 @@ begin
   end if;
 
   -- ── Corporation ─────────────────────────────────────────────────────────
-  insert into core.corporation (code, legal_name, display_name, default_locale, default_currency, timezone)
+  insert into core.corporation (code, legal_name, display_name, default_locale, default_currency, timezone, settings)
   values (v_code, current_setting('nt.legal_name'), current_setting('nt.display_name'),
-          current_setting('nt.locale'), current_setting('nt.currency'), current_setting('nt.timezone'))
+          current_setting('nt.locale'), current_setting('nt.currency'), current_setting('nt.timezone'),
+          jsonb_build_object('modules', current_setting('nt.modules')::jsonb))
   returning id into v_corp;
 
   -- ── Campuses ────────────────────────────────────────────────────────────
@@ -250,6 +261,9 @@ def main() -> int:
     parser.add_argument("--locale", default="tr")
     parser.add_argument("--currency", default="TRY")
     parser.add_argument("--timezone", default="Europe/Istanbul")
+    parser.add_argument("--enable-modules", action="append", metavar="MODÜL[,MODÜL]",
+                        help=f"Açık başlayacak isteğe bağlı modüller ({', '.join(MODULES)} veya all); "
+                             "verilmezse hepsi kapalı başlar")
     parser.add_argument("--local", action="store_true", help="Docker yerine yerel psql kullan")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="Çalıştır ama ROLLBACK yap (deneme)")
@@ -268,6 +282,8 @@ def main() -> int:
 
     print(f"\n🏢  Kurum açılıyor: {args.name} ({args.code})"
           + ("  [--check: deneme, veri yazılmayacak]" if args.check else ""))
+    on = parse_modules(args.enable_modules)
+    print("    • Modüller açık: " + (", ".join(on) if on else "yok (hepsi kapalı)"))
     for c in campuses:
         print(f"    • Kampüs {c['code']}: {c['name']}" + (f" ({c['city']})" if c["city"] else ""))
 

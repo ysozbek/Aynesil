@@ -148,6 +148,18 @@ public sealed class UpdateStudentContractCommandHandler : IRequestHandler<Update
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "StudentContract"));
 
+        if (contract.RowVersion != req.RowVersion)
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
+
+        if (req.GuardianId.HasValue && req.GuardianId != contract.GuardianId)
+        {
+            // Yeni veli, sözleşmenin öğrencisine bağlı olmalı (başka öğrencinin velisi atanamaz).
+            var linked = await _db.StudentGuardians.AsNoTracking().AnyAsync(
+                g => g.StudentId == contract.StudentId && g.GuardianId == req.GuardianId.Value, ct);
+            if (!linked)
+                throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Guardian"));
+        }
+
         contract.UpdateDetails(req.GuardianId, req.StartsOn, req.EndsOn, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }

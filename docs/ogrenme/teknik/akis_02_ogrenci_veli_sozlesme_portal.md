@@ -32,7 +32,7 @@
 2. `Hukuk → Sözleşmeler → Yeni Sözleşme` (`student_contract:generate`): öğrenci, şablon, başlangıç/bitiş. Bitiş başlangıçtan önce olamaz.
 3. Sözleşme detayında düğmeler (izne bağlı): **Gönder** (`:send`, draft→sent) → **İmzala** (`:sign`, sent→signed; imza yöntemi *Islak İmza / Elektronik İmza / Tıkla ve Kabul Et*, imzalayan adı, imzalı belge) → **Feshet** (`:terminate`). İmza uyarısı: "Bu işlem geri alınamaz."
 4. **Etkinleştir** (`:activate`, signed→active) ve **Süresini bitir** (`:expire`, active→expired) sözleşme detayında düğme olarak vardır (onay penceresiyle; geçersiz geçiş hatası sayfada gösterilir).
-5. Sözleşme yalnızca **taslakken** silinebilir; aktif olanlar fesihle kapatılır.
+5. Sözleşme yalnızca **taslakken** düzenlenir ve silinir: `PUT /api/legal/contracts/{id}` (`student_contract:update`; `guardianId`, `startsOn`, `endsOn`, `rowVersion`; `draft` dışı → 409 `Rule.ContractModifyStatus`; yeni veli sözleşmenin öğrencisine bağlı olmalı) ve `DELETE` (`student_contract:delete`, soft delete; `draft` dışı → 409 `Rule.OnlyDraftContractDelete`). Önceden düzenleme `sent` için de açıktı, sıkılaştırıldı. Ekran: sözleşme detayında Düzenle/Sil (yalnızca taslakta). Aktif olanlar fesihle kapatılır.
 
 ### D. Rıza (KVKK, kamera, foto-video …)
 - `Hukuk → Rızalar` **listeler** (öğrenci, tür, şablon, rıza tarihi, geçerlilik, zorunlu/opsiyonel). Rıza **verme** (`POST /api/legal/consents/grant`, `student_consent:grant`) ve **geri çekme** (`…/{id}/withdraw`, `:withdraw`) öğrenci kartındaki **Rızalar** sekmesindedir (`StudentConsentsPanel`; sekme `student_consent:read` ile görünür): tür ya da güncel şablon + veli + geçerlilik; kamera rızasında veli zorunlu. Kanıt dosyası ekleme (`…/{id}/evidence`) ekranda yok (dosya yükleme akışı yok).

@@ -22,7 +22,7 @@ Değerlendirme ekibi (Koordinatör/Yönetici) değerlendirmeyi yapar. BEP'i Koor
 - Plan sırayla ilerler: Taslak → İnceleme Bekliyor → Onaylandı → Aktif. Sırayı atlamaya çalışırsanız sistem plan hangi durumdayken ne yapılabileceğini söyleyen bir uyarı verir.
 - Sonuçlandırılmış değerlendirme raporu bir daha değiştirilemez.
 - Taslak plan revize edilemez ve kapatılamaz.
-- Akademik dönem tanımlı olmalı; dönemleri yönetecek bir ekran bulamadım, ilk kurulumda teknik destekle girilmiş olabilir.
+- Akademik dönem tanımlı olmalı. Dönemler `BEP → Akademik Dönemler` ekranından yönetilir: **Dönem Ekle**, **Düzenle**, **Güncel dönem yap** (önceki güncel dönemin işareti kalkar) ve **Sil**. Eğitim planı bağlı bir dönem ve güncel dönem silinemez; önce başka dönemi güncel yapın. Bitiş tarihi başlangıçtan sonra olmalıdır.
 
 ## Kendin dene
 - `koordinator@demo-a.test`: `BEP`'te 8 plan var (taslak, incelemede, onaylı, aktif). Taslağı **İncelemeye Gönder** → **Onayla** → **Aktifleştir**; sonra "Veli Görüntülüyor"u açın.

@@ -13,6 +13,7 @@ namespace Aynesil.Api.Controllers;
 /// Route: /api/camps
 /// </summary>
 [Route("api/camps")]
+[RequireModule(Modules.Camps)]
 public sealed class CampsController : BaseController
 {
     // ── Camps ─────────────────────────────────────────────────────────────────────

@@ -27,6 +27,7 @@ public sealed class GetUserMenuQueryHandler : IRequestHandler<GetUserMenuQuery, 
     private readonly ITenantContext _tenantContext;
     private readonly ICurrentUserService _currentUser;
     private readonly ICacheService _cache;
+    private readonly IModuleAccess _modules;
 
     private static readonly TimeSpan CacheExpiry = TimeSpan.FromHours(1);
 
@@ -34,8 +35,10 @@ public sealed class GetUserMenuQueryHandler : IRequestHandler<GetUserMenuQuery, 
         IMenuRepository menuRepository,
         ITenantContext tenantContext,
         ICurrentUserService currentUser,
-        ICacheService cache)
+        ICacheService cache,
+        IModuleAccess modules)
     {
+        _modules = modules;
         _menuRepository = menuRepository;
         _tenantContext = tenantContext;
         _currentUser = currentUser;
@@ -68,14 +71,21 @@ public sealed class GetUserMenuQueryHandler : IRequestHandler<GetUserMenuQuery, 
                     m.Route,
                     m.Icon,
                     m.SortOrder,
-                    m.RequiredPermission?.Code))
+                    m.RequiredPermission?.Code,
+                    m.FeatureFlag))
                 .ToList();
             },
             CacheExpiry,
             ct);
 
+        // Kurum için kapalı modüller (feature_flag = modül kodu) önbellekten bağımsız, her istekte okunur;
+        // böylece devops/set_modules.py değişikliği menüye hemen yansır. Gizlenen düğümün alt öğeleri de düşer.
+        var modules = await _modules.GetAllAsync(ct);
+
         // Filter in-memory using the current user's permissions (read from JWT claims — no DB hit)
         var visible = allItems
+            .Where(m => m.FeatureFlag is null ||
+                        !modules.TryGetValue(m.FeatureFlag, out var enabled) || enabled)
             .Where(m => m.RequiredPermissionCode is null ||
                         _currentUser.HasPermission(m.RequiredPermissionCode))
             .ToList();
@@ -133,4 +143,5 @@ internal sealed record CachedMenuEntry(
     string? Route,
     string? Icon,
     int SortOrder,
-    string? RequiredPermissionCode);
+    string? RequiredPermissionCode,
+    string? FeatureFlag = null);

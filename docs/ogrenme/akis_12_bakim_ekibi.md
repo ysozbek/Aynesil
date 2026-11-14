@@ -1,5 +1,7 @@
 # Akış 12 — Bakım ekibi: öğrenciye bakan eğitmenlerin belirlenmesi (ekranı yok)
 
+> **Modül anahtarı: `care_team` (Bakım ekibi).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable care_team` (Akış 16). Bayrak yalnızca `/api/care-team` ve `/api/students/{id}/care-team` uçlarını kapatır; öğrenci erişimini sınırlayan veritabanı politikası (ABAC/RLS) bundan bağımsız çalışmaya devam eder.
+
 > **Bu modülün ekranı yok.** Menüde "Bakım Ekibi" satırı tanımlı ama açılacak bir sayfa yok. Hazırlanmış altyapı olarak çalışıyor.
 
 ## Bu akış ne anlatıyor?

@@ -24,6 +24,21 @@ const form = reactive({
   rowVersion: 0,
 })
 
+const modules = ref<Record<string, boolean>>({})
+const MODULE_ORDER = ['camps', 'consultancy', 'camera', 'surveys', 'care_team', 'kpi']
+const moduleList = computed(() => MODULE_ORDER.map(code => ({ code, enabled: modules.value[code] !== false })))
+
+/** `modules` platform işidir; serbest JSON alanında gösterilmez (gönderilse de sunucu yok sayar). */
+function withoutModules(raw: string | undefined): string {
+  try {
+    const obj = JSON.parse(raw || '{}') as Record<string, unknown>
+    delete obj.modules
+    return JSON.stringify(obj, null, 2)
+  } catch {
+    return raw ?? '{}'
+  }
+}
+
 const saved = ref(false)
 const error = ref('')
 
@@ -36,8 +51,9 @@ onMounted(async () => {
       timezone: settings.timezone,
       taxOffice: settings.taxOffice ?? '',
       taxNumber: settings.taxNumber ?? '',
-      settings: settings.settings ?? '{}',
+      settings: withoutModules(settings.settings),
     })
+    modules.value = settings.modules ?? {}
   }
   if (!store.current) await store.fetchOne(id.value)
   form.rowVersion = (store.current?.rowVersion ?? 0)
@@ -137,6 +153,19 @@ async function save() {
           placeholder="{}"
         />
         <p class="mt-1 text-xs text-muted-foreground">{{ t('corporation.settingsJsonHint') }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">{{ t('corporation.modules.title') }}</label>
+        <ul class="rounded-lg border border-border divide-y divide-border">
+          <li v-for="m in moduleList" :key="m.code" class="flex items-center justify-between px-3 py-2 text-sm">
+            <span class="text-foreground">{{ t(`corporation.modules.names.${m.code}`) }}</span>
+            <span
+              :class="['px-2 py-0.5 rounded-full text-xs font-medium', m.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600']"
+            >{{ m.enabled ? t('corporation.modules.enabled') : t('corporation.modules.disabled') }}</span>
+          </li>
+        </ul>
+        <p class="mt-1 text-xs text-muted-foreground">{{ t('corporation.modules.hint') }}</p>
       </div>
 
       <div class="flex justify-end">

@@ -1,5 +1,7 @@
 # Akış 9 — Kamera: kurulum → derslik ataması → veli izleme yetkisi → izleme
 
+> **Modül anahtarı: `camera` (Kamera).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable camera` (Akış 16). Kapalıyken öğrenci kamera rızası (Akış 2) yine alınabilir; yalnızca kamera/yetki/izleme uçları kapanır.
+
 ## Bu akış ne anlatıyor?
 Derslikteki kameraların sisteme tanıtılmasını, hangi derslik ya da seansta çalıştıklarının belirlenmesini ve velilere belirli bir süre için çocuklarını izleme yetkisi verilmesini anlatır. Her izleme kaydedilir; bu bir yasal gerekliliktir. **Canlı yayın izleme ekranı henüz yok** (aşağıya bakın).
 

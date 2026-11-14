@@ -82,7 +82,7 @@ public class StudentContract : TenantEntity
         return contract;
     }
 
-    // ── Mutations (draft/sent only) ────────────────────────────────────────────
+    // ── Mutations (draft only; sent/signed contracts are frozen) ───────────────
 
     public void UpdateDetails(
         Guid? guardianId,
@@ -90,7 +90,7 @@ public class StudentContract : TenantEntity
         DateOnly? endsOn,
         Guid? updatedBy = null)
     {
-        EnsureEditable();
+        EnsureDraft();
         if (startsOn.HasValue && endsOn.HasValue && endsOn < startsOn)
             throw new InvalidArgumentException(MsgKeys.Validation.MustNotBeBefore, MsgArg.Field("EndDate"), MsgArg.Field("StartDate"));
 
@@ -190,9 +190,9 @@ public class StudentContract : TenantEntity
         AddDomainEvent(new StudentContractStatusChangedEvent(Id, CorporationId, StudentId, prev, newStatus));
     }
 
-    private void EnsureEditable()
+    private void EnsureDraft()
     {
-        if (Status is "signed" or "active" or "expired" or "terminated")
+        if (Status != "draft")
             throw new BusinessRuleViolationException(MsgKeys.Rule.ContractModifyStatus, new EnumValue("Status", Status));
     }
 }

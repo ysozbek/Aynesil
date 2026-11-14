@@ -1,5 +1,7 @@
 # Akış 8 — Okul danışmanlığı: kurum → plan → ziyaret → gözlem → takip
 
+> **Modül anahtarı: `consultancy` (Okul danışmanlığı).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable consultancy` (Akış 16).
+
 ## Bu akış ne anlatıyor?
 Kurumun dışarıdaki okullara verdiği danışmanlık hizmetini anlatır: hangi okulla çalışıldığı, yıllık plan, okula yapılan ziyaretler, ziyarette alınan gözlemler, çıkan rapor ve yapılacak işlerin takibi. Okulla yapılan anlaşma da burada tutulur.
 

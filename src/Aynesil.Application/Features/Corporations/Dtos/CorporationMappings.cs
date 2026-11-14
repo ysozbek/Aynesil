@@ -49,5 +49,6 @@ internal static class CorporationMappings
             corp.Timezone,
             corp.TaxOffice,
             corp.TaxNumber,
-            corp.Settings);
+            corp.Settings,
+            Common.TenantModules.CorporationModules.Parse(corp.Settings));
 }

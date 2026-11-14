@@ -9,13 +9,13 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, bu turda **27 uç kapatıldı**, kalan **123** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"); kalan **115** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
 ## 2. (A) Yarım kalmış iş akışı — bu turda kapatılanlar
 
-Hepsi mevcut ekran desenleriyle (StatusBadge, `utils/datetime`, `constants/permissions`, form/hata gösterimi) yapıldı. Kalan A grubu: **yok** (aşağıdaki B/C gerekçeleri tek tek yazıldı).
+Hepsi mevcut ekran desenleriyle (StatusBadge, `utils/datetime`, `constants/permissions`, form/hata gösterimi) yapıldı. Kalan A grubu: **yok** (aşağıdaki B/C gerekçeleri tek tek yazıldı; B'den taşınanlar için "İkinci tur" tablosuna bakın).
 
 | Akış | Uç(lar) | Ekran |
 |---|---|---|
@@ -39,6 +39,17 @@ Hepsi mevcut ekran desenleriyle (StatusBadge, `utils/datetime`, `constants/permi
 | Toplu KPI hesaplama | `POST /api/performance-kpi/compute/bulk` | "Dönem Hesapla" düğmesi hiçbir şey yapmıyordu (yalnızca yeniliyordu); otomatik hesaplama işi de kayıtlı değil | KPI anlık görüntüleri |
 
 Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken seansın katılımcısı talep sahibi öğrenci olmalı (`Rule.MakeupSessionStudentMismatch`); KPI `spec` geçerli JSON nesnesi olmalı, güncellemede platform tanımı salt okunur + `rowVersion` kontrolü.
+
+**İkinci tur — B'den A'ya taşınıp ekranı yapılanlar (2026-11-14):**
+
+| Akış | Uç(lar) | Kural | Ekran |
+|---|---|---|---|
+| Seans notu düzenleme | `PUT /api/scheduling/sessions/{sessionId}/notes/{noteId}` | Yalnızca notu yazan eğitmen düzenler (`authored_by` = oturumdaki kullanıcıya bağlı eğitmen); başkasının notunu `session_note:delete` (yönetici) yetkisi olan düzenleyebilir, aksi halde 403 `Rule.SessionNoteAuthorOnly`. Eski `rowVersion` → 409. | Seans detayı → Notlar → kalem simgesi |
+| Seans hedefi çıkarma | `DELETE /api/scheduling/sessions/{sessionId}/goals/{studentGoalId}` | Öğrencinin hedefi silinmez, yalnızca seansla bağı (ilerleme notu/ölçüm) kalkar; seansta olmayan hedef → 404 `Rule.GoalNotInSession`. Onay penceresi var. | Seans detayı → Hedefler → ✕ |
+| Akademik dönem: liste, oluştur, düzenle, güncel yap, sil | `GET/PUT/DELETE /api/education-plans/academic-periods/{id}`, `POST …/{id}/set-current` (+ mevcut `GET`/`POST` liste/oluştur) | Silme: eğitim planı bağlıysa `Rule.AcademicPeriodInUse`; **güncel dönem silinemez** (yeni: `Rule.AcademicPeriodCurrentDelete`, önce başka dönem güncel yapılır). Düzenleme `rowVersion` ister. | `/bep/academic-periods` (menü `plans-academic`: V31'de pasifti, **V54** ile açıldı ve yola hizalandı; eski `/education-plans/academic-periods` yönlendirilir) |
+| Taslak sözleşmeyi düzenleme ve silme | `PUT /api/legal/contracts/{id}`, `DELETE /api/legal/contracts/{id}` | **Yalnızca `draft`:** gönderilmiş/imzalı/aktif sözleşmede düzenleme 409 `Rule.ContractModifyStatus`, silme 409 `Rule.OnlyDraftContractDelete` (önceden düzenleme `sent` için de açıktı; sıkılaştırıldı). Düzenleme `rowVersion` ister; yeni veli sözleşmenin öğrencisine bağlı olmalı. Silme soft delete. | Sözleşme detayı → Düzenle / Sil (yalnızca taslakta görünür) |
+
+**Seans notu düzenlendi bilgisi:** şemada (`scheduling.session_note`) `edited_at/edited_by` yok; yalnızca `updated_at` (+ `core.audit_trigger` ile `core.audit_log`'ta eski/yeni değer) var. Yeni tablo/kolon icat edilmedi: not kartında **"Düzenlendi"** rozeti `updated_at − created_at > 2 sn` ile gösterilir (üzerine gelince son düzenleme zamanı). Veli portalı bugün seans notlarını hiç göstermediği için "veliye görünür notun düzenlendiği" bilgisi portala taşınmadı. **Öneri (karar sizde, uygulanmadı):** portal seans notlarını gösterecekse `session_note`'a `edited_at timestamptz` + `edited_by uuid` eklemek (V54) ve veliye "düzenlendi" bilgisini bu alanlardan vermek; böylece `updated_at`'ın başka nedenle (ör. görünürlük değişikliği) değişmesi rozeti yanıltmaz.
 
 **Kamera izleme ↔ rıza ilişkisi (doğrulandı):** veliye izleme yetkisi (`ViewingAuthorization`) verilirken öğrenci + **o veli** adına verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2). İzleme başlatılırken **yetkinin bağlı olduğu velinin kendi** rızası yeniden kontrol edilir; geri alınmışsa/süresi dolmuşsa izleme başlamaz (`Rule.CameraConsentWithdrawn`). Rıza geri alınınca o veliye + öğrenciye ait açık izleme yetkileri iptal edilir (gerekçe "Rıza geri alındı", V52 `revoked_reason`); diğer velinin yetkisi etkilenmez. (Önceki turda öğrenci düzeyinde kontrol ediliyordu ve geri alma yetkiyi iptal etmiyordu; sıkılaştırıldı.)
 
@@ -136,15 +147,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | GET | `/api/consultancy/visits/{visitId}/observations` | Observations.Read |
 | POST | `/api/consultancy/visits/{visitId}/observations` | Observations.Create |
 
-**EducationPlans** — 4 uç. Akademik dönem ayrıntı/güncelle/sil/güncel yap: dönem oluşturma-listeleme ekranlı; dönem yönetimi yılda birkaç kez, API ile yapılabilir.
-
-| Metot | Route | İzin |
-|---|---|---|
-| DELETE | `/api/education-plans/academic-periods/{id}` | AcademicPeriods.Manage |
-| GET | `/api/education-plans/academic-periods/{id}` | AcademicPeriods.Read |
-| PUT | `/api/education-plans/academic-periods/{id}` | AcademicPeriods.Manage |
-| POST | `/api/education-plans/academic-periods/{id}/set-current` | AcademicPeriods.Manage |
-
 **EducationPlans** — 1 uç. Veli görünür plan okuması; portal kendi ucunu kullanıyor.
 
 | Metot | Route | İzin |
@@ -181,12 +183,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | Metot | Route | İzin |
 |---|---|---|
 | POST | `/api/legal/consents/{id}/evidence` | StudentConsents.AttachEvidence |
-
-**Legal** — 1 uç. Taslak sözleşme düzenleme (tarih/veli); yeni taslak oluşturulabiliyor, gerekirse eklenir.
-
-| Metot | Route | İzin |
-|---|---|---|
-| PUT | `/api/legal/contracts/{id}` | StudentContracts.Update |
 
 **Meetings** — 2 uç. Toplantı listesi ham ucu (takvim/ayrıntı ekranlı) ve çıktı güncelleme.
 
@@ -291,13 +287,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | POST | `/api/scheduling/recurring-schedules/{id}/exceptions` | Sessions.Update |
 | POST | `/api/scheduling/sessions/{sessionId}/attendance/bulk` | Attendance.Record |
 
-**Scheduling** — 2 uç. Seans notu düzenleme / hedef çıkarma; not ve hedef ekleme ekranlı.
-
-| Metot | Route | İzin |
-|---|---|---|
-| DELETE | `/api/scheduling/sessions/{sessionId}/goals/{studentGoalId}` | Sessions.ManageGoals |
-| PUT | `/api/scheduling/sessions/{sessionId}/notes/{noteId}` | SessionNotes.Write |
-
 **Surveys** — 9 uç. Anket modülünün frontend servisi/ekranı hiç yok (yalnızca API). Anket kullanılacaksa tümü birlikte yapılmalı.
 
 | Metot | Route | İzin |
@@ -319,12 +308,30 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 |---|---|---|---|---|
 | Auth | POST | `/api/auth/register` | Users.Create | `/users` oluşturma (ekranlı) aynı işi yapıyor; `register` yinelenen yol. |
 | Health | GET | `/Health` | - | Altyapı sağlık ucu (yük dengeleyici/izleme çağırır); ekranı olmaz. |
-| Legal | DELETE | `/api/legal/consent-templates/{id}` | ConsentTemplates.Delete | Şablon/sözleşme silme: imzalı sözleşme ve rıza değişmez/kalıcıdır (CLAUDE.md); yeni sürümle ilerlenir. Ekran açılmamalı. |
-| Legal | DELETE | `/api/legal/contract-templates/{id}` | ContractTemplates.Delete | Şablon/sözleşme silme: imzalı sözleşme ve rıza değişmez/kalıcıdır (CLAUDE.md); yeni sürümle ilerlenir. Ekran açılmamalı. |
-| Legal | DELETE | `/api/legal/contracts/{id}` | StudentContracts.Delete | Şablon/sözleşme silme: imzalı sözleşme ve rıza değişmez/kalıcıdır (CLAUDE.md); yeni sürümle ilerlenir. Ekran açılmamalı. |
+| Legal | DELETE | `/api/legal/consent-templates/{id}` | ConsentTemplates.Delete | Şablon/rıza silme: imzalı sözleşme ve rıza değişmez/kalıcıdır (CLAUDE.md); yeni sürümle ilerlenir. Ekran açılmamalı. |
+| Legal | DELETE | `/api/legal/contract-templates/{id}` | ContractTemplates.Delete | Şablon/rıza silme: imzalı sözleşme ve rıza değişmez/kalıcıdır (CLAUDE.md); yeni sürümle ilerlenir. Ekran açılmamalı. (Taslak *öğrenci sözleşmesi* silme artık A'da: yalnızca `draft`.) |
 | Programs | GET | `/api/student-programs/{id}` | Enrollments.Read | Öğrenci-program tekil okuma; liste yanıtı yetiyor. |
 | ReferenceData | GET | `/api/reference-data/{typeCode}/default` | RefData.Read | Varsayılan değer ucu; arayüz `isDefault` alanını liste yanıtından alıyor. |
 | Students | GET | `/api/students/{id}/campuses` | Students.Read | Alt kayıtlar öğrenci detay yanıtında zaten geliyor (tanı/gelişim profili/kampüs/veli); ayrı çağrı gereksiz. |
 | Students | GET | `/api/students/{id}/developmental-profiles` | Students.Read | Alt kayıtlar öğrenci detay yanıtında zaten geliyor (tanı/gelişim profili/kampüs/veli); ayrı çağrı gereksiz. |
 | Students | GET | `/api/students/{id}/diagnoses` | Students.Read | Alt kayıtlar öğrenci detay yanıtında zaten geliyor (tanı/gelişim profili/kampüs/veli); ayrı çağrı gereksiz. |
 
+## 5. Modül görünürlüğü (kurum bazında aç/kapat)
+
+B grubundaki modüller (kamp, okul danışmanlığı, kamera, anketler, bakım ekibi, KPI) yarım kaldığı için **yeni kurumda kapalı** başlar. Kontrol sonucu: önceden böyle bir mekanizma **yoktu** (`iam.menu_item.feature_flag` sütunu vardı ama hiçbir kod okumuyordu); V53 ile kuruldu.
+
+| Konu | Karar |
+|---|---|
+| Durum nerede | `core.corporation.settings` JSONB → `{"modules":{"camps":true,"consultancy":true,"camera":true,"surveys":true,"care_team":true,"kpi":true}}`. Yeni tablo/sütun yok. |
+| Anahtar yoksa | **Açık** sayılır (geriye dönük uyum; mevcut kurumlar ve testler kırılmaz). Kapatmak için açıkça `false`. V53 mevcut kurumlara hepsini `true` yazar (demo dahil; yazılı anahtar korunur). |
+| Kim değiştirir | Yalnızca platform: `devops/set_modules.py` ve `devops/new_tenant.py`. Kurum yöneticisinin `PUT /api/corporations/{id}/settings` isteğinde `modules` gönderilirse **yok sayılır**, mevcut değer korunur. |
+| Uçlar | `[RequireModule(Modules.X)]` (CampsController, ConsultancyController, CameraController, SurveysController, CareTeamController, PerformanceKpiController). Kapalıysa **403 `Error.ModuleDisabled`** (kimlik/izin denetiminden sonra). Durum her istekte okunur: komut sonrası API yeniden başlatmak gerekmez. |
+| Menü | V53 `feature_flag`'i modül koduyla doldurur (kök + alt öğeler + yol öneki). `GetUserMenuQuery` kapalı modülün düğümünü (ve alt öğelerini) her istekte eler; menü önbelleği modül durumundan bağımsızdır. |
+| Kurum ayarları ekranı | `Kurumlar → kurum → Ayarlar`: "Modüller" listesi **salt okunur** (Açık/Kapalı rozeti); serbest JSON alanında `modules` gösterilmez. |
+| Yeni kurum | `new_tenant.py` varsayılan olarak 6 modülü **kapalı** yazar; açmak için `--enable-modules camps,kpi` ya da `all`. |
+| Demo | `demo-seed` demo kurumlarını `--enable-modules all` ile açar; mevcut `demo_a/b` açık kalır. |
+| Sonradan aç/kapat | `python3 devops/set_modules.py --code ornek --enable camps --disable surveys` · `--list` durum · `--check` deneme · `--dry-run` SQL. |
+
+Menüsü olmayan modüller: `students-surveys` ve `students-care-team` menü satırları pasif (ekran yok); bayrak yine de konmuştur, ekran gelince modül kapalıyken görünmez.
+
+Doğrulama: birim (`ModuleVisibilityTests`: ayrıştırma, `modules` koruma, filtre, menü), entegrasyon (`ModuleVisibilityTests`: yeni kurum kapalı + 403 + menü gizli; aç/kapat anında etkili; kurum yöneticisi açamaz), smoke-api (demo_a: kapat → 403 + menü gizli; aç → geri gelir; kurum ayarıyla açma denemesi korunur).

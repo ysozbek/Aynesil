@@ -16,6 +16,7 @@ namespace Aynesil.Api.Controllers;
 /// Route: /api/performance-kpi
 /// </summary>
 [Route("api/performance-kpi")]
+[RequireModule(Modules.Kpi)]
 public sealed class PerformanceKpiController : BaseController
 {
     // ── KPI Categories ────────────────────────────────────────────────────────

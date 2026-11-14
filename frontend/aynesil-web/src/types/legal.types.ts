@@ -234,6 +234,13 @@ export interface CreateContractPayload {
   endsOn?: string
 }
 
+export interface UpdateContractPayload {
+  guardianId?: string | null
+  startsOn?: string | null
+  endsOn?: string | null
+  rowVersion: number
+}
+
 export interface SignContractPayload {
   signedByName: string
   signatureMethod: 'wet' | 'e_sign' | 'click_wrap'

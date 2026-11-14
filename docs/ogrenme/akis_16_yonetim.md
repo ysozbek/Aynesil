@@ -17,10 +17,11 @@ Kurum Yöneticisi. Koordinatör, kullanıcı/rol/kurum/ayar/menü/referans veri 
    - **Şifremi unuttum:** giriş ekranındaki bağlantı e-posta ister; sıfırlama bağlantısı e-postayla gelir ve `Yeni şifre belirle` ekranını açar. **E-posta sağlayıcısı bağlı olmadığı için bağlantı şimdilik gitmez** (ekranda da yazar); unutan kullanıcının şifresini yönetici sıfırlamalıdır.
 6. **Menüyü düzenle:** `Menüler` (Dinamik Menü) ağacı gösterir (platform menüsü sayfalarla hizalıdır: sayfası olmayan öğeler kapalı, Veliler / Sözleşme Raporları / Bildirim Tercihleri / portal alt öğeleri açık); **Menü Öğesi Ekle** / **Alt Öğe Ekle** ile kuruma özel öğeler eklenir. Platformun varsayılan öğeleri silinemez, yalnızca pasife alınır. Bir öğe, tanımlı izne sahip kullanıcıya görünür; yetkisi olmayan menüyü görmez.
 7. **Yeni kurum açılışı:** bu ekrandan değil, teknik ekibin kurulum aracıyla yapılır (Kurulum Yol Haritası belgesine bakın). `Kurumlar → Kurum Ekle` düğmesi de vardır ama kullanımı [doğrulanacak].
+8. **Modülleri gör:** `Kurumlar → kurum → Ayarlar` sayfasındaki **Modüller** listesi kampın, okul danışmanlığının, kameranın, anketlerin, bakım ekibinin ve KPI'ın açık mı kapalı mı olduğunu gösterir. **Salt okunurdur**: kurum yöneticisi açıp kapatamaz (ayar JSON'una `modules` yazsa da yok sayılır). Yeni kurumda bu altı modül kapalı başlar; teknik ekip açar: `python3 devops/set_modules.py --code ornek --enable camps,kpi` (`--list` durumu gösterir, `--disable` kapatır). Kapalı modülün menüsü görünmez ve uçları "Bu modül kurumunuz için etkin değil" (403) döner.
 
 ## Dikkat
 - Kullanıcı adı alınmışsa "'…' kullanıcı adı zaten alınmış." çıkar; başka kurumdaki bir ad da sayılır.
-- Menüde "Yetkiniz yok" ya da menü eksikse sorun genelde rolde eksik izindir, hata değildir.
+- Menüde "Yetkiniz yok" ya da menü eksikse sorun genelde rolde eksik izindir, hata değildir. İstisna: Kamp, Danışmanlık, Kamera, KPI menüleri rolde izin olsa bile **modül kapalıysa** görünmez (adım 8).
 - Kullanıcıyı silmek yerine **Askıya Al** kullanın; kendi hesabınızı silemezsiniz.
 - Rol ve izin değişikliği, kullanıcının bir sonraki girişinde ya da oturumu yenilendiğinde etkili olur [doğrulanacak].
 - Velilerin ve eğitmenlerin giriş yapabilmesi ve kendi adlarına iş yapabilmesi için kullanıcı hesabının kartlarına **bağlı** olması gerekir (Akış 14 ve 15). Bir kullanıcı en fazla bir eğitmen ve en fazla bir veli kaydına bağlanabilir.
@@ -28,6 +29,6 @@ Kurum Yöneticisi. Koordinatör, kullanıcı/rol/kurum/ayar/menü/referans veri 
 - E-posta henüz gönderilmiyor: yeni hesapların geçici şifresini kişiye siz iletirsiniz; "şifremi unuttum" e-postası da gitmez (ekranlar hazır, e-posta sağlayıcısı bağlanınca çalışır).
 
 ## Kendin dene
-`admin@demo-a.test` ile girin. `Roller`'de "Koordinatör" ve "Muhasebe" rollerinin izin sayılarını karşılaştırın; yeni bir test rolü açıp iki izin verin. `Kullanıcılar → Kullanıcı Ekle` ile yeni hesap açıp bu rolü atayın, o hesapla giriş yapıp hangi menülerin göründüğüne bakın. `Referans Veriler → Seans Tipleri`'nde yeni değer ekleyip sonra pasifleştirin. `koordinator@demo-a.test` ile yönetim menülerinin görünmediğini doğrulayın. `Kullanıcılar`'da `egitmen@demo-a.test` ve `veli1@demo-a.test`'i açıp bağlı eğitmen / veli kaydını görün.
+`admin@demo-a.test` ile girin. `Roller`'de "Koordinatör" ve "Muhasebe" rollerinin izin sayılarını karşılaştırın; yeni bir test rolü açıp iki izin verin. `Kullanıcılar → Kullanıcı Ekle` ile yeni hesap açıp bu rolü atayın, o hesapla giriş yapıp hangi menülerin göründüğüne bakın. `Referans Veriler → Seans Tipleri`'nde yeni değer ekleyip sonra pasifleştirin. `koordinator@demo-a.test` ile yönetim menülerinin görünmediğini doğrulayın. `Kurumlar → Demo Gökkuşağı → Ayarlar`'da Modüller listesinin hepsinin "Açık" olduğunu görün; `python3 devops/set_modules.py --code demo_a --disable camps` ile Kamp'ı kapatıp sayfayı yenileyin (menü kaybolur), sonra `--enable camps` ile geri açın. `Kullanıcılar`'da `egitmen@demo-a.test` ve `veli1@demo-a.test`'i açıp bağlı eğitmen / veli kaydını görün.
 
 Teknik ayrıntılar: [teknik/akis_16_yonetim.md](teknik/akis_16_yonetim.md)

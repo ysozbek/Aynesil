@@ -1,5 +1,7 @@
 # Akış 10 — KPI ve raporlar: değerler nereden geliyor, panolar neyi gösteriyor
 
+> **Modül anahtarı: `kpi` (Eğitmen KPI).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable kpi` (Akış 16). Rapor panoları (Hukuk, Finans vb.) bu bayraktan etkilenmez; yalnızca KPI menüsü ve `/api/performance-kpi` uçları kapanır.
+
 ## Bu akış ne anlatıyor?
 Eğitmenlerin performansının nasıl ölçüldüğünü ve kurumun hangi ekranlarda hangi özet bilgiyi gördüğünü anlatır. KPI sayıları elle girilmez; seans, yoklama, hedef ve veli geri bildirimi gibi gerçek kayıtlardan **hesaplanır**.
 

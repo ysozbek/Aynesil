@@ -1,4 +1,5 @@
 using Aynesil.Application.Common.Exceptions;
+using Aynesil.Domain.Common;
 using Aynesil.Application.Features.Scheduling.Commands;
 using Aynesil.Application.Features.Scheduling.Queries;
 using Aynesil.Domain.Modules.Educators.Entities;
@@ -75,7 +76,7 @@ public class SessionNoteAuthorTests
     {
         using var ctx = new TenantTestContext();
         var session = NewSession();
-        var author = Educator.Create(TenantA, "Yazan", "Eğitmen");
+        var author = LinkedEducator(ctx.UserId); // düzenleyen = notu yazan eğitmen
         var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
         await ctx.SeedAsync(session, author, note);
 
@@ -83,7 +84,73 @@ public class SessionNoteAuthorTests
             new EditSessionNoteCommand(note.Id, "Düzenlendi", true, note.RowVersion), default);
 
         dto.AuthoredBy.Should().Be(author.Id);
-        dto.AuthorName.Should().Be("Yazan Eğitmen");
+        dto.AuthorName.Should().Be("Ayşe Yılmaz");
+        dto.Body.Should().Be("Düzenlendi");
+        dto.ParentVisible.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Edit_by_another_educator_without_manage_permission_is_forbidden()
+    {
+        using var ctx = new TenantTestContext();
+        var session = NewSession();
+        var author = Educator.Create(TenantA, "Yazan", "Eğitmen");
+        var me = LinkedEducator(ctx.UserId); // başka bir eğitmen
+        var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
+        await ctx.SeedAsync(session, author, me, note);
+
+        var act = () => ctx.Handler<EditSessionNoteCommandHandler>().Handle(
+            new EditSessionNoteCommand(note.Id, "Ele geçirildi", true, note.RowVersion), default);
+
+        await act.Should().ThrowAsync<ForbiddenAccessException>();
+        (await ctx.Db.SessionNotes.SingleAsync()).Body.Should().Be("İlk");
+    }
+
+    [Fact]
+    public async Task Edit_by_a_user_with_no_educator_record_and_no_permission_is_forbidden()
+    {
+        using var ctx = new TenantTestContext();
+        var session = NewSession();
+        var author = Educator.Create(TenantA, "Yazan", "Eğitmen");
+        var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
+        await ctx.SeedAsync(session, author, note);
+
+        var act = () => ctx.Handler<EditSessionNoteCommandHandler>().Handle(
+            new EditSessionNoteCommand(note.Id, "x", false, note.RowVersion), default);
+
+        await act.Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
+    [Fact]
+    public async Task Edit_by_an_administrator_may_change_another_educators_note()
+    {
+        using var ctx = new TenantTestContext();
+        ctx.CurrentUser.Setup(u => u.HasPermission(Aynesil.Shared.Constants.Permissions.SessionNotes.Delete)).Returns(true);
+        var session = NewSession();
+        var author = Educator.Create(TenantA, "Yazan", "Eğitmen");
+        var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
+        await ctx.SeedAsync(session, author, note);
+
+        var dto = await ctx.Handler<EditSessionNoteCommandHandler>().Handle(
+            new EditSessionNoteCommand(note.Id, "Yönetici düzeltti", false, note.RowVersion), default);
+
+        dto.Body.Should().Be("Yönetici düzeltti");
+        dto.AuthoredBy.Should().Be(author.Id, "yazar değişmez");
+    }
+
+    [Fact]
+    public async Task Edit_with_a_stale_row_version_is_rejected()
+    {
+        using var ctx = new TenantTestContext();
+        var session = NewSession();
+        var author = LinkedEducator(ctx.UserId);
+        var note = SessionNote.Write(TenantA, session.Id, "İlk", false, author.Id);
+        await ctx.SeedAsync(session, author, note);
+
+        var act = () => ctx.Handler<EditSessionNoteCommandHandler>().Handle(
+            new EditSessionNoteCommand(note.Id, "x", false, note.RowVersion + 7), default);
+
+        await act.Should().ThrowAsync<BusinessRuleViolationException>();
     }
 
     [Fact]

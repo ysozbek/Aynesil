@@ -1,5 +1,7 @@
 # Akış 6 — Kamp: kamp → dönem → kayıt / bekleme listesi → etkinlik → yoklama
 
+> **Modül anahtarı: `camps` (Kamp).** Bu modül kurum bazında açılıp kapatılır; yeni kurumda **kapalı** başlar (menüsü görünmez, uçları 403 `Error.ModuleDisabled` döner). Demo kurumlarda açıktır. Açmak için teknik ekip: `python3 devops/set_modules.py --code <kurum> --enable camps` (Akış 16).
+
 ## Bu akış ne anlatıyor?
 Yaz kampı gibi kısa süreli programların tanımlanmasını, her dönem için kontenjanlı kayıt alınmasını ve kontenjan dolunca bekleme listesi tutulmasını anlatır. Etkinlik ve devam takibi sistemde var ama **henüz ekranı yok**.
 

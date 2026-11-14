@@ -29,7 +29,7 @@
 7. Silme yalnızca `planlandı` durumundaki oturum için ("Yalnızca Planlandı durumundaki oturumlar silinebilir").
 
 ### B. BEP
-1. **Akademik dönem** tanımlı olmalı (`/api/education-plans/academic-periods`; bitiş başlangıçtan sonra olmalı; "güncel dönem" işaretlenir). Bu uç menüsüz API'dir; V31 ile `plans-academic` menüsü pasif [doğrulanacak: dönemleri ekrandan yönetme yolu var mı].
+1. **Akademik dönem** tanımlı olmalı (`/api/education-plans/academic-periods`; bitiş başlangıçtan sonra olmalı; "güncel dönem" işaretlenir). Ekran: `BEP → Akademik Dönemler` (`/bep/academic-periods`, `AcademicPeriodListView.vue`; menü `plans-academic` V31'de pasifti, **V54** ile açıldı; eski `/education-plans/academic-periods` yönlendirilir). Uçlar: `GET` liste/tekil, `POST`, `PUT {id}` (`rowVersion`), `POST {id}/set-current`, `DELETE {id}` (`academic_period:read|manage`). Silme: plan bağlıysa `Rule.AcademicPeriodInUse`; güncel dönem → `Rule.AcademicPeriodCurrentDelete` (yeni). Dönem türü `ACADEMIC_TERM` referans verisinden seçilir.
 2. **Hedef kaynağı:** `Hedefler → Hedef Kütüphanesi` (kütüphane) ve **Hedef Şablonları** (çok dilli şablon + çeviri). Bunlardan öğrenciye **Öğrenci Hedefi** açılır (`Hedefler → Öğrenci Hedefleri → yeni`): başlangıç değeri, hedef değer, ustalık kriteri, hedef tarihi, sorumlu.
 3. `BEP → Plan Oluştur` (`/bep/new`, `education_plan:create`): öğrenci, akademik dönem, başlık, başlangıç/bitiş tarihi. Plan `draft` doğar.
 4. Plan detayı → **Hedefler** sekmesi → **Hedef Ekle** (öğrencinin bu plana eklenmemiş hedefleri listelenir; "Hedef yoksa önce oluşturun"). Uzun/kısa vadeli hedefler ayrı gruplanır; **Hedefi Kaldır**, sıralama (`reorder`). (`education_plan:manage_goals`)

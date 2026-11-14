@@ -3,6 +3,7 @@ using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.TenantModules;
 using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using Aynesil.Application.Features.Corporations.Dtos;
 using FluentValidation;
@@ -91,7 +92,9 @@ public sealed class UpdateCorporationSettingsCommandHandler
         corp.Timezone = req.Timezone;
         corp.TaxOffice = req.TaxOffice;
         corp.TaxNumber = req.TaxNumber;
-        corp.UpdateSettings(req.Settings, _currentUser.UserId);
+        // `modules` platform işidir (devops/set_modules.py): gönderilse bile yok sayılır, mevcut değer korunur.
+        corp.UpdateSettings(
+            CorporationModules.PreserveModules(req.Settings, corp.Settings), _currentUser.UserId);
 
         await _db.SaveChangesAsync(ct);
 

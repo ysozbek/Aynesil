@@ -4,6 +4,8 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { SignContractPayload } from '@/types/legal.types'
+import type { StudentGuardianDto } from '@/types/student.types'
+import { studentService } from '@/services/student.service'
 import { useContractStore } from '@/stores/contract.store'
 import { usePermission } from '@/composables/usePermission'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -25,6 +27,12 @@ const showTerminateConfirm = ref(false)
 const showActivateConfirm = ref(false)
 const showExpireConfirm = ref(false)
 const actionError = ref('')
+const showEdit = ref(false)
+const showDeleteConfirm = ref(false)
+const editError = ref('')
+const editGuardians = ref<StudentGuardianDto[]>([])
+const editForm = reactive({ guardianId: '', startsOn: '', endsOn: '' })
+const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary'
 const signForm = reactive<{ method: SignContractPayload['signatureMethod']; signedByName: string }>({ method: 'wet', signedByName: '' })
 
 function formatDate(dt: string) {
@@ -70,6 +78,54 @@ async function doSign() {
   showSignModal.value = false
 }
 
+// Yalnızca taslak sözleşme düzenlenir/silinir (sunucu da gönderilmiş/imzalı sözleşmeyi reddeder).
+async function openEdit() {
+  if (!contract.value) return
+  Object.assign(editForm, {
+    guardianId: contract.value.guardianId ?? '',
+    startsOn: contract.value.startsOn ?? '',
+    endsOn: contract.value.endsOn ?? '',
+  })
+  editError.value = ''
+  editGuardians.value = []
+  showEdit.value = true
+  try {
+    const res = await studentService.getGuardians(contract.value.studentId)
+    if (res.success && res.data) editGuardians.value = res.data
+  } catch { /* veli listesi yüklenemezse mevcut veli korunur */ }
+}
+
+async function submitEdit() {
+  if (!contract.value) return
+  editError.value = ''
+  if (editForm.startsOn && editForm.endsOn && editForm.endsOn < editForm.startsOn) {
+    editError.value = t('legal.contract.form.dateOrder'); return
+  }
+  try {
+    await contractStore.updateContract(id, {
+      guardianId: editForm.guardianId || null,
+      startsOn: editForm.startsOn || null,
+      endsOn: editForm.endsOn || null,
+      rowVersion: contract.value.rowVersion,
+    })
+    showEdit.value = false
+  } catch (e: unknown) {
+    editError.value = (e as Error).message
+  }
+}
+
+async function doDelete() {
+  actionError.value = ''
+  try {
+    await contractStore.deleteContract(id)
+    showDeleteConfirm.value = false
+    router.replace({ name: 'contracts' })
+  } catch (e: unknown) {
+    showDeleteConfirm.value = false
+    actionError.value = (e as Error).message
+  }
+}
+
 async function doTerminate() {
   await run(() => contractStore.terminateContract(id))
   showTerminateConfirm.value = false
@@ -93,6 +149,22 @@ onMounted(() => {
       <PageHeader :title="t('legal.contract.detail.title')" :description="contract.studentFullName">
         <div class="flex flex-wrap items-center gap-2">
           <StatusBadge entity="contract" :status="contract.status" />
+          <button
+            v-if="contract.status === ContractStatus.Draft && can(Permissions.StudentContracts.Update)"
+            :disabled="contractStore.saving"
+            @click="openEdit"
+            class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent disabled:opacity-50"
+          >
+            {{ t('common.edit') }}
+          </button>
+          <button
+            v-if="contract.status === ContractStatus.Draft && can(Permissions.StudentContracts.Delete)"
+            :disabled="contractStore.saving"
+            @click="showDeleteConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            {{ t('common.delete') }}
+          </button>
           <button
             v-if="contract.status === ContractStatus.Draft && can(Permissions.StudentContracts.Send)"
             :disabled="contractStore.saving"
@@ -204,6 +276,45 @@ onMounted(() => {
         </div>
       </div>
     </template>
+
+    <FormModal
+      :open="showEdit"
+      :title="t('legal.contract.detail.editTitle')"
+      :saving="contractStore.saving"
+      @submit="submitEdit"
+      @close="showEdit = false"
+    >
+      <p v-if="editError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ editError }}</p>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.form.guardian') }}</label>
+          <select v-model="editForm.guardianId" :class="inputClass">
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="g in editGuardians" :key="g.guardianId" :value="g.guardianId">{{ g.guardianFullName }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.startsOn') }}</label>
+            <input v-model="editForm.startsOn" type="date" :class="inputClass" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('legal.contract.fields.endsOn') }}</label>
+            <input v-model="editForm.endsOn" type="date" :class="inputClass" />
+          </div>
+        </div>
+      </div>
+    </FormModal>
+
+    <ConfirmModal
+      :open="showDeleteConfirm"
+      :title="t('legal.contract.detail.deleteTitle')"
+      :message="t('legal.contract.detail.deleteConfirm')"
+      :confirm-label="t('common.delete')"
+      :loading="contractStore.saving"
+      @confirm="doDelete"
+      @cancel="showDeleteConfirm = false"
+    />
 
     <FormModal
       :open="showSignModal"

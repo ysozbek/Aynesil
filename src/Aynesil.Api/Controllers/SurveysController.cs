@@ -13,6 +13,7 @@ namespace Aynesil.Api.Controllers;
 /// Route: /api/surveys
 /// </summary>
 [Route("api/surveys")]
+[RequireModule(Modules.Surveys)]
 public sealed class SurveysController : BaseController
 {
     // ── Survey Definitions ────────────────────────────────────────────────────────

@@ -416,6 +416,14 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/bep/EducationPlanFormView.vue'),
         meta: { permission: Permissions.EducationPlans.Update },
       },
+      {
+        path: 'bep/academic-periods',
+        name: 'academic-periods',
+        component: () => import('@/views/bep/AcademicPeriodListView.vue'),
+        meta: { permission: Permissions.AcademicPeriods.Read },
+      },
+      // Menu seed (V12 `plans-academic`) `/education-plans/academic-periods` yolunu kullanır; `:id` yönlendirmesinden önce gelmeli.
+      { path: 'education-plans/academic-periods', redirect: '/bep/academic-periods' },
       // Menu seed `/education-plans/*` (db/migrations/V12) still points to the
       // older URL base. Keep both URLs working so permissioned menu rows do not
       // 404 while we align menu paths in a follow-up migration.

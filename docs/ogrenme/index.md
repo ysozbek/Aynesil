@@ -31,7 +31,7 @@ Tüm akışlarda "Kendin dene" için demo hesapları: `admin@demo-a.test`, `koor
 
 ## Dikkat çeken eksikler (tur sırasında bulundu)
 - ~~Veli ve eğitmen kayıtlarını kullanıcı hesabına bağlayan ekran yok~~ → eklendi: kartta "Kullanıcı hesabı" (Akış 14, 15, 16).
-- Anketler ve bakım ekibinin ekranı yok; kamp ve kamerada kısmi ekran var (bkz. [eşleme tablosu](teknik/eslesme_tablosu.md)). Hukuk (şablon, sözleşme yaşam döngüsü, rıza), telafi, iade, izin bakiyesi ve KPI tanımı artık ekranlı; güncel ekransız uç listesi [../ekransiz-endpointler.md](../ekransiz-endpointler.md).
+- Anketler ve bakım ekibinin ekranı yok; kamp ve kamerada kısmi ekran var (bkz. [eşleme tablosu](teknik/eslesme_tablosu.md)). Bu altı yarım modül (kamp, okul danışmanlığı, kamera, anketler, bakım ekibi, KPI) **kurum bazında açılıp kapanır** ve yeni kurumda kapalı başlar (Akış 16, adım 8). Hukuk (şablon, taslak sözleşme düzenle/sil, rıza), telafi, iade, izin bakiyesi, KPI tanımı, akademik dönemler ve seans notu/hedef düzenleme artık ekranlı; güncel ekransız uç listesi [../ekransiz-endpointler.md](../ekransiz-endpointler.md).
 - ~~Kamera sayfasındaki "Canlı İzle" düğmesi 404'e gidiyor~~ → canlı izleme ekranı olmadığı için düğme kaldırıldı (Akış 9).
 - ~~Menü ↔ sayfa uyuşmazlıkları~~ → V49 ile hizalandı (eşleme tablosu).
 - E-posta/SMS gönderilmiyor, olaylardan bildirim üretilmiyor (Akış 13).

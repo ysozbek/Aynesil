@@ -107,6 +107,16 @@ export const useBepStore = defineStore('bep', () => {
     }
   }
 
+  async function deletePeriod(id: string): Promise<void> {
+    saving.value = true
+    try {
+      const res = await bepService.deleteAcademicPeriod(id)
+      if (!res.success) throw new Error(res.message ?? 'Dönem silinemedi.')
+    } finally {
+      saving.value = false
+    }
+  }
+
   // ── Education Plans ─────────────────────────────────────────────────────────
 
   async function fetchPlans(query: EducationPlanListQuery) {
@@ -332,7 +342,7 @@ export const useBepStore = defineStore('bep', () => {
   return {
     periodList, currentPeriod, planList, currentPlan,
     summaryReport, trendReport, loading, saving, error,
-    fetchPeriods, fetchPeriod, createPeriod, updatePeriod, setCurrentPeriod,
+    fetchPeriods, fetchPeriod, createPeriod, updatePeriod, setCurrentPeriod, deletePeriod,
     fetchPlans, fetchPlan, createPlan, updatePlan, deletePlan,
     submitPlan, approvePlan, rejectPlan, activatePlan, closePlan,
     revisePlan, setGuardianVisibility, addGoal, removeGoal, reorderGoals,

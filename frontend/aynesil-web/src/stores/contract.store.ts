@@ -10,7 +10,7 @@ import type {
   StudentContractListItemDto, StudentContractDto,
   ContractReportItemDto, SignatureReportItemDto,
   ContractListQuery, ContractTemplateListQuery,
-  CreateContractPayload, SignContractPayload,
+  CreateContractPayload, UpdateContractPayload, SignContractPayload,
   CreateContractTemplatePayload, UpdateContractTemplatePayload, NewTemplateVersionPayload,
 } from '@/types/legal.types'
 
@@ -105,6 +105,24 @@ export const useContractStore = defineStore('contract', () => {
     } finally { saving.value = false }
   }
 
+  async function updateContract(id: string, payload: UpdateContractPayload) {
+    saving.value = true
+    try {
+      const res = await legalService.updateContract(id, payload)
+      if (!res.success) throw new Error(res.message ?? 'Sözleşme güncellenemedi.')
+      await fetchContract(id, true)
+    } finally { saving.value = false }
+  }
+
+  async function deleteContract(id: string) {
+    saving.value = true
+    try {
+      const res = await legalService.deleteContract(id)
+      if (!res.success) throw new Error(res.message ?? 'Sözleşme silinemedi.')
+      currentContract.value = null
+    } finally { saving.value = false }
+  }
+
   async function sendContract(id: string) {
     saving.value = true
     try {
@@ -174,7 +192,7 @@ export const useContractStore = defineStore('contract', () => {
     templates, currentTemplate, contracts, currentContract,
     contractReport, signatureReport, loading, saving, error,
     fetchTemplates, createTemplate, updateTemplate, newTemplateVersion, fetchTemplate, fetchContracts, fetchContract,
-    createContract, sendContract, activateContract, expireContract, signContract, terminateContract,
+    createContract, updateContract, deleteContract, sendContract, activateContract, expireContract, signContract, terminateContract,
     fetchContractReport, fetchSignatureReport, clearCurrent,
   }
 })

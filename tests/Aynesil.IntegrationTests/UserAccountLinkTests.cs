@@ -69,6 +69,7 @@ public sealed class UserAccountLinkTests : IDisposable
             {
                 Path.Combine(root, "devops", "new_tenant.py"), "--dry-run", "--code", code, "--name", $"Kurum {code}",
                 "--admin-username", adminUsername, "--admin-name", "Yönetici", "--admin-password", AdminPassword,
+                "--enable-modules", "all", // kamera akışları yeni kurumda varsayılan kapalı modüle bağlı (V53)
             },
             RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false,
             StandardOutputEncoding = Encoding.UTF8,

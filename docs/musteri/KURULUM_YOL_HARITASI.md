@@ -30,6 +30,7 @@ Komut kurumu, kampüsleri, platform işlemleri (kurum açma, etkinleştirme/pasi
 - Seans türleri, ödeme yöntemleri, aday kaynakları gibi listeler ve menüler platform genelidir; kurum ilk girişten itibaren görür. Kurum isterse kendine özel değer ekler.
 - Kullanıcı adları **tüm sistemde** benzersizdir; giriş yalnızca kullanıcı adıyla yapılır. Başka bir kurumda kullanılan ad kabul edilmez. Bu yüzden yönetici ve personel hesaplarında e-posta adresi kullanın (ör. `mudur@ornek.com`). "ayse" gibi kısa adlar kurumlar arasında çakışır.
 - Kurum, kampüs ve kullanıcı açma tek işlemdir. Hata olursa hiçbir şey yazılmaz.
+- **İsteğe bağlı modüller yeni kurumda kapalı başlar:** kamp, okul danışmanlığı, kamera, anketler, bakım ekibi ve eğitmen KPI. Kapalı modülün menüsü görünmez, uçları erişime kapalıdır. Müşteri kullanacaksa açın: `python3 devops/set_modules.py --code ornek --enable camps,kpi` (kurulumda `new_tenant.py --enable-modules camps,kpi` de verilebilir; `--list` durumu gösterir). Müşteri yöneticisi bu ayarı değiştiremez, `Kurumlar → Ayarlar`'da yalnızca görür.
 
 ---
 

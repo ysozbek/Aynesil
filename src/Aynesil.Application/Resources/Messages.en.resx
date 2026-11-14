@@ -35,6 +35,7 @@
   <data name="Error.InvalidArgument" xml:space="preserve"><value>One of the submitted values is invalid.</value></data>
   <data name="Error.InvalidRequest" xml:space="preserve"><value>The submitted data is invalid.</value></data>
   <data name="Error.InvalidValue" xml:space="preserve"><value>Invalid value.</value></data>
+  <data name="Error.ModuleDisabled" xml:space="preserve"><value>This module is not enabled for your organization. Contact the platform administrator to enable it.</value></data>
   <data name="Error.NotFound" xml:space="preserve"><value>{0} was not found.</value></data>
   <data name="Error.ReferenceInUse" xml:space="preserve"><value>This record is in use by other records and cannot be deleted.</value></data>
   <data name="Error.ReferenceMissing" xml:space="preserve"><value>The related record was not found or does not belong to this organization.</value></data>
@@ -44,6 +45,7 @@
   <data name="Error.Unauthorized" xml:space="preserve"><value>You need to sign in.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>An unexpected error occurred. Please try again.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Validation failed.</value></data>
+  <data name="Rule.AcademicPeriodCurrentDelete" xml:space="preserve"><value>The current academic period cannot be deleted. Make another period current first.</value></data>
   <data name="Rule.AcademicPeriodInUse" xml:space="preserve"><value>Cannot delete an academic period that has education plans assigned to it.</value></data>
   <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>The signed-in user is not linked to any educator record, and this action is performed on behalf of an educator. An administrator must link this user under Educators → educator detail → "User account".</value></data>
   <data name="Rule.ActivePortalAccessNotFound" xml:space="preserve"><value>Active portal access record not found for guardian {0} / student {1}.</value></data>
@@ -91,7 +93,7 @@
   <data name="Rule.ConsultancyPlanNotActive" xml:space="preserve"><value>Consultancy plan {0} not found or is not active for this institution.</value></data>
   <data name="Rule.ContractActivateNeedsSigned" xml:space="preserve"><value>Only signed contracts can be activated. Current status: '{0}'.</value></data>
   <data name="Rule.ContractExpireNeedsActive" xml:space="preserve"><value>Only active contracts can be expired. Current status: '{0}'.</value></data>
-  <data name="Rule.ContractModifyStatus" xml:space="preserve"><value>A '{0}' contract cannot be modified.</value></data>
+  <data name="Rule.ContractModifyStatus" xml:space="preserve"><value>A '{0}' contract cannot be modified. Only draft contracts can be edited.</value></data>
   <data name="Rule.ContractNeedsCurrentVersion" xml:space="preserve"><value>Contracts may only be generated from the current version of a template.</value></data>
   <data name="Rule.ContractSendNeedsDraft" xml:space="preserve"><value>Only draft contracts can be sent. Current status: '{0}'.</value></data>
   <data name="Rule.ContractSignNeedsSent" xml:space="preserve"><value>Only sent contracts can be signed. Current status: '{0}'.</value></data>
@@ -244,6 +246,7 @@
   <data name="Rule.SessionCancelStatus" xml:space="preserve"><value>Cannot cancel a session in '{0}' status.</value></data>
   <data name="Rule.SessionCompleteStatus" xml:space="preserve"><value>Cannot complete a session in '{0}' status. Only 'in progress' sessions can be completed.</value></data>
   <data name="Rule.SessionCompletedLocked" xml:space="preserve"><value>Completed sessions cannot change status.</value></data>
+  <data name="Rule.SessionNoteAuthorOnly" xml:space="preserve"><value>Only the educator who wrote this session note, or an administrator, can edit it.</value></data>
   <data name="Rule.SessionRescheduleClosed" xml:space="preserve"><value>Cannot reschedule a completed or cancelled session.</value></data>
   <data name="Rule.SessionStartStatus" xml:space="preserve"><value>Cannot start a session in '{0}' status. Only 'planned' sessions can be started.</value></data>
   <data name="Rule.SessionTerminalStatus" xml:space="preserve"><value>Session is in terminal status '{0}' and cannot be modified.</value></data>

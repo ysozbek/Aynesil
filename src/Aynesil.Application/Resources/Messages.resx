@@ -35,6 +35,7 @@
   <data name="Error.InvalidArgument" xml:space="preserve"><value>Gönderilen değerlerden biri geçersiz.</value></data>
   <data name="Error.InvalidRequest" xml:space="preserve"><value>Gönderilen veri geçersiz.</value></data>
   <data name="Error.InvalidValue" xml:space="preserve"><value>Geçersiz değer.</value></data>
+  <data name="Error.ModuleDisabled" xml:space="preserve"><value>Bu modül kurumunuz için etkin değil. Etkinleştirmek için platform yöneticisiyle iletişime geçin.</value></data>
   <data name="Error.NotFound" xml:space="preserve"><value>{0} bulunamadı.</value></data>
   <data name="Error.ReferenceInUse" xml:space="preserve"><value>Bu kayıt başka kayıtlarda kullanıldığı için silinemez.</value></data>
   <data name="Error.ReferenceMissing" xml:space="preserve"><value>İlişkili kayıt bulunamadı veya bu kuruma ait değil.</value></data>
@@ -44,6 +45,7 @@
   <data name="Error.Unauthorized" xml:space="preserve"><value>Oturum açmanız gerekiyor.</value></data>
   <data name="Error.Unexpected" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.</value></data>
   <data name="Error.ValidationFailed" xml:space="preserve"><value>Doğrulama hatası.</value></data>
+  <data name="Rule.AcademicPeriodCurrentDelete" xml:space="preserve"><value>Güncel akademik dönem silinemez. Önce başka bir dönemi güncel yapın.</value></data>
   <data name="Rule.AcademicPeriodInUse" xml:space="preserve"><value>Eğitim planlarının atandığı bir akademik dönem silinemez.</value></data>
   <data name="Rule.ActingEducatorRequired" xml:space="preserve"><value>Oturumdaki kullanıcı hiçbir eğitmen kaydına bağlı değil; bu işlem eğitmen adına yapılır. Bir yönetici Eğitmenler → eğitmen detayı → "Kullanıcı hesabı" bölümünden bu kullanıcıyı eğitmen kaydına bağlamalıdır.</value></data>
   <data name="Rule.ActivePortalAccessNotFound" xml:space="preserve"><value>{0} velisi / {1} öğrencisi için aktif portal erişim kaydı bulunamadı.</value></data>
@@ -91,7 +93,7 @@
   <data name="Rule.ConsultancyPlanNotActive" xml:space="preserve"><value>{0} danışmanlık planı bulunamadı veya bu kurum için aktif değil.</value></data>
   <data name="Rule.ContractActivateNeedsSigned" xml:space="preserve"><value>Yalnızca imzalanmış sözleşmeler etkinleştirilebilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.ContractExpireNeedsActive" xml:space="preserve"><value>Yalnızca aktif sözleşmelerin süresi dolabilir. Mevcut durum: '{0}'.</value></data>
-  <data name="Rule.ContractModifyStatus" xml:space="preserve"><value>'{0}' durumundaki bir sözleşme değiştirilemez.</value></data>
+  <data name="Rule.ContractModifyStatus" xml:space="preserve"><value>'{0}' durumundaki bir sözleşme değiştirilemez. Yalnızca taslak sözleşmeler düzenlenebilir.</value></data>
   <data name="Rule.ContractNeedsCurrentVersion" xml:space="preserve"><value>Sözleşme yalnızca şablonun güncel sürümünden oluşturulabilir.</value></data>
   <data name="Rule.ContractSendNeedsDraft" xml:space="preserve"><value>Yalnızca taslak sözleşmeler gönderilebilir. Mevcut durum: '{0}'.</value></data>
   <data name="Rule.ContractSignNeedsSent" xml:space="preserve"><value>Yalnızca gönderilmiş sözleşmeler imzalanabilir. Mevcut durum: '{0}'.</value></data>
@@ -244,6 +246,7 @@
   <data name="Rule.SessionCancelStatus" xml:space="preserve"><value>'{0}' durumundaki bir seans iptal edilemez.</value></data>
   <data name="Rule.SessionCompleteStatus" xml:space="preserve"><value>'{0}' durumundaki bir seans tamamlanamaz. Yalnızca 'devam ediyor' durumundaki seanslar tamamlanabilir.</value></data>
   <data name="Rule.SessionCompletedLocked" xml:space="preserve"><value>Tamamlanmış seansların durumu değiştirilemez.</value></data>
+  <data name="Rule.SessionNoteAuthorOnly" xml:space="preserve"><value>Bu seans notunu yalnızca notu yazan eğitmen ya da yönetici düzenleyebilir.</value></data>
   <data name="Rule.SessionRescheduleClosed" xml:space="preserve"><value>Tamamlanmış veya iptal edilmiş bir seans yeniden planlanamaz.</value></data>
   <data name="Rule.SessionStartStatus" xml:space="preserve"><value>'{0}' durumundaki bir seans başlatılamaz. Yalnızca 'planlandı' durumundaki seanslar başlatılabilir.</value></data>
   <data name="Rule.SessionTerminalStatus" xml:space="preserve"><value>Seans '{0}' son durumunda olduğu için değiştirilemez.</value></data>

@@ -15,6 +15,7 @@ public static class MsgKeys
         public static readonly MsgKey InvalidArgument = new("Error.InvalidArgument");
         public static readonly MsgKey NotFound = new("Error.NotFound");
         public static readonly MsgKey Forbidden = new("Error.Forbidden");
+        public static readonly MsgKey ModuleDisabled = new("Error.ModuleDisabled");
         public static readonly MsgKey Unauthorized = new("Error.Unauthorized");
         public static readonly MsgKey TenantSessionInvalid = new("Error.TenantSessionInvalid");
         public static readonly MsgKey TooManyRequests = new("Error.TooManyRequests");
@@ -92,6 +93,7 @@ public static class MsgKeys
         public static readonly MsgKey ViewingLogNotFound = new("Rule.ViewingLogNotFound");
         public static readonly MsgKey VisitNotFoundOrCancelled = new("Rule.VisitNotFoundOrCancelled");
         public static readonly MsgKey ActingEducatorRequired = new("Rule.ActingEducatorRequired");
+        public static readonly MsgKey SessionNoteAuthorOnly = new("Rule.SessionNoteAuthorOnly");
         public static readonly MsgKey RecordAlreadyLinkedToUser = new("Rule.RecordAlreadyLinkedToUser");
         public static readonly MsgKey UserAlreadyLinkedToEducator = new("Rule.UserAlreadyLinkedToEducator");
         public static readonly MsgKey UserAlreadyLinkedToGuardian = new("Rule.UserAlreadyLinkedToGuardian");
@@ -111,6 +113,7 @@ public static class MsgKeys
         public static readonly MsgKey RoleStillAssigned = new("Rule.RoleStillAssigned");
         public static readonly MsgKey UsernameTaken = new("Rule.UsernameTaken");
         public static readonly MsgKey AcademicPeriodInUse = new("Rule.AcademicPeriodInUse");
+        public static readonly MsgKey AcademicPeriodCurrentDelete = new("Rule.AcademicPeriodCurrentDelete");
         public static readonly MsgKey ActivityActionStatus = new("Rule.ActivityActionStatus");
         public static readonly MsgKey ActivityAlreadyActive = new("Rule.ActivityAlreadyActive");
         public static readonly MsgKey ActivityAlreadyInactive = new("Rule.ActivityAlreadyInactive");

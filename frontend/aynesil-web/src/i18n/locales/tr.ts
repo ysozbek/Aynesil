@@ -230,6 +230,20 @@ const tr = {
   },
 
   corporation: {
+    modules: {
+      title: 'Modüller',
+      enabled: 'Açık',
+      disabled: 'Kapalı',
+      hint: 'Modül durumu salt okunurdur; platform yöneticisi açar/kapatır (devops/set_modules.py). Kapalı modülün menüsü gizlenir ve uçları erişime kapanır.',
+      names: {
+        camps: 'Kamp',
+        consultancy: 'Okul danışmanlığı',
+        camera: 'Kamera',
+        surveys: 'Anketler',
+        care_team: 'Bakım ekibi',
+        kpi: 'Eğitmen KPI',
+      },
+    },
     title: 'Kurumlar',
     description: 'Tüm kurum ve şirketleri yönetin.',
     suspended: 'Askıya Alınmış',
@@ -988,6 +1002,23 @@ const tr = {
 
   // ── BEP / IEP Management ───────────────────────────────────────────────────
   bep: {
+    period: {
+      title: 'Akademik Dönemler',
+      description: 'Eğitim planlarının bağlandığı akademik dönemleri yönetin.',
+      create: 'Dönem Ekle',
+      edit: 'Dönemi Düzenle',
+      name: 'Dönem Adı',
+      term: 'Dönem Türü',
+      startDate: 'Başlangıç',
+      endDate: 'Bitiş',
+      current: 'Güncel',
+      makeCurrent: 'Güncel dönem yap',
+      makeCurrentConfirm: '"{name}" güncel dönem olarak işaretlenecek; önceki güncel dönemin işareti kalkacak.',
+      datesRequired: 'Başlangıç ve bitiş tarihi zorunludur.',
+      dateOrder: 'Bitiş tarihi başlangıçtan sonra olmalıdır.',
+      deleteTitle: 'Dönemi Sil',
+      deleteConfirm: '"{name}" dönemi silinecek. Eğitim planı bağlı dönem veya güncel dönem silinemez.',
+    },
     title: 'BEP / IEP Planları',
     description: 'Bireysel eğitim planlarını yönetin.',
     create: 'Plan Oluştur',
@@ -1077,6 +1108,12 @@ const tr = {
       noAvailableGoals: 'Öğrencinin bu seansa eklenebilecek aktif hedefi yok.',
       createStudentGoal: 'Öğrenciye hedef tanımla',
       addNote: 'Not Ekle',
+      editNote: 'Notu Düzenle',
+      noteEdited: 'Düzenlendi',
+      noteEditedAt: 'Son düzenleme: {at}',
+      removeGoal: 'Hedefi seanstan çıkar',
+      removeGoalTitle: 'Hedefi Çıkar',
+      removeGoalMessage: '"{goal}" hedefi bu seanstan çıkarılacak (öğrencinin hedefi silinmez; seanstaki ilerleme notu ve ölçüm kaybolur). Devam edilsin mi?',
       notePlaceholder: 'Seans notu...',
       parentVisible: 'Veliye Görünür',
       measuredValue: 'Ölçüm',
@@ -2265,6 +2302,9 @@ const tr = {
         terminateConfirm: 'Bu sözleşme feshedilecek. Onaylıyor musunuz?',
         activateConfirm: 'İmzalanmış sözleşme yürürlüğe alınacak. Devam edilsin mi?',
         expireConfirm: 'Sözleşme süresi doldu olarak işaretlenecek. Devam edilsin mi?',
+        editTitle: 'Taslak Sözleşmeyi Düzenle',
+        deleteTitle: 'Taslak Sözleşmeyi Sil',
+        deleteConfirm: 'Bu taslak sözleşme silinecek. Gönderilmiş veya imzalanmış sözleşmeler silinemez. Devam edilsin mi?',
       },
       fields: {
         student: 'Öğrenci',

@@ -23,6 +23,7 @@ namespace Aynesil.Api.Controllers;
 /// GUC wiring: app.care_team_bypass is set by TenantConnectionInterceptor from JWT perm claims.
 /// </summary>
 [Route("api")]
+[RequireModule(Modules.CareTeam)]
 public sealed class CareTeamController : BaseController
 {
     // ── Student-scoped endpoints ──────────────────────────────────────────────

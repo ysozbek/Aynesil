@@ -4,6 +4,7 @@ using Aynesil.Application.Common.Educators;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Domain.Modules.Scheduling.Entities;
+
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -86,13 +87,27 @@ public class EditSessionNoteCommandValidator : AbstractValidator<EditSessionNote
 public sealed class EditSessionNoteCommandHandler : IRequestHandler<EditSessionNoteCommand, SessionNoteDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly ITenantContext _tenant;
 
-    public EditSessionNoteCommandHandler(IAppDbContext db) => _db = db;
+    public EditSessionNoteCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenant)
+    {
+        _db = db;
+        _currentUser = currentUser;
+        _tenant = tenant;
+    }
 
     public async Task<SessionNoteDto> Handle(EditSessionNoteCommand req, CancellationToken ct)
     {
         var note = await _db.SessionNotes.FirstOrDefaultAsync(n => n.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SessionNote"));
+
+        // Yalnızca notu yazan eğitmen düzenler; başkasının notunu session_note:delete (yönetici) yetkisi olan düzenleyebilir.
+        var actingEducatorId = await ActingEducator.FindIdAsync(
+            _db, _tenant.RequireCorporationId(), _currentUser.UserId, ct);
+        var isAuthor = actingEducatorId.HasValue && note.AuthoredBy == actingEducatorId;
+        if (!isAuthor && !_currentUser.HasPermission(Aynesil.Shared.Constants.Permissions.SessionNotes.Delete))
+            throw new ForbiddenAccessException(MsgKeys.Rule.SessionNoteAuthorOnly);
 
         if (note.RowVersion != req.RowVersion)
             throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);

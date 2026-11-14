@@ -34,6 +34,11 @@ const cancelModal = ref(false)
 const cancelReason = ref('')
 const completeModal = ref(false)
 const noteModal = ref(false)
+const noteError = ref('')
+/** Doluysa not modalı düzenleme modunda. */
+const editingNote = ref<{ id: string; rowVersion: number } | null>(null)
+const removeGoalTarget = ref<{ studentGoalId: string; goalStatement: string } | null>(null)
+const goalError = ref('')
 const newNoteBody = ref('')
 const newNoteParentVisible = ref(false)
 const addParticipantId = ref('')
@@ -115,16 +120,63 @@ async function doNoShow() {
   await store.noShowSession(sessionId, session.value.rowVersion)
 }
 
-async function doAddNote() {
-  if (!newNoteBody.value.trim()) return
-  await store.addNote(sessionId, { body: newNoteBody.value, parentVisible: newNoteParentVisible.value })
-  noteModal.value = false
+function openAddNote() {
+  editingNote.value = null
   newNoteBody.value = ''
   newNoteParentVisible.value = false
+  noteError.value = ''
+  noteModal.value = true
+}
+
+function openEditNote(note: { id: string; body: string; parentVisible: boolean; rowVersion: number }) {
+  editingNote.value = { id: note.id, rowVersion: note.rowVersion }
+  newNoteBody.value = note.body
+  newNoteParentVisible.value = note.parentVisible
+  noteError.value = ''
+  noteModal.value = true
+}
+
+/** Düzenlenmiş mi? (updated_at, oluşturmadan 2 sn'den fazla sonra). Sunucu tarafı yazar kontrolünü yapar. */
+function isEdited(note: { createdAt: string; updatedAt: string }) {
+  return new Date(note.updatedAt).getTime() - new Date(note.createdAt).getTime() > 2000
+}
+
+async function doSaveNote() {
+  if (!newNoteBody.value.trim()) return
+  noteError.value = ''
+  try {
+    if (editingNote.value) {
+      await store.updateNote(sessionId, editingNote.value.id, {
+        body: newNoteBody.value,
+        parentVisible: newNoteParentVisible.value,
+        rowVersion: editingNote.value.rowVersion,
+      })
+    } else {
+      await store.addNote(sessionId, { body: newNoteBody.value, parentVisible: newNoteParentVisible.value })
+    }
+    noteModal.value = false
+    editingNote.value = null
+    newNoteBody.value = ''
+    newNoteParentVisible.value = false
+  } catch (e: unknown) {
+    noteError.value = (e as Error).message
+  }
 }
 
 async function deleteNote(noteId: string) {
   await store.deleteNote(sessionId, noteId)
+}
+
+async function doRemoveGoal() {
+  if (!removeGoalTarget.value) return
+  goalError.value = ''
+  try {
+    await store.removeSessionGoal(sessionId, removeGoalTarget.value.studentGoalId)
+  } catch (e: unknown) {
+    goalError.value = (e as Error).message
+  } finally {
+    removeGoalTarget.value = null
+  }
 }
 
 async function removeParticipant(studentId: string) {
@@ -390,7 +442,7 @@ function getAttendance(studentId: string) {
         <div class="flex justify-end mb-4">
           <button
             v-if="can(Permissions.SessionNotes.Write)"
-            @click="noteModal = true"
+            @click="openAddNote"
             class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,6 +465,16 @@ function getAttendance(studentId: string) {
             <div class="flex items-start justify-between gap-4">
               <p class="text-sm text-foreground flex-1">{{ note.body }}</p>
               <button
+                v-if="can(Permissions.SessionNotes.Write)"
+                @click="openEditNote(note)"
+                class="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                :title="t('common.edit')"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
                 v-if="can(Permissions.SessionNotes.Delete)"
                 @click="deleteNote(note.id)"
                 class="shrink-0 text-muted-foreground hover:text-red-600 transition-colors"
@@ -425,6 +487,13 @@ function getAttendance(studentId: string) {
             <div class="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
               <span>{{ note.authorName ?? '—' }}</span>
               <span>{{ new Date(note.createdAt).toLocaleString('tr-TR') }}</span>
+              <span
+                v-if="isEdited(note)"
+                class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
+                :title="t('scheduling.session.noteEditedAt', { at: new Date(note.updatedAt).toLocaleString('tr-TR') })"
+              >
+                {{ t('scheduling.session.noteEdited') }}
+              </span>
               <span v-if="note.parentVisible" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
                 {{ t('scheduling.session.parentVisible') }}
               </span>
@@ -464,6 +533,7 @@ function getAttendance(studentId: string) {
             >{{ t('scheduling.session.addGoal') }}</button>
           </div>
         </div>
+        <p v-if="goalError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ goalError }}</p>
         <div v-if="session.goals.length === 0" class="py-10 text-center text-muted-foreground text-sm">
           {{ t('scheduling.session.noGoals') }}
         </div>
@@ -481,7 +551,17 @@ function getAttendance(studentId: string) {
                 :disabled="!can(Permissions.Sessions.ManageGoals)"
                 @change="store.updateSessionGoal(sessionId, goal.studentGoalId, { workedOn: !goal.workedOn, progressNote: goal.progressNote, measuredValue: goal.measuredValue })"
               />
-              <p class="text-sm font-medium text-foreground">{{ goal.goalStatement }}</p>
+              <p class="text-sm font-medium text-foreground flex-1">{{ goal.goalStatement }}</p>
+              <button
+                v-if="can(Permissions.Sessions.ManageGoals)"
+                @click="removeGoalTarget = { studentGoalId: goal.studentGoalId, goalStatement: goal.goalStatement }"
+                class="shrink-0 text-muted-foreground hover:text-red-600 transition-colors"
+                :title="t('scheduling.session.removeGoal')"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             <div v-if="goal.progressNote" class="text-sm text-muted-foreground ml-7">{{ goal.progressNote }}</div>
             <div v-if="goal.measuredValue !== null && goal.measuredValue !== undefined" class="text-xs text-muted-foreground ml-7 mt-1">
@@ -522,10 +602,21 @@ function getAttendance(studentId: string) {
       @cancel="completeModal = false"
     />
 
+    <ConfirmModal
+      :open="!!removeGoalTarget"
+      :title="t('scheduling.session.removeGoalTitle')"
+      :message="t('scheduling.session.removeGoalMessage', { goal: removeGoalTarget?.goalStatement })"
+      :confirm-label="t('scheduling.session.removeGoal')"
+      :loading="store.saving"
+      @confirm="doRemoveGoal"
+      @cancel="removeGoalTarget = null"
+    />
+
     <!-- Note Modal -->
     <div v-if="noteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
-        <h3 class="font-semibold text-foreground mb-4">{{ t('scheduling.session.addNote') }}</h3>
+        <h3 class="font-semibold text-foreground mb-4">{{ editingNote ? t('scheduling.session.editNote') : t('scheduling.session.addNote') }}</h3>
+        <p v-if="noteError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ noteError }}</p>
         <textarea
           v-model="newNoteBody"
           :placeholder="t('scheduling.session.notePlaceholder')"
@@ -538,7 +629,7 @@ function getAttendance(studentId: string) {
         </label>
         <div class="flex justify-end gap-2 mt-4">
           <button @click="noteModal = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
-          <button @click="doAddNote" :disabled="!newNoteBody.trim() || store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
+          <button @click="doSaveNote" :disabled="!newNoteBody.trim() || store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
             {{ store.saving ? t('common.saving') : t('common.save') }}
           </button>
         </div>

@@ -15,6 +15,7 @@ namespace Aynesil.Api.Controllers;
 /// Route: /api/cameras
 /// </summary>
 [Route("api/cameras")]
+[RequireModule(Modules.Camera)]
 public sealed class CameraController : BaseController
 {
     // ── Camera CRUD ───────────────────────────────────────────────────────────────

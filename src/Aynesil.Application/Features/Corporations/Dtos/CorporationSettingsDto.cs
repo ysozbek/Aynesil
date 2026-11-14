@@ -14,5 +14,7 @@ public record CorporationSettingsDto(
     string Timezone,
     string? TaxOffice,
     string? TaxNumber,
-    string Settings
+    string Settings,
+    /// <summary>Modül durumu (salt okunur; platform yönetir). Anahtar yoksa açık.</summary>
+    IReadOnlyDictionary<string, bool> Modules
 );

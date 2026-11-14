@@ -227,6 +227,7 @@ export interface SessionNoteDto {
   authoredBy?: string
   authorName?: string
   createdAt: string
+  updatedAt: string
   rowVersion: number
 }
 

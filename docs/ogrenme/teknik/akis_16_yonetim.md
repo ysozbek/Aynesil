@@ -27,3 +27,6 @@ Vue `views/{users,roles,permissions,menus,refdata,campuses,corporations,settings
 
 ## [doğrulanacak]
 Rol/izin değişikliğinin JWT'ye yansıma zamanı; `SettingsView`'in yazma yapıp yapmadığı; `Kurum Ekle`'nin platform yöneticisi dışında kullanımı.
+
+### Modül görünürlüğü (V53)
+`core.corporation.settings.modules` = `{"camps","consultancy","camera","surveys","care_team","kpi"}` → bool. Anahtar yoksa açık; yalnızca platform yazar (`devops/set_modules.py`, `new_tenant.py --enable-modules`), `PUT /api/corporations/{id}/settings` `modules`'ü yok sayar (`CorporationModules.PreserveModules`). `CorporationSettingsDto.Modules` etkin durumu salt okunur verir (`CorporationSettingsView` "Modüller" listesi). Uçlar `[RequireModule]` ile 403 `Error.ModuleDisabled`; menü `iam.menu_item.feature_flag` = modül kodu (V53 doldurur), `GetUserMenuQuery` her istekte eler. V54: `plans-academic` menüsü açıldı. Testler: `ModuleVisibilityTests` (birim + entegrasyon), smoke-api "modül kapalı/açık". Tam açıklama: `docs/ekransiz-endpointler.md` §5.
