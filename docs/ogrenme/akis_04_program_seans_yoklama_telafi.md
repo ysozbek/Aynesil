@@ -4,7 +4,7 @@
 Öğrencinin bir programa yazılmasını, haftalık derslerin (seansların) planlanmasını, ders günü yoklama alınıp not yazılmasını ve gelmeyen öğrenciye telafi hakkı verilmesini anlatır. Seans tamamlandığında öğrencinin paketinden **otomatik olarak 1 seans hakkı düşer**; bu, finans tarafıyla buluştuğu yerdir (Akış 5).
 
 ## Kim yapar?
-Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen: yoklama, seans notu, telafi talebi. Eğitmen seans oluşturamaz.
+Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen: yoklama, seans notu, telafi talebi. Eğitmen seans oluşturamaz. Demo'daki Eğitmen rolünde seansı **tamamlama** ve seansa **hedef ekleme/çıkarma** izinleri yok; kendi kurumunuzda eğitmen bunları yapacaksa role ekleyin (Kurulum Kılavuzu B.4).
 
 ## Adımlar
 1. **Programı hazırla (bir kez):** `Programlar → Yeni Program`; programa hizmetleri ekleyin. Paketler ve seanslar bu programa bağlanacağı için önce bu gerekir.
@@ -14,7 +14,7 @@ Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen
    - *Tek seferlik:* `Seanslar → Seans Oluştur`; kampüs, oda, saat, öğrenci ve eğitmen seçin.
    - *Her hafta tekrarlayan:* `Tekrar Eden Planlar → Plan Oluştur` (öğrenci, program, eğitmen, oda, günler, saat), sonra listede **Seansları Oluştur** ile tarih aralığı verin. Sistem kaç seans oluşturduğunu, oda ya da eğitmen dolu olduğu için kaç tarihi atladığını yazar.
 5. **Seansa hedef bağla:** seans sayfası → **Hedefler** sekmesi → **Hedef Ekle**. Önce seansa öğrenci eklenmiş olmalı. Böylece seansta çalışılan BEP hedefi kayda geçer. Yanlış bağlanan hedef, kartındaki **✕** ile seanstan çıkarılır (onay sorulur); öğrencinin hedefi silinmez, yalnızca bu seanstaki ilerleme notu ve ölçüm kalkar.
-6. **Ders günü yoklama al:** seans sayfası → **Yoklama** sekmesi: her öğrenci için Katıldı, Gelmedi veya Geç Geldi seçin; gelmeyene mazeret yazabilirsiniz. Kredi düşümü yoklamaya bakar, bu yüzden tamamlamadan önce yapın.
+6. **Ders günü yoklama al:** seans sayfası → **Devam** sekmesi: her öğrenci için Katıldı, Gelmedi veya Geç Geldi seçin; gelmeyene mazeret yazabilirsiniz. Kredi düşümü yoklamaya bakar, bu yüzden tamamlamadan önce yapın.
 7. **Not yaz:** **Notlar** sekmesi → **Not Ekle**. Eğitmenin görüşü ve gözlemi burada kalır. Notu **kalem simgesiyle düzenleyebilirsiniz**: yalnızca notu yazan eğitmen düzenler; başkasının notunu notları silebilen yönetici düzeltebilir, diğerleri "yalnızca yazan eğitmen ya da yönetici düzenleyebilir" uyarısı alır. Metni düzenlenen notta **Düzenlendi** rozeti çıkar (üzerine gelince son düzenleme zamanı); yalnızca görünürlüğü değiştirmek düzenleme sayılmaz. **Veliye Görünür** işaretli not, velinin portalında çocuğun **Seanslar** sekmesinde o seansın altında görünür; düzenlenmişse velide de "düzenlendi" yazar; işareti kaldırırsanız veliden kalkar.
 8. **Seansı tamamla:** **Tamamla**. Yoklamada "geldi" olan her öğrenci için, seansın programına bağlı paketinden 1 seans hakkı düşer. Gerekirse **İptal Et** (gerekçe yazılır) veya **Yeniden Planla**.
 9. **Telafi iste:** gelmeyen öğrenci için `Seans Planlama → Telafi Talepleri → Talep Oluştur`; kaçırılan seansı seçin.
@@ -29,7 +29,7 @@ Koordinatör/planlamacı: program, kayıt, seans planı, telafi onayı. Eğitmen
 
 ## Kendin dene
 `demo_a`'da yaklaşık 225 seans, tekrarlayan plan ve telafi talebi var.
-1. `koordinator@demo-a.test` → `Seanslar`: ileri tarihli bir seansı açın, **Katılımcılar**'a öğrenci ekleyin, **Yoklama**'da Katıldı seçip **Tamamla**; "seans hakkı düşüldü" yazısını ve Finans'taki Kredi Defteri'ni (Akış 5) görün. Yoklamasız bir seansı tamamlayıp "düşülmedi" uyarısını da görün.
+1. `koordinator@demo-a.test` → `Seanslar`: ileri tarihli bir seansı açın, **Katılımcılar**'a öğrenci ekleyin, **Devam** sekmesinde Katıldı seçip **Tamamla**; "seans hakkı düşüldü" yazısını ve Finans'taki Kredi Defteri'ni (Akış 5) görün. Yoklamasız bir seansı tamamlayıp "düşülmedi" uyarısını da görün.
 2. `Tekrar Eden Planlar`'dan bir planla **Seansları Oluştur** (iki haftalık aralık) ve atlanan tarihleri izleyin.
 3. `Telafi Talepleri`: bekleyen talepte **Onayla** veya **Reddet**; onaylı talepte **Seans ata**, planlı talepte **Tamamla** (demo'da bir talep tamamlanmış durumda).
 4. `egitmen@demo-a.test`: kendi seansında yoklama ve not; "Seans Oluştur" düğmesinin olmadığına dikkat edin.

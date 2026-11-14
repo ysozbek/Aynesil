@@ -20,11 +20,12 @@ Muhasebe ve Kurum Yöneticisi. Koordinatör Finans menüsünü görmez. Veli, iz
 7. **İndirim tanımla:** `Burslar` (yüzde ya da sabit tutar) ve `Promosyonlar` (kod, tarih aralığı, aktif/pasif).
 
 ## Dikkat
-- Ödenmiş fatura doğrudan iptal edilemez: "Önce iade işlemi yapın." Kesilmiş faturayı iptal ederken gerekçe zorunludur.
+- Ödenmiş fatura doğrudan iptal edilemez: "Önce iade işlemi yapın." Fatura iptal edilirken gerekçe her zaman zorunludur.
 - İade yalnızca onaylanmış ödeme için istenebilir ve kalan iade edilebilir tutarı aşamaz.
 - **Paketi İptal Et** sadece paketi kapatır; kalan seans haklarını sıfırlamaz ya da para iadesi yapmaz. İadeyi ayrıca yapmalısınız.
 - İşleme alınan iadeler ödeme tutarının tamamına ulaşırsa ödeme "İade Edildi" olur; başarısız işaretleme yalnızca iadenin durumunu değiştirir.
-- Menüde "İadeler" ve "Finans Raporları" satırları kapalı; bu bilgileri sadece ilgili sayfalarda görebilirsiniz.
+- Menüde **Finans → İadeler** açık (sayfa: İade Talepleri). "Finans Raporları" satırı kapalı; rapor bilgisi yalnızca ilgili sayfalarda görünür.
+- Menü adları ile sayfa başlıkları bazen farklıdır: **Paket Kataloğu** (sayfa: Paket Tanımları), **Tahsilatlar** (sayfa: Ödemeler), **Kampanyalar** (sayfa: Promosyon Kodları).
 
 ## Kendin dene
 `demo_a`'da 3 paket tanımı, 8 öğrenci paketi, 8 fatura (taslak, kısmi, ödenmiş, iptal, kesilmiş), 6 ödeme ve 31 hak hareketi var.

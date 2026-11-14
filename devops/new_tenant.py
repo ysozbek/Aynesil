@@ -309,7 +309,7 @@ def main() -> int:
     else:
         print(f"    Geçici şifre  : {password}")
         print("    (Bu şifre tekrar gösterilmez. İlk girişten sonra değiştirilmesini isteyin.)")
-    print("\nSonraki adım: docs/musteri/KURULUM_YOL_HARITASI.md → 1. hafta")
+    print("\nSonraki adım: docs/musteri/KURULUM_KILAVUZU.md → Bölüm B (1. hafta)")
     return 0
 
 

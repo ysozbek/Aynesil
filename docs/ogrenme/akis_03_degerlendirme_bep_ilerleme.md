@@ -4,7 +4,9 @@
 Çocuğun önce bir form üzerinden değerlendirilmesini, sonuca göre Bireysel Eğitim Planı'nın (BEP) hazırlanıp onaylanmasını ve planın hedeflerinde çocuğun ne kadar ilerlediğinin kaydedilmesini anlatır. Veli de onaylı planı portalda görebilir.
 
 ## Kim yapar?
-Değerlendirme ekibi (Koordinatör/Yönetici) değerlendirmeyi yapar. BEP'i Koordinatör hazırlar ve onaylar. Eğitmen hedeflere ilerleme girer ve plana inceleme notu ekler; plan oluşturup onaylayamaz.
+Değerlendirme ekibi (Koordinatör/Yönetici) değerlendirmeyi yapar. BEP'i Koordinatör hazırlar ve onaylar. Eğitmen hedeflere ilerleme girer ve plana inceleme notu ekler; plan oluşturamaz (demo'daki Eğitmen rolünde onay izni vardır).
+
+**Onaylayan kim?** Onaylayan ya da reddeden kişiyi sistem formdan değil, **o an giriş yapmış kullanıcıya bağlı eğitmen kaydından** alır. Bu yüzden onay verecek herkesin (koordinatör, müdür dahil) bir eğitmen kaydı olmalı ve kullanıcı hesabı bu kayda bağlı olmalıdır (Akış 15, adım 8). Bağlı değilse **Onayla**/**Reddet** "Oturumdaki kullanıcı hiçbir eğitmen kaydına bağlı değil…" uyarısı verir. Demo'da yalnızca `egitmen@demo-a.test` bir eğitmen kaydına bağlıdır.
 
 ## Adımlar
 1. **Şablon hazırla (bir kez):** `Değerlendirme → Şablonlar` ile bölümlere ve maddelere ayrılmış değerlendirme formu oluşturun. Aynı formu her çocukta kullanırsınız.
@@ -25,8 +27,8 @@ Değerlendirme ekibi (Koordinatör/Yönetici) değerlendirmeyi yapar. BEP'i Koor
 - Akademik dönem tanımlı olmalı. Dönemler `BEP → Akademik Dönemler` ekranından yönetilir: **Dönem Ekle**, **Düzenle**, **Güncel dönem yap** (önceki güncel dönemin işareti kalkar) ve **Sil**. Eğitim planı bağlı bir dönem ve güncel dönem silinemez; önce başka dönemi güncel yapın. Bitiş tarihi başlangıçtan sonra olmalıdır.
 
 ## Kendin dene
-- `koordinator@demo-a.test`: `BEP`'te 8 plan var (taslak, incelemede, onaylı, aktif). Taslağı **İncelemeye Gönder** → **Onayla** → **Aktifleştir**; sonra "Veli Görüntülüyor"u açın.
-- `egitmen@demo-a.test`: `Hedefler → Öğrenci Hedefleri`'nde bir hedefe **İlerleme Kaydet**. BEP'te plan oluşturma düğmesi olmadığını, yalnızca **İnceleme Ekle**'yi görün.
+- `koordinator@demo-a.test`: `BEP`'te 8 plan var (taslak, incelemede, onaylı, aktif). Taslağı **İncelemeye Gönder**, sonra **Onayla**'yı deneyin: koordinatör hesabı bir eğitmen kaydına bağlı olmadığı için uyarı alırsınız. `admin@demo-a.test` ile Eğitimciler → bir eğitmen (Merve Çalışkan dışında) → **Kullanıcı hesabı → Mevcut kullanıcıyı bağla** ile `koordinator@demo-a.test`'i bağlayın; koordinatörle tekrar **Onayla** → **Aktifleştir**, sonra "Veli Görüntülüyor"u açın. **Onaylar** sekmesinde onaylayan olarak bağladığınız eğitmenin adı görünür.
+- `egitmen@demo-a.test`: `Hedefler → Öğrenci Hedefleri`'nde bir hedefe **İlerleme Kaydet**. BEP'te plan oluşturma düğmesi olmadığını görün; **İnceleme Ekle** ve (demo rolünde onay izni olduğu için) **Onayla** görünür.
 - `Değerlendirme`: 4 oturumdan birini Başlat → Puanlama → Tamamla → Rapor sırasıyla geçin.
 - `veli1@demo-a.test` ile `Portal → Çocuklarım → Hedefler`'e bakıp veli gözünü görün.
 

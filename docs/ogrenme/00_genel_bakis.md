@@ -25,16 +25,16 @@ Arkada çalışan destek işleri: personel izinleri (7), okul danışmanlığı 
 |---|---|---|
 | **Kurum Yöneticisi** | Her şeyi görür ve yapar: yönetim, finans, hukuk, kamera, KPI. | Hepsi |
 | **Koordinatör** | Günlük operasyon: aday, öğrenci, plan, seans, telafi onayı, toplantı, izin onayı, danışmanlık, kamp. Finans, kullanıcı/rol ve ayar yönetimi **yok**. | 1–4, 6–9, 15 |
-| **Eğitmen** | Kendi seanslarında yoklama, not, hedef ilerlemesi; BEP'e inceleme notu; telafi talebi; kendi izni; öğrenci/veli bilgisini okur. Oluşturma/onay yetkisi yok. | 3, 4, 7, 10 (okur) |
+| **Eğitmen** | Kendi seanslarında yoklama, not, hedef ilerlemesi; BEP'e inceleme notu ve onay (demo rolünde onay izni var); telafi talebi; kendi izni; öğrenci/veli bilgisini okur. Seans ve plan oluşturamaz; demo rolünde seansı tamamlama izni yok. | 3, 4, 7, 10 (okur) |
 | **Muhasebe** | Paket, fatura, ödeme, kredi, burs, promosyon. Öğrenci/veli bilgisini yalnızca okur. | 5 |
 | **Veli** | Yalnızca portal: çocuğunun seansları, hedefleri, paketleri, belgeleri, toplantıları, bildirimleri. | 14 |
 
-Bu roller demo kurumlarının rolleridir; kendi kurumunuzda roller **Roller** ekranından istediğiniz gibi tanımlanır. Sistem kişinin unvanına değil, rolüne tanımlı izinlere bakar; izni olmayan menü görünmez, izni olmayan sayfaya girilirse "yetkiniz yok" sayfası açılır.
+Bu roller demo kurumlarının rolleridir; kendi kurumunuzda roller **Roller** ekranından istediğiniz gibi tanımlanır (önerilen set: Kurulum Kılavuzu B.4). Seans notu yazan ve BEP onaylayan kişiyi sistem **giriş yapan kullanıcıya bağlı eğitmen kaydından** alır; bu yüzden bu işleri yapacak herkesin (koordinatör dahil) hesabı bir eğitmen kaydına bağlı olmalıdır (Akış 15). Sistem kişinin unvanına değil, rolüne tanımlı izinlere bakar; izni olmayan menü görünmez, izni olmayan sayfaya girilirse "yetkiniz yok" sayfası açılır.
 
 ## Ekranlar nasıl düzenlenmiş?
 Sol menü yetkinize göre dolar. Üst barda bildirimler ve profil var. Çoğu modülün bir ana sayfası (panosu), bir listesi, bir ekleme formu ve bir ayrıntı sayfası vardır. Silinen kayıtların çoğu aslında gizlenir; ödeme, fatura, kredi, imzalı sözleşme ve verilmiş rıza ise hiç silinmez, düzeltme kaydı ile düzeltilir.
 
 ## Giriş ve hesap
-Giriş kullanıcı adı ve şifreyle yapılır; kullanıcı adı tüm kurumlarda benzersizdir. Şifre unutulursa "parola sıfırlama" istenir, ancak e-posta gönderen bir sağlayıcı henüz bağlı olmadığı için sıfırlama e-postası kullanıcıya ulaşmaz (Akış 13).
+Giriş kullanıcı adı ve şifreyle yapılır; kullanıcı adı tüm kurumlarda benzersizdir. Yöneticinin açtığı hesaplar ilk girişte şifre değiştirmeye zorlanır. Şifre unutulursa "parola sıfırlama" istenir, ancak e-posta gönderen bir sağlayıcı henüz bağlı olmadığı için sıfırlama e-postası kullanıcıya ulaşmaz (Akış 13); kurum yöneticisinin başkasının şifresini sıfırlayacağı bir ekran da yok, yeni geçici şifreyi teknik ekip verir (Akış 16).
 
 Okuma sırası ve tüm dosyalar: [index.md](index.md) · Modül/ekran eşlemesi: [teknik/eslesme_tablosu.md](teknik/eslesme_tablosu.md)

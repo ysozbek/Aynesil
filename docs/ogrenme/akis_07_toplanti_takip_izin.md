@@ -36,13 +36,13 @@ Eğitmen talep eder (kendi izni). Koordinatör ve Kurum Yöneticisi onaylar ya d
 ### Adımlar
 1. **Talep gir:** `İzin → Talepler → Yeni`; izin alacak **eğitmeni seçin** (otomatik gelmez), izin türü, gün ya da saat, tarihler, neden.
 2. **Gerekirse düzenle:** yalnızca "Bekliyor" durumundaki talep düzenlenebilir; vazgeçilirse **İptal Et**.
-3. **Etkiyi gör ve karar ver:** yönetici talep sayfasında önce o tarihlerdeki seansların listesini (seans etkisi) görür, sonra **Onayla** ya da **Reddet** der; red için neden yazılır.
+3. **Etkiyi gör ve karar ver:** yönetici talep sayfasında önce o tarihlerdeki seansların listesini (seans etkisi) görür, sonra **Onayla** ya da **Reddet** der; red için neden yazılır. **Onaylayan, o an giriş yapmış kullanıcıdır**; formda seçilmez ve bunun için eğitmen kaydı gerekmez.
 4. **Bakiyeyi izle:** `İzin → Bakiyeler`; hak, kullanılan ve kalan görülür. Yönetici **Bakiye Tanımla** ile eğitmen + izin türü + yıl için yıllık hakkı açar (aynı kombinasyon için ikinci kayıt açılamaz), mevcut hakkı **Hak Güncelle** ile değiştirir, yıl sonunda **Devir İşlemi** yapabilir. Bakiye kaydı olmayan eğitmende bakiye kontrolü yapılmaz; bu yüzden yıl başında hak tanımlamak gerekir.
 5. **Takvim ve rapor:** `İzin → Takvim` izinleri takvimde, `İzin → Raporlar` kullanım ve trendleri gösterir.
 
 ### Dikkat
 - Aynı eğitmen için aynı tarihlerde bekleyen ya da onaylı başka talep varsa yenisi reddedilir.
-- Onay sırasında bakiye yetmezse: "Yetersiz izin bakiyesi…" uyarısı çıkar. Eğitmenin hiç bakiye kaydı yoksa bu kontrol yapılmıyor gibi [doğrulanacak].
+- Onay sırasında bakiye yetmezse: "Yetersiz izin bakiyesi…" uyarısı çıkar. Eğitmenin o izin türü ve yıl için bakiye kaydı yoksa bu kontrol **yapılmaz** (koddan doğrulandı: "bakiye kaydı varsa uygula"); bu yüzden yıl başında hak tanımlayın.
 - Onaylanan izin seansları otomatik iptal etmez veya başkasına devretmez; yönetici etkilenen seansları kendisi düzenler [doğrulanacak].
 
 ### Kendin dene

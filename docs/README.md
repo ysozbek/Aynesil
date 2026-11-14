@@ -8,7 +8,8 @@ Dokümanlar okuyucuya göre gruplanmıştır.
 |---|---|---|
 | [KULLANIM_KILAVUZU.md](musteri/KULLANIM_KILAVUZU.md) | Kurum personeli, veli | Ekranların rol bazında kullanımı. Sonunda kurulum/destek ekibi için **Teknik Ek** var. |
 | [DEMO_SENARYOSU.md](musteri/DEMO_SENARYOSU.md) | Demoyu yapan kişi | Demo verisi hazırlığı ve üç hikâyelik sunum akışı, söylenecek cümleler |
-| [KURULUM_YOL_HARITASI.md](musteri/KURULUM_YOL_HARITASI.md) | Kurulumu yapan kişi | Yeni kurumu sıfırdan canlıya alma: Gün 0 (script), 1. hafta, 2. hafta |
+| [KURULUM_KILAVUZU.md](musteri/KURULUM_KILAVUZU.md) | Sistem yöneticisi (A), kurulumu yapan kişi (B) | A: sunucu kurulumu, ortam değişkenleri, HTTPS/ters vekil, yedekleme, güncelleme, canlıya çıkış listesi. B: yeni kurumu sıfırdan canlıya alma, roller, hesap bağlama, müşteriden istenecek bilgiler |
+| [KURULUM_YOL_HARITASI.md](musteri/KURULUM_YOL_HARITASI.md) | — | Taşındı; KURULUM_KILAVUZU.md'ye yönlendirir |
 
 ## Mimari — bu klasörün kökü (yetkili kaynak)
 

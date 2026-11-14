@@ -34,7 +34,7 @@ db/seed/tenants/
 
 ## Yeni tenant kurulumu
 
-**Önerilen yol:** `devops/new_tenant.py`. Kurum, kampüsler, admin rolü ve ilk yönetici kullanıcıyı tek transaction'da açar; dosya kopyalamak ve SQL düzenlemek gerekmez. Ayrıntı: `docs/musteri/KURULUM_YOL_HARITASI.md`.
+**Önerilen yol:** `devops/new_tenant.py`. Kurum, kampüsler, admin rolü ve ilk yönetici kullanıcıyı tek transaction'da açar; dosya kopyalamak ve SQL düzenlemek gerekmez. Ayrıntı: `docs/musteri/KURULUM_KILAVUZU.md` (Bölüm B).
 
 ```bash
 python3 devops/new_tenant.py --check --code yeni_musteri --name "Yeni Müşteri" \

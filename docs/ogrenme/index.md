@@ -19,6 +19,7 @@ Bu klasör kişiseldir ve commit edilmez. Sade metinler ekran dilindedir; teknik
    - [Akış 9 — Kamera](akis_09_kamera.md)
    - [Akış 15 — Eğitmenler](akis_15_egitmenler.md)
 5. Yönetim ve ölçüm:
+   - [Akış 17 — Sıfırdan kurum kurulumu](akis_17_sifirdan_kurum_kurulumu.md) (yeni müşteriyi ilk güne hazırlamak; diğer akışları birbirine bağlar)
    - [Akış 16 — Yönetim (kullanıcı, rol, liste, kampüs)](akis_16_yonetim.md)
    - [Akış 10 — KPI ve raporlar](akis_10_kpi_raporlar.md)
    - [Akış 13 — Bildirimler](akis_13_bildirimler.md)
@@ -34,7 +35,10 @@ Tüm akışlarda "Kendin dene" için demo hesapları: `admin@demo-a.test`, `koor
 - Anketler ve bakım ekibinin ekranı yok; kamp ve kamerada kısmi ekran var (bkz. [eşleme tablosu](teknik/eslesme_tablosu.md)). Bu altı yarım modül (kamp, okul danışmanlığı, kamera, anketler, bakım ekibi, KPI) **kurum bazında açılıp kapanır** ve yeni kurumda kapalı başlar (Akış 16, adım 8). Hukuk (şablon, taslak sözleşme düzenle/sil, rıza), telafi, iade, izin bakiyesi, KPI tanımı, akademik dönemler ve seans notu/hedef düzenleme artık ekranlı; güncel ekransız uç listesi [../ekransiz-endpointler.md](../ekransiz-endpointler.md).
 - ~~Kamera sayfasındaki "Canlı İzle" düğmesi 404'e gidiyor~~ → canlı izleme ekranı olmadığı için düğme kaldırıldı (Akış 9).
 - ~~Menü ↔ sayfa uyuşmazlıkları~~ → V49 ile hizalandı (eşleme tablosu).
-- E-posta/SMS gönderilmiyor, olaylardan bildirim üretilmiyor (Akış 13).
+- E-posta/SMS gönderilmiyor, olaylardan bildirim üretilmiyor (Akış 13). Kurum yöneticisinin başkasının şifresini sıfırlayacağı bir ekran da yok (Akış 16).
+- "Eğitimciler" ana menüsü `user:read` izni istiyor; bu izni olmayan Koordinatör ve Eğitmen rolleri menüyü göremiyor (Akış 15, 16).
+- Pasifleştirilen kurumun kullanıcıları giriş yapabiliyor; giriş kurumun durumuna bakmıyor (Akış 17).
+- BEP onayı için onaylayanın hesabı bir eğitmen kaydına bağlı olmalı; demo'da `koordinator@demo-a.test` bağlı değil (Akış 3).
 
 ## Teknik klasör
 - [teknik/eslesme_tablosu.md](teknik/eslesme_tablosu.md) — controller / ekran / akış eşlemesi
