@@ -9,10 +9,13 @@ import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import FormModal from '@/components/shared/FormModal.vue'
+import RoomPicker from '@/components/pickers/RoomPicker.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
 import type { RecurringScheduleListItemDto } from '@/types/scheduling.types'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
+import { toLocalDateString, localInputToIso } from '@/utils/datetime'
 
 /** Default window = today → +30 days, in ISO YYYY-MM-DD. */
 function defaultWindow() {
@@ -141,6 +144,86 @@ async function doGenerate() {
     generateLoading.value = false
   }
 }
+
+// ── Toplu iptal / toplu oda değişikliği / tek tarih istisnası ───────────────
+type OpKind = 'cancel' | 'room' | 'exception'
+const opKind = ref<OpKind | null>(null)
+const opTarget = ref<RecurringScheduleListItemDto | null>(null)
+const opResult = ref<string | null>(null)
+const opError = ref('')
+const opErrors = reactive<Record<string, string>>({})
+const opForm = reactive({
+  from: '', to: '', reason: '',
+  roomId: '',
+  exceptionDate: '', action: 'skip' as 'skip' | 'cancel' | 'reschedule', newStartAt: '',
+})
+
+function openOp(kind: OpKind, row: RecurringScheduleListItemDto) {
+  const today = toLocalDateString()
+  Object.assign(opForm, { from: today, to: today, reason: '', roomId: '', exceptionDate: today, action: 'skip', newStartAt: '' })
+  Object.keys(opErrors).forEach((k) => delete opErrors[k])
+  opError.value = ''
+  opResult.value = null
+  opTarget.value = row
+  opKind.value = kind
+}
+
+function closeOp() {
+  opKind.value = null
+  opTarget.value = null
+  opResult.value = null
+}
+
+function requiredMsg(field: string) { return t('validation.required', { field }) }
+
+function validateOp(): boolean {
+  Object.keys(opErrors).forEach((k) => delete opErrors[k])
+  if (opKind.value === 'cancel') {
+    if (!opForm.from) opErrors.from = requiredMsg(t('scheduling.recurring.from'))
+    if (!opForm.to) opErrors.to = requiredMsg(t('scheduling.recurring.to'))
+    if (opForm.from && opForm.to && opForm.to < opForm.from) opErrors.to = t('scheduling.recurring.ops.rangeInverted')
+    if (!opForm.reason.trim()) opErrors.reason = requiredMsg(t('scheduling.recurring.ops.reason'))
+  } else if (opKind.value === 'room') {
+    if (!opForm.from) opErrors.from = requiredMsg(t('scheduling.recurring.ops.fromDate'))
+    if (!opForm.roomId) opErrors.roomId = requiredMsg(t('scheduling.room.title'))
+  } else if (opKind.value === 'exception') {
+    if (!opForm.exceptionDate) opErrors.exceptionDate = requiredMsg(t('scheduling.recurring.ops.exceptionDate'))
+    if (opForm.action === 'reschedule' && !opForm.newStartAt) opErrors.newStartAt = requiredMsg(t('scheduling.recurring.ops.newStart'))
+  }
+  return Object.keys(opErrors).length === 0
+}
+
+async function submitOp() {
+  if (!opTarget.value || !validateOp()) return
+  opError.value = ''
+  const id = opTarget.value.id
+  try {
+    if (opKind.value === 'cancel') {
+      const r = await store.bulkCancelSessions(id, { from: opForm.from, to: opForm.to, reason: opForm.reason.trim() })
+      opResult.value = t('scheduling.recurring.ops.cancelResult', { count: r.affectedCount })
+    } else if (opKind.value === 'room') {
+      const r = await store.bulkReassignRoom(id, { newRoomId: opForm.roomId, from: opForm.from })
+      const lines = [t('scheduling.recurring.ops.roomResult', { count: r.affectedCount })]
+      if (r.roomConflictSkipped > 0) lines.push(t('scheduling.recurring.generateSkippedRoom', { count: r.roomConflictSkipped }))
+      opResult.value = lines.join(' ')
+    } else if (opKind.value === 'exception') {
+      const r = await store.addRecurringException(id, {
+        exceptionDate: opForm.exceptionDate,
+        action: opForm.action,
+        newStartAt: opForm.action === 'reschedule' ? localInputToIso(opForm.newStartAt) : undefined,
+        reason: opForm.reason.trim() || undefined,
+      })
+      opResult.value = r.affectedCount > 0
+        ? t('scheduling.recurring.ops.exceptionResultApplied', { count: r.affectedCount })
+        : t('scheduling.recurring.ops.exceptionResult')
+    }
+    loadList()
+  } catch (e: unknown) {
+    opError.value = (e as Error).message
+  }
+}
+
+const opInput = 'w-full h-9 px-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary'
 </script>
 
 <template>
@@ -215,6 +298,36 @@ async function doGenerate() {
             </svg>
           </button>
           <button
+            v-if="can(Permissions.Sessions.BulkCancel) && row.isActive"
+            @click="openOp('cancel', row)"
+            class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
+            :title="t('scheduling.recurring.ops.cancelTitle')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM10 14l4 4m0-4l-4 4" />
+            </svg>
+          </button>
+          <button
+            v-if="can(Permissions.Sessions.BulkReassign) && row.isActive"
+            @click="openOp('room', row)"
+            class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary"
+            :title="t('scheduling.recurring.ops.roomTitle')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </button>
+          <button
+            v-if="can(Permissions.Sessions.Update) && row.isActive"
+            @click="openOp('exception', row)"
+            class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary"
+            :title="t('scheduling.recurring.ops.exceptionTitle')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+          <button
             v-if="can(Permissions.Sessions.Update) && row.isActive"
             @click="deactivateTarget = row"
             class="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600"
@@ -250,6 +363,85 @@ async function doGenerate() {
       @confirm="doDeactivate"
       @cancel="deactivateTarget = null"
     />
+
+    <!-- Toplu iptal / oda değişikliği / istisna -->
+    <FormModal
+      :open="!!opKind"
+      :title="opKind === 'cancel' ? t('scheduling.recurring.ops.cancelTitle') : opKind === 'room' ? t('scheduling.recurring.ops.roomTitle') : t('scheduling.recurring.ops.exceptionTitle')"
+      :subtitle="opTarget?.studentFullName ?? t('scheduling.recurring.noStudent')"
+      :saving="store.saving"
+      @submit="opResult ? closeOp() : submitOp()"
+      @close="closeOp"
+    >
+      <template v-if="opResult" #footer>
+        <button @click="closeOp" class="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90">{{ t('common.close') }}</button>
+      </template>
+      <div v-if="opError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">{{ opError }}</div>
+      <div v-if="opResult" class="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800">{{ opResult }}</div>
+
+      <div v-else class="space-y-4">
+        <template v-if="opKind === 'cancel'">
+          <p class="text-sm text-muted-foreground">{{ t('scheduling.recurring.ops.cancelHint') }}</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-muted-foreground mb-1">{{ t('scheduling.recurring.from') }} *</label>
+              <input v-model="opForm.from" type="date" :class="[opInput, opErrors.from ? 'border-red-400' : 'border-border']" />
+              <p v-if="opErrors.from" class="mt-1 text-xs text-red-600">{{ opErrors.from }}</p>
+            </div>
+            <div>
+              <label class="block text-xs text-muted-foreground mb-1">{{ t('scheduling.recurring.to') }} *</label>
+              <input v-model="opForm.to" type="date" :class="[opInput, opErrors.to ? 'border-red-400' : 'border-border']" />
+              <p v-if="opErrors.to" class="mt-1 text-xs text-red-600">{{ opErrors.to }}</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.recurring.ops.reason') }} *</label>
+            <textarea v-model="opForm.reason" rows="2" maxlength="500" :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary', opErrors.reason ? 'border-red-400' : 'border-border']" />
+            <p v-if="opErrors.reason" class="mt-1 text-xs text-red-600">{{ opErrors.reason }}</p>
+          </div>
+        </template>
+
+        <template v-else-if="opKind === 'room'">
+          <p class="text-sm text-muted-foreground">{{ t('scheduling.recurring.ops.roomHint') }}</p>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.recurring.ops.newRoom') }} *</label>
+            <RoomPicker v-model="opForm.roomId" :invalid="!!opErrors.roomId" />
+            <p v-if="opErrors.roomId" class="mt-1 text-xs text-red-600">{{ opErrors.roomId }}</p>
+          </div>
+          <div>
+            <label class="block text-xs text-muted-foreground mb-1">{{ t('scheduling.recurring.ops.fromDate') }} *</label>
+            <input v-model="opForm.from" type="date" :class="[opInput, opErrors.from ? 'border-red-400' : 'border-border']" />
+            <p v-if="opErrors.from" class="mt-1 text-xs text-red-600">{{ opErrors.from }}</p>
+          </div>
+        </template>
+
+        <template v-else-if="opKind === 'exception'">
+          <p class="text-sm text-muted-foreground">{{ t('scheduling.recurring.ops.exceptionHint') }}</p>
+          <div>
+            <label class="block text-xs text-muted-foreground mb-1">{{ t('scheduling.recurring.ops.exceptionDate') }} *</label>
+            <input v-model="opForm.exceptionDate" type="date" :class="[opInput, opErrors.exceptionDate ? 'border-red-400' : 'border-border']" />
+            <p v-if="opErrors.exceptionDate" class="mt-1 text-xs text-red-600">{{ opErrors.exceptionDate }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.recurring.ops.action') }}</label>
+            <select v-model="opForm.action" :class="[opInput, 'border-border']">
+              <option value="skip">{{ t('scheduling.recurring.ops.actionSkip') }}</option>
+              <option value="cancel">{{ t('scheduling.recurring.ops.actionCancel') }}</option>
+              <option value="reschedule">{{ t('scheduling.recurring.ops.actionReschedule') }}</option>
+            </select>
+          </div>
+          <div v-if="opForm.action === 'reschedule'">
+            <label class="block text-xs text-muted-foreground mb-1">{{ t('scheduling.recurring.ops.newStart') }} *</label>
+            <input v-model="opForm.newStartAt" type="datetime-local" :class="[opInput, opErrors.newStartAt ? 'border-red-400' : 'border-border']" />
+            <p v-if="opErrors.newStartAt" class="mt-1 text-xs text-red-600">{{ opErrors.newStartAt }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ t('scheduling.recurring.ops.reasonOptional') }}</label>
+            <input v-model="opForm.reason" type="text" maxlength="500" :class="[opInput, 'border-border']" />
+          </div>
+        </template>
+      </div>
+    </FormModal>
 
     <!-- Generate modal with required window inputs (API requires body). -->
     <div

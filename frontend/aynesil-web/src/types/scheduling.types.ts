@@ -185,7 +185,9 @@ export interface BulkGeneratePayload {
 }
 
 export interface BulkCancelPayload {
+  /** `YYYY-MM-DD` */
   from: string
+  /** `YYYY-MM-DD` (gün dahil) */
   to: string
   reason?: string
 }

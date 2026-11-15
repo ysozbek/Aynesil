@@ -412,6 +412,25 @@ async function dailyOpsFlows() {
         record({ phase: 'yazma', id: 'scheduling.generateSessions (closureSkipped = 1, 1 seans üretildi)', verb: 'POST', url: `/scheduling/recurring-schedules/${schedId}/generate`, status: gen.status,
           outcome: g?.closureSkipped === 1 && g?.affectedCount === 1 ? 'ok' : 'type', note: `closureSkipped=${g?.closureSkipped} affectedCount=${g?.affectedCount}`, mismatches: [] })
         ctx.recurringId = schedId
+        // 2) tekrar eden plan toplu işlemleri (üretilen tek seans üzerinde): oda değişikliği → istisna → toplu iptal
+        if (ctx.roomId) {
+          const re = await write('yazma', 'scheduling.bulkReassignRoom', 'POST', `/scheduling/recurring-schedules/${schedId}/bulk-reassign-room`, { newRoomId: ctx.roomId, from: holiday })
+          const sessList = await http('GET', `/scheduling/sessions?recurringScheduleId=${schedId}&page=1&pageSize=20`)
+          const first = (sessList.json?.data?.items ?? [])[0]
+          record({ phase: 'yazma', id: 'scheduling.bulkReassignRoom (oda değişti, durum "scheduled" kaldı)', verb: 'POST', url: `/scheduling/recurring-schedules/${schedId}/bulk-reassign-room`, status: re.status,
+            outcome: re.json?.data?.affectedCount === 1 && (!first || first.status === 'scheduled') ? 'ok' : 'type', note: `affectedCount=${re.json?.data?.affectedCount} durum=${first?.status}`, mismatches: [] })
+        } else skip('scheduling.bulkReassignRoom', 'POST', '/scheduling/recurring-schedules/{id}/bulk-reassign-room', 'oda yok')
+        expectStatus('yazma', 'scheduling.bulkCancel (bitiş < başlangıç → reddedilir)', 'POST', `/scheduling/recurring-schedules/${schedId}/bulk-cancel`,
+          await http('POST', `/scheduling/recurring-schedules/${schedId}/bulk-cancel`, { from: day(310), to: day(300), reason: 'x' }), [400, 422])
+        const ex = await write('yazma', 'scheduling.addRecurrenceException (henüz seansı olmayan tarih)', 'POST', `/scheduling/recurring-schedules/${schedId}/exceptions`, { exceptionDate: day(321), action: 'skip', newStartAt: null, reason: 'Smoke' })
+        record({ phase: 'yazma', id: 'scheduling.addRecurrenceException (affectedCount = 0)', verb: 'POST', url: `/scheduling/recurring-schedules/${schedId}/exceptions`, status: ex.status,
+          outcome: ex.json?.data?.affectedCount === 0 ? 'ok' : 'type', note: `affectedCount=${ex.json?.data?.affectedCount}`, mismatches: [] })
+        expectStatus('yazma', 'scheduling.addRecurrenceException (aynı tarih ikinci kez → reddedilir)', 'POST', `/scheduling/recurring-schedules/${schedId}/exceptions`,
+          await http('POST', `/scheduling/recurring-schedules/${schedId}/exceptions`, { exceptionDate: day(321), action: 'cancel', newStartAt: null, reason: null }), [400, 409, 422], 'Rule.ExceptionExistsForDate')
+        const ex2 = await write('yazma', 'scheduling.addRecurrenceException (üretilmiş seansı iptal eder)', 'POST', `/scheduling/recurring-schedules/${schedId}/exceptions`, { exceptionDate: day(307), action: 'cancel', newStartAt: null, reason: 'Smoke istisna' })
+        const bc = await write('yazma', 'scheduling.bulkCancel (kalan seans yok → 0)', 'POST', `/scheduling/recurring-schedules/${schedId}/bulk-cancel`, { from: holiday, to: day(314), reason: 'Smoke toplu iptal' })
+        record({ phase: 'yazma', id: 'scheduling.bulkCancel / istisna (seans tam bir kez iptal edildi)', verb: 'POST', url: `/scheduling/recurring-schedules/${schedId}/bulk-cancel`, status: bc.status,
+          outcome: (ex2.json?.data?.affectedCount ?? 0) + (bc.json?.data?.affectedCount ?? 0) === 1 ? 'ok' : 'type', note: `istisna=${ex2.json?.data?.affectedCount} toplu=${bc.json?.data?.affectedCount}`, mismatches: [] })
       }
     } else skip('scheduling.generateSessions (tatil günü atlanır)', 'POST', '/scheduling/recurring-schedules/{id}/generate', 'seans türü yok')
     await write('yazma', 'scheduling.deleteCalendarEntry', 'DELETE', `/scheduling/calendar-entries/${entry.id}`)

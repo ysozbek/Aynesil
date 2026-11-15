@@ -190,10 +190,12 @@ export const useSchedulingStore = defineStore('scheduling', () => {
     }
   }
 
-  async function addRecurringException(id: string, payload: AddRecurringExceptionPayload) {
+  async function addRecurringException(id: string, payload: AddRecurringExceptionPayload): Promise<BulkOperationResultDto> {
     saving.value = true
     try {
-      await schedulingService.addRecurringException(id, payload)
+      const res = await schedulingService.addRecurringException(id, payload)
+      if (!res.success || !res.data) throw new Error(res.message ?? 'İstisna eklenemedi.')
+      return res.data
     } finally {
       saving.value = false
     }

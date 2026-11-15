@@ -175,7 +175,7 @@ public record AddRecurrenceExceptionCommand(
     DateOnly ExceptionDate,
     string Action,
     DateTimeOffset? NewStartAt,
-    string? Reason) : IRequest;
+    string? Reason) : IRequest<BulkOperationResultDto>;
 
 public class AddRecurrenceExceptionCommandValidator
     : AbstractValidator<AddRecurrenceExceptionCommand>
@@ -192,14 +192,27 @@ public class AddRecurrenceExceptionCommandValidator
     }
 }
 
+/// <summary>
+/// Tek tarih istisnası. Gelecekteki seans üretiminde o tarihi atlar / başka saate taşır; ayrıca o tarih için
+/// plandan zaten üretilmiş ve henüz yapılmamış bir seans varsa istisnayı ona da uygular
+/// (skip/cancel → iptal, reschedule → yeni saate taşıma). Sonuçta etkilenen seans sayısı döner.
+/// </summary>
 public sealed class AddRecurrenceExceptionCommandHandler
-    : IRequestHandler<AddRecurrenceExceptionCommand>
+    : IRequestHandler<AddRecurrenceExceptionCommand, BulkOperationResultDto>
 {
     private readonly IAppDbContext _db;
+    private readonly ISessionRepository _sessions;
+    private readonly ICurrentUserService _currentUser;
 
-    public AddRecurrenceExceptionCommandHandler(IAppDbContext db) => _db = db;
+    public AddRecurrenceExceptionCommandHandler(
+        IAppDbContext db, ISessionRepository sessions, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _sessions = sessions;
+        _currentUser = currentUser;
+    }
 
-    public async Task Handle(AddRecurrenceExceptionCommand req, CancellationToken ct)
+    public async Task<BulkOperationResultDto> Handle(AddRecurrenceExceptionCommand req, CancellationToken ct)
     {
         var schedule = await _db.RecurringSchedules
             .AsNoTracking()
@@ -217,7 +230,41 @@ public sealed class AddRecurrenceExceptionCommandHandler
             req.ExceptionDate, req.Action, req.NewStartAt, req.Reason);
 
         _db.RecurrenceExceptions.Add(exception);
+
+        // O tarihteki (UTC günü; üretimle aynı kabul) yapılmamış seans.
+        var dayStart = new DateTimeOffset(req.ExceptionDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var dayEnd = dayStart.AddDays(1);
+        var existing = await _db.Sessions
+            .Include(s => s.Educators)
+            .Where(s => s.RecurringScheduleId == req.RecurringScheduleId
+                     && (s.Status == "scheduled" || s.Status == "rescheduled")
+                     && s.StartsAt >= dayStart && s.StartsAt < dayEnd)
+            .ToListAsync(ct);
+
+        foreach (var session in existing)
+        {
+            if (req.Action == "reschedule")
+            {
+                var newStart = req.NewStartAt!.Value;
+                var newEnd = newStart.Add(session.EndsAt - session.StartsAt);
+                if (session.RoomId.HasValue
+                    && await _sessions.HasRoomConflictAsync(session.RoomId.Value, newStart, newEnd, session.Id, ct))
+                    throw new BusinessRuleViolationException(MsgKeys.Rule.RoomBookedNewSlot, session.RoomId);
+                foreach (var e in session.Educators)
+                    if (await _sessions.HasEducatorConflictAsync(e.EducatorId, newStart, newEnd, session.Id, ct))
+                        throw new BusinessRuleViolationException(MsgKeys.Rule.EducatorBookedSlot, e.EducatorId);
+                session.Reschedule(newStart, newEnd, session.RoomId, _currentUser.UserId);
+            }
+            else
+            {
+                session.Cancel(req.Reason, _currentUser.UserId);
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
+
+        return new BulkOperationResultDto(
+            existing.Count, $"Exception added; {existing.Count} existing session(s) updated.");
     }
 }
 
@@ -513,6 +560,18 @@ public record BulkCancelSessionsCommand(
     DateOnly? From,
     DateOnly? To) : IRequest<BulkOperationResultDto>;
 
+public class BulkCancelSessionsCommandValidator : AbstractValidator<BulkCancelSessionsCommand>
+{
+    public BulkCancelSessionsCommandValidator()
+    {
+        RuleFor(x => x.RecurringScheduleId).NotEmpty();
+        RuleFor(x => x.To).GreaterThanOrEqualTo(x => x.From!.Value)
+            .When(x => x.From.HasValue && x.To.HasValue)
+            .WithKey(MsgKeys.Validation.MustBeAfter, Msg.FieldArg("To"), Msg.FieldArg("From"));
+        RuleFor(x => x.Reason).MaximumLength(500);
+    }
+}
+
 public sealed class BulkCancelSessionsCommandHandler
     : IRequestHandler<BulkCancelSessionsCommand, BulkOperationResultDto>
 {
@@ -527,11 +586,15 @@ public sealed class BulkCancelSessionsCommandHandler
 
     public async Task<BulkOperationResultDto> Handle(BulkCancelSessionsCommand req, CancellationToken ct)
     {
+        if (!await _db.RecurringSchedules.AnyAsync(s => s.Id == req.RecurringScheduleId, ct))
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
+
         var now = DateTimeOffset.UtcNow;
 
+        // Tek tek ertelenmiş ("rescheduled") seanslar da henüz yapılmamıştır; onlar da iptal edilir.
         var q = _db.Sessions.Where(s =>
             s.RecurringScheduleId == req.RecurringScheduleId &&
-            s.Status == "scheduled" &&
+            (s.Status == "scheduled" || s.Status == "rescheduled") &&
             s.StartsAt > now);
 
         if (req.From.HasValue)
@@ -586,11 +649,19 @@ public sealed class BulkReassignRoomCommandHandler
 
     public async Task<BulkOperationResultDto> Handle(BulkReassignRoomCommand req, CancellationToken ct)
     {
+        var schedule = await _db.RecurringSchedules
+            .FirstOrDefaultAsync(s => s.Id == req.RecurringScheduleId, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "RecurringSchedule"));
+
+        if (req.NewRoomId.HasValue
+            && !await _db.Rooms.AnyAsync(r => r.Id == req.NewRoomId.Value && r.IsActive, ct))
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Room"));
+
         var from = new DateTimeOffset(req.From.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
         var upcomingSessions = await _db.Sessions
             .Where(s => s.RecurringScheduleId == req.RecurringScheduleId
-                     && s.Status == "scheduled"
+                     && (s.Status == "scheduled" || s.Status == "rescheduled")
                      && s.StartsAt >= from)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(ct);
@@ -607,15 +678,19 @@ public sealed class BulkReassignRoomCommandHandler
                 if (conflict) { skipped++; continue; }
             }
 
-            s.Reschedule(s.StartsAt, s.EndsAt, req.NewRoomId, _currentUser.UserId);
+            // Yalnızca oda değişir; seans "ertelendi" durumuna geçmez.
+            s.ChangeRoom(req.NewRoomId, _currentUser.UserId);
             updated++;
         }
 
-        if (updated > 0)
-            await _db.SaveChangesAsync(ct);
+        // Bundan sonra üretilecek seanslar da yeni odayı kullansın.
+        schedule.ChangeRoom(req.NewRoomId, _currentUser.UserId);
+
+        await _db.SaveChangesAsync(ct);
 
         return new BulkOperationResultDto(
             updated,
-            $"{updated} session(s) reassigned; {skipped} skipped due to room conflict.");
+            $"{updated} session(s) reassigned; {skipped} skipped due to room conflict.",
+            skipped);
     }
 }

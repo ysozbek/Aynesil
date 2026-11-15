@@ -111,7 +111,7 @@ export const schedulingService = {
     apiService.post(`/scheduling/recurring-schedules/${id}/deactivate`),
 
   addRecurringException: (id: string, payload: AddRecurringExceptionPayload) =>
-    apiService.post(`/scheduling/recurring-schedules/${id}/exceptions`, payload),
+    apiService.post<BulkOperationResultDto>(`/scheduling/recurring-schedules/${id}/exceptions`, payload),
 
   /**
    * Materialises concrete session rows from a recurring schedule for the given window.

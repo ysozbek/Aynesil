@@ -115,6 +115,17 @@ public class Session : TenantEntity
             Id, CorporationId, previous, Status, updatedBy));
     }
 
+    /// <summary>
+    /// Yalnızca odayı değiştirir; saat aynı kaldığı için durum "rescheduled"a geçmez.
+    /// </summary>
+    public void ChangeRoom(Guid? roomId, Guid? updatedBy = null)
+    {
+        EnsureNotTerminal();
+        RoomId    = roomId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy;
+    }
+
     public void Complete(Guid? updatedBy = null)
     {
         EnsureTransitionAllowed("completed");

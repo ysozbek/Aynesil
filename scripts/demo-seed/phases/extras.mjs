@@ -108,6 +108,15 @@ async function newFlowExamples(ctx) {
       await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })
 
+  // Tekrar eden plan: tek tarih istisnası (henüz seansı üretilmemiş tarih → sonraki üretimde atlanır)
+  await step('tekrar eden plan istisnası', async () => {
+    const plans = (await c.get('/scheduling/recurring-schedules?isActive=true&page=1&pageSize=5')).items ?? []
+    if (!plans.length) return
+    try {
+      await c.post(`/scheduling/recurring-schedules/${plans[0].id}/exceptions`, { exceptionDate: dayStr(21), action: 'skip', newStartAt: null, reason: 'Demo: eğitmen yıllık izinde' })
+    } catch (e) { if (e.status !== 422 && e.status !== 409 && e.status !== 400) throw e } // aynı tarih için zaten var
+  })
+
   // İlk giriş örneği: ilkgiris@… kullanıcısı must_change_password=true ile açık bırakılır (seed.mjs temizlemez).
   info(`ilk giriş örneği: ${fx.users.firstLogin.local}@${t.domain} (must_change_password açık; diğer demo kullanıcılarında kapalı)`)
 }

@@ -1,4 +1,5 @@
 using Aynesil.Api.Authorization;
+using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Features.Scheduling.Commands;
 using Aynesil.Application.Features.Scheduling.Dtos;
 using Aynesil.Application.Features.Scheduling.Queries;
@@ -193,15 +194,13 @@ public sealed class SchedulingController : BaseController
 
     [HttpPost("recurring-schedules/{id:guid}/exceptions")]
     [HasPermission(Permissions.Sessions.Update)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<BulkOperationResultDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> AddRecurrenceException(
         Guid id, [FromBody] AddRecurrenceExceptionRequest req, CancellationToken ct)
-    {
-        await Sender.Send(
+        => OkResult(await Sender.Send(
             new AddRecurrenceExceptionCommand(id, req.ExceptionDate, req.Action,
-                req.NewStartAt, req.Reason), ct);
-        return NoContentResult(MsgKeys.Success.RecurrenceExceptionAdded);
-    }
+                req.NewStartAt, req.Reason), ct),
+            Msg.Get(MsgKeys.Success.RecurrenceExceptionAdded));
 
     [HttpPost("recurring-schedules/{id:guid}/generate")]
     [HasPermission(Permissions.Sessions.BulkGenerate)]

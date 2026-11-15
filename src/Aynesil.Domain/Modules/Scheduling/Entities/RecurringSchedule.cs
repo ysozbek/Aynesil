@@ -127,6 +127,13 @@ public class RecurringSchedule : TenantEntity
         UpdatedBy = updatedBy;
     }
 
+    public void ChangeRoom(Guid? roomId, Guid? updatedBy = null)
+    {
+        RoomId    = roomId;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = updatedBy;
+    }
+
     public void UpdateRange(DateOnly? rangeEnd, int? maxOccurrences, Guid? updatedBy = null)
     {
         RangeEnd       = rangeEnd;
