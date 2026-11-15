@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Aynesil.Api.RateLimiting;
@@ -12,9 +13,11 @@ namespace Aynesil.Api.RateLimiting;
 /// Güvenlik: başlık yalnızca <see cref="KnownProxies"/>/<see cref="KnownNetworks"/>'ten gelen bağlantılarda
 /// dikkate alınır; bilinmeyen kaynaktan gelen <c>X-Forwarded-For</c> yok sayılır (istemci kendi IP'sini
 /// sahteleyip hız sınırından kaçamaz). Hiçbiri tanımlı değilse (Development) ASP.NET varsayılanı kalır:
-/// yalnızca loopback güvenilir. Üretimde vekilin adresi/ağı ortam değişkeniyle verilir, ör.
-/// <c>AYNESIL_ForwardedHeaders__KnownProxies__0=10.0.0.5</c>,
-/// <c>AYNESIL_ForwardedHeaders__KnownNetworks__0=172.18.0.0/16</c>.
+/// yalnızca loopback güvenilir. docker-compose.yml compose iç ağını (<c>AYNESIL_NETWORK_SUBNET</c>, vars.
+/// 172.30.0.0/24) varsayılan olarak verir: ön yüz nginx'i ve sunucudaki ters vekil (Docker ağ geçidi üzerinden)
+/// bu ağdan bağlanır. Başka bir vekil için <c>.env</c>'e ör.
+/// <c>AYNESIL_ForwardedHeaders__KnownProxies__0=10.0.0.5</c> yazılır.
+/// IPv4 girişleri, Kestrel'in çift yığın soketinde görülen IPv4-eşlemeli IPv6 biçimiyle (::ffff:a.b.c.d) de eklenir.
 /// </summary>
 public sealed class ForwardedHeadersSettings
 {
@@ -49,14 +52,23 @@ public static class ForwardedHeadersSetup
         options.KnownProxies.Clear();
         options.KnownNetworks.Clear();
         foreach (var proxy in proxies)
-            options.KnownProxies.Add(IPAddress.Parse(proxy.Trim()));
+        {
+            var address = IPAddress.Parse(proxy.Trim());
+            options.KnownProxies.Add(address);
+            // Kestrel çift yığın (http://+:5000) dinlediğinde IPv4 bağlantılar ::ffff:a.b.c.d olarak görünür.
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+                options.KnownProxies.Add(address.MapToIPv6());
+        }
         foreach (var network in networks)
         {
             var parts = network.Trim().Split('/');
-            if (parts.Length != 2 || !IPAddress.TryParse(parts[0], out var prefix) || !int.TryParse(parts[1], out var length))
+            if (parts.Length != 2 || !IPAddress.TryParse(parts[0], out var prefix) || !int.TryParse(parts[1], out var length)
+                || length < 0 || length > (prefix.AddressFamily == AddressFamily.InterNetwork ? 32 : 128))
                 throw new InvalidOperationException(
                     $"ForwardedHeaders:KnownNetworks entry '{network}' must be in CIDR form (e.g. 172.18.0.0/16).");
             options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(prefix, length));
+            if (prefix.AddressFamily == AddressFamily.InterNetwork)
+                options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(prefix.MapToIPv6(), 96 + length));
         }
     }
 }

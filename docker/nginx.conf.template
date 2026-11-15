@@ -1,3 +1,28 @@
+# Ön yüz nginx'i (aynesil-web konteyneri). Şablon: imajın giriş betiği açılışta yalnızca AYNESIL_ ile başlayan
+# değişkenleri yerine koyar (NGINX_ENVSUBST_FILTER, docker/frontend.Dockerfile); nginx'in kendi $değişkenlerine dokunmaz.
+#
+# Gerçek istemci IP'si (hız sınırı, giriş kayıtları):
+#   - Bağlantı compose ağından geliyorsa (sunucudaki ters vekil Docker ağ geçidi üzerinden bağlanır) onun
+#     X-Forwarded-For'u dikkate alınır; real_ip_recursive ile güvenilmeyen en sağdaki adres istemci olur.
+#     Böylece istemcinin başlığa eklediği sahte değerler (solda kalır) işe yaramaz.
+#   - Bağlantı başka bir yerden geliyorsa (ters vekil yok, port doğrudan yayınlanmış) başlık yok sayılır,
+#     istemci bağlantının kaynak adresidir.
+#   - API'ye X-Forwarded-For EKLENMEZ, ÜZERİNE YAZILIR: tek değer, nginx'in belirlediği istemci adresi.
+#     API yalnızca compose ağını güvenilir vekil kabul eder (AYNESIL_ForwardedHeaders__KnownNetworks__0).
+set_real_ip_from ${AYNESIL_NETWORK_SUBNET};
+real_ip_header   X-Forwarded-For;
+real_ip_recursive on;
+
+# X-Forwarded-Proto yalnızca güvenilen ters vekilden (TLS'i o sonlandırır) gelirse aktarılır.
+geo $realip_remote_addr $aynesil_from_trusted_proxy {
+    default 0;
+    ${AYNESIL_NETWORK_SUBNET} 1;
+}
+map "$aynesil_from_trusted_proxy:$http_x_forwarded_proto" $aynesil_forwarded_proto {
+    "~^1:(https?)$" $1;
+    default         $scheme;
+}
+
 server {
     listen 80;
     server_name _;
@@ -20,14 +45,18 @@ server {
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1000;
 
+    # Dosya yüklemeleri (belgeler, rıza kanıtı). nginx varsayılanı 1 MB'tır.
+    client_max_body_size 20m;
+
     # API proxy — /api/* isteklerini backend container'a ilet
     location /api/ {
         proxy_pass http://aynesil-api:5000/api/;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
+        # $remote_addr, real_ip modülünden sonra gerçek istemcidir (yukarıya bakın). Ekleme değil, üzerine yazma.
         proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For   $remote_addr;
+        proxy_set_header X-Forwarded-Proto $aynesil_forwarded_proto;
         proxy_connect_timeout 10s;
         proxy_read_timeout    60s;
     }

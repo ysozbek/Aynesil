@@ -21,9 +21,14 @@ RUN npm run build
 # ── Stage 2: Serve via nginx ──────────────────────────────────────────────────
 FROM nginx:1.27-alpine AS runtime
 
-# Remove default config and copy our SPA config
+# Remove default config; our SPA config is a template rendered at startup by the image's entrypoint
+# (/docker-entrypoint.d/20-envsubst-on-templates.sh → /etc/nginx/conf.d/default.conf).
+# Only AYNESIL_* variables are substituted so nginx's own $variables are left alone.
 RUN rm /etc/nginx/conf.d/default.conf
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
+ENV NGINX_ENVSUBST_FILTER=^AYNESIL_
+# Compose ağı (docker-compose.yml AYNESIL_NETWORK_SUBNET ile aynı varsayılan); compose environment'ı ezer.
+ENV AYNESIL_NETWORK_SUBNET=172.30.0.0/24
 
 COPY --from=build /app/dist /usr/share/nginx/html
 

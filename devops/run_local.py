@@ -43,7 +43,9 @@ def main() -> None:
     copy_env_if_missing()
 
     print("\n🐳  Starting AyNesil via Docker Compose...")
-    run(["docker", "compose", "up", "--build", "--remove-orphans"])
+    # docker-compose.dev.yml: PostgreSQL/Redis/API portlarını ana makineye açar (üretim dosyası kapatır).
+    run(["docker", "compose", "-f", "docker-compose.yml", "-f", "docker-compose.dev.yml",
+         "up", "--build", "--remove-orphans"])
 
 
 if __name__ == "__main__":

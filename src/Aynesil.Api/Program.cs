@@ -60,6 +60,9 @@ try
     app.UseSerilogRequestLogging(opts =>
     {
         opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+        // UseForwardedHeaders'tan sonra: güvenilen vekil arkasında gerçek istemci IP'si.
+        opts.EnrichDiagnosticContext = (diag, http) =>
+            diag.Set("ClientIp", http.Connection.RemoteIpAddress?.ToString());
     });
 
     // Dil: Accept-Language → JWT locale → tr. İlk kayıt ExceptionMiddleware'den önce

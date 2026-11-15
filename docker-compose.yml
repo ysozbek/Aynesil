@@ -1,8 +1,17 @@
 ---
 # AyNesil Platform — Docker Compose
-# Primary local development & single-server deployment workflow.
-# Usage: docker compose up
-# All services use the AYNESIL_ env prefix — see .env.example.
+# Tek sunuculu kurulum (üretim varsayılanları) ve yerel geliştirme.
+#   Üretim : docker compose up -d --build
+#   Geliştirme (DB/Redis/API portları dışarı açık):
+#            docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#            (ya da: python3 devops/run_local.py)
+# Ayarlar .env'den gelir (bkz. .env.example). API servisi .env'i env_file ile de okur:
+# .env'e yazılan her AYNESIL_ değişkeni API'ye ulaşır.
+#
+# Ağ güvenliği: PostgreSQL ve Redis hiçbir porta yayınlanmaz (yalnızca iç ağ). API ve ön yüz
+# yalnızca 127.0.0.1'e yayınlanır; dışarıya sunucudaki ters vekil (nginx/Caddy, TLS) açılır.
+# Docker kendi iptables kurallarını yazdığı için ufw yayınlanan portları ENGELLEMEZ; bu yüzden
+# kapatma burada, yayın adresiyle yapılır.
 
 name: aynesil
 
@@ -21,8 +30,8 @@ services:
     volumes:
       - aynesil-db-data:/var/lib/postgresql/data
       - ./docker/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
-    ports:
-      - "5432:5432"
+    # Port yayını yok: API, Flyway ve betikler (docker exec) iç ağdan erişir.
+    # Yerel geliştirme için docker-compose.dev.yml 5432'yi açar.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aynesil_owner} -d ${POSTGRES_DB:-aynesil}"]
       interval: 10s
@@ -37,11 +46,15 @@ services:
     image: redis:7-alpine
     container_name: aynesil-redis
     restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      # Şifre .env'den (AYNESIL_REDIS_PASSWORD). REDISCLI_AUTH sayesinde konteyner içindeki
+      # redis-cli (healthcheck, `docker exec aynesil-redis redis-cli ...`) şifreyi kendiliğinden kullanır.
+      REDIS_PASSWORD: ${AYNESIL_REDIS_PASSWORD:-changeme_redis}
+      REDISCLI_AUTH: ${AYNESIL_REDIS_PASSWORD:-changeme_redis}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --maxmemory 256mb --maxmemory-policy allkeys-lru"]
     volumes:
       - aynesil-redis-data:/data
-    ports:
-      - "6379:6379"
+    # Port yayını yok (yalnızca iç ağ). Yerel geliştirme için docker-compose.dev.yml 6379'u açar.
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -94,6 +107,12 @@ services:
         condition: service_healthy
       aynesil-flyway:
         condition: service_completed_successfully
+    # .env'deki her AYNESIL_ değişkeni API'ye ulaşır (ForwardedHeaders, CORS, token süreleri, log seviyesi…);
+    # override dosyası gerekmez. Aşağıdaki environment bloğu env_file'dan önceliklidir; bu yüzden oradaki
+    # değerler ${AD:-varsayılan} biçimindedir ve .env'deki aynı adlı değişkenle değiştirilebilir.
+    env_file:
+      - path: .env
+        required: false
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5000
@@ -102,17 +121,22 @@ services:
         Username=${AYNESIL_DB_APP_USER:-aynesil_app};
         Password=${AYNESIL_DB_APP_PASSWORD:-changeme_app};
         Application Name=AynesilApi
-      AYNESIL_ConnectionStrings__Redis: aynesil-redis:6379,abortConnect=false
+      AYNESIL_ConnectionStrings__Redis: aynesil-redis:6379,password=${AYNESIL_REDIS_PASSWORD:-changeme_redis},abortConnect=false
       AYNESIL_Jwt__Secret: ${AYNESIL_Jwt__Secret:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_64_CHARACTERS}
       AYNESIL_Jwt__Issuer: ${AYNESIL_Jwt__Issuer:-https://api.aynesil.com}
       AYNESIL_Jwt__Audience: ${AYNESIL_Jwt__Audience:-aynesil-web}
-      AYNESIL_Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-5173}
+      AYNESIL_Cors__AllowedOrigins__0: ${AYNESIL_Cors__AllowedOrigins__0:-http://localhost:${FRONTEND_PORT:-5173}}
       AYNESIL_Storage__Local__RootPath: /app/uploads
+      # Gerçek istemci IP'si: X-Forwarded-For yalnızca compose iç ağından (ön yüz nginx'i, sunucudaki ters
+      # vekilin Docker ağ geçidi üzerinden gelen bağlantısı) kabul edilir; dışarıdan gelen sahte başlık yok sayılır.
+      # Ek vekiller .env'de AYNESIL_ForwardedHeaders__KnownProxies__0 / KnownNetworks__1 ile verilir.
+      AYNESIL_ForwardedHeaders__KnownNetworks__0: ${AYNESIL_ForwardedHeaders__KnownNetworks__0:-${AYNESIL_NETWORK_SUBNET:-172.30.0.0/24}}
     volumes:
       - aynesil-uploads:/app/uploads
       - aynesil-logs:/app/logs
+    # Yalnızca sunucunun kendisinden (ters vekil, izleme, betikler): dışarıya açık değil.
     ports:
-      - "${API_PORT:-5000}:5000"
+      - "127.0.0.1:${API_PORT:-5000}:5000"
     healthcheck:
       # curl Alpine'da yok → wget kullanılır
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
@@ -137,14 +161,25 @@ services:
     depends_on:
       aynesil-api:
         condition: service_healthy
+    environment:
+      # nginx X-Forwarded-For'u yalnızca bu ağdan (sunucudaki ters vekil → Docker ağ geçidi) gelirse dikkate alır
+      # (docker/nginx.conf.template, set_real_ip_from).
+      AYNESIL_NETWORK_SUBNET: ${AYNESIL_NETWORK_SUBNET:-172.30.0.0/24}
+    # Varsayılan yalnızca 127.0.0.1: önüne TLS sonlandıran ters vekil konur (KURULUM_KILAVUZU A.6).
+    # Ters vekilsiz doğrudan yayın gerekiyorsa .env'de FRONTEND_BIND=0.0.0.0.
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_BIND:-127.0.0.1}:${FRONTEND_PORT:-5173}:80"
     networks:
       - aynesil-net
 
 networks:
   aynesil-net:
     driver: bridge
+    # Sabit alt ağ: API ve ön yüz nginx'i bu ağı güvenilir vekil kabul eder. Sunucuda çakışırsa .env'de
+    # AYNESIL_NETWORK_SUBNET ile değiştirin (değişiklik için: docker compose down && docker compose up -d).
+    ipam:
+      config:
+        - subnet: ${AYNESIL_NETWORK_SUBNET:-172.30.0.0/24}
 
 volumes:
   aynesil-db-data:

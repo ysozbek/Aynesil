@@ -75,9 +75,35 @@ public class ForwardedHeadersTests
     }
 
     [Fact]
+    public async Task Ipv4_network_also_matches_the_ipv4_mapped_address_seen_on_a_dual_stack_socket()
+    {
+        // Kestrel http://+:5000 dinlediğinde nginx konteynerinin bağlantısı ::ffff:172.30.0.5 olarak gelir.
+        var options = OptionsFrom(new() { ["ForwardedHeaders:KnownNetworks:0"] = "172.30.0.0/24" });
+        (await ClientIpSeenAsync(options, "::ffff:172.30.0.5", "203.0.113.9")).Should().Be(IPAddress.Parse("203.0.113.9"));
+        (await ClientIpSeenAsync(options, "::ffff:172.31.0.5", "203.0.113.9")).Should().Be(IPAddress.Parse("::ffff:172.31.0.5"));
+    }
+
+    [Fact]
+    public async Task Ipv4_proxy_also_matches_its_ipv4_mapped_address()
+    {
+        var options = OptionsFrom(new() { ["ForwardedHeaders:KnownProxies:0"] = "172.30.0.1" });
+        (await ClientIpSeenAsync(options, "::ffff:172.30.0.1", "203.0.113.10")).Should().Be(IPAddress.Parse("203.0.113.10"));
+    }
+
+    [Fact]
+    public async Task Only_the_rightmost_address_is_used_so_a_client_cannot_prepend_a_fake_one()
+    {
+        // nginx $proxy_add_x_forwarded_for: istemcinin uydurduğu değer solda, nginx'in gördüğü gerçek adres en sağda.
+        var options = OptionsFrom(new() { ["ForwardedHeaders:KnownNetworks:0"] = "172.30.0.0/24" });
+        (await ClientIpSeenAsync(options, "172.30.0.5", "1.2.3.4, 203.0.113.11")).Should().Be(IPAddress.Parse("203.0.113.11"));
+    }
+
+    [Fact]
     public void Malformed_network_fails_fast_at_startup()
     {
         var act = () => OptionsFrom(new() { ["ForwardedHeaders:KnownNetworks:0"] = "172.18.0.0" });
         act.Should().Throw<InvalidOperationException>().WithMessage("*CIDR*");
+        var tooLong = () => OptionsFrom(new() { ["ForwardedHeaders:KnownNetworks:0"] = "172.18.0.0/33" });
+        tooLong.Should().Throw<InvalidOperationException>().WithMessage("*CIDR*");
     }
 }

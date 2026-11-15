@@ -4,6 +4,7 @@ using Aynesil.Domain.Common;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Aynesil.Application.Features.Auth.Commands;
 
@@ -52,12 +53,15 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
     private readonly IAppDbContext _db;
     private readonly IPasswordService _passwords;
     private readonly ITokenService _tokens;
+    private readonly ILogger<LoginCommandHandler> _logger;
 
-    public LoginCommandHandler(IAppDbContext db, IPasswordService passwords, ITokenService tokens)
+    public LoginCommandHandler(
+        IAppDbContext db, IPasswordService passwords, ITokenService tokens, ILogger<LoginCommandHandler> logger)
     {
         _db = db;
         _passwords = passwords;
         _tokens = tokens;
+        _logger = logger;
     }
 
     public async Task<LoginResult> Handle(LoginCommand req, CancellationToken ct)
@@ -80,7 +84,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
                   FROM iam.authenticate_user({0}::citext)",
                 req.Username)
             .FirstOrDefaultAsync(ct)
-            ?? await FailUnknownUserAsync(req.Password);
+            ?? await FailUnknownUserAsync(req.Password, req.IpAddress);
 
         // ── Step 2: Password verification FIRST ────────────────────────────────
         // Hesap durumu (kilitli/devre dışı) yalnızca parola doğruysa bildirilir; aksi halde her başarısızlık
@@ -94,14 +98,15 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             // Kilitli/devre dışı hesaplarda deneme sayacı artırılmaz (kilit süresi uzamasın).
             if (!inactive && !lockedOut)
                 await _passwords.RecordFailedAttemptAsync(user.Id, ct);
+            _logger.LogWarning("Login failed for user {UserId} from {ClientIp}: invalid password", user.Id, req.IpAddress);
             throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
         }
 
         // ── Step 3: Account state (password is correct, so revealing it is safe) ─
         if (inactive)
-            throw new AuthenticationFailedException(MsgKeys.Auth.AccountDisabled);
+            throw Rejected(user, req.IpAddress, MsgKeys.Auth.AccountDisabled);
         if (lockedOut)
-            throw new AuthenticationFailedException(MsgKeys.Auth.AccountLocked);
+            throw Rejected(user, req.IpAddress, MsgKeys.Auth.AccountLocked);
 
         await _passwords.ResetFailedAttemptsAsync(user.Id, ct);
 
@@ -118,6 +123,9 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             user.Id, user.CorporationId, permissions,
             req.IpAddress, req.UserAgent, ct);
 
+        _logger.LogInformation("Login succeeded for user {UserId} (corporation {CorporationId}) from {ClientIp}",
+            user.Id, user.CorporationId, req.IpAddress);
+
         return new LoginResult(
             tokenPair.AccessToken,
             tokenPair.RefreshToken,
@@ -133,10 +141,18 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
     /// <summary>
     /// Bilinmeyen kullanıcıda da gerçek bir BCrypt doğrulaması çalışır; yanıt süresi "parola yanlış" ile aynı olur.
     /// </summary>
-    private Task<AuthUserRow> FailUnknownUserAsync(string password)
+    private Task<AuthUserRow> FailUnknownUserAsync(string password, string? clientIp)
     {
         _passwords.VerifyOrDummy(password, null);
+        // Kullanıcı adı loglanmaz (yanlış alana yazılmış bir parola olabilir); yalnızca kaynak IP.
+        _logger.LogWarning("Login failed for an unknown username from {ClientIp}", clientIp);
         throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
+    }
+
+    private AuthenticationFailedException Rejected(AuthUserRow user, string? clientIp, MsgKey reason)
+    {
+        _logger.LogWarning("Login rejected for user {UserId} from {ClientIp}: {Reason}", user.Id, clientIp, reason.Value);
+        return new AuthenticationFailedException(reason);
     }
 
     private record PermissionRow(string PermissionCode);
