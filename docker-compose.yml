@@ -5,8 +5,8 @@
 #   Geliştirme (DB/Redis/API portları dışarı açık):
 #            docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 #            (ya da: python3 devops/run_local.py)
-# Ayarlar .env'den gelir (bkz. .env.example). API servisi .env'i env_file ile de okur:
-# .env'e yazılan her AYNESIL_ değişkeni API'ye ulaşır.
+# Ayarlar .env'den gelir (bkz. .env.example). API konteynerine .env'in tamamı değil, yalnızca
+# aynesil-api servisinin environment bloğunda listelenen değişkenler geçer (sahip rolü bilgisi geçmez).
 #
 # Ağ güvenliği: PostgreSQL ve Redis hiçbir porta yayınlanmaz (yalnızca iç ağ). API ve ön yüz
 # yalnızca 127.0.0.1'e yayınlanır; dışarıya sunucudaki ters vekil (nginx/Caddy, TLS) açılır.
@@ -107,12 +107,11 @@ services:
         condition: service_healthy
       aynesil-flyway:
         condition: service_completed_successfully
-    # .env'deki her AYNESIL_ değişkeni API'ye ulaşır (ForwardedHeaders, CORS, token süreleri, log seviyesi…);
-    # override dosyası gerekmez. Aşağıdaki environment bloğu env_file'dan önceliklidir; bu yüzden oradaki
-    # değerler ${AD:-varsayılan} biçimindedir ve .env'deki aynı adlı değişkenle değiştirilebilir.
-    env_file:
-      - path: .env
-        required: false
+    # Yalnızca API'nin ihtiyaç duyduğu değişkenler. .env'in tamamı (sahip rolü POSTGRES_USER/POSTGRES_PASSWORD
+    # dahil) konteynere GİTMEZ: env_file kullanılmaz. API veritabanına yalnızca uygulama rolüyle (aynesil_app,
+    # RLS'ye tabi) bağlanır; sahip rolünü yalnızca Flyway (kendi konteynerinde) ve betikler (docker exec) kullanır.
+    # Her değer .env'de aynı adla verilebilir (${AD:-varsayılan}); varsayılanlar appsettings.json ile aynıdır.
+    # Yeni bir API ayarı .env'den verilecekse buraya eklenmelidir.
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5000
@@ -122,15 +121,34 @@ services:
         Password=${AYNESIL_DB_APP_PASSWORD:-changeme_app};
         Application Name=AynesilApi
       AYNESIL_ConnectionStrings__Redis: aynesil-redis:6379,password=${AYNESIL_REDIS_PASSWORD:-changeme_redis},abortConnect=false
+      # ── JWT ──
       AYNESIL_Jwt__Secret: ${AYNESIL_Jwt__Secret:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_64_CHARACTERS}
       AYNESIL_Jwt__Issuer: ${AYNESIL_Jwt__Issuer:-https://api.aynesil.com}
       AYNESIL_Jwt__Audience: ${AYNESIL_Jwt__Audience:-aynesil-web}
+      AYNESIL_Jwt__AccessTokenExpiryMinutes: ${AYNESIL_Jwt__AccessTokenExpiryMinutes:-60}
+      AYNESIL_Jwt__RefreshTokenExpiryDays: ${AYNESIL_Jwt__RefreshTokenExpiryDays:-30}
+      # ── CORS (boş girişler yok sayılır) ──
       AYNESIL_Cors__AllowedOrigins__0: ${AYNESIL_Cors__AllowedOrigins__0:-http://localhost:${FRONTEND_PORT:-5173}}
+      AYNESIL_Cors__AllowedOrigins__1: ${AYNESIL_Cors__AllowedOrigins__1:-}
+      # ── Dosyalar ──
       AYNESIL_Storage__Local__RootPath: /app/uploads
-      # Gerçek istemci IP'si: X-Forwarded-For yalnızca compose iç ağından (ön yüz nginx'i, sunucudaki ters
-      # vekilin Docker ağ geçidi üzerinden gelen bağlantısı) kabul edilir; dışarıdan gelen sahte başlık yok sayılır.
-      # Ek vekiller .env'de AYNESIL_ForwardedHeaders__KnownProxies__0 / KnownNetworks__1 ile verilir.
+      AYNESIL_Storage__Local__BaseUrl: ${AYNESIL_Storage__Local__BaseUrl:-http://localhost:5000/files}
+      # ── Log ──
+      AYNESIL_Serilog__MinimumLevel__Default: ${AYNESIL_Serilog__MinimumLevel__Default:-Information}
+      # ── Gerçek istemci IP'si: X-Forwarded-For yalnızca compose iç ağından (ön yüz nginx'i, sunucudaki ters
+      #    vekilin Docker ağ geçidi üzerinden gelen bağlantısı) kabul edilir; dışarıdan gelen sahte başlık yok sayılır.
+      #    Ters vekil başka bir makinedeyse .env'de KnownProxies__0 (boş girişler yok sayılır).
       AYNESIL_ForwardedHeaders__KnownNetworks__0: ${AYNESIL_ForwardedHeaders__KnownNetworks__0:-${AYNESIL_NETWORK_SUBNET:-172.30.0.0/24}}
+      AYNESIL_ForwardedHeaders__KnownNetworks__1: ${AYNESIL_ForwardedHeaders__KnownNetworks__1:-}
+      AYNESIL_ForwardedHeaders__KnownProxies__0: ${AYNESIL_ForwardedHeaders__KnownProxies__0:-}
+      AYNESIL_ForwardedHeaders__KnownProxies__1: ${AYNESIL_ForwardedHeaders__KnownProxies__1:-}
+      # ── Anonim auth uçlarının hız sınırı ──
+      AYNESIL_RateLimiting__Auth__Login__PermitLimit: ${AYNESIL_RateLimiting__Auth__Login__PermitLimit:-10}
+      AYNESIL_RateLimiting__Auth__Login__Window: ${AYNESIL_RateLimiting__Auth__Login__Window:-00:01:00}
+      AYNESIL_RateLimiting__Auth__PasswordResetRequest__PermitLimit: ${AYNESIL_RateLimiting__Auth__PasswordResetRequest__PermitLimit:-3}
+      AYNESIL_RateLimiting__Auth__PasswordResetRequest__Window: ${AYNESIL_RateLimiting__Auth__PasswordResetRequest__Window:-01:00:00}
+      AYNESIL_RateLimiting__Auth__PasswordResetConfirm__PermitLimit: ${AYNESIL_RateLimiting__Auth__PasswordResetConfirm__PermitLimit:-10}
+      AYNESIL_RateLimiting__Auth__PasswordResetConfirm__Window: ${AYNESIL_RateLimiting__Auth__PasswordResetConfirm__Window:-00:01:00}
     volumes:
       - aynesil-uploads:/app/uploads
       - aynesil-logs:/app/logs

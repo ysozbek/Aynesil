@@ -108,8 +108,11 @@ public static class ApiServiceCollectionExtensions
         services.AddOpenApi();
 
         // ── CORS ──────────────────────────────────────────────────────────────────
-        var allowedOrigins = configuration
-            .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        // Boş girişler yok sayılır: compose isteğe bağlı CORS yuvalarını (__1…) boş değerle geçirir.
+        var allowedOrigins = (configuration
+            .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .ToArray();
 
         services.AddCors(opts =>
             opts.AddPolicy("AynesilCors", policy =>
