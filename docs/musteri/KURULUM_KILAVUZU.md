@@ -26,9 +26,11 @@ Veritabanındaki veri üç ayrı yoldan gelir. Hangisinin nereden geldiğini bil
 |---|---|---|---|
 | **1. Platform** | Şema, izin kataloğu, platform menüleri ve çevirileri, referans verileri (seans türleri, ödeme yöntemleri vb.), mesaj çevirileri | `db/migrations/V*.sql` (Flyway) | Her `docker compose up`'ta kendiliğinden (`aynesil-flyway`); elle bir şey yapılmaz |
 | **2. Demo** | İki örnek kurum (`demo_a`, `demo_b`), kullanıcıları, öğrenciler, seanslar, BEP'ler, finans vb. | `scripts/demo-seed` (gerçek API üzerinden) | Yalnızca siz çalıştırınca. **Canlıda asla** |
-| **3. Gerçek kurum** | Müşterinin kurumu, kampüsleri, yönetici hesabı | `devops/new_tenant.py` (Bölüm B.1) | Her yeni müşteri için bir kez |
+| **3. Gerçek kurum** | Müşterinin kurumu, kampüsleri, yönetici hesabı | `devops/new_tenant.py` (Bölüm B.1); Akran Hareket için `db/seed/tenants/akran/create.sh` | Her yeni müşteri için bir kez |
 
-> **Not:** Platform katmanı geçmişten kalan bir örnek kurum da açar: `akran` kurumu ve içinde `admin` / `Admin123!` hesabı (V2, V28; "yalnızca geliştirme" diye işaretli). Bu hesap her yeni kurulumda, canlıda da oluşur. Canlıda ne yapılacağı için A.9 madde 17'ye bakın.
+Migration'lar **hiçbir kurum ve kullanıcı açmaz**. Boş bir kurulumda giriş yapılabilecek hesap yoktur; ilk hesap 2. ya da 3. katmanla gelir.
+
+> **Migration geçmişi değişti (henüz canlı kurulum yokken):** Eskiden V2 örnek bir kurum (`akran`, kampüsleri, kuruma özel referans değerleri) ve V28 bu kurumda `admin` / `Admin123!` kullanıcısı açıyordu. Bunlar migration'lardan çıkarıldı (V2, V16, V28 değişti). Bu değişiklikten önce kurulmuş **her yerel veritabanı sıfırdan kurulmalıdır** (aşağıdaki 1. adım): eski bir veritabanında Flyway, değişen dosyalar için "checksum mismatch" hatası verir ve durur. Akran kurumu gerekiyorsa: `db/seed/tenants/akran/create.sh --admin-username <e-posta> --admin-name "<ad soyad>"` (geçici şifre üretir, ilk girişte değiştirmek zorunlu; tekrar çalıştırılabilir).
 
 ### Adımlar
 
@@ -63,11 +65,13 @@ docker compose down -v --remove-orphans
 
 ```bash
 docker compose up -d --build
-docker compose logs aynesil-flyway | tail -5      # "Successfully applied N migrations"
-docker compose ps                                 # flyway "exited (0)", diğerleri healthy
+docker compose logs aynesil-flyway | grep "Successfully applied"   # "Successfully applied N migrations ... now at version vNN"
+docker compose ps                                 # aynesil-db/redis/api healthy, aynesil-web running
 ```
 
-Flyway boş veritabanına bütün migration'ları uygular; **platform katmanı** (izinler, menüler, referans veriler) bu adımda kendiliğinden gelir. Ayrı bir seed komutu yoktur.
+Flyway boş veritabanına bütün migration'ları uygular; **platform katmanı** (izinler, menüler, referans veriler) bu adımda kendiliğinden gelir. Ayrı bir seed komutu yoktur. Bu noktada kurum ve kullanıcı yoktur; `http://localhost:5173` açılır ama giriş yapılamaz.
+
+`aynesil-flyway` tek seferlik olduğu için `docker compose ps` listesinde görünmez (bitmiş konteyner); durumunu `docker compose ps -a` gösterir (`Exited (0)`).
 
 **3) Demo verisini kurun:**
 
@@ -119,7 +123,7 @@ Giriş hız sınırı (dakikada 10) yerelde bütün istekleri aynı adresten gö
 | Bileşen | Gereksinim | Not |
 |---|---|---|
 | İşletim sistemi | 64 bit Linux (Ubuntu 22.04/24.04 LTS önerilir) | Flyway imajı yalnızca `linux/amd64`; ARM sunucuda emülasyonla çalışır (`docker-compose.yml`'deki `platform: linux/amd64`). x86_64 sunucu önerilir. |
-| Docker | Docker Engine + Compose eklentisi (v2.24 veya üstü) | `env_file` içindeki `required: false` ve geliştirme ekindeki `!override` için v2.24+ gerekir [doğrulanacak] |
+| Docker | Docker Engine + Compose eklentisi (v2.24 veya üstü) | Geliştirme ekindeki `!override` ve iç içe varsayılanlı yer tutucular (`${A:-${B}}`) için v2.24+ gerekir [doğrulanacak] |
 | PostgreSQL | 15 veya üstü, hedef **17** | Compose kendi `postgres:17-alpine` konteynerini kurar. Harici/yönetilen PostgreSQL kullanılacaksa bkz. A.5.4 |
 | Redis | 7 | Compose kurar (menü/referans önbelleği, parola sıfırlama jetonları, hesap kilidi) |
 | RAM | En az 4 GB, önerilen 8 GB | API (.NET 9) + PostgreSQL + Redis (256 MB sınırlı) + nginx. Tek sunuculu SaaS'ta kurum sayısı arttıkça PostgreSQL için bellek ekleyin [doğrulanacak: yük testi yapılmadı] |
@@ -144,14 +148,11 @@ chmod 600 .env
 
 ### `.env` nasıl okunur
 
-`docker-compose.yml`, `.env`'i iki yoldan kullanır:
+`docker-compose.yml` `.env`'i yer tutucular (`${...}`) için okur. **API konteynerine `.env`'in tamamı gitmez:** yalnızca compose dosyasında `aynesil-api` servisinin `environment` bloğunda listelenen değişkenler aktarılır (bağlantı dizeleri, JWT, CORS, ForwardedHeaders, token süreleri, dosya adresi, log seviyesi, hız sınırı). Her biri `${AD:-varsayılan}` biçimindedir; `.env`'e aynı adla yazılan değer kullanılır, yazılmazsa varsayılan (`appsettings.json` ile aynı) geçerlidir.
 
-1. **Yer tutucular:** compose dosyasındaki `${...}` değerleri (veritabanı şifreleri, Redis şifresi, portlar, ağ) `.env`'den doldurulur.
-2. **API'nin ortamı (`env_file`):** `.env`'deki **her** değişken API konteynerine geçer. `AYNESIL_` ile başlayanları API okur (ör. `AYNESIL_Cors__AllowedOrigins__0`, `AYNESIL_Jwt__AccessTokenExpiryMinutes`, `AYNESIL_ForwardedHeaders__KnownProxies__0`). Override dosyası gerekmez.
-
-Compose dosyasının `environment` bloğundaki değerler `env_file`'dan önceliklidir. Bu yüzden oradaki ayarlar `${AD:-varsayılan}` biçimindedir: `.env`'e aynı adla yazılan değer kullanılır. Bağlantı dizeleri (`AYNESIL_ConnectionStrings__*`) ise compose dosyasında şifrelerden kurulur; `.env`'e yazmayın.
-
-> `.env`'deki her şey API konteynerinin ortamında görünür (sahip rolünün şifresi `POSTGRES_PASSWORD` dahil). `.env`'e işi olmayan gizli bilgi koymayın.
+- **Sahip rolünün bilgileri** (`POSTGRES_USER`, `POSTGRES_PASSWORD`) yalnızca veritabanı ve Flyway konteynerlerine gider. API veritabanına yalnızca uygulama rolüyle (`aynesil_app`, RLS'ye tabi) bağlanır. Kontrol: `docker exec aynesil-api env | grep -i postgres` boş dönmeli.
+- Bağlantı dizeleri (`AYNESIL_ConnectionStrings__*`) compose dosyasında şifrelerden kurulur; `.env`'e yazmayın.
+- Listede olmayan bir `AYNESIL_` değişkenini `.env`'e yazmak **işe yaramaz**; önce compose dosyasının `environment` bloğuna eklenmesi gerekir.
 
 ### Anahtar tablosu
 
@@ -193,11 +194,11 @@ API, yapılandırmayı `appsettings.json` → `appsettings.{Ortam}.json` → `AY
 | `AYNESIL_Jwt__RefreshTokenExpiryDays` | Yenileme jetonu süresi (gün) | Hayır | `30` |
 | `Jwt:Algorithm` | `appsettings.json`'da var ama kod her zaman HS256 kullanır | Hayır | Değiştirmeyin |
 | `AYNESIL_ForwardedHeaders__KnownNetworks__0` | Güvenilen vekil ağı (CIDR). Gerçek istemci IP'si `X-Forwarded-For`'dan yalnızca bu ağdan gelen bağlantılarda alınır | Hayır: compose iç ağını verir (`AYNESIL_NETWORK_SUBNET`) | `172.30.0.0/24` |
-| `AYNESIL_ForwardedHeaders__KnownNetworks__1`…, `AYNESIL_ForwardedHeaders__KnownProxies__0`… | Ek güvenilen vekiller (ters vekil başka bir makinedeyse) | Hayır | `10.0.0.5` |
+| `AYNESIL_ForwardedHeaders__KnownNetworks__1`, `AYNESIL_ForwardedHeaders__KnownProxies__0`, `__1` | Ek güvenilen vekiller (ters vekil başka bir makinedeyse). Compose bu üç yuvayı aktarır; boş bırakılan yok sayılır | Hayır | `10.0.0.5` |
 | `AYNESIL_RateLimiting__Auth__Login__PermitLimit` / `__Window` | Giriş hız sınırı | Hayır | `10` / `00:01:00` |
 | `AYNESIL_RateLimiting__Auth__PasswordResetRequest__…` | Şifre sıfırlama isteği sınırı | Hayır | `3` / `01:00:00` |
 | `AYNESIL_RateLimiting__Auth__PasswordResetConfirm__…` | Şifre sıfırlama onayı sınırı | Hayır | `10` / `00:01:00` |
-| `AYNESIL_Cors__AllowedOrigins__0`, `__1`… | Tarayıcıdan API'yi çağırabilecek adresler | Hayır (ön yüz API'yi aynı adresten, `/api` ile çağırır) | Vars. `http://localhost:<FRONTEND_PORT>`; canlıda `https://app.ornek.com` |
+| `AYNESIL_Cors__AllowedOrigins__0`, `__1` | Tarayıcıdan API'yi çağırabilecek adresler (compose iki yuva aktarır; boş olan yok sayılır) | Hayır (ön yüz API'yi aynı adresten, `/api` ile çağırır) | Vars. `http://localhost:<FRONTEND_PORT>`; canlıda `https://app.ornek.com` |
 | `AYNESIL_Storage__Local__RootPath` | Yüklenen dosyaların konteyner içindeki dizini | Hayır (compose `/app/uploads` verir) | `/app/uploads` |
 | `AYNESIL_Storage__Local__BaseUrl` | Dosya bağlantılarının kök adresi | Hayır | Varsayılan `http://localhost:5000/files`; canlıda kendi adresinizi verin [doğrulanacak: bu adresi sunan bir uç bulunamadı] |
 | `AYNESIL_Serilog__MinimumLevel__Default` | Log seviyesi | Hayır | `Information` (Development'ta `Debug`) |
@@ -505,7 +506,7 @@ docker compose logs --since 10m aynesil-api | grep -E "ERR|FTL" || echo "hata yo
 Compose iç ağına sabit alt ağ (`AYNESIL_NETWORK_SUBNET`) ve Redis'e şifre (`AYNESIL_REDIS_PASSWORD`) gelen sürüme ilk geçişte:
 
 1. `.env`'e `AYNESIL_REDIS_PASSWORD` ekleyin (A.4).
-2. Eski `docker-compose.override.yml` yalnızca port kapatma ve ForwardedHeaders içinse silin. Bunlar artık varsayılan; diğer ayarlarını `.env`'e taşıyın.
+2. Eski `docker-compose.override.yml` yalnızca port kapatma ve ForwardedHeaders içinse silin. Bunlar artık varsayılan; diğer ayarlarını `.env`'e taşıyın (yalnızca compose'un `aynesil-api` listesindeki anahtarlar API'ye ulaşır, A.4).
 3. Ağın yeniden oluşturulması gerekir: `docker compose down && docker compose up -d --build`. **`-v` kullanmayın** (veriler silinir).
 4. A.6 "Doğrulama" ile gerçek IP'yi kontrol edin.
 
@@ -547,7 +548,6 @@ Flyway'in ücretsiz sürümü migration'ları geri almaz. Geri alma yolu:
 | 14 | Demo verisi canlı sunucuda yok | `select code from core.corporation` içinde `demo_a`/`demo_b` olmamalı |
 | 15 | Docker diskleri ve `/opt/aynesil` için sunucu düzeyinde disk şifreleme / erişim kısıtı | — |
 | 16 | Kurum askıya alındığında girişler ve açık oturumlar kesiliyor | B.1.4'teki komuttan sonra o kurumun kullanıcısıyla giriş "Kurumunuzun hesabı etkin değil" vermeli |
-| 17 | **Platform migration'larının açtığı `admin` hesabı** (`akran` kurumu, şifre `Admin123!`, A.0 not) canlıda bu şifreyle açık kalmamalı. `akran` müşteriniz değilse hesabı askıya alın; müşterinizse kurum yöneticisinin ilk iş şifreyi değiştirmesini sağlayın | `docker exec aynesil-db psql -U aynesil_owner -d aynesil -Atc "select username, status, crypt('Admin123!', password_hash) = password_hash from iam.user_account where username = 'admin'"` → `t` ise açık. Askıya almak: `update iam.user_account set status = 'suspended' where username = 'admin'` |
 
 ## A.10 Bilinen eksikler
 
@@ -1034,7 +1034,7 @@ Bu tabloları müşteriye gönderin (Excel'e kopyalanabilir).
 
 ## [doğrulanacak] listesi
 
-1. Docker Compose v2.24+ gereksinimi (`env_file` `required: false`, geliştirme ekindeki `!override`): Compose v5.1 ile denendi; sunucudaki sürümde `docker compose config` ile kontrol edilmeli.
+1. Docker Compose v2.24+ gereksinimi (iç içe varsayılanlı yer tutucular, geliştirme ekindeki `!override`): Compose v5.1 ile denendi; sunucudaki sürümde `docker compose config` ile kontrol edilmeli.
 2. RAM/CPU önerileri yük testiyle doğrulanmadı.
 3. `Storage:Local:BaseUrl` adresini sunan bir uç bulunamadı; dosya bağlantılarının nasıl açıldığı.
 4. Harici/yönetilen PostgreSQL senaryosu (A.5.4) test edilmedi.
