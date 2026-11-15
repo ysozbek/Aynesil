@@ -37,7 +37,11 @@ Hesabınızı yöneticiniz açtıysa size bir **geçici şifre** verilir. Bu şi
 Sağ üstteki baş harfinizin olduğu yuvarlağa tıklayın → **Şifre Değiştir**. Değişiklikten sonra yeniden giriş yaparsınız.
 
 ### Şifremi unuttum
-Giriş ekranında **Şifremi unuttum** bağlantısı vardır. **Şu an e-posta gönderilmediği için bu bağlantı size ulaşmaz** (ekranda da yazar). Şifrenizi unuttuysanız kurum yöneticinize başvurun; yönetici AyNesil destek ekibinden yeni geçici şifre ister.
+Giriş ekranında **Şifremi unuttum** bağlantısı vardır. **Şu an e-posta gönderilmediği için bu bağlantı size ulaşmaz** (ekranda da yazar). Şifrenizi unuttuysanız kurum yöneticinize başvurun: yönetici size yeni bir geçici şifre verir, ilk girişte kendi şifrenizi belirlersiniz.
+
+Aynı hesaba 5 kez yanlış şifre girilirse hesap 15 dakika kilitlenir. Bekleyebilir ya da yöneticinizden şifre sıfırlamasını isteyebilirsiniz.
+
+**Yöneticiler için:** `Platform Yönetimi → Kullanıcılar →` kullanıcı → **Şifreyi Sıfırla**. Yeni geçici şifre **bir kez** gösterilir; kişiye güvenli bir yoldan (yüz yüze, telefon) iletin. Kişinin açık oturumları kapanır ve ilk girişte şifresini değiştirmesi istenir.
 
 ### Arayüzün ana bölümleri
 - **Sol menü:** Rolünüze göre oluşur. Yetkiniz olmayan bölümler görünmez.
@@ -62,7 +66,7 @@ En geniş yetki sahibi. Yönetim ekranları `Platform Yönetimi` menüsündedir.
    - Sistemle gelen değerler **tüm kurumlarda ortaktır**: düzenleyemez ve silemezsiniz, yalnızca **kendi kurumunuz için pasifleştirebilirsiniz** (listelerde görünmez olur).
    - Çoğu listeye **kendi değerinizi ekleyebilirsiniz**; eklediğinizi düzenler ya da pasifleştirirsiniz. Cinsiyet, entegrasyon türü ve bildirim kanalı listeleri sabittir.
 4. **Roller** → `Platform Yönetimi → Roller → Rol Ekle`, sonra **İzinler** sekmesinden izinleri seçin. Kurumunuzla birlikte **Yönetici** ve **Veli (portal)** rolleri hazır gelir.
-5. **Kullanıcılar** → `Platform Yönetimi → Kullanıcılar → Kullanıcı Ekle`: kullanıcı adı (tüm sistemde benzersiz; e-posta önerilir), ad soyad, şifre, kampüs. Sonra kullanıcı sayfasında **Rol Ata**. Kişi ilk girişte şifresini değiştirir. Ayrılan personel için silmek yerine **Askıya Al**.
+5. **Kullanıcılar** → `Platform Yönetimi → Kullanıcılar → Kullanıcı Ekle`: kullanıcı adı (tüm sistemde benzersiz; e-posta önerilir), ad soyad, şifre, kampüs. Sonra kullanıcı sayfasında **Rol Ata**. Kişi ilk girişte şifresini değiştirir. Şifresini unutan için aynı sayfada **Şifreyi Sıfırla**. Ayrılan personel için silmek yerine **Askıya Al**.
 6. **Eğitmen ve veli hesapları** → hesap, kişinin kendi kartından açılır ve bağlanır (bkz. 3.14). Bu iş kullanıcı yönetimi izni gerektirdiği için yöneticiye aittir.
 7. **Menü Yönetimi** → `Platform Yönetimi → Menü Yönetimi`: sistemle gelen menü öğeleri **salt okunurdur** (düzenlenemez, gizlenemez, silinemez). Yalnızca kurumunuza özel öğe ekleyebilirsiniz. Normalde dokunmanız gerekmez.
 
@@ -252,7 +256,7 @@ Arayüz şu an Türkçedir. Altyapı başka dilleri destekleyecek şekilde kurul
 | "Eğitimciler" menüsü görünmüyor | Bu menü bugün kullanıcı listesini görme iznini de istiyor; yöneticiniz rolünüze ekleyebilir. |
 | "Yetkiniz yok" sayfası çıkıyor | İzin eksik. |
 | İlk girişte başka sayfa açılmıyor | Geçici şifreyle girdiniz; önce şifrenizi değiştirin. |
-| Şifremi unuttum, e-posta gelmedi | E-posta şu an gönderilmiyor. Kurum yöneticinize başvurun. |
+| Şifremi unuttum, e-posta gelmedi | E-posta şu an gönderilmiyor. Kurum yöneticinize başvurun; yönetici Kullanıcılar → kullanıcı → **Şifreyi Sıfırla** ile yeni geçici şifre verir. |
 | Seans notu yazarken "eğitmen kaydına bağlı değil" uyarısı | Yönetici, eğitmen kartı → Kullanıcı hesabı bölümünden hesabınızı bağlamalı. |
 | BEP'i onaylarken aynı uyarı | Onaylayan kişinin de eğitmen kaydı olmalı ve hesabına bağlı olmalı. |
 | Grup seansında veliye görünür not kaydedilmiyor | Notun hangi öğrenci için olduğunu seçin. |

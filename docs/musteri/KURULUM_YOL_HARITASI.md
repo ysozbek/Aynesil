@@ -2,6 +2,7 @@
 
 Bu dokümanın içeriği genişletilerek **[KURULUM_KILAVUZU.md](KURULUM_KILAVUZU.md)** dosyasına taşındı:
 
+- **A.0 — Yerel/geliştirme ortamını sıfırdan kurma** ve verinin üç katmanı (platform / demo / gerçek kurum).
 - **Bölüm A — Sunucu kurulumu:** gereksinimler, ortam değişkenleri ve gizli anahtarlar, ilk kurulum, HTTPS ve ters vekil, yedekleme, güncelleme, canlıya çıkış kontrol listesi, bilinen eksikler.
 - **Bölüm B — Kurum kurulumu:** eski "Gün 0 / 1. hafta / 2. hafta" aşamaları; her aşama için parametre kontrol listeleri, önerilen roller ve izinleri, hesap bağlama, geçici şifre akışı ve müşteriden istenecek bilgiler tablosu.
 

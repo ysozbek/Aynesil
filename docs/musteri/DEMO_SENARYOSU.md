@@ -25,22 +25,21 @@ Aday  →  Öğrenci  →  Program (ne alıyor?)  →  Haftalık Plan  →  Sean
 
 ## 1. Demo hazırlığı (demodan 1 gün önce)
 
-Demo verisi elle girilmez; hazır bir betik iki örnek kurum kurar: **Demo Gökkuşağı Merkezi** (`demo_a`) ve **Demo Papatya Merkezi** (`demo_b`). Her birinde 15 öğrenci, 6 eğitmen, 20 aday, yaklaşık 225 seans (son 8 hafta + önümüzdeki 2 hafta), BEP'ler, paketler, faturalar, sözleşmeler, rızalar, telafi talepleri ve portal hesabı olan veliler vardır. Ek modüllerin hepsi açıktır.
+Demo verisi elle girilmez; hazır bir betik iki örnek kurum kurar: **Demo Gökkuşağı Merkezi** (`demo_a`) ve **Demo Papatya Merkezi** (`demo_b`). Her birinde 15 öğrenci, 6 eğitmen, 20 aday, yaklaşık 235 seans (son 8 hafta, bugün ve önümüzdeki 2 hafta), BEP'ler, paketler, faturalar, sözleşmeler, rızalar, telafi talepleri ve portal hesabı olan veliler vardır. Ek modüllerin hepsi açıktır. Ortamı sıfırdan kurmak için: `docs/musteri/KURULUM_KILAVUZU.md` A.0.
 
 ```bash
 scripts/demo-seed/run.sh            # kur / eksikleri tamamla
 scripts/demo-seed/run.sh --reset    # demo kurumlarını silip baştan kur (seans tarihleri bugüne göre yeniden üretilir)
 ```
 
-**Giriş hesapları ve ortak şifre:** `scripts/demo-seed/README.md` → "Giriş bilgileri". Demoda kullanacağınız hesaplar: kurum yöneticisi (`admin@demo-a.test`), eğitmen (`egitmen@demo-a.test`), veli (`veli1@demo-a.test`: iki çocuklu, kamera yetkili).
+**Giriş hesapları ve ortak şifre:** `scripts/demo-seed/README.md` → "Giriş bilgileri". Demoda kullanacağınız hesaplar: kurum yöneticisi (`admin@demo-a.test`), eğitmen (`egitmen@demo-a.test`), veli (`veli1@demo-a.test`: iki çocuklu, kamera yetkili). Yönetici ve koordinatör hesapları ders vermeyen birer eğitmen kaydına bağlıdır; bu yüzden yönetici hesabıyla seans notu yazabilir ve BEP onaylayabilirsiniz.
 
 > Demo sunucusu canlı sunucu değildir. Demo betiğini müşterinin canlı sunucusunda çalıştırmayın; şifre herkesçe bilinir.
 
 **Hazırlık listesi (betikten sonra):**
 
-- [ ] **Betik çalıştı:** sonunda hata özeti yok. Demodan önceki gün `--reset` ile çalıştırırsanız seanslar demo gününe göre yeniden dağılır.
-- [ ] **Bugüne bir seans:** Betik bugüne seans koymayabilir. **Seans Planlama → Seanslar → Seans Oluştur** ile bugün için bir seans açın: kampüs, oda, öğrenci, sorumlu eğitimci olarak **Merve Çalışkan** (`egitmen@demo-a.test`'in bağlı olduğu eğitmen). Öğrenci olarak **paketi olan** bir öğrenci seçin ve seansın programı paketin programıyla aynı olsun (**Finans → Öğrenci Paketleri**'nden kontrol edin). Yoksa tamamlanınca hak düşmez.
-- [ ] **Yöneticiyi bir eğitmen kaydına bağlayın:** Demo yöneticisi hiçbir eğitmen kaydına bağlı değildir; bu haliyle **seans notu yazamaz ve BEP onaylayamaz**. **Eğitimciler → Eğitmen Listesi** → Merve dışındaki bir eğitmen → **Genel Bakış → Kullanıcı hesabı → Mevcut kullanıcıyı bağla** → `admin@demo-a.test`. (İsterseniz bunu demoda canlı yapın; bkz. Hikâye 3, adım 7.)
+- [ ] **Betik çalıştı:** sonunda `hata: 0`. Betik çalıştığı gün ve ertesi gün için demo seansları açar; demodan bir gün önce ya da demo sabahı çalıştırmanız yeterli. Eksik seansları her çalıştırmada tamamlar, `--reset` gerekmez.
+- [ ] **Bugünkü seans:** **Seans Planlama** (Planlama Paneli) → "Bugünkü Seanslar"da saat **16:00**'da **Merve Çalışkan**'ın "Demo günü seansı — …" görünüyor. Öğrencinin ABA paketi var ve seans ABA hizmetine bağlı; tamamlanınca hak düşer. Hikâye 2 bu seansla yapılır.
 - [ ] **Yeni aday:** **CRM → Adaylar**'da "Yeni" aşamasında bir aday olduğunu görün (canlı dönüşüm için). Yoksa **Aday Ekle** ile bir tane açın.
 - [ ] **Bekleyen telafi:** **Seans Planlama → Telafi Seansları**'nda "Bekliyor" durumunda bir talep olduğunu görün.
 - [ ] **İncelemede bir BEP:** **BEP / IEP → Plan Listesi**'nde "İnceleme Bekliyor" durumunda bir plan olduğunu görün.
@@ -80,14 +79,14 @@ scripts/demo-seed/run.sh --reset    # demo kurumlarını silip baştan kur (sean
 |---|---|---|---|
 | 1 | Günün tablosu | **Seans Planlama** (ana sayfa: Planlama Paneli). "Bugünkü Seanslar" listesini gösterin. | "Sabah girdiğinizde bugün kimin kiminle hangi odada olduğunu görüyorsunuz." |
 | 2 | Takvim | Seans Planlama → **Takvim**. **Okul** görünümünde **Hafta**'yı seçin. | "Tüm kurumun haftası. Aynı odaya iki seans konamaz, aynı eğitmen iki yerde olamaz; sistem engelliyor." |
-| 3 | Seansa gir | Bugünkü seansı açın. **Genel Bakış**, **Katılımcılar** sekmeleri. | "Eğitimci seansa girdiğinde öğrencisini ve bilgilerini burada görüyor." |
+| 3 | Seansa gir | Bugünkü 16:00 seansını ("Demo günü seansı — …") açın. **Genel Bakış**, **Katılımcılar** sekmeleri. | "Eğitimci seansa girdiğinde öğrencisini ve bilgilerini burada görüyor." |
 | 4 | Yoklama | **Devam** sekmesi → **Katıldı** / **Gelmedi** / **Geç Geldi**. | "Yoklama tek tıkla. Gelmeyen çocuk için telafi süreci buradan başlıyor." |
 | 5 | Hedef işaretleme | **Hedefler** sekmesi → üstteki kutudan öğrencinin hedefini seçip **Hedef Ekle**, ardından çalışılan hedefin kutusunu işaretleyin. Yanlış eklenen hedefi **✕** ile çıkarabilirsiniz. | "Bu seansta hangi hedefler üzerinde çalışıldığını işaretliyor. Gelişim raporu buradan oluşuyor." |
 | 6 | Seans notu | **Notlar** sekmesi → **Not Ekle** → **Veliye Görünür** işaretli. Kaydettikten sonra kalem simgesiyle bir kelimeyi değiştirin; **Düzenlendi** rozeti çıkar. | "Hocanın notu. İsterse veliye de gösteriyor; veli akşam telefondan okuyor. Not sonradan düzeltilirse velide de 'düzenlendi' yazıyor, kimse sessizce değiştiremiyor." |
 | 7 | Seansı tamamla | Önce yoklamada "Katıldı" seçili olsun, sonra **Tamamla**. Öğrencinin yanında "1 seans hakkı düşüldü" çıkar. | "Seans tamamlanınca velinin paketinden bir seans hakkı otomatik düşüyor." |
 | 8 | Telafi | Seans Planlama → **Telafi Seansları** (sayfa: Telafi Talepleri) → bekleyen talep → **Onayla**, sonra **Seans ata** ile öğrencinin ileri tarihli seanslarından birini seçin. | "Kaçırılan seansın telafisi kaybolmuyor: onaylandı, hangi seansta yapılacak, yapıldı mı; hepsi kayıtlı." |
 
-Not: 6. adımı yönetici hesabıyla yapıyorsanız yöneticinin bir eğitmen kaydına bağlı olması gerekir (Hazırlık listesi). Bağlı değilse sistem uyarır. Bu uyarı da gösterilebilir: "Notu kimin yazdığını sistem giriş yapan kişiden alıyor, formda seçtirmiyor."
+Not: Notu kimin yazdığını sistem giriş yapan kişinin bağlı olduğu eğitmen kaydından alır (demo yöneticisi bağlıdır). İsterseniz söyleyin: "Notu kimin yazdığını formda seçtirmiyoruz; giriş yapan kişi yazar olarak kaydediliyor." Aynı adımları `egitmen@demo-a.test` ile de yapabilirsiniz: eğitmen yoklama alır, hedef işaretler, not yazar ve seansı tamamlar; finans ve kullanıcı ekranlarını görmez.
 
 **Sonucu söyleyin:**
 > "Hafta planı, yoklama, not, telafi; hepsi tek ekranda ve geriye dönük aranabilir."
@@ -165,4 +164,5 @@ Ayrıca müşterinin kullandığı kelimeleri yazın. "Kayıt", "seans hakkı", 
 | Kuruma özel KPI tanımı | KPI & Performans → **KPI Tanımları** → **Yeni KPI tanımı** |
 | Akademik dönemler, güncel dönem | BEP / IEP → **Akademik Dönemler** |
 | İlk girişte şifre değiştirme | `scripts/demo-seed/README.md`'deki "ilk giriş örneği" hesabıyla giriş yapın |
+| Şifresini unutan personel | Platform Yönetimi → **Kullanıcılar** → kullanıcı → **Şifreyi Sıfırla**: yeni geçici şifre bir kez görünür, kişinin açık oturumları kapanır, ilk girişte şifresini değiştirmek zorunda. ("Şifremi unuttum" e-postası henüz gitmiyor; bunun yerine yönetici sıfırlar.) |
 | Modül durumu | Platform Yönetimi → Kurumlar → kurum → **Ayarlar** → Modüller (salt okunur) |

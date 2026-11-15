@@ -16,7 +16,7 @@ const COORDINATOR_DENIED = new Set([
   'notification_trigger:manage',
   'portal:access', 'parent_feedback:create', 'parent_feedback:submit', 'survey:respond',
 ])
-// Gruplar dışından gerekenler: aday/değerlendirme/toplantı formlarında kişi seçmek için kullanıcı listesi (salt okuma).
+// Gruplar dışından gerekenler: aday formu (atanan) ve değerlendirme oturumu formu (değerlendiren) kullanıcı listesini ister (salt okuma).
 const COORDINATOR_EXTRA = new Set(['user:read'])
 
 const ROLE_RULES = {

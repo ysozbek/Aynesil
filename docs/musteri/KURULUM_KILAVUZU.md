@@ -4,6 +4,7 @@ Bu kılavuz iki bölümden oluşur:
 
 | Bölüm | Kim için | Ne zaman |
 |---|---|---|
+| **A.0 Yerel/geliştirme ortamı** | Geliştirici, demo hazırlayan | Kendi makinenizde, istediğiniz zaman sıfırdan |
 | **A. Sunucu kurulumu** | Sistem yöneticisi | Bir kez (ve her sürüm güncellemesinde) |
 | **B. Kurum kurulumu** | Kurulumu yapan kişi + kurum yöneticisi | Her yeni müşteri (kurum) için |
 
@@ -12,6 +13,92 @@ Koddan doğrulanamayan noktalar **[doğrulanacak]** ile işaretlidir; tam liste 
 ---
 
 # A. Sunucu kurulumu
+
+## A.0 Yerel/geliştirme ortamını sıfırdan kurma
+
+Bu bölüm geliştirici makinesi ve demo hazırlığı içindir. Canlı sunucu için A.1'den devam edin.
+
+### Verinin üç katmanı
+
+Veritabanındaki veri üç ayrı yoldan gelir. Hangisinin nereden geldiğini bilmek, neyi silip neyi yeniden kurabileceğinizi belirler.
+
+| Katman | Ne içerir | Nereden gelir | Ne zaman çalışır |
+|---|---|---|---|
+| **1. Platform** | Şema, izin kataloğu, platform menüleri ve çevirileri, referans verileri (seans türleri, ödeme yöntemleri vb.), mesaj çevirileri | `db/migrations/V*.sql` (Flyway) | Her `docker compose up`'ta kendiliğinden (`aynesil-flyway`); elle bir şey yapılmaz |
+| **2. Demo** | İki örnek kurum (`demo_a`, `demo_b`), kullanıcıları, öğrenciler, seanslar, BEP'ler, finans vb. | `scripts/demo-seed` (gerçek API üzerinden) | Yalnızca siz çalıştırınca. **Canlıda asla** |
+| **3. Gerçek kurum** | Müşterinin kurumu, kampüsleri, yönetici hesabı | `devops/new_tenant.py` (Bölüm B.1) | Her yeni müşteri için bir kez |
+
+> **Not:** Platform katmanı geçmişten kalan bir örnek kurum da açar: `akran` kurumu ve içinde `admin` / `Admin123!` hesabı (V2, V28; "yalnızca geliştirme" diye işaretli). Bu hesap her yeni kurulumda, canlıda da oluşur. Canlıda ne yapılacağı için A.9 madde 17'ye bakın.
+
+### Adımlar
+
+Gerekenler: Docker (Compose v2.24+), Node.js 20+, Python 3. API'yi Docker dışında `dotnet run` ile çalıştıracaksanız .NET 9 SDK.
+
+```bash
+cd ~/Projects/Aynesil
+cp -n .env.example .env          # yoksa oluşturur; varsa dokunmaz
+```
+
+`.env`'e şu satırı ekleyin (yalnızca geliştirici makinesinde). Bu satırla her `docker compose` komutu `docker-compose.dev.yml`'i de okur; PostgreSQL (5432), Redis (6379), API ve ön yüz portları ana makineye açılır (`dotnet run`, veritabanı istemcisi için):
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+```
+
+**1) Eski yığını silin (volume'larla birlikte):**
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+`-v` şu diskleri **kalıcı olarak siler**: veritabanı (`aynesil-db-data`), yüklenen dosyalar (`aynesil-uploads`), Redis ve loglar.
+
+> **Gerçek veri varsa önce yedek alın.** Bu makinede gerçek bir kurumun verisi ya da saklamak istediğiniz bir test verisi varsa silmeden önce:
+> ```bash
+> docker exec aynesil-db pg_dump -U aynesil_owner -d aynesil -Fc > ~/aynesil-yedek-$(date +%Y%m%d-%H%M).dump
+> ```
+> Geri yükleme A.7'dedir. Canlı sunucuda `down -v` komutunu **asla** çalıştırmayın.
+
+**2) Yığını yeniden kurun:**
+
+```bash
+docker compose up -d --build
+docker compose logs aynesil-flyway | tail -5      # "Successfully applied N migrations"
+docker compose ps                                 # flyway "exited (0)", diğerleri healthy
+```
+
+Flyway boş veritabanına bütün migration'ları uygular; **platform katmanı** (izinler, menüler, referans veriler) bu adımda kendiliğinden gelir. Ayrı bir seed komutu yoktur.
+
+**3) Demo verisini kurun:**
+
+```bash
+scripts/demo-seed/run.sh              # iki demo kurum + tüm veri (birkaç dakika)
+```
+
+Sonunda `hata: 0` görmelisiniz. Demo verisini daha sonra baştan kurmak için `scripts/demo-seed/run.sh --reset` yeterlidir: yalnızca `demo_a`/`demo_b`'yi siler ve yeniden kurar, başka kuruma ve platform verisine dokunmaz. API kodu değiştiyse `--build` ekleyin.
+
+**4) Giriş:** `http://localhost:5173`. Ortak demo şifresi `DemoSifre!2026` (`scripts/demo-seed/fixtures.json`).
+
+| Rol | demo_a (Demo Gökkuşağı Merkezi) | demo_b (Demo Papatya Merkezi) |
+|---|---|---|
+| Kurum yöneticisi (eğitmen kaydına bağlı) | `admin@demo-a.test` | `admin@demo-b.test` |
+| Koordinatör (eğitmen kaydına bağlı) | `koordinator@demo-a.test` | `koordinator@demo-b.test` |
+| Eğitmen | `egitmen@demo-a.test` | `egitmen@demo-b.test` |
+| Muhasebe | `muhasebe@demo-a.test` | `muhasebe@demo-b.test` |
+| Veli (iki çocuk, kamera yetkili) | `veli1@demo-a.test` | `veli1@demo-b.test` |
+| Veli (tek çocuk) | `veli2@demo-a.test` | `veli2@demo-b.test` |
+| İlk girişte şifre değiştirme örneği | `ilkgiris@demo-a.test` | `ilkgiris@demo-b.test` |
+
+Ayrıntı (her kurumda ne var, bugünün seansları): `scripts/demo-seed/README.md`.
+
+**5) İsteğe bağlı kontroller:**
+
+```bash
+scripts/smoke-api/run.sh        # ön yüzün kullandığı uçların duman testi
+scripts/smoke-proxy/run.sh      # gerçek istemci IP'si zinciri (A.6)
+```
+
+Giriş hız sınırı (dakikada 10) yerelde bütün istekleri aynı adresten görür. Betikleri art arda çalıştırırken `429` alırsanız bir dakika bekleyin.
 
 ## A.1 İki senaryo
 
@@ -32,13 +119,13 @@ Koddan doğrulanamayan noktalar **[doğrulanacak]** ile işaretlidir; tam liste 
 | Bileşen | Gereksinim | Not |
 |---|---|---|
 | İşletim sistemi | 64 bit Linux (Ubuntu 22.04/24.04 LTS önerilir) | Flyway imajı yalnızca `linux/amd64`; ARM sunucuda emülasyonla çalışır (`docker-compose.yml`'deki `platform: linux/amd64`). x86_64 sunucu önerilir. |
-| Docker | Docker Engine + Compose eklentisi (v2.24 veya üstü) | `!override` söz dizimi için v2.24+ gerekir (A.4) [doğrulanacak] |
+| Docker | Docker Engine + Compose eklentisi (v2.24 veya üstü) | `env_file` içindeki `required: false` ve geliştirme ekindeki `!override` için v2.24+ gerekir [doğrulanacak] |
 | PostgreSQL | 15 veya üstü, hedef **17** | Compose kendi `postgres:17-alpine` konteynerini kurar. Harici/yönetilen PostgreSQL kullanılacaksa bkz. A.5.4 |
 | Redis | 7 | Compose kurar (menü/referans önbelleği, parola sıfırlama jetonları, hesap kilidi) |
 | RAM | En az 4 GB, önerilen 8 GB | API (.NET 9) + PostgreSQL + Redis (256 MB sınırlı) + nginx. Tek sunuculu SaaS'ta kurum sayısı arttıkça PostgreSQL için bellek ekleyin [doğrulanacak: yük testi yapılmadı] |
 | CPU | 2 çekirdek, önerilen 4 | İmaj derlemesi (`docker compose build`) en çok CPU isteyen adımdır |
 | Disk | En az 40 GB SSD | Veritabanı, yüklenen dosyalar (`aynesil-uploads`), 30 günlük log dosyaları ve yerel yedekler. Yedekleri ayrıca sunucu dışına kopyalayın |
-| Ağ | 80 ve 443 dışarıya açık; 5432, 6379, 5000, 5173 **kapalı** | Bkz. A.4 "Portları kapatın" |
+| Ağ | 80 ve 443 dışarıya açık; 5432, 6379, 5000, 5173 **kapalı** | Compose dosyası varsayılan olarak kapatır; bkz. A.4 "Portlar ve güvenlik duvarı" |
 
 ## A.3 Repo ve dizin
 
@@ -55,11 +142,16 @@ chmod 600 .env
 
 ## A.4 Ortam değişkenleri ve gizli anahtarlar
 
-### Önemli: `.env` her şeyi konteynere taşımaz
+### `.env` nasıl okunur
 
-`docker-compose.yml`'de API servisinin `env_file` satırı **yoktur**. `.env` yalnızca compose dosyasındaki `${...}` yer tutucularını doldurur. Yani `.env`'e yazılan bir değer **ancak compose dosyasında karşılığı varsa** API'ye ulaşır. Compose dosyasında karşılığı olmayan ayarlar (ForwardedHeaders, CORS'un üretim adresi, Storage BaseUrl, token süreleri, log seviyesi) için sunucuda bir `docker-compose.override.yml` oluşturun. `docker compose up` bu dosyayı otomatik okur.
+`docker-compose.yml`, `.env`'i iki yoldan kullanır:
 
-> Ayrıca compose dosyası `AYNESIL_Cors__AllowedOrigins__0` değerini sabit olarak `http://localhost:${FRONTEND_PORT}` verir; `.env`'deki CORS satırları bu yüzden etkisizdir. Ön yüz API'yi aynı adresten (`/api`) çağırdığı için CORS normalde gerekmez; yine de override ile üretim adresini verin.
+1. **Yer tutucular:** compose dosyasındaki `${...}` değerleri (veritabanı şifreleri, Redis şifresi, portlar, ağ) `.env`'den doldurulur.
+2. **API'nin ortamı (`env_file`):** `.env`'deki **her** değişken API konteynerine geçer. `AYNESIL_` ile başlayanları API okur (ör. `AYNESIL_Cors__AllowedOrigins__0`, `AYNESIL_Jwt__AccessTokenExpiryMinutes`, `AYNESIL_ForwardedHeaders__KnownProxies__0`). Override dosyası gerekmez.
+
+Compose dosyasının `environment` bloğundaki değerler `env_file`'dan önceliklidir. Bu yüzden oradaki ayarlar `${AD:-varsayılan}` biçimindedir: `.env`'e aynı adla yazılan değer kullanılır. Bağlantı dizeleri (`AYNESIL_ConnectionStrings__*`) ise compose dosyasında şifrelerden kurulur; `.env`'e yazmayın.
+
+> `.env`'deki her şey API konteynerinin ortamında görünür (sahip rolünün şifresi `POSTGRES_PASSWORD` dahil). `.env`'e işi olmayan gizli bilgi koymayın.
 
 ### Anahtar tablosu
 
@@ -77,8 +169,12 @@ API, yapılandırmayı `appsettings.json` → `appsettings.{Ortam}.json` → `AY
 | `AYNESIL_Jwt__Secret` | Oturum jetonlarını (JWT, HS256) imzalayan anahtar. Sızarsa herkes her kurumda yönetici jetonu üretebilir. | **Evet** (compose'daki `CHANGE_ME…` varsayılanı canlıda kabul edilemez) | `<gizli>` | `openssl rand -base64 64 \| tr -d '\n'` (en az 32, önerilen 64+ karakter) |
 | `AYNESIL_Jwt__Issuer` | Jetonu üreten (doğrulamada karşılaştırılır) | Hayır (vars. `https://api.aynesil.com`) | `https://app.ornek.com` | Serbest metin; değişirse tüm oturumlar düşer |
 | `AYNESIL_Jwt__Audience` | Jetonun hedefi | Hayır (vars. `aynesil-web`) | `aynesil-web` | Serbest metin |
-| `API_PORT` | API'nin sunucuda yayınlandığı port | Hayır (vars. `5000`) | `5000` | — |
-| `FRONTEND_PORT` | Ön yüz nginx'inin sunucuda yayınlandığı port | Hayır (vars. `5173`) | `5173` | — |
+| `AYNESIL_REDIS_PASSWORD` | Redis şifresi. Redis yalnızca iç ağdadır ama şifresiz bırakılmaz; API bağlantısı compose'da buna göre kurulur | **Evet** (varsayılan `changeme_redis` canlıda kabul edilemez) | `<gizli>` | `openssl rand -hex 24` (yalnızca harf ve rakam: bağlantı dizesinde virgül ve eşittir ayırıcıdır) |
+| `AYNESIL_NETWORK_SUBNET` | Compose iç ağının adres aralığı. API ve ön yüz nginx'i `X-Forwarded-For`'u yalnızca bu ağdan kabul eder (A.6) | Hayır (vars. `172.30.0.0/24`) | `172.30.0.0/24` | Sunucudaki başka bir ağla çakışırsa değiştirin; sonra `docker compose down && docker compose up -d` |
+| `API_PORT` | API'nin **127.0.0.1** üzerinde yayınlandığı port (dışarıya açık değil) | Hayır (vars. `5000`) | `5000` | — |
+| `FRONTEND_PORT` | Ön yüz nginx'inin yayınlandığı port | Hayır (vars. `5173`) | `5173` | — |
+| `FRONTEND_BIND` | Ön yüzün yayınlandığı adres | Hayır (vars. `127.0.0.1`) | `127.0.0.1` | Ters vekil kullanılıyorsa değiştirmeyin. Yalnızca ters vekilsiz (TLS'siz) kurulumda `0.0.0.0` |
+| `COMPOSE_FILE` | Ek compose dosyaları | **Canlıda yazmayın** | — | Yalnızca geliştirici makinesinde `docker-compose.yml:docker-compose.dev.yml` (A.0) |
 
 Şifre notları:
 - `docker/init-db.sh` uygulama rolünü **yalnızca veritabanı diski boşken ilk açılışta** oluşturur ve şifreyi SQL içine tek tırnakla yazar. Şifrede tek tırnak (`'`) kullanmayın.
@@ -87,22 +183,21 @@ API, yapılandırmayı `appsettings.json` → `appsettings.{Ortam}.json` → `AY
   docker exec -it aynesil-db psql -U aynesil_owner -d aynesil -c "ALTER ROLE aynesil_app PASSWORD '<yeni>'"
   ```
 
-**API ayarları (`docker-compose.override.yml` ile verilir)**
+**API ayarları (`.env`'e yazılır)**
 
 | Anahtar (ortam değişkeni) | Ne işe yarar | Zorunlu | Örnek / varsayılan |
 |---|---|---|---|
-| `AYNESIL_ConnectionStrings__DefaultConnection` | API'nin veritabanı bağlantısı (uygulama rolüyle). Hangfire da bunu kullanır. | Evet (compose `.env`'den kurar) | `Host=aynesil-db;Port=5432;Database=aynesil;Username=aynesil_app;Password=…` |
-| `AYNESIL_ConnectionStrings__Redis` | Redis bağlantısı. Boşsa bellek içi önbelleğe düşer. | Hayır (compose kurar) | `aynesil-redis:6379,abortConnect=false` |
-| `AYNESIL_ConnectionStrings__MigrationConnection` | `.env.example`'da var ama **kod okumuyor** | Hayır | Yazmayın |
+| `AYNESIL_ConnectionStrings__DefaultConnection` | API'nin veritabanı bağlantısı (uygulama rolüyle). Hangfire da bunu kullanır. | Compose kurar | Yazmayın (şifreler `POSTGRES_*`/`AYNESIL_DB_APP_*`'den gelir) |
+| `AYNESIL_ConnectionStrings__Redis` | Redis bağlantısı. Boşsa bellek içi önbelleğe düşer. | Compose kurar | Yazmayın (`aynesil-redis:6379,password=<AYNESIL_REDIS_PASSWORD>,abortConnect=false`) |
 | `AYNESIL_Jwt__AccessTokenExpiryMinutes` | Erişim jetonu süresi (dk) | Hayır | `60` (Development'ta `120`) |
 | `AYNESIL_Jwt__RefreshTokenExpiryDays` | Yenileme jetonu süresi (gün) | Hayır | `30` |
 | `Jwt:Algorithm` | `appsettings.json`'da var ama kod her zaman HS256 kullanır | Hayır | Değiştirmeyin |
-| `AYNESIL_ForwardedHeaders__KnownProxies__0`, `__1`… | Gerçek istemci IP'sini `X-Forwarded-For`'dan almak için güvenilen vekil IP'leri | **Canlıda evet** (bunu ya da bir sonrakini verin) | `172.18.0.1` |
-| `AYNESIL_ForwardedHeaders__KnownNetworks__0`, `__1`… | Güvenilen vekil ağları (CIDR) | **Canlıda evet** | `172.18.0.0/16` |
+| `AYNESIL_ForwardedHeaders__KnownNetworks__0` | Güvenilen vekil ağı (CIDR). Gerçek istemci IP'si `X-Forwarded-For`'dan yalnızca bu ağdan gelen bağlantılarda alınır | Hayır: compose iç ağını verir (`AYNESIL_NETWORK_SUBNET`) | `172.30.0.0/24` |
+| `AYNESIL_ForwardedHeaders__KnownNetworks__1`…, `AYNESIL_ForwardedHeaders__KnownProxies__0`… | Ek güvenilen vekiller (ters vekil başka bir makinedeyse) | Hayır | `10.0.0.5` |
 | `AYNESIL_RateLimiting__Auth__Login__PermitLimit` / `__Window` | Giriş hız sınırı | Hayır | `10` / `00:01:00` |
 | `AYNESIL_RateLimiting__Auth__PasswordResetRequest__…` | Şifre sıfırlama isteği sınırı | Hayır | `3` / `01:00:00` |
 | `AYNESIL_RateLimiting__Auth__PasswordResetConfirm__…` | Şifre sıfırlama onayı sınırı | Hayır | `10` / `00:01:00` |
-| `AYNESIL_Cors__AllowedOrigins__0`, `__1`… | Tarayıcıdan API'yi çağırabilecek adresler | Hayır (aynı adresten çalışıyorsa) | `https://app.ornek.com` |
+| `AYNESIL_Cors__AllowedOrigins__0`, `__1`… | Tarayıcıdan API'yi çağırabilecek adresler | Hayır (ön yüz API'yi aynı adresten, `/api` ile çağırır) | Vars. `http://localhost:<FRONTEND_PORT>`; canlıda `https://app.ornek.com` |
 | `AYNESIL_Storage__Local__RootPath` | Yüklenen dosyaların konteyner içindeki dizini | Hayır (compose `/app/uploads` verir) | `/app/uploads` |
 | `AYNESIL_Storage__Local__BaseUrl` | Dosya bağlantılarının kök adresi | Hayır | Varsayılan `http://localhost:5000/files`; canlıda kendi adresinizi verin [doğrulanacak: bu adresi sunan bir uç bulunamadı] |
 | `AYNESIL_Serilog__MinimumLevel__Default` | Log seviyesi | Hayır | `Information` (Development'ta `Debug`) |
@@ -117,34 +212,40 @@ API, yapılandırmayı `appsettings.json` → `appsettings.{Ortam}.json` → `AY
 | `VITE_API_BASE_URL` | Ön yüzün API'yi çağırdığı adres; imaj derlenirken gömülür | Compose `/api` verir; değiştirmeyin |
 | `VITE_APP_TITLE`, `VITE_APP_VERSION` | Başlık ve sürüm metni (`frontend/aynesil-web/.env.example`) | İsteğe bağlı |
 
-### Örnek `docker-compose.override.yml`
-
-Sunucuda repo köküne koyun, repoya **eklemeyin**:
-
-```yaml
-services:
-  aynesil-api:
-    environment:
-      AYNESIL_ForwardedHeaders__KnownNetworks__0: "172.18.0.0/16"   # A.6'daki komutla bulduğunuz ağ
-      AYNESIL_Cors__AllowedOrigins__0: "https://app.ornek.com"
-      AYNESIL_Storage__Local__BaseUrl: "https://app.ornek.com/files"
-    ports: !override
-      - "127.0.0.1:5000:5000"
-  aynesil-web:
-    ports: !override
-      - "127.0.0.1:5173:80"
-  aynesil-db:
-    ports: !reset []
-  aynesil-redis:
-    ports: !reset []
-```
-
-### Portları kapatın
-
-Compose dosyası PostgreSQL'i (5432), Redis'i (6379), API'yi (5000) ve ön yüzü (5173) **tüm ağ arabirimlerinde** yayınlar. Redis'in şifresi yoktur. Docker kendi iptables kurallarını yazdığı için **`ufw` bu portları engellemez**. Yukarıdaki override ile portları ya kaldırın ya da `127.0.0.1`'e bağlayın. Ardından dışarıdan kontrol edin:
+### Canlı `.env` örneği
 
 ```bash
-# Başka bir makineden; hepsi "kapalı/zaman aşımı" vermeli
+POSTGRES_PASSWORD=<openssl rand -base64 32 | tr -d '/+=' | cut -c1-32>
+AYNESIL_DB_APP_PASSWORD=<farklı bir değer>
+AYNESIL_REDIS_PASSWORD=<openssl rand -hex 24>
+AYNESIL_Jwt__Secret=<openssl rand -base64 64 | tr -d '\n'>
+AYNESIL_Jwt__Issuer=https://app.ornek.com
+AYNESIL_Cors__AllowedOrigins__0=https://app.ornek.com
+AYNESIL_Storage__Local__BaseUrl=https://app.ornek.com/files
+# COMPOSE_FILE satırı YOK (geliştirme eki portları dışarı açar)
+```
+
+### Portlar ve güvenlik duvarı
+
+`docker-compose.yml` üretim için yazılmıştır:
+
+| Servis | Yayın | Kim erişir |
+|---|---|---|
+| PostgreSQL (5432) | **Yok** | Yalnızca compose iç ağı (API, Flyway); betikler `docker exec` ile |
+| Redis (6379) | **Yok**, ayrıca şifreli | Yalnızca API |
+| API (5000) | `127.0.0.1:${API_PORT}` | Sunucunun kendisi (ters vekil, izleme, betikler) |
+| Ön yüz (5173) | `${FRONTEND_BIND:-127.0.0.1}:${FRONTEND_PORT}` | Sunucudaki ters vekil |
+
+**Neden `ufw` yetmez:** Docker, yayınladığı portlar için iptables'a kendi kurallarını yazar ve bu kurallar `ufw`'nin kurallarından **önce** işlenir. Yani `ufw deny 5432` dese bile `0.0.0.0:5432`'ye yayınlanmış bir konteyner portu dışarıdan erişilebilir kalır. Port kapatma bu yüzden güvenlik duvarında değil, compose dosyasındaki yayın adresinde yapılır: hiç yayınlamamak ya da `127.0.0.1`'e bağlamak. `ufw` ise 22, 80, 443 gibi ana makine servisleri için kullanılmaya devam eder.
+
+Geliştirme eki (`docker-compose.dev.yml`) PostgreSQL, Redis, API ve ön yüzü tüm arabirimlere açar. **Canlı sunucuda kullanmayın** (`.env`'de `COMPOSE_FILE` olmamalı).
+
+Kontrol:
+
+```bash
+# Sunucuda: yalnızca 127.0.0.1 görünmeli
+docker compose ps --format '{{.Name}} {{.Ports}}'
+# Başka bir makineden: hepsi "kapalı/zaman aşımı" vermeli
 nc -zv <sunucu-ip> 5432 6379 5000 5173
 ```
 
@@ -179,9 +280,11 @@ docker compose logs aynesil-api | grep "starting on" # "AyNesil API starting on 
 
 `/health` adresi `/api` altında değildir. Ön yüz nginx'i yalnızca `/api/`'yi API'ye ilettiği için dışarıdan `https://app.ornek.com/health` çalışmaz; izleme aracını sunucu içinden `127.0.0.1:5000/health`'e yönlendirin ya da ters vekile ayrı bir `location = /health` ekleyin.
 
+Redis şifreli olduğu için `redis-cli`'yi konteyner içinden çalıştırın; şifre konteynerde tanımlıdır (`REDISCLI_AUTH`): `docker exec aynesil-redis redis-cli ping` → `PONG`.
+
 ### A.5.3 Demo verisi (isteğe bağlı, canlıda kullanmayın)
 
-Demo/test sunucusunda iki örnek kurum kurmak için `scripts/demo-seed/run.sh`. Hesaplar ve ortak şifre `scripts/demo-seed/README.md`'dedir. Bu şifre herkesçe bilindiği için **canlı sunucuda çalıştırmayın**.
+Demo/test sunucusunda iki örnek kurum kurmak için `scripts/demo-seed/run.sh` (A.0 adım 3). Hesaplar ve ortak şifre A.0'da ve `scripts/demo-seed/README.md`'dedir. Bu şifre herkesçe bilindiği için **canlı sunucuda çalıştırmayın**.
 
 ### A.5.4 Harici/yönetilen PostgreSQL
 
@@ -199,23 +302,25 @@ Bu senaryo bu repoda test edilmemiştir [doğrulanacak].
 
 ```
 İstemci ──HTTPS──▶ sunucudaki nginx (443, sertifika)
-                     ├── /api/  ──▶ 127.0.0.1:5000  (aynesil-api)
-                     └── /      ──▶ 127.0.0.1:5173  (aynesil-web: derlenmiş ön yüz)
+                     └── /  ──▶ 127.0.0.1:5173  aynesil-web (nginx: derlenmiş ön yüz)
+                                                  └── /api/ ──▶ aynesil-api:5000 (compose iç ağı)
 ```
 
-`/api/` isteklerini **doğrudan API'ye** gönderin, ön yüz konteynerinden geçirmeyin. Nedeni aşağıda.
+Her şeyi ön yüz konteynerine (`127.0.0.1:5173`) gönderin; o `/api/`'yi API'ye iletir. İsterseniz `/api/`'yi doğrudan `127.0.0.1:5000`'e de gönderebilirsiniz; iki yol da gerçek istemci IP'sini korur.
 
 ### Neden önemli: hız sınırı ve gerçek IP
 
-Anonim giriş uçlarının hız sınırı (giriş 10/dk, şifre sıfırlama isteği 3/saat, sıfırlama onayı 10/dk) **istemci IP'si başına** ve hedef kullanıcı adı başına ayrı ayrı uygulanır (`Api/RateLimiting/AuthRateLimiter.cs`). API istemci IP'sini bağlantının kaynağından alır. Ters vekil arkasında bu kaynak vekilin kendisidir. Bu durumda:
+Anonim giriş uçlarının hız sınırı (giriş 10/dk, şifre sıfırlama isteği 3/saat, sıfırlama onayı 10/dk) **istemci IP'si başına** ve hedef kullanıcı adı başına ayrı ayrı uygulanır (`Api/RateLimiting/AuthRateLimiter.cs`). Vekil arkasında bağlantının kaynağı vekilin kendisidir. IP zinciri kurulmamışsa bütün kullanıcılar tek bir IP'den geliyor görünür ve tek sayacı paylaşır: sabah on kişi giriş yaptığında on birinci kişi bir dakika boyunca "çok fazla istek" alır. Giriş kayıtlarındaki ve log'lardaki IP de anlamsızlaşır.
 
-- **ForwardedHeaders tanımlı değilse ya da yanlışsa**, bütün kullanıcılar tek bir IP'den (vekilden) geliyor görünür ve **tek bir sayacı paylaşır**. Sabah 9'da on kişi giriş yaptığında on birinci kişi bir dakika boyunca "çok fazla istek" alır; kurumun tamamı kilitlenmiş olur. Etkinlik günlüğü ve oturum kayıtlarındaki IP de anlamsızlaşır.
-- **Fazla geniş tanımlanırsa** (ör. `0.0.0.0/0`), saldırgan `X-Forwarded-For` başlığını uydurup her denemede farklı IP'den geliyormuş gibi görünür ve hız sınırını aşar.
+Zincir varsayılan kurulumda hazırdır:
 
-API, `X-Forwarded-For`'u yalnızca `KnownProxies`/`KnownNetworks`'teki bir kaynaktan gelirse dikkate alır ve listenin **yalnızca en sağdaki** adresini kullanır (ASP.NET varsayılanı, tek vekil adımı). Bu yüzden:
+1. **Sunucudaki nginx** istemcinin adresini `X-Forwarded-For` olarak yazar (aşağıdaki örnekte: ekleme değil, üzerine yazma).
+2. **Ön yüz nginx'i** (`docker/nginx.conf.template`) bu başlığı yalnızca compose ağından gelen bağlantıda kabul eder. Sunucudaki nginx'in `127.0.0.1:5173` bağlantısı Docker ağ geçidi üzerinden bu ağdan gelir. Başka bir yerden gelen başlık yok sayılır. Ardından API'ye giden `X-Forwarded-For`'u tek değerle, belirlediği istemci adresiyle **üzerine yazar**.
+3. **API** `X-Forwarded-For`'u yalnızca compose ağından (`AYNESIL_NETWORK_SUBNET`, vars. `172.30.0.0/24`) gelen bağlantıda kabul eder (`AYNESIL_ForwardedHeaders__KnownNetworks__0`, compose varsayılanı).
 
-- İstek iki vekilden geçerse (sunucu nginx'i → ön yüz konteynerindeki nginx → API), API en sağdaki adresi, yani **ilk vekilin konteyner ağı adresini** görür ve yine herkes tek sayaçta toplanır. Yerel kurulumda bu doğrulandı: ön yüz konteynerinden gelen girişlerin hepsi `iam.auth_session.ip_address` sütununda aynı konteyner adresiyle (`::ffff:172.19.0.5`) kayıtlı.
-- Bu yüzden `/api/`'yi doğrudan `127.0.0.1:5000`'e yönlendirin.
+Bu yüzden istemcinin kendisinin gönderdiği sahte bir `X-Forwarded-For` hız sınırını aşmaya yaramaz. Ayar gerekmez; ters vekil başka bir makinedeyse `.env`'e `AYNESIL_ForwardedHeaders__KnownProxies__0=<vekil-ip>` ekleyin ve ön yüz nginx'inin o adresten de başlık kabul etmesi için şablondaki `set_real_ip_from` satırını çoğaltın.
+
+> **Docker Desktop (macOS/Windows):** ana makineden gelen bağlantılar VM adresinden (ör. `192.168.65.1`) gelir ve güvenilmez. Bu yalnızca geliştirme makinesini etkiler; Linux sunucuda ana makine bağlantısı compose ağının ağ geçidinden gelir [doğrulanacak: Docker'ın `userland-proxy` ayarına bağlıdır; `scripts/smoke-proxy/run.sh` 4. adımda görülen adresi yazar].
 
 ### nginx örneği (sunucuda)
 
@@ -233,15 +338,15 @@ server {
     ssl_certificate     /etc/letsencrypt/live/app.ornek.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/app.ornek.com/privkey.pem;
 
-    # JWT tüm izinleri taşıdığı için büyük olabilir (docker/nginx.conf ile aynı değerler)
+    # JWT tüm izinleri taşıdığı için büyük olabilir (docker/nginx.conf.template ile aynı değerler)
     large_client_header_buffers 8 64k;
     client_header_buffer_size   32k;
     client_max_body_size        20m;
 
     add_header Strict-Transport-Security "max-age=31536000" always;
 
-    location /api/ {
-        proxy_pass http://127.0.0.1:5000/api/;
+    location / {
+        proxy_pass http://127.0.0.1:5173;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
         # Ekleme değil, ÜZERİNE YAZMA: istemcinin gönderdiği sahte X-Forwarded-For atılır
@@ -249,44 +354,28 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 60s;
     }
-
-    location / {
-        proxy_pass http://127.0.0.1:5173;
-        proxy_set_header Host $host;
-    }
 }
 ```
 
 Sertifika için örnek: `sudo certbot --nginx -d app.ornek.com`.
 
-### KnownNetworks değerini bulma
-
-Sunucu nginx'i `127.0.0.1:5000`'e bağlandığında Docker bağlantıyı compose ağının ağ geçidi adresinden konteynere iletir [doğrulanacak: Docker'ın `userland-proxy` ayarına bağlıdır]. Ağın adresini bulun:
-
-```bash
-docker network inspect aynesil_aynesil-net -f '{{(index .IPAM.Config 0).Subnet}}   gateway: {{(index .IPAM.Config 0).Gateway}}'
-# ör. 172.18.0.0/16   gateway: 172.18.0.1
-```
-
-Override'a ya ağı (`AYNESIL_ForwardedHeaders__KnownNetworks__0: "172.18.0.0/16"`) ya da yalnızca ağ geçidini (`AYNESIL_ForwardedHeaders__KnownProxies__0: "172.18.0.1"`) yazın. Yalnızca ağ geçidi daha dardır ve önerilir. Ağ `docker compose down` ile silinip yeniden oluşturulursa adres değişebilir; her güncellemeden sonra tekrar kontrol edin.
-
-Yapılandırma geçersizse (ör. CIDR yerine düz IP) API açılışta hata vererek durur (`ForwardedHeadersSetup.cs`).
-
 ### Doğrulama
 
 ```bash
-docker compose up -d aynesil-api
 # Kendi bilgisayarınızdan tarayıcıyla giriş yapın, sonra sunucuda:
 docker exec aynesil-db psql -U aynesil_owner -d aynesil -c \
   "select ip_address, issued_at from iam.auth_session order by issued_at desc limit 5"
+docker compose logs --since 10m aynesil-api | grep "Login succeeded"
 ```
 
-Son satırda **kendi genel IP adresiniz** görünmeli. `172.x.x.x` görünüyorsa ayar tutmamıştır; herkes tek sayacı paylaşıyordur. (IPv4 adresleri `::ffff:` önekiyle görünebilir; bu normaldir.)
+Son satırda ve log'da **kendi genel IP adresiniz** görünmeli. `172.x.x.x` görünüyorsa zincir kopuktur (sunucudaki nginx `X-Forwarded-For` yazmıyor ya da başka bir adresten bağlanıyor). İstek log'larında da her satırda `ClientIp` vardır.
+
+Otomatik kontrol: `scripts/smoke-proxy/run.sh` (demo verisi gerekir; bu yüzden demo/test sunucusunda). Aynı vekil arkasındaki iki istemcinin ayrı sayaç kullandığını, compose ağı dışından gelen sahte başlığın yok sayıldığını ve giriş kaydında gerçek IP'nin göründüğünü sınar.
 
 ### HTTPS notları
 
-- TLS sunucu nginx'inde sonlanır; API konteyner içinde HTTP dinler. `X-Forwarded-Proto` güvenilen vekilden geldiği için API isteği HTTPS olarak görür.
-- `app.UseHttpsRedirection()` konteynerde HTTPS portu olmadığından yönlendirme yapmaz; açılışta "https port" uyarısı loglanabilir, zararsızdır [doğrulanacak].
+- TLS sunucu nginx'inde sonlanır; API konteyner içinde HTTP dinler. `X-Forwarded-Proto` yalnızca güvenilen vekilden geldiğinde aktarılır; API isteği HTTPS olarak görür.
+- `app.UseHttpsRedirection()` konteynerde HTTPS portu olmadığından yönlendirme yapmaz; açılıştan sonra bir kez "Failed to determine the https port for redirect" uyarısı loglanır, zararsızdır.
 - Hız sınırı sayaçları **API süreci belleğindedir**. API'yi birden fazla örnekle (ölçekleme, yük dengeleme) çalıştırırsanız etkin sınır örnek sayısıyla çarpılır. Çok örnekli dağıtımdan önce Redis tabanlı bir sınırlayıcı gerekir. Tek örnekli kurulumda sorun yoktur.
 
 ## A.7 Yedekleme ve geri yükleme
@@ -297,7 +386,7 @@ Son satırda **kendi genel IP adresiniz** görünmeli. `172.x.x.x` görünüyors
 |---|---|---|
 | Veritabanı | `aynesil-db` konteyneri, `aynesil_aynesil-db-data` diski | **Evet** — tüm iş verisi, kullanıcılar, Hangfire işleri |
 | Yüklenen dosyalar | `aynesil_aynesil-uploads` diski | Evet |
-| `.env` ve `docker-compose.override.yml` | `/opt/aynesil` | **Evet, ayrı ve şifreli** (gizli anahtarlar) |
+| `.env` (ve varsa `docker-compose.override.yml`) | `/opt/aynesil` | **Evet, ayrı ve şifreli** (gizli anahtarlar) |
 | Redis | `aynesil_aynesil-redis-data` | Hayır (önbellek; kaybolursa yalnızca açık şifre sıfırlama bağlantıları ve hesap kilitleri düşer) |
 | Loglar | `aynesil_aynesil-logs` | İsteğe bağlı |
 
@@ -368,7 +457,7 @@ docker exec aynesil-db psql -U aynesil_owner -d postgres -c "CREATE DATABASE ayn
 docker exec -i aynesil-db pg_restore -U aynesil_owner -d aynesil --exit-on-error < /var/backups/aynesil/db-<TS>.dump
 docker run --rm -v aynesil_aynesil-uploads:/data -v /var/backups/aynesil:/backup alpine \
   sh -c "rm -rf /data/* && tar xzf /backup/uploads-<TS>.tgz -C /data"
-docker exec aynesil-redis redis-cli FLUSHALL      # eski önbellek geri yüklenen veriyle çelişmesin
+docker exec aynesil-redis redis-cli FLUSHALL      # eski önbellek geri yüklenen veriyle çelişmesin (şifre konteynerde tanımlı)
 docker compose up -d
 ```
 
@@ -411,6 +500,15 @@ curl -fsS http://127.0.0.1:5000/health
 docker compose logs --since 10m aynesil-api | grep -E "ERR|FTL" || echo "hata yok"
 ```
 
+### Ağ ve Redis ayarlarının değiştiği sürüme geçiş
+
+Compose iç ağına sabit alt ağ (`AYNESIL_NETWORK_SUBNET`) ve Redis'e şifre (`AYNESIL_REDIS_PASSWORD`) gelen sürüme ilk geçişte:
+
+1. `.env`'e `AYNESIL_REDIS_PASSWORD` ekleyin (A.4).
+2. Eski `docker-compose.override.yml` yalnızca port kapatma ve ForwardedHeaders içinse silin. Bunlar artık varsayılan; diğer ayarlarını `.env`'e taşıyın.
+3. Ağın yeniden oluşturulması gerekir: `docker compose down && docker compose up -d --build`. **`-v` kullanmayın** (veriler silinir).
+4. A.6 "Doğrulama" ile gerçek IP'yi kontrol edin.
+
 ### Neden önbellek temizlenir
 
 Menü ağacı kurum ve dil başına Redis'te **1 saat** saklanır (`GetUserMenuQuery`, anahtar `aynesil:corp:<kurum>:menu:<dil>`). Bir migration yeni menü satırı eklediğinde ya da bir menüyü açıp kapattığında, kullanıcılar önbellek dolana kadar eski menüyü görür. Referans değerleri de önbelleklenir (30 dk). Modül açma/kapama (`set_modules.py`) önbellekten bağımsızdır ve hemen etkili olur.
@@ -433,22 +531,23 @@ Flyway'in ücretsiz sürümü migration'ları geri almaz. Geri alma yolu:
 
 | # | Kontrol | Nasıl doğrulanır |
 |---|---|---|
-| 1 | `.env`'deki tüm `changeme…`/`CHANGE_ME…` değerleri değişti; `AYNESIL_Jwt__Secret` en az 64 karakter | `grep -i change /opt/aynesil/.env` boş dönmeli |
+| 1 | `.env`'deki tüm `changeme…`/`CHANGE_ME…` değerleri değişti (Redis şifresi dahil); `AYNESIL_Jwt__Secret` en az 64 karakter; `COMPOSE_FILE` satırı yok | `grep -iE "change\|COMPOSE_FILE" /opt/aynesil/.env` boş dönmeli |
 | 2 | `.env` izinleri `600`, repoya eklenmemiş | `ls -l .env`, `git status` |
-| 3 | 5432, 6379, 5000, 5173 dışarıdan kapalı | Başka makineden `nc -zv` |
+| 3 | 5432, 6379, 5000, 5173 dışarıdan kapalı (compose varsayılanı; `ufw` bunu sağlamaz, A.4) | Başka makineden `nc -zv` |
 | 4 | HTTPS çalışıyor, HTTP 443'e yönleniyor | Tarayıcı |
-| 5 | ForwardedHeaders doğru: `iam.auth_session.ip_address` gerçek istemci IP'lerini gösteriyor | A.6 "Doğrulama" |
+| 5 | Gerçek istemci IP'si: `iam.auth_session.ip_address` ve "Login succeeded" log satırı gerçek istemci IP'lerini gösteriyor | A.6 "Doğrulama" |
 | 6 | `ASPNETCORE_ENVIRONMENT=Production` | `docker compose logs aynesil-api \| grep "starting on"` → `Production`. Development'ta API belgeleri (`/openapi`, `/scalar`) açılır ve log seviyesi `Debug` olur |
-| 7 | **E-posta sağlayıcısı yok.** `INotificationService` olarak `LoggingNotificationService` kayıtlı: hiçbir e-posta/SMS gitmez, yalnızca şablon kodu ve alıcı loglanır. Sonuç: **"Şifremi unuttum" çalışmaz** (ekran var ama bağlantı gitmez), davet e-postası gitmez. Geçici şifreler kişiye elle iletilir. **Kurum yöneticisinin başka bir kullanıcının şifresini sıfırlayacağı bir ekran ya da uç yoktur** (`UsersController`'da yok); şifresini unutan kullanıcı için teknik ekip B.1.2'deki komutu kullanır | Müşteriye yazılı olarak bildirin |
+| 7 | **E-posta sağlayıcısı yok.** `INotificationService` olarak `LoggingNotificationService` kayıtlı: hiçbir e-posta/SMS gitmez, yalnızca şablon kodu ve alıcı loglanır. Sonuç: **"Şifremi unuttum" çalışmaz** (ekran var ama bağlantı gitmez), davet e-postası gitmez. Geçici şifreler kişiye elle iletilir. Şifresini unutan kullanıcının şifresini **kurum yöneticisi** sıfırlar (Kullanıcılar → kullanıcı → **Şifreyi Sıfırla**, B.1.2) | Müşteriye yazılı olarak bildirin |
 | 8 | Hız sınırı **tek örnek** içindir; API tek örnekle çalışıyor | `docker compose ps` (bir `aynesil-api`) |
 | 9 | Loglar: dosya logları `aynesil_aynesil-logs` diskinde `logs/aynesil-YYYYMMDD.log`, 30 gün saklanır; konsol `docker compose logs`. Disk dolmasın diye Docker log sürücüsüne boyut sınırı verin (`/etc/docker/daemon.json` → `"log-opts": {"max-size": "50m", "max-file": "5"}`) | `docker volume inspect`, `df -h` |
 | 10 | İzleme: `127.0.0.1:5000/health` dakikada bir kontrol ediliyor; disk doluluğu ve yedek başarısı izleniyor | İzleme aracı |
 | 11 | Yedekleme çalışıyor ve bir geri yükleme provası yapıldı | A.7 |
 | 12 | **KPI'lar otomatik hesaplanmaz.** Arka plan işi kayıtlı değil; tek yol `KPI & Performans → Performans Anlık Görüntüleri → Dönem Hesapla` düğmesi (içinde bulunulan ay için). KPI modülü açık kurumlara bunu söyleyin | Müşteriye bildirin |
 | 13 | Olaylardan bildirim üretilmiyor (ör. "seans yarın"); gelen kutusu bugün kendiliğinden dolmaz [doğrulanacak] | Müşteriye bildirin |
-| 14 | Pasifleştirilen kurumun kullanıcıları **hâlâ giriş yapabiliyor**: giriş yalnızca kullanıcının durumuna bakar, kurumun durumuna bakmaz (`LoginCommand`, `iam.authenticate_user`). Kurumu kapatırken kullanıcılarını da askıya alın (B.1.4) | — |
-| 15 | Demo verisi canlı sunucuda yok | `select code from core.corporation` içinde `demo_a`/`demo_b` olmamalı |
-| 16 | Docker diskleri ve `/opt/aynesil` için sunucu düzeyinde disk şifreleme / erişim kısıtı | — |
+| 14 | Demo verisi canlı sunucuda yok | `select code from core.corporation` içinde `demo_a`/`demo_b` olmamalı |
+| 15 | Docker diskleri ve `/opt/aynesil` için sunucu düzeyinde disk şifreleme / erişim kısıtı | — |
+| 16 | Kurum askıya alındığında girişler ve açık oturumlar kesiliyor | B.1.4'teki komuttan sonra o kurumun kullanıcısıyla giriş "Kurumunuzun hesabı etkin değil" vermeli |
+| 17 | **Platform migration'larının açtığı `admin` hesabı** (`akran` kurumu, şifre `Admin123!`, A.0 not) canlıda bu şifreyle açık kalmamalı. `akran` müşteriniz değilse hesabı askıya alın; müşterinizse kurum yöneticisinin ilk iş şifreyi değiştirmesini sağlayın | `docker exec aynesil-db psql -U aynesil_owner -d aynesil -Atc "select username, status, crypt('Admin123!', password_hash) = password_hash from iam.user_account where username = 'admin'"` → `t` ise açık. Askıya almak: `update iam.user_account set status = 'suspended' where username = 'admin'` |
 
 ## A.10 Bilinen eksikler
 
@@ -469,9 +568,6 @@ Ayrıntı: `docs/ekransiz-endpointler.md`. Özet:
 
 **Koddan çıkan diğer eksikler:**
 - **Toplu aktarma yok.** Öğrenci, veli, eğitmen listeleri ekrandan tek tek girilir.
-- **"Eğitimciler" ana menüsü `user:read` izni istiyor.** Bu izni olmayan roller (ör. Koordinatör, Eğitmen) menüde "Eğitimciler"i hiç görmez; eğitmen listesine menüden ulaşamaz. Geçici çözüm B.4'te.
-- Pasif kurumun kullanıcıları giriş yapabiliyor (A.9 madde 14).
-- Kurum yöneticisi başka bir kullanıcının şifresini sıfırlayamıyor; e-posta da gitmediği için şifre yenileme teknik ekibe kalıyor (B.1.2).
 - Kurum logosu için alan/ekran yok.
 
 ---
@@ -534,7 +630,15 @@ Komutun açtıkları (tek işlemde; hata olursa hiçbir şey yazılmaz):
 
 - Kullanıcı adını ve geçici şifreyi **ayrı kanallardan** iletin (ör. kullanıcı adını e-postayla, şifreyi telefonla ya da SMS'le). İkisini aynı mesajda göndermeyin.
 - Yönetici ilk girişte **şifresini değiştirmek zorundadır**: şifre değiştirme sayfasından başka hiçbir sayfa açılmaz. Değiştirince yeniden giriş yapar.
-- "Şifremi unuttum" bugün çalışmaz (e-posta gitmez) ve kurum yöneticisinin başkasının şifresini sıfırlayacağı bir ekran yoktur. Bir kullanıcı (yönetici dahil) şifresini kaybederse teknik ekip yeni bir geçici şifre verir. Hazır bir betik yoktur; komut:
+- **Şifresini unutan kullanıcı:** "Şifremi unuttum" bugün çalışmaz (e-posta gitmez). Bunun yerine kurum yöneticisi **Platform Yönetimi → Kullanıcılar → kullanıcı → Şifreyi Sıfırla**'ya basar (izin: `user:reset_password`, Yönetici rolünde var). Sistem:
+  - yeni bir geçici şifre üretir ve **bir kez** gösterir (Kopyala düğmesi; pencere kapanınca bir daha görülmez),
+  - kullanıcının eski şifresini geçersiz kılar ve **açık oturumlarını kapatır**,
+  - kullanıcıyı ilk girişte şifresini değiştirmeye zorlar,
+  - çok sayıda hatalı deneme nedeniyle kilitlenmiş hesabın kilidini hemen kaldırır.
+
+  Yönetici kendi şifresini buradan sıfırlayamaz; kendi şifresini **Şifre Değiştir**'den değiştirir. Başka kurumun kullanıcısı bu ekranda görünmez.
+- **Hesap kilidi:** aynı hesaba 5 hatalı şifre denemesinden sonra hesap 15 dakika kilitlenir; süre dolunca kendiliğinden açılır ya da yönetici şifreyi sıfırlayınca hemen açılır.
+- **Kurumun tek yöneticisi şifresini kaybederse** (bu yüzden en az iki yönetici önerilir, B.4) şifreyi sıfırlayacak kimse kalmaz. Bu durumda teknik ekip veritabanından geçici şifre verir:
   ```bash
   GECICI=$(openssl rand -base64 18 | tr -d '/+=')
   docker exec aynesil-db psql -U aynesil_owner -d aynesil -c \
@@ -543,7 +647,6 @@ Komutun açtıkları (tek işlemde; hata olursa hiçbir şey yazılmaz):
       where username = 'mudur@ornek.com'"
   echo "Geçici şifre: $GECICI"
   ```
-  `new_tenant.py` de şifreyi aynı yöntemle (`crypt(…, gen_salt('bf', 12))`) yazar. Kullanıcı ilk girişte şifresini değiştirmeye zorlanır. Çok sayıda hatalı deneme sonrası hesap kilitliyse kilit bir süre sonra kendiliğinden kalkar [doğrulanacak: süre].
 
 ### B.1.3 Modülleri açma ve kapama
 
@@ -572,13 +675,21 @@ python3 devops/set_modules.py --code ornek --disable kpi           # kapatır
 Kurumu etkinleştirme/pasifleştirme platform izni (`corporation:delete`) gerektirir ve bu izin hiçbir kurum rolüne verilemez. Kurum yöneticisi kendi kurumunu kapatamaz. Teknik ekip veritabanından yapar [doğrulanacak: hazır bir betik yok]:
 
 ```bash
+# Askıya al (geçici)          → status='suspended'
+# Kapat (sözleşme bitti)       → status='closed'
 docker exec -it aynesil-db psql -U aynesil_owner -d aynesil -c \
   "update core.corporation set status='suspended' where code='ornek'"
-# Giriş kurumun durumuna bakmadığı için kullanıcıları da askıya alın:
+# Yeniden aç
 docker exec -it aynesil-db psql -U aynesil_owner -d aynesil -c \
-  "update iam.user_account set status='suspended'
-     where corporation_id=(select id from core.corporation where code='ornek')"
+  "update core.corporation set status='active' where code='ornek'"
 ```
+
+Kurum `active` değilken:
+- **Giriş** reddedilir: kullanıcı doğru şifreyle girse de "Kurumunuzun hesabı etkin değil. Lütfen kurum yöneticinizle ya da destek ekibiyle iletişime geçin." mesajını alır (İngilizce arayüzde İngilizce). Şifre yanlışsa yalnızca "Kullanıcı adı veya parola hatalı" der; kurumun durumu açık edilmez.
+- **Oturum yenileme** reddedilir ve oturum kapatılır.
+- **Açık oturumlar** en geç **1 dakika** içinde (API'nin kurum durumu önbelleği) kesilir; kullanıcı giriş sayfasına düşer.
+
+Kullanıcıları ayrıca askıya almak gerekmez. Kurum yeniden açılınca kullanıcılar eski şifreleriyle normal giriş yapar.
 
 ## B.2 Kurum ayarları
 
@@ -628,34 +739,41 @@ Modül kapalıysa ilgili listeler (kamp türleri, kamera türleri, kurum türler
 
 Ekran: **Platform Yönetimi → Roller → Rol Ekle**, sonra rolün **İzinler** sekmesinden izinleri seçin. Sistem kişinin unvanına değil, rolündeki izinlere bakar. Bir kişiye birden fazla rol verilebilir; izinler toplanır.
 
-Hazır gelen iki rol vardır: **Yönetici** ve **Veli (portal)**. Aşağıdaki öneriler demo kurumların rollerinden türetilmiştir (`scripts/demo-seed/phases/identity.mjs`). İzin kodları ekranda kodla birlikte görünür.
+Hazır gelen iki rol vardır: **Yönetici** ve **Veli (portal)**. Aşağıdaki öneriler demo kurumların rolleriyle aynıdır (`scripts/demo-seed/phases/identity.mjs`; demo seed rolleri her çalıştırmada bu kümeye eşitler). Demo hesaplarıyla her rolün günlük işini deneyebilirsiniz (A.0). İzin kodları ekranda kodla birlikte görünür.
 
 ### Yönetici (hazır gelir)
 Platform işlemleri dışında **her şey**. Kullanıcı açma, rol verme ve eğitmen/veli hesabı bağlama yalnızca bu roldedir. Kurumda en az iki kişiye verin (biri tatildeyken kilitlenmemek için).
 
 ### Koordinatör
-**Yönetici rolündeki her şey, şu gruplar hariç:** kullanıcı (`user:*`), rol ve izin (`role:*`, `permission:*`), kurum (`corporation:*`), ayarlar (`settings:*`), entegrasyon, denetim kaydı (`audit:*`), menü (`menu:*`), referans veri (`ref_data:*`), finansın tamamı (`finance`, `invoice`, `refund`, `credit_ledger`, `package_definition`, `student_package`, `scholarship`, `promotion`, `discount`), raporlar (`report:*`), KPI hesaplama ve yönetimi (`kpi_snapshot:*`, `kpi:manage`).
+**Yönetici rolündeki her şey, şunlar hariç:**
 
-Günlük operasyonu yürütür: aday, öğrenci, veli, değerlendirme, BEP (onay dahil), program ve kayıt, seans planlama, telafi onayı, toplantı, izin onayı, sözleşme ve rıza.
+| Hariç | İzinler | Neden |
+|---|---|---|
+| Kurum yönetimi | kullanıcı (`user:*`, `user:read` hariç), rol ve izin (`role:*`, `permission:*`), kurum (`corporation:*`), ayarlar (`settings:*`), entegrasyon, denetim kaydı (`audit:*`), menü (`menu:*`), referans veri (`ref_data:*`), kampüs ekleme/düzenleme/silme (`campus:create/update/delete`), bildirim tetikleyicileri (`notification_trigger:manage`) | Yönetici işi |
+| Finans | `finance`, `finance_payment`, `finance_report`, `invoice`, `refund`, `credit_ledger`, `package_definition`, `student_package`, `scholarship`, `promotion`, `discount` | Muhasebe işi |
+| Rapor ve KPI yönetimi | `report:*`, `kpi_snapshot:*`, `kpi:manage` | |
+| Başkasının kaydını değiştirme, ana kayıt silme | `session_note:delete`, `case_note:delete` (başkalarının notunu düzenleme/silme), `student:delete`, `guardian:delete`, `educator:delete` | Klinik kayıt ve ana kayıt güvenliği; yönetici yapar |
+| Veli tarafı | `portal:access`, `parent_feedback:create/submit`, `survey:respond` | Personel rolüne ait değil (verilirse menüde Veli Portalı çıkar) |
 
-> **Önemli:** "Eğitimciler" menüsü `user:read` izni istiyor (A.10). Koordinatörün eğitmen listesini menüden açabilmesi için role **`user:read`** iznini de ekleyin. Bu izin kullanıcı listesini **yalnızca görüntülemeyi** sağlar; kullanıcı açma ve hesap bağlama yetkisi vermez.
+**Ek olarak `user:read`:** aday formunda (atanan kişi) ve değerlendirme oturumu formunda (değerlendiren) kişi seçmek için kullanıcı listesi gerekir. Bu izin kullanıcı listesini **yalnızca görüntülemeyi** sağlar; kullanıcı açma, şifre sıfırlama ve hesap bağlama yetkisi vermez.
+
+Günlük operasyonu yürütür: aday, öğrenci, veli, değerlendirme, BEP (onay dahil), program ve kayıt, seans planlama, telafi onayı, toplantı, izin onayı, sözleşme ve rıza. BEP onaylayacağı ve not yazabileceği için koordinatörün **bir eğitmen kaydı olmalı ve hesabına bağlı olmalıdır** (B.5.2).
 
 ### Eğitmen
 
 | Alan | İzinler |
 |---|---|
 | Öğrenci, veli (okuma) | `student:read`, `guardian:read`, `enrollment:read`, `program:read`, `campus:read`, `room:read`, `educator:read` |
-| Seans | `session:read`, **`session:complete`** (eğitmen seansı kendisi tamamlayacaksa; demo rolünde yok), **`session:manage_goals`** (seansa hedef ekleyip çıkaracaksa; demo rolünde yok) |
+| Seans | `session:read`, `session:complete` (seansı tamamlar; paketten hak düşer), `session:manage_goals` (seansa hedef ekler/çıkarır) |
 | Yoklama | `attendance:read`, `attendance:record` |
 | Seans notu | `session_note:write`. **`session_note:delete` vermeyin**: bu izin başkalarının notlarını düzenleme ve silme yetkisidir (yönetici yetkisi) |
-| Hedefler | `student_goal:read`, `student_goal:create`, `student_goal:update`, `student_goal:change_status`, `goal_progress:read`, `goal_progress:record`, `goal_library:read`, `goal_template:read` |
-| BEP | `education_plan:read`, `education_plan:add_review`. BEP onaylayacak eğitmenlere ayrıca `education_plan:approve` |
+| Hedefler | `student_goal:read`, `student_goal:create`, `student_goal:update`, `student_goal:change_status`, `goal_progress:read`, `goal_progress:record`, `goal_library:read`, `goal_template:read` (hedef silme `student_goal:delete` yok) |
+| BEP | `education_plan:read`, `education_plan:add_review`. BEP'i koordinatör onaylar; onay yetkisi verilecek kıdemli eğitmenlere ayrıca `education_plan:approve` |
 | Vaka notu | `case_note:create`, `case_note:read`, `case_note:update` (gizli notları okuyacaksa `case_note:read_confidential`) |
 | Telafi | `makeup_request:read`, `makeup_request:request` |
 | İzin | `leave_request:submit`, `leave_request:read`, `leave_request:cancel`, `leave_balance:read` |
 | Diğer | `meeting:read`, `assessment_session:read`, `notification:read`, `kpi_dashboard:read` (KPI açıksa), `parent_feedback:read` |
 | Kamp (modül açıksa) | `camp:read`, `camp_attendance:read/record`, `camp_participation:read/record` |
-| Menü kusuru | Eğitmen listesini görecekse `user:read` (A.10) |
 
 ### Muhasebe
 
@@ -723,7 +841,7 @@ Portal iki adımdır; **ikisi de** gerekir:
    - WhatsApp grubu gibi birden çok kişinin gördüğü yerlere yazmayın.
 3. Kişi ilk girişte **şifre değiştirme sayfasına** yönlenir; başka sayfa açılmaz. Yeni şifreyi belirleyince yeniden giriş yapar.
 4. Sonradan şifresini değiştirmek isteyen herkes sağ üstteki baş harf rozetinden **Şifre Değiştir**'e gider.
-5. "Şifremi unuttum" ekranı vardır ama e-posta gitmediği için **bugün çalışmaz**. Kurum yöneticisinin başkasının şifresini sıfırlayacağı bir ekran da yoktur. Şifresini unutan kişi için teknik ekibe başvurun (B.1.2'deki komut).
+5. "Şifremi unuttum" ekranı vardır ama e-posta gitmediği için **bugün çalışmaz**. Şifresini unutan kişinin şifresini kurum yöneticisi **Kullanıcılar → kullanıcı → Şifreyi Sıfırla** ile sıfırlar; yeni geçici şifre yine bir kez gösterilir ve bu adımlar tekrarlanır (B.1.2).
 
 ## B.6 Programlar, hizmetler ve paketler
 
@@ -916,14 +1034,12 @@ Bu tabloları müşteriye gönderin (Excel'e kopyalanabilir).
 
 ## [doğrulanacak] listesi
 
-1. Docker Compose v2.24+ gereksinimi (`!override` / `!reset` söz dizimi) — kullanılan sürümde denenmeli.
+1. Docker Compose v2.24+ gereksinimi (`env_file` `required: false`, geliştirme ekindeki `!override`): Compose v5.1 ile denendi; sunucudaki sürümde `docker compose config` ile kontrol edilmeli.
 2. RAM/CPU önerileri yük testiyle doğrulanmadı.
 3. `Storage:Local:BaseUrl` adresini sunan bir uç bulunamadı; dosya bağlantılarının nasıl açıldığı.
 4. Harici/yönetilen PostgreSQL senaryosu (A.5.4) test edilmedi.
-5. Sunucu nginx'i `127.0.0.1:5000`'e bağlandığında API'nin gördüğü kaynak adres (Docker `userland-proxy` ayarına bağlı); KnownProxies değeri buna göre seçilmeli ve A.6'daki doğrulamayla kontrol edilmeli.
-6. `UseHttpsRedirection`'ın konteynerde yalnızca uyarı loglaması.
-7. Hesap kilidinin (çok sayıda hatalı giriş) ne kadar sürdüğü.
-8. Olaylardan otomatik bildirim üretilmediği (tetikleyici işleyicisi bulunamadı).
-9. Kuruma özel KPI tanımlarının hesaplamaya katılmadığı.
-10. Kurum pasifleştirme için hazır betik olmadığı; SQL ile yapılması.
-11. Vergi dairesi/numarasının faturada kullanılıp kullanılmadığı; kurum ayarlarındaki serbest JSON alanını okuyan bir ekran olup olmadığı.
+5. Linux sunucuda, sunucu nginx'inin `127.0.0.1:5173`/`127.0.0.1:5000` bağlantısının konteynerde compose ağının ağ geçidinden geldiği (Docker `userland-proxy` ayarı). Docker Desktop'ta denendi (orada VM adresi görünür); Linux'ta `scripts/smoke-proxy/run.sh` 4. adımı ve A.6 "Doğrulama" ile kontrol edilmeli.
+6. Olaylardan otomatik bildirim üretilmediği (tetikleyici işleyicisi bulunamadı).
+7. Kuruma özel KPI tanımlarının hesaplamaya katılmadığı.
+8. Kurum pasifleştirme için hazır betik olmadığı; SQL ile yapılması.
+9. Vergi dairesi/numarasının faturada kullanılıp kullanılmadığı; kurum ayarlarındaki serbest JSON alanını okuyan bir ekran olup olmadığı.
