@@ -321,6 +321,8 @@ public static class MsgKeys
         public static readonly MsgKey InvalidResetToken = new("Auth.InvalidResetToken");
         /// <summary>Hesap ilk giriş parolasını değiştirmeden başka uçları kullanamaz (403).</summary>
         public static readonly MsgKey PasswordChangeRequired = new("Auth.PasswordChangeRequired");
+        /// <summary>Kullanıcının kurumu etkin değil (askıya alınmış/kapatılmış): giriş, yenileme ve oturum içi istekler reddedilir (401).</summary>
+        public static readonly MsgKey CorporationInactive = new("Auth.CorporationInactive");
     }
 
     /// <summary>Başarı yanıtlarının mesajları (<c>message</c>); anahtar aynı zamanda yanıt kodudur (<c>code</c>).</summary>

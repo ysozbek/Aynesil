@@ -2,7 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Aynesil.Application.Common.Exceptions;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Domain.Common;
 using Aynesil.Domain.Modules.Iam.Entities;
 using Aynesil.Infrastructure.Options;
 using Aynesil.Infrastructure.Persistence;
@@ -116,12 +118,31 @@ public sealed class JwtTokenService : ITokenService
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid or expired refresh token.");
 
-        // Session'ı revoke et (rotation)
-        await SetTenantGucAsync(session.CorporationId, session.UserId, cancellationToken);
+        // Session'ı revoke et (rotation). GUC ve UPDATE aynı bağlantıda olmalı: TenantConnectionInterceptor her bağlantı
+        // açılışında kurum GUC'unu (yenilemede boş) yeniden yazar; ayrı komutlarda RLS satırı gizler ve UPDATE sessizce
+        // 0 satır günceller (eski yenileme jetonu tekrar kullanılabilirdi). "revoked_at IS NULL" + satır sayısı: aynı
+        // jetonla eşzamanlı iki yenilemeden yalnızca biri geçer.
+        var revoked = 0;
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await SetTenantGucAsync(session.CorporationId, session.UserId, cancellationToken);
+            revoked = await _db.Database.ExecuteSqlRawAsync(
+                "UPDATE iam.auth_session SET revoked_at = now() WHERE id = {0} AND revoked_at IS NULL",
+                [session.Id], cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+        });
+        if (revoked == 0)
+            throw new UnauthorizedAccessException("Refresh token was already used.");
 
-        await _db.Database.ExecuteSqlRawAsync(
-            "UPDATE iam.auth_session SET revoked_at = now() WHERE id = {0}",
-            session.Id);
+        // Kurum askıya alındı/kapatıldıysa yeni token verilmez (V57). Oturum yukarıda iptal edildi;
+        // aynı yenileme jetonu tekrar denenemez. Kurum yeniden etkinleşince kullanıcı normal giriş yapar.
+        var corporationActive = await _db.Database
+            .SqlQueryRaw<bool>(@"SELECT iam.corporation_is_active({0}) AS ""Value""", session.CorporationId)
+            .FirstAsync(cancellationToken);
+        if (!corporationActive)
+            throw new AuthenticationFailedException(MsgKeys.Auth.CorporationInactive);
 
         // Permissions yükle ve yeni token çıkar
         var permissions = await _db.Database

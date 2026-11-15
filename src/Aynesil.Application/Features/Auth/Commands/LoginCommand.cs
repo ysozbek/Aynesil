@@ -107,6 +107,9 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
             throw Rejected(user, req.IpAddress, MsgKeys.Auth.AccountDisabled);
         if (lockedOut)
             throw Rejected(user, req.IpAddress, MsgKeys.Auth.AccountLocked);
+        // Askıya alınmış/kapatılmış kurumun kullanıcısı giremez (V57; kurum satırı RLS'li, fonksiyon SECURITY DEFINER).
+        if (!await CorporationIsActiveAsync(user.CorporationId, ct))
+            throw Rejected(user, req.IpAddress, MsgKeys.Auth.CorporationInactive);
 
         await _passwords.ResetFailedAttemptsAsync(user.Id, ct);
 
@@ -148,6 +151,11 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
         _logger.LogWarning("Login failed for an unknown username from {ClientIp}", clientIp);
         throw new AuthenticationFailedException(MsgKeys.Auth.InvalidCredentials);
     }
+
+    private Task<bool> CorporationIsActiveAsync(Guid corporationId, CancellationToken ct) =>
+        _db.Database
+            .SqlQueryRaw<bool>(@"SELECT iam.corporation_is_active({0}) AS ""Value""", corporationId)
+            .FirstAsync(ct);
 
     private AuthenticationFailedException Rejected(AuthUserRow user, string? clientIp, MsgKey reason)
     {
