@@ -412,9 +412,13 @@ async function closureFlows() {
       expectStatus('yazma', 'scheduling.removeSessionGoal (bağlı olmayan hedef → 404)', 'DELETE', `/scheduling/sessions/${sid}/goals/${gid}`,
         await http('DELETE', `/scheduling/sessions/${sid}/goals/${gid}`), [404], 'Rule.GoalNotInSession')
     }
-    // not yazmak için oturum açan kullanıcı bir eğitmen kaydına bağlı olmalı (ActingEducator): yönetici geçici bağlanır
+    // not yazmak için oturum açan kullanıcı bir eğitmen kaydına bağlı olmalı (ActingEducator). Demo yöneticisi kendi
+    // (ders vermeyen) eğitmen kaydına bağlıdır (demo-seed people.mjs); bağlı değilse geçici olarak bağlanır ve sonra çözülür.
     if (sid && ctx.adminUserId) {
-      const link = await write('yazma', 'educators.linkUserAccount (not yazarı)', 'PUT', `/educators/${ctx.educatorId}/user-account`, { userId: ctx.adminUserId })
+      const own = (await http('GET', `/educators/by-user/${ctx.adminUserId}`)).json?.data
+      const link = own?.id
+        ? { status: 200 }
+        : await write('yazma', 'educators.linkUserAccount (not yazarı)', 'PUT', `/educators/${ctx.educatorId}/user-account`, { userId: ctx.adminUserId })
       if (link.status < 300) {
         const n = await write('yazma', 'scheduling.writeNote', 'POST', `/scheduling/sessions/${sid}/notes`, { body: 'Smoke not', parentVisible: true })
         const note = n.json?.data
@@ -430,7 +434,7 @@ async function closureFlows() {
             await http('PUT', `/scheduling/sessions/${sid}/notes/${note.id}`, { body: 'x', parentVisible: false, rowVersion: note.rowVersion }), [400, 409, 422])
           void e
         }
-        await http('DELETE', `/educators/${ctx.educatorId}/user-account`)
+        if (!own?.id) await http('DELETE', `/educators/${ctx.educatorId}/user-account`)
       }
     } else if (sid) skip('scheduling.editNote', 'PUT', '/scheduling/sessions/{id}/notes/{noteId}', 'yönetici kullanıcı kimliği yok')
   } else skip('scheduling.removeSessionGoal / editNote', 'DELETE', '/scheduling/sessions/{id}/goals/{goalId}', 'ön koşul eksik')
