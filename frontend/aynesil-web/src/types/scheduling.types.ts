@@ -67,6 +67,8 @@ export interface CalendarEntryDto {
   endsAt: string
   isAllDay: boolean
   createdAt: string
+  /** Yalnızca oluşturma yanıtında: "planlı seansları iptal et" seçildiyse iptal edilen seans sayısı. */
+  cancelledSessionCount?: number
 }
 
 export interface CreateCalendarEntryPayload {
@@ -77,6 +79,8 @@ export interface CreateCalendarEntryPayload {
   startsAt: string
   endsAt: string
   isAllDay: boolean
+  /** Aralıktaki planlı seansları iptal et (gerekçe: kaydın adı). */
+  cancelPlannedSessions?: boolean
 }
 
 // ── Recurring Schedules ────────────────────────────────────────────────────────

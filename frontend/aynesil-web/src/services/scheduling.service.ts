@@ -88,6 +88,11 @@ export const schedulingService = {
       `/scheduling/calendar-entries${qs({ campusId, from, to })}`
     ),
 
+  getCalendarEntryImpact: (from: string, to: string, campusId?: string) =>
+    apiService.get<{ plannedSessionCount: number }>(
+      `/scheduling/calendar-entries/impact${qs({ from, to, campusId })}`
+    ),
+
   createCalendarEntry: (payload: CreateCalendarEntryPayload) =>
     apiService.post<CalendarEntryDto>('/scheduling/calendar-entries', payload),
 

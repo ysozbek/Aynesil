@@ -85,6 +85,20 @@ async function doApplyDiscount() {
   }
 }
 
+const removeDiscountTarget = ref<string | null>(null)
+const removeDiscountError = ref('')
+
+async function doRemoveDiscount() {
+  if (!removeDiscountTarget.value) return
+  removeDiscountError.value = ''
+  try {
+    await store.removeDiscount(invoiceId, removeDiscountTarget.value)
+    removeDiscountTarget.value = null
+  } catch (e: unknown) {
+    removeDiscountError.value = (e as Error).message
+  }
+}
+
 async function removeLine(lineId: string) {
   await store.removeInvoiceLine(invoiceId, lineId)
 }
@@ -217,8 +231,15 @@ function printInvoice() {
             <ul class="divide-y divide-border text-sm">
               <li v-for="d in invoice.discounts" :key="d.id" class="px-3 py-2 flex items-start justify-between gap-3">
                 <span class="text-muted-foreground">{{ d.reason || '—' }}</span>
-                <span class="font-mono text-red-600 whitespace-nowrap">
-                  {{ d.isPercentage ? '%' + d.value : '-' + formatCurrency(d.value, invoice.currency) }}
+                <span class="flex items-center gap-3">
+                  <span class="font-mono text-red-600 whitespace-nowrap">
+                    {{ d.isPercentage ? '%' + d.value : '-' + formatCurrency(d.value, invoice.currency) }}
+                  </span>
+                  <button
+                    v-if="can(Permissions.Discounts.Apply) && invoice.status === 'draft'"
+                    @click="removeDiscountError = ''; removeDiscountTarget = d.id"
+                    class="text-xs text-red-500 hover:underline"
+                  >{{ t('finance.invoice.discount.remove') }}</button>
                 </span>
               </li>
             </ul>
@@ -313,6 +334,16 @@ function printInvoice() {
         </div>
       </div>
     </div>
+
+    <ConfirmModal
+      :open="!!removeDiscountTarget"
+      :title="t('finance.invoice.discount.removeTitle')"
+      :message="removeDiscountError || t('finance.invoice.discount.removeMessage')"
+      :confirm-label="t('finance.invoice.discount.remove')"
+      :loading="store.saving"
+      @confirm="doRemoveDiscount"
+      @cancel="removeDiscountTarget = null"
+    />
 
     <ConfirmModal
       :open="issueModal"

@@ -107,6 +107,8 @@
   <data name="Rule.CurrentPasswordIncorrect" xml:space="preserve"><value>Mevcut parola hatalı.</value></data>
   <data name="Rule.DiscountNeedsDraftInvoice" xml:space="preserve"><value>İndirimler yalnızca taslak faturalara uygulanabilir.</value></data>
   <data name="Rule.DiscountExceedsSubtotal" xml:space="preserve"><value>Toplam indirim, fatura ara toplamını aşamaz.</value></data>
+  <data name="Rule.MeetingOutcomeCancelled" xml:space="preserve"><value>İptal edilmiş toplantıya sonuç eklenemez ya da sonucu düzenlenemez.</value></data>
+  <data name="Rule.DiscountRemoveNeedsDraftInvoice" xml:space="preserve"><value>İndirim yalnızca taslak faturadan kaldırılabilir.</value></data>
   <data name="Rule.HierarchyAlreadyEnded" xml:space="preserve"><value>Bu denetim ilişkisi zaten sona ermiş.</value></data>
   <data name="Rule.HierarchyEndBeforeStart" xml:space="preserve"><value>Bitiş tarihi, ilişkinin başlangıç tarihinden önce olamaz.</value></data>
   <data name="Rule.EducatorAlreadyAtScope" xml:space="preserve"><value>Eğitimci zaten bu kapsamda atanmış.</value></data>

@@ -378,11 +378,15 @@ public sealed class RecordMeetingOutcomeCommandHandler
     {
         var corporationId = _tenant.RequireCorporationId();
 
-        var meetingExists = await _db.Meetings
-            .AnyAsync(m => m.Id == req.MeetingId && m.CorporationId == corporationId, ct);
+        var meetingStatus = await _db.Meetings
+            .Where(m => m.Id == req.MeetingId && m.CorporationId == corporationId)
+            .Select(m => m.Status)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
 
-        if (!meetingExists)
-            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
+        // Tamamlanmış toplantıya sonuç girilebilir; iptal edilmişe girilemez.
+        if (meetingStatus == "cancelled")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingOutcomeCancelled);
 
         var outcome = MeetingOutcome.Create(
             corporationId, req.MeetingId,
@@ -429,6 +433,11 @@ public sealed class UpdateMeetingOutcomeCommandHandler
         var outcome = await _db.MeetingOutcomes
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "MeetingOutcome"));
+
+        var meetingCancelled = await _db.Meetings
+            .AnyAsync(m => m.Id == outcome.MeetingId && m.Status == "cancelled", ct);
+        if (meetingCancelled)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.MeetingOutcomeCancelled);
 
         outcome.Update(req.Summary, req.Decisions);
         await _db.SaveChangesAsync(ct);

@@ -103,3 +103,48 @@ public sealed class ApplyDiscountCommandHandler
         }
     }
 }
+
+// ── RemoveDiscountCommand ─────────────────────────────────────────────────────
+
+/// <summary>Taslak faturaya uygulanmış indirimi kaldırır; yalnızca draft (aksi 409).</summary>
+public record RemoveDiscountCommand(Guid Id) : IRequest;
+
+public sealed class RemoveDiscountCommandHandler : IRequestHandler<RemoveDiscountCommand>
+{
+    private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
+
+    public RemoveDiscountCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
+
+    public async Task Handle(RemoveDiscountCommand req, CancellationToken ct)
+    {
+        var corporationId = _tenant.RequireCorporationId();
+
+        var discount = await _db.Discounts
+            .FirstOrDefaultAsync(d => d.CorporationId == corporationId && d.Id == req.Id, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Discount"));
+
+        if (!discount.InvoiceId.HasValue)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.DiscountRemoveNeedsDraftInvoice);
+
+        var invoice = await _db.Invoices
+            .Include(i => i.Lines)
+            .Include(i => i.Discounts)
+            .FirstOrDefaultAsync(i => i.CorporationId == corporationId && i.Id == discount.InvoiceId.Value, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Invoice"));
+
+        if (invoice.Status != "draft")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.DiscountRemoveNeedsDraftInvoice);
+
+        var tracked = invoice.Discounts.First(d => d.Id == discount.Id);
+        invoice.Discounts.Remove(tracked);
+        _db.Discounts.Remove(tracked);
+        invoice.RecalculateTotals();
+
+        await _db.SaveChangesAsync(ct);
+    }
+}

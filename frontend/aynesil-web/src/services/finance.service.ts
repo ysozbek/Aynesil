@@ -198,6 +198,9 @@ export const financeService = {
   createDiscount: (payload: CreateDiscountPayload) =>
     apiService.post<DiscountDto>('/payments/discounts', payload),
 
+  removeDiscount: (id: string) =>
+    apiService.delete(`/payments/discounts/${id}`),
+
   // ── Scholarships ──────────────────────────────────────────────────────────
 
   listScholarships: (query: ScholarshipListQuery) =>

@@ -125,11 +125,12 @@ export const useSchedulingStore = defineStore('scheduling', () => {
     }
   }
 
-  async function createCalendarEntry(payload: CreateCalendarEntryPayload) {
+  async function createCalendarEntry(payload: CreateCalendarEntryPayload): Promise<CalendarEntryDto> {
     saving.value = true
     try {
       const res = await schedulingService.createCalendarEntry(payload)
-      if (!res.success) throw new Error(res.message ?? 'Takvim kaydı oluşturulamadı.')
+      if (!res.success || !res.data) throw new Error(res.message ?? 'Takvim kaydı oluşturulamadı.')
+      return res.data
     } finally {
       saving.value = false
     }

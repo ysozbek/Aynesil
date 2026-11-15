@@ -86,6 +86,16 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
 
+  async function removeDiscount(invoiceId: string, discountId: string) {
+    saving.value = true
+    try {
+      await financeService.removeDiscount(discountId)
+      await fetchInvoice(invoiceId)
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function removeInvoiceLine(id: string, lineId: string) {
     saving.value = true
     try {
@@ -127,7 +137,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
   return {
     invoiceList, currentInvoice, loading, saving, error,
     fetchInvoices, fetchInvoice, createInvoice,
-    addInvoiceLine, removeInvoiceLine, applyDiscount,
+    addInvoiceLine, removeInvoiceLine, applyDiscount, removeDiscount,
     issueInvoice, voidInvoice,
     clearCurrent,
   }

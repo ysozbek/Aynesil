@@ -470,6 +470,21 @@ async function dailyOpsFlows() {
       record({ phase: 'yazma', id: 'meeting.updateOutcome (kalıcılık)', verb: 'GET', url: `/meetings/${meetingId}`, status: 200,
         outcome: got?.summary === 'Smoke özet (düzenlendi)' && got?.decisions === 'Smoke karar 2' ? 'ok' : 'type', note: got ? 'metin güncel' : 'sonuç okunamadı', mismatches: [] })
       expectStatus('yazma', 'meeting.updateOutcome (boş metin → reddedilir)', 'PUT', `/meetings/outcomes/${outcomeId}`, await http('PUT', `/meetings/outcomes/${outcomeId}`, { summary: ' ', decisions: null }), [400, 422])
+      // tamamlanmış toplantıda sonuç ekleme/düzenleme serbest
+      await write('yazma', 'meeting.complete (sonuç sonrası)', 'POST', `/meetings/${meetingId}/complete`)
+      await write('yazma', 'meeting.updateOutcome (tamamlanmış toplantı)', 'PUT', `/meetings/outcomes/${outcomeId}`, { summary: 'Tamamlandıktan sonra düzenlendi', decisions: null })
+      await write('yazma', 'meeting.recordOutcome (tamamlanmış toplantı)', 'POST', `/meetings/${meetingId}/outcomes`, { meetingId, summary: 'Sonradan eklenen', decisions: null })
+    }
+    // iptal edilmiş toplantıda kapalı
+    const mc = await http('POST', '/meetings', { campusId: ctx.campusId, title: `Smoke İptal ${RUN}`, location: 'Oda', scheduledAt: at(6, 10), endsAt: at(6, 11) })
+    const cid = idOf(mc.json?.data)
+    if (cid) {
+      const oc2 = await http('POST', `/meetings/${cid}/outcomes`, { meetingId: cid, summary: 'İptal öncesi', decisions: null })
+      await http('POST', `/meetings/${cid}/cancel`)
+      expectStatus('yazma', 'meeting.recordOutcome (iptal edilmiş toplantı → reddedilir)', 'POST', `/meetings/${cid}/outcomes`,
+        await http('POST', `/meetings/${cid}/outcomes`, { meetingId: cid, summary: 'x', decisions: null }), [400, 409, 422], 'Rule.MeetingOutcomeCancelled')
+      if (oc2.json?.data?.id) expectStatus('yazma', 'meeting.updateOutcome (iptal edilmiş toplantı → reddedilir)', 'PUT', `/meetings/outcomes/${oc2.json.data.id}`,
+        await http('PUT', `/meetings/outcomes/${oc2.json.data.id}`, { summary: 'y', decisions: null }), [400, 409, 422], 'Rule.MeetingOutcomeCancelled')
     }
   } else skip('meeting.updateOutcome', 'PUT', '/meetings/outcomes/{id}', 'toplantı oluşmadı')
 
@@ -499,9 +514,12 @@ async function dailyOpsFlows() {
     const sch = gs.json?.data
     if (sch?.id) {
       const det = await write('yazma', 'finance.getScholarship', 'GET', `/payments/scholarships/${sch.id}`)
+      const approverBefore = det.json?.data?.approvedBy
       const upd = await write('yazma', 'finance.updateScholarship', 'PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: null, amount: 750, validFrom: day(0), validTo: day(300), note: 'Smoke burs (düzenlendi)', rowVersion: det.json?.data?.rowVersion })
       record({ phase: 'yazma', id: 'finance.updateScholarship (yüzde → sabit tutar)', verb: 'PUT', url: `/payments/scholarships/${sch.id}`, status: upd.status,
         outcome: upd.json?.data?.amount === 750 && upd.json?.data?.percentage == null ? 'ok' : 'type', note: `tutar=${upd.json?.data?.amount} yüzde=${upd.json?.data?.percentage}`, mismatches: [] })
+      record({ phase: 'yazma', id: 'finance.updateScholarship (onaylayan sabit kalır)', verb: 'PUT', url: `/payments/scholarships/${sch.id}`, status: upd.status,
+        outcome: upd.json?.data?.approvedBy === approverBefore ? 'ok' : 'type', note: `önce=${approverBefore} sonra=${upd.json?.data?.approvedBy}`, mismatches: [] })
       expectStatus('yazma', 'finance.updateScholarship (yüzde + tutar birlikte → reddedilir)', 'PUT', `/payments/scholarships/${sch.id}`,
         await http('PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: 10, amount: 100, validFrom: day(0), validTo: null, note: null, rowVersion: upd.json?.data?.rowVersion }), [400, 422])
       expectStatus('yazma', 'finance.updateScholarship (eski rowVersion → reddedilir)', 'PUT', `/payments/scholarships/${sch.id}`,
@@ -525,11 +543,22 @@ async function dailyOpsFlows() {
         await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: false, value: 900, reason: 'fazla' }), [400, 409, 422], 'Rule.DiscountExceedsSubtotal')
       expectStatus('yazma', 'finance.applyDiscount (yüzde > 100 → reddedilir)', 'POST', '/payments/discounts',
         await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: true, value: 101, reason: 'fazla' }), [400, 422])
+      const discs = (await http('GET', `/payments/invoices/${iid}`)).json?.data?.discounts ?? []
+      const fixed = discs.find(d => !d.isPercentage)
+      if (fixed) {
+        await write('yazma', 'finance.removeDiscount (taslak)', 'DELETE', `/payments/discounts/${fixed.id}`)
+        const back = (await http('GET', `/payments/invoices/${iid}`)).json?.data
+        record({ phase: 'yazma', id: 'finance.removeDiscount (toplam yeniden hesaplandı: 1000 - 100 = 900)', verb: 'GET', url: `/payments/invoices/${iid}`, status: 200,
+          outcome: back?.discountTotal === 100 && back?.grandTotal === 900 && back?.discounts?.length === 1 ? 'ok' : 'type', note: `indirim=${back?.discountTotal} toplam=${back?.grandTotal}`, mismatches: [] })
+      }
       if (ln.json?.data) {
         const cur = (await http('GET', `/payments/invoices/${iid}`)).json?.data
         await write('yazma', 'finance.issueInvoice (indirimli)', 'POST', `/payments/invoices/${iid}/issue`, { invoiceNo: `SMD-${RUN}`, rowVersion: cur?.rowVersion })
         expectStatus('yazma', 'finance.applyDiscount (kesilmiş fatura → reddedilir)', 'POST', '/payments/discounts',
           await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: true, value: 5, reason: 'geç' }), [400, 409, 422], 'Rule.DiscountNeedsDraftInvoice')
+        const left = (await http('GET', `/payments/invoices/${iid}`)).json?.data?.discounts?.[0]
+        if (left) expectStatus('yazma', 'finance.removeDiscount (kesilmiş fatura → 409)', 'DELETE', `/payments/discounts/${left.id}`,
+          await http('DELETE', `/payments/discounts/${left.id}`), [409], 'Rule.DiscountRemoveNeedsDraftInvoice')
       }
     }
   } else skip('finance.applyDiscount', 'POST', '/payments/discounts', 'öğrenci yok')
@@ -564,6 +593,35 @@ async function dailyOpsFlows() {
       }
     }
   } else skip('educator.endHierarchy', 'PATCH', '/educators/{id}/hierarchy/{edgeId}/end', 'eğitmen yok')
+
+  // 10) kapalı gün eklerken planlı seansları iptal et: sayı önizlenir, seçilmezse seans kalır, seçilirse gerekçe = kaydın adı
+  if (ctx.sessionTypeId && ctx.educatorId) {
+    const d2 = day(330), d3 = day(331)
+    const mk = async (d, t) => idOf((await http('POST', '/scheduling/sessions', {
+      sessionTypeId: ctx.sessionTypeId, startsAt: `${d}T${t}:00Z`, endsAt: `${d}T${t}:40:00Z`,
+      campusId: ctx.campusId, roomId: null, title: `Smoke Kapalı Gün ${RUN}`, isMakeup: false, participantStudentIds: [], educatorAssignments: [{ educatorId: ctx.educatorId, role: 'lead' }] })).json?.data)
+    const sA = await mk(d2, '10'), sB = await mk(d3, '10')
+    const imp = await write('yazma', 'scheduling.getCalendarEntryImpact', 'GET', `/scheduling/calendar-entries/impact?from=${encodeURIComponent(`${d2}T00:00:00Z`)}&to=${encodeURIComponent(nextDay(d2))}`)
+    record({ phase: 'yazma', id: 'scheduling.getCalendarEntryImpact (planlı seans sayısı ≥ 1)', verb: 'GET', url: '/scheduling/calendar-entries/impact', status: imp.status,
+      outcome: imp.json?.data?.plannedSessionCount >= 1 ? 'ok' : 'type', note: `sayı=${imp.json?.data?.plannedSessionCount}`, mismatches: [] })
+    // seçenek işaretsiz: seans kalır
+    const keep = await write('yazma', 'scheduling.createCalendarEntry (iptal seçeneği yok)', 'POST', '/scheduling/calendar-entries', { title: `Smoke Kapalı ${RUN} A`, entryType: 'closure', campusId: null, startsAt: `${d2}T00:00:00Z`, endsAt: nextDay(d2), isAllDay: true })
+    const stA = sA ? (await http('GET', `/scheduling/sessions/${sA}`)).json?.data : null
+    record({ phase: 'yazma', id: 'scheduling.createCalendarEntry (seçilmezse seans olduğu gibi kalır)', verb: 'GET', url: `/scheduling/sessions/${sA}`, status: 200,
+      outcome: keep.json?.data?.cancelledSessionCount === 0 && stA?.status === 'scheduled' ? 'ok' : 'type', note: `iptal=${keep.json?.data?.cancelledSessionCount} durum=${stA?.status}`, mismatches: [] })
+    // seçenek işaretli: iptal + gerekçe = ad; kayıt silinince seans geri gelmez
+    const cut = await write('yazma', 'scheduling.createCalendarEntry (planlı seansları iptal et)', 'POST', '/scheduling/calendar-entries', { title: `Smoke Kapalı ${RUN} B`, entryType: 'closure', campusId: null, startsAt: `${d3}T00:00:00Z`, endsAt: nextDay(d3), isAllDay: true, cancelPlannedSessions: true })
+    const stB = sB ? (await http('GET', `/scheduling/sessions/${sB}`)).json?.data : null
+    record({ phase: 'yazma', id: 'scheduling.createCalendarEntry (iptal edildi, gerekçe = kaydın adı)', verb: 'GET', url: `/scheduling/sessions/${sB}`, status: 200,
+      outcome: cut.json?.data?.cancelledSessionCount >= 1 && stB?.status === 'cancelled' && stB?.cancelReason === `Smoke Kapalı ${RUN} B` ? 'ok' : 'type', note: `iptal=${cut.json?.data?.cancelledSessionCount} durum=${stB?.status} gerekçe=${stB?.cancelReason}`, mismatches: [] })
+    if (cut.json?.data?.id) {
+      await http('DELETE', `/scheduling/calendar-entries/${cut.json.data.id}`)
+      const after = sB ? (await http('GET', `/scheduling/sessions/${sB}`)).json?.data : null
+      record({ phase: 'yazma', id: 'scheduling.deleteCalendarEntry (iptal edilen seans geri gelmez)', verb: 'DELETE', url: `/scheduling/calendar-entries/${cut.json.data.id}`, status: 200,
+        outcome: after?.status === 'cancelled' ? 'ok' : 'type', note: `durum=${after?.status}`, mismatches: [] })
+    }
+    if (keep.json?.data?.id) await http('DELETE', `/scheduling/calendar-entries/${keep.json.data.id}`)
+  } else skip('scheduling.getCalendarEntryImpact', 'GET', '/scheduling/calendar-entries/impact', 'ön koşul eksik')
   token = adminToken
 }
 

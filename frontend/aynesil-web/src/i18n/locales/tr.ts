@@ -1373,7 +1373,12 @@ const tr = {
       noBlock: 'Etkinlik yalnızca takvimde görünür; seans üretimini engellemez.',
       hint: 'Resmi tatil, kapalı gün ve dönem arası kayıtlarına denk gelen tarihler, tekrar eden plandan seans oluşturulurken atlanır. Önceden oluşturulmuş seanslar etkilenmez.',
       deleteTitle: 'Kaydı Sil',
-      deleteMessage: '"{name}" kaydını silmek istediğinize emin misiniz? Daha önce atlanan tarihler için seanslar kendiliğinden oluşmaz; planı yeniden oluşturabilirsiniz.',
+      deleteMessage: '"{name}" kaydını silmek istediğinize emin misiniz? Bu kayıt yüzünden iptal edilmiş seanslar geri gelmez, atlanan tarihler için seans da kendiliğinden oluşmaz; gerekirse planı yeniden oluşturun.',
+      impact: 'Bu tarihlere denk gelen {count} planlı seans var.',
+      cancelPlanned: 'Bu seansları iptal et (iptal gerekçesi: kaydın adı)',
+      cancelPlannedHint: 'Seçmezseniz seanslar olduğu gibi kalır. Yapılmış seanslara dokunulmaz.',
+      created: 'Kayıt eklendi.',
+      createdCancelled: 'Kayıt eklendi; {count} planlı seans iptal edildi.',
     },
   },
 
@@ -1471,8 +1476,11 @@ const tr = {
     invoice: {
       discount: {
         apply: 'İndirim Uygula',
+        remove: 'Kaldır',
+        removeTitle: 'İndirimi Kaldır',
+        removeMessage: 'Bu indirim faturadan kaldırılsın mı? Toplamlar yeniden hesaplanır. Yalnızca taslak faturada yapılabilir.',
         applied: 'Uygulanan İndirimler',
-        hint: 'İndirim yalnızca taslak faturaya uygulanır ve toplam indirim ara toplamı aşamaz. Fatura kesildikten sonra indirim eklenemez.',
+        hint: 'İndirim yalnızca taslak faturaya uygulanır ve toplam indirim ara toplamı aşamaz. Fatura kesildikten sonra indirim eklenemez ya da kaldırılamaz.',
         percentage: 'Yüzde (%)',
         fixed: 'Sabit tutar',
         percentValue: 'İndirim oranı (%)',

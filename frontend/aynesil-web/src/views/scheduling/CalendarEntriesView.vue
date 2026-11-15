@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSchedulingStore } from '@/stores/scheduling.store'
 import { campusService } from '@/services/campus.service'
+import { schedulingService } from '@/services/scheduling.service'
 import { usePermission } from '@/composables/usePermission'
 import { Permissions } from '@/constants/permissions'
 import { startOfDayIso, localInputToIso, toLocalDateString } from '@/utils/datetime'
@@ -77,6 +78,8 @@ const form = reactive({
 const errors = reactive<Record<string, string>>({})
 
 function openCreate() {
+  notice.value = ''
+  cancelPlanned.value = false
   const today = toLocalDateString()
   Object.assign(form, {
     title: '', entryType: 'holiday', campusId: campusFilter.value, isAllDay: true,
@@ -103,28 +106,60 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
+/** Tüm gün: yerel gün başı → bitiş gününü kapsayacak şekilde ertesi günün 00:00'ı. Geçersizse null. */
+function computeRange(): { startsAt: string; endsAt: string } | null {
+  try {
+    if (form.isAllDay) {
+      if (!form.startDate || !form.endDate || form.endDate < form.startDate) return null
+      const next = new Date(`${form.endDate}T00:00:00`)
+      next.setDate(next.getDate() + 1)
+      return { startsAt: startOfDayIso(form.startDate), endsAt: next.toISOString() }
+    }
+    if (!form.startsAt || !form.endsAt || form.endsAt <= form.startsAt) return null
+    return { startsAt: localInputToIso(form.startsAt), endsAt: localInputToIso(form.endsAt) }
+  } catch {
+    return null
+  }
+}
+
+// Kayıt eklenmeden önce: aralığa denk gelen planlı seans sayısı ve "iptal et" seçeneği (yalnızca seans engelleyen türlerde).
+const plannedCount = ref(0)
+const cancelPlanned = ref(false)
+let impactSeq = 0
+
+watch(
+  () => [showForm.value, form.entryType, form.campusId, form.isAllDay, form.startDate, form.endDate, form.startsAt, form.endsAt],
+  async () => {
+    plannedCount.value = 0
+    const range = showForm.value && blocksSessions.value ? computeRange() : null
+    if (!range) { cancelPlanned.value = false; return }
+    const seq = ++impactSeq
+    try {
+      const res = await schedulingService.getCalendarEntryImpact(range.startsAt, range.endsAt, form.campusId || undefined)
+      if (seq === impactSeq && res.success && res.data) plannedCount.value = res.data.plannedSessionCount
+    } catch { /* sayı gösterilemezse seçenek sunulmaz */ }
+    if (plannedCount.value === 0) cancelPlanned.value = false
+  },
+)
+
+const notice = ref('')
+
 async function submit() {
   if (!validate()) return
-  // Tüm gün: yerel gün başı → bitiş gününü kapsayacak şekilde ertesi günün 00:00'ı.
-  let startsAt: string
-  let endsAt: string
-  if (form.isAllDay) {
-    startsAt = startOfDayIso(form.startDate)
-    const next = new Date(`${form.endDate}T00:00:00`)
-    next.setDate(next.getDate() + 1)
-    endsAt = next.toISOString()
-  } else {
-    startsAt = localInputToIso(form.startsAt)
-    endsAt = localInputToIso(form.endsAt)
-  }
+  const range = computeRange()
+  if (!range) return
   try {
-    await store.createCalendarEntry({
+    const created = await store.createCalendarEntry({
       title: form.title.trim(),
       entryType: form.entryType,
       campusId: form.campusId || undefined,
-      startsAt, endsAt,
+      startsAt: range.startsAt, endsAt: range.endsAt,
       isAllDay: form.isAllDay,
+      cancelPlannedSessions: cancelPlanned.value && plannedCount.value > 0,
     })
+    notice.value = created.cancelledSessionCount
+      ? t('scheduling.calendarEntries.createdCancelled', { count: created.cancelledSessionCount })
+      : t('scheduling.calendarEntries.created')
     showForm.value = false
     await load()
   } catch (e: unknown) {
@@ -183,6 +218,7 @@ const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-transparent focu
     </div>
 
     <p class="mb-3 text-xs text-muted-foreground">{{ t('scheduling.calendarEntries.hint') }}</p>
+    <div v-if="notice" class="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800 mb-4">{{ notice }}</div>
     <div v-if="loadError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">{{ loadError }}</div>
 
     <DataTable :columns="columns" :rows="store.calendarEntries" :loading="store.loading">
@@ -232,6 +268,14 @@ const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-transparent focu
             <option value="">{{ t('scheduling.calendarEntries.wholeCorporation') }}</option>
             <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
+        </div>
+        <div v-if="blocksSessions && plannedCount > 0" class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm space-y-2">
+          <p class="text-amber-900">{{ t('scheduling.calendarEntries.impact', { count: plannedCount }) }}</p>
+          <label class="flex items-start gap-2 text-amber-900">
+            <input type="checkbox" v-model="cancelPlanned" class="rounded mt-0.5" />
+            <span>{{ t('scheduling.calendarEntries.cancelPlanned') }}</span>
+          </label>
+          <p class="text-xs text-amber-800">{{ t('scheduling.calendarEntries.cancelPlannedHint') }}</p>
         </div>
         <label class="flex items-center gap-2 text-sm">
           <input type="checkbox" v-model="form.isAllDay" class="rounded" />

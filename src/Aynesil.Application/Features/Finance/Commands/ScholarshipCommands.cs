@@ -163,7 +163,7 @@ public sealed class UpdateScholarshipCommandHandler
             req.ScholarshipTypeId,
             req.Percentage, req.Amount,
             req.ValidFrom, req.ValidTo,
-            _currentUser.UserId, req.Note);
+            scholarship.ApprovedBy, req.Note); // onaylayan sabit kalır; düzenleyen audit_log'dadır
 
         await _db.SaveChangesAsync(ct);
 

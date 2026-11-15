@@ -476,6 +476,15 @@ public sealed class PaymentsController : BaseController
         return CreatedResult(result, null);
     }
 
+    [HttpDelete("discounts/{id:guid}")]
+    [HasPermission(Permissions.Discounts.Apply)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemoveDiscount(Guid id, CancellationToken ct)
+    {
+        await Sender.Send(new RemoveDiscountCommand(id), ct);
+        return NoContentResult();
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // SCHOLARSHIPS
     // ══════════════════════════════════════════════════════════════════════════

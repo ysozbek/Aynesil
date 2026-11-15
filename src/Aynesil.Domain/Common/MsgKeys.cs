@@ -226,6 +226,8 @@ public static class MsgKeys
         public static readonly MsgKey MeetingCancelCompleted = new("Rule.MeetingCancelCompleted");
         public static readonly MsgKey MeetingCompleteCancelled = new("Rule.MeetingCompleteCancelled");
         public static readonly MsgKey MeetingUpdateCancelled = new("Rule.MeetingUpdateCancelled");
+        public static readonly MsgKey MeetingOutcomeCancelled = new("Rule.MeetingOutcomeCancelled");
+        public static readonly MsgKey DiscountRemoveNeedsDraftInvoice = new("Rule.DiscountRemoveNeedsDraftInvoice");
         public static readonly MsgKey MenuItemHasChildren = new("Rule.MenuItemHasChildren");
         public static readonly MsgKey NoAccessToEntity = new("Rule.NoAccessToEntity");
         public static readonly MsgKey NotificationBodyUnresolved = new("Rule.NotificationBodyUnresolved");

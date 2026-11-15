@@ -139,6 +139,7 @@
   <data name="Entity.RolePermission" xml:space="preserve"><value>rol yetkisi</value></data>
   <data name="Entity.Room" xml:space="preserve"><value>oda</value></data>
   <data name="Entity.Scholarship" xml:space="preserve"><value>burs</value></data>
+  <data name="Entity.Discount" xml:space="preserve"><value>indirim</value></data>
   <data name="Entity.SchoolVisit" xml:space="preserve"><value>okul ziyareti</value></data>
   <data name="Entity.Session" xml:space="preserve"><value>seans</value></data>
   <data name="Entity.SessionNote" xml:space="preserve"><value>seans notu</value></data>

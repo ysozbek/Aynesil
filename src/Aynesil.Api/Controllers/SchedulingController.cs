@@ -111,6 +111,16 @@ public sealed class SchedulingController : BaseController
         => OkResult(await Sender.Send(
             new GetCalendarEntriesQuery(from, to, campusId), ct));
 
+    [HttpGet("calendar-entries/impact")]
+    [HasPermission(Permissions.Sessions.ManageCalendar)]
+    [ProducesResponseType(typeof(ApiResponse<CalendarEntryImpactDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCalendarEntryImpact(
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        [FromQuery] Guid? campusId = null,
+        CancellationToken ct = default)
+        => OkResult(await Sender.Send(new GetCalendarEntryImpactQuery(from, to, campusId), ct));
+
     [HttpPost("calendar-entries")]
     [HasPermission(Permissions.Sessions.ManageCalendar)]
     [ProducesResponseType(typeof(ApiResponse<CalendarEntryDto>), StatusCodes.Status201Created)]
@@ -120,7 +130,7 @@ public sealed class SchedulingController : BaseController
         var result = await Sender.Send(
             new CreateCalendarEntryCommand(
                 req.Title, req.EntryType,
-                req.StartsAt, req.EndsAt, req.IsAllDay, req.CampusId), ct);
+                req.StartsAt, req.EndsAt, req.IsAllDay, req.CampusId, req.CancelPlannedSessions), ct);
         return CreatedResult(result, $"/api/scheduling/calendar-entries/{result.Id}");
     }
 
@@ -656,7 +666,8 @@ public record CreateCalendarEntryRequest(
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     bool IsAllDay,
-    Guid? CampusId);
+    Guid? CampusId,
+    bool CancelPlannedSessions = false);
 
 // Recurring Schedules
 public record CreateRecurringScheduleRequest(

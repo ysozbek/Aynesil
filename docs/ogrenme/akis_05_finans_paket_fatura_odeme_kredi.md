@@ -17,10 +17,10 @@ Muhasebe ve Kurum Yöneticisi. Koordinatör Finans menüsünü görmez. Veli, iz
    - Para iadesi: ödemenin sayfasında **İade Et**; tutar ve gerekçe girilir. Talep `Finans → İade Talepleri`nde "Bekliyor" görünür; yetkili **İşleme al** ya da **Başarısız işaretle** der. İadeler silinmez.
    - Paketten vazgeçme: **Paketi İptal Et**.
    - Yanlış hak hareketi: silinmez, **Kredi Düzelt** ile ters kayıt girilir.
-7. **İndirim tanımla:** `Burslar` (yüzde ya da sabit tutar) ve `Promosyonlar` (kod, tarih aralığı, aktif/pasif). Bursun satırına tıklayınca **ayrıntısı** açılır; **Düzenle** ile tür, yüzde ya da tutar (ikisinden yalnızca biri), tarihler ve not güncellenir. Başkası aynı bursu arada değiştirdiyse uyarı çıkar, yenileyip tekrar deneyin.
+7. **İndirim tanımla:** `Burslar` (yüzde ya da sabit tutar) ve `Promosyonlar` (kod, tarih aralığı, aktif/pasif). Bursun satırına tıklayınca **ayrıntısı** açılır; **Düzenle** ile tür, yüzde ya da tutar (ikisinden yalnızca biri), tarihler ve not güncellenir. Başkası aynı bursu arada değiştirdiyse uyarı çıkar, yenileyip tekrar deneyin. Düzenleme **onaylayan kişiyi değiştirmez**; kimin düzenlediği işlem geçmişinde (`audit_log`) durur.
 
 ## Dikkat
-- **İndirim yalnızca taslak faturaya uygulanır** ve toplam indirim (yüzde + sabit) fatura ara toplamını aşamaz. Fatura kesildikten sonra indirim eklenemez. Uygulanan indirimi geri alan bir ekran/uç yoktur; yanlış girildiyse o taslağı kullanmayıp yeni taslak açın.
+- **İndirim yalnızca taslak faturaya uygulanır** ve toplam indirim (yüzde + sabit) fatura ara toplamını aşamaz. Fatura kesildikten sonra indirim eklenemez. Yanlış girilen indirim, fatura sayfasındaki **Uygulanan İndirimler** listesinde indirimin yanındaki **Kaldır** ile geri alınır (toplamlar yeniden hesaplanır); bu yalnızca taslakta yapılır, kesilmiş faturada sistem reddeder.
 - Ödenmiş fatura doğrudan iptal edilemez: "Önce iade işlemi yapın." Fatura iptal edilirken gerekçe her zaman zorunludur.
 - İade yalnızca onaylanmış ödeme için istenebilir ve kalan iade edilebilir tutarı aşamaz.
 - **Paketi İptal Et** sadece paketi kapatır; kalan seans haklarını sıfırlamaz ya da para iadesi yapmaz. İadeyi ayrıca yapmalısınız.
@@ -30,7 +30,7 @@ Muhasebe ve Kurum Yöneticisi. Koordinatör Finans menüsünü görmez. Veli, iz
 
 ## Kendin dene
 `demo_a`'da 3 paket tanımı, 8 öğrenci paketi, 8 fatura (taslak, kısmi, ödenmiş, iptal, kesilmiş), 6 ödeme ve 31 hak hareketi var.
-1. `muhasebe@demo-a.test` → `Faturalar`: taslakta **Faturayı Kes** (demo'daki bir taslakta "Kardeş indirimi (demo)" %10 indirimi hazırdır; yeni bir indirim eklemeyi ve ara toplamdan büyük sabit indirimin reddedildiğini deneyin); ödenmiş faturada **İptal Et**'i deneyip engeli görün.
+1. `muhasebe@demo-a.test` → `Faturalar`: taslakta **Faturayı Kes** (demo'daki bir taslakta "Kardeş indirimi (demo)" %10 indirimi hazırdır; yeni bir indirim eklemeyi, **Kaldır** ile geri almayı ve ara toplamdan büyük sabit indirimin reddedildiğini deneyin); ödenmiş faturada **İptal Et**'i deneyip engeli görün.
 2. `Ödemeler`: bekleyen ödemede **Onayla**; bağlı faturanın durumunun değiştiğini izleyin. Onaylı ödemede fazla tutarla **İade Et** deneyin.
 3. `Burslar`'da demo bursunun satırına tıklayıp ayrıntıyı görün, **Düzenle** ile yüzdeyi değiştirin. `Öğrenci Paketleri → Paket Ata`, sonra `Kredi Defteri`'nde yeni "Verildi" satırını görün.
 4. `koordinator@demo-a.test` ile girip Finans menüsünün görünmediğini kontrol edin.

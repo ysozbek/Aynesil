@@ -45,7 +45,8 @@ public record CalendarEntryDto(
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     bool IsAllDay,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    int CancelledSessionCount = 0);
 
 // ── Recurring Schedule DTOs ───────────────────────────────────────────────────
 

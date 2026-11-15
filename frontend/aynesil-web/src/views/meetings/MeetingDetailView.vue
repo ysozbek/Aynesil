@@ -36,8 +36,9 @@ const canEditMeeting = computed(() => {
   return s !== 'cancelled' && s !== 'completed' && can(Permissions.Meetings.Update)
 })
 
+// Tamamlanmış toplantıya da sonuç girilir/düzenlenir; yalnızca iptal edilmişte kapalıdır.
 const canManageOutcomes = computed(() =>
-  canEditMeeting.value && can(Permissions.Meetings.RecordOutcome)
+  meeting.value?.status !== 'cancelled' && can(Permissions.Meetings.RecordOutcome)
 )
 const canManageFollowUps = computed(() =>
   canEditMeeting.value && can(Permissions.Meetings.ManageFollowUps)
