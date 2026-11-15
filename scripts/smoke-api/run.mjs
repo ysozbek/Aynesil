@@ -861,6 +861,15 @@ async function guardianRound() {
       outcome: ok ? 'ok' : items.some(x => x.isFinalized === false) ? 'leak' : r.status >= 500 ? '5xx' : '4xx',
       note: ok ? 'beklenen: yalnızca kesinleşmiş rapor(lar) görünür' : `beklenen: ≥1 kesinleşmiş, taslak yok; gelen ${r.status}, ${items.length} rapor (${items.map(x => x.isFinalized ? 'kesinleşmiş' : 'TASLAK').join(', ')})`, mismatches: [] })
   }
+  // Portal BEP özeti: yalnızca onaylı/yürürlükteki ve veliye açık planlar (taslak/incelemede/kapalı gelmez)
+  for (const child of mine) {
+    const r = await http('GET', `/portal/students/${child.id ?? child.studentId}/bep`)
+    const plans = r.json?.data ?? []
+    const bad = plans.filter(p => !['approved', 'active'].includes(p.status))
+    record({ phase: 'izolasyon', id: `isolation.portal.bep (veli1 → ${child.firstName ?? ''})`, verb: 'GET', url: '/portal/students/{id}/bep', status: r.status,
+      outcome: bad.length ? 'leak' : r.status === 200 ? 'ok' : r.status >= 500 ? '5xx' : '4xx',
+      note: bad.length ? `onaysız plan veliye göründü: ${bad.map(p => p.status).join(', ')}` : `beklenen: yalnızca onaylı/aktif plan(lar) (${plans.length})`, mismatches: [] })
+  }
   // V55: portal seans geçmişinde yalnızca veliye görünür notlar gelir; düzenlenen notta editedAt dolu
   let sawEdited = false
   for (const child of mine) {

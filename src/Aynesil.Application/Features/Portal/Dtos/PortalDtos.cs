@@ -63,7 +63,9 @@ public record PortalEducationPlanDto(
     int Version,
     string Status,
     DateOnly? EffectiveFrom,
-    DateOnly? EffectiveTo);
+    DateOnly? EffectiveTo,
+    DateTimeOffset? ApprovedAt = null,
+    int GoalCount = 0);
 
 // ── Portal Goal Progress ──────────────────────────────────────────────────────
 

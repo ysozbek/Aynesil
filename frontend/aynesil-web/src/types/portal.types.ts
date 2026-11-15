@@ -92,6 +92,8 @@ export interface PortalEducationPlanDto {
   status: string
   effectiveFrom?: string
   effectiveTo?: string
+  approvedAt?: string | null
+  goalCount?: number
 }
 
 // ── Goal Progress ──────────────────────────────────────────────────────────────

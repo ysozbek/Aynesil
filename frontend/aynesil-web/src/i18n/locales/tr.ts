@@ -1806,6 +1806,7 @@ const tr = {
     },
     nav: {
       sessions: 'Seanslar',
+      bep: 'BEP Özeti',
       goals: 'Hedefler',
       packages: 'Paketler',
       documents: 'Belgeler',
@@ -1828,6 +1829,17 @@ const tr = {
       noUpcoming: 'Yaklaşan seans bulunmuyor.',
       notes: 'Eğitmen notları',
       noteEdited: 'düzenlendi',
+    },
+    bep: {
+      hint: 'Kurumun onayladığı ve sizinle paylaştığı bireysel eğitim planları burada görünür.',
+      untitled: 'Bireysel Eğitim Planı',
+      version: 'Sürüm {n}',
+      approvedOn: 'Onay tarihi',
+      goalCount: '{n} hedef',
+      current: 'Güncel',
+      period: 'Geçerlilik',
+      openEnded: 'süresiz',
+      none: 'Sizinle paylaşılmış onaylı bir plan bulunmuyor.',
     },
     goals: {
       total: 'Toplam Hedef',

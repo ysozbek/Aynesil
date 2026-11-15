@@ -274,14 +274,17 @@ public sealed class GetPortalEducationPlanQueryHandler
             return [];
 
         return await _db.EducationPlans.AsNoTracking()
+            // Onaylı ya da yürürlükteki (active) plan; veliye açma kuralı (MakeGuardianVisible) ikisine de izin verir.
+            // Taslak, incelemede, revize edilmekte ve kapanmış planlar gösterilmez.
             .Where(ep => ep.StudentId == req.StudentId
-                      && ep.Status == "approved"
+                      && (ep.Status == "approved" || ep.Status == "active")
                       && ep.GuardianVisible == true
                       && ep.DeletedAt == null)
             .OrderByDescending(ep => ep.EffectiveFrom)
             .Select(ep => new PortalEducationPlanDto(
                 ep.Id, ep.Title, ep.Version, ep.Status,
-                ep.EffectiveFrom, ep.EffectiveTo))
+                ep.EffectiveFrom, ep.EffectiveTo,
+                ep.ApprovedAt, ep.PlanGoals.Count))
             .ToListAsync(ct);
     }
 }

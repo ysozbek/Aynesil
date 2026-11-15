@@ -81,6 +81,11 @@
         <ChildGoalsTab :student-id="studentId" />
       </div>
 
+      <!-- BEP Tab -->
+      <div v-if="activeTab === 'bep'">
+        <ChildBepTab :student-id="studentId" />
+      </div>
+
       <!-- Packages Tab -->
       <div v-if="activeTab === 'packages'">
         <ChildPackagesTab :student-id="studentId" />
@@ -106,6 +111,7 @@ import { useParentPortalStore } from '@/stores/parentPortal.store'
 import { useI18n } from 'vue-i18n'
 import ChildSessionsTab from './tabs/ChildSessionsTab.vue'
 import ChildGoalsTab from './tabs/ChildGoalsTab.vue'
+import ChildBepTab from './tabs/ChildBepTab.vue'
 import ChildPackagesTab from './tabs/ChildPackagesTab.vue'
 import ChildDocumentsTab from './tabs/ChildDocumentsTab.vue'
 import ChildMeetingsTab from './tabs/ChildMeetingsTab.vue'
@@ -123,6 +129,7 @@ const availableTabs = computed(() => {
   if (!student) return []
   const tabs = []
   if (student.canViewSessions) tabs.push({ key: 'sessions', label: t('portal.nav.sessions'), icon: '📅' })
+  if (student.canViewPlan) tabs.push({ key: 'bep', label: t('portal.nav.bep'), icon: '📋' })
   if (student.canViewPlan) tabs.push({ key: 'goals', label: t('portal.nav.goals'), icon: '🎯' })
   if (student.canViewFinance) tabs.push({ key: 'packages', label: t('portal.nav.packages'), icon: '📦' })
   if (student.canViewReports) tabs.push({ key: 'documents', label: t('portal.nav.documents'), icon: '📄' })
