@@ -9,7 +9,7 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"); kalan **115** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"); kalan **100** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
@@ -49,17 +49,30 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | Akademik dönem: liste, oluştur, düzenle, güncel yap, sil | `GET/PUT/DELETE /api/education-plans/academic-periods/{id}`, `POST …/{id}/set-current` (+ mevcut `GET`/`POST` liste/oluştur) | Silme: eğitim planı bağlıysa `Rule.AcademicPeriodInUse`; **güncel dönem silinemez** (yeni: `Rule.AcademicPeriodCurrentDelete`, önce başka dönem güncel yapılır). Düzenleme `rowVersion` ister. | `/bep/academic-periods` (menü `plans-academic`: V31'de pasifti, **V54** ile açıldı ve yola hizalandı; eski `/education-plans/academic-periods` yönlendirilir) |
 | Taslak sözleşmeyi düzenleme ve silme | `PUT /api/legal/contracts/{id}`, `DELETE /api/legal/contracts/{id}` | **Yalnızca `draft`:** gönderilmiş/imzalı/aktif sözleşmede düzenleme 409 `Rule.ContractModifyStatus`, silme 409 `Rule.OnlyDraftContractDelete` (önceden düzenleme `sent` için de açıktı; sıkılaştırıldı). Düzenleme `rowVersion` ister; yeni veli sözleşmenin öğrencisine bağlı olmalı. Silme soft delete. | Sözleşme detayı → Düzenle / Sil (yalnızca taslakta görünür) |
 
+**Üçüncü tur — B'den A'ya taşınıp ekranı yapılanlar: kurumların günlük işi (2026-11-15):**
+
+| Akış | Uç(lar) | Kural | Ekran |
+|---|---|---|---|
+| Takvim kayıtları (tatil / kapalı gün / dönem arası / etkinlik): liste, oluştur, sil | `GET/POST /api/scheduling/calendar-entries`, `DELETE …/{id}` | Kurum geneli ya da kampüse özel; tüm gün veya saatli. Takvimin okul/kampüs/oda/eğitimci/öğrenci görünümlerinin hepsinde gösterilir (çok günlü kayıt her güne, "Tüm gün" satırı). **Tekrar eden plandan seans üretimi `holiday/closure/term_break` günlerini atlar** (kontrol edildi: **atlamıyordu**, eklendi) ve atlanan tarih sayısı mevcut sonuç mesajında yazılır (`BulkOperationResultDto.ClosureSkipped`: "{count} tarih, tatil/kapalı gün olduğu için atlandı."). `event` engellemez; sonradan girilen kayıt mevcut seanslara dokunmaz. | `/scheduling/calendar-entries` (takvim → "Tatil ve Kapalı Günler") |
+| Tekrar eden plan: toplu iptal | `POST /api/scheduling/recurring-schedules/{id}/bulk-cancel` | Tarih aralığı + zorunlu gerekçe (ekranda); `from ≤ to` sunucuda; ertelenmiş (`rescheduled`) seanslar da dahil; yapılmış/iptal seanslara dokunulmaz; plan yoksa 404. | Tekrar Eden Planlar → satır simgesi |
+| Tekrar eden plan: toplu oda değişikliği | `POST …/{id}/bulk-reassign-room` | Yalnızca oda değişir (`Session.ChangeRoom`; önceden seans "ertelendi" oluyordu), plan da yeni odayla devam eder, çakışan tarihler atlanır ve sayılır (`RoomConflictSkipped`); oda aktif olmalı. | aynı |
+| Tekrar eden plan: tek tarih istisnası | `POST …/{id}/exceptions` | skip/cancel/reschedule; o tarih için seans zaten üretilmişse istisna ona da uygulanır, etkilenen sayı döner (`NoContent` yerine `BulkOperationResultDto`); aynı tarihe ikinci istisna reddedilir. | aynı |
+| Seans detayında toplu yoklama | `POST /api/scheduling/sessions/{id}/attendance/bulk` | "Tümünü Geldi İşaretle", kayıtlı yoklama varsa onay; yalnızca seans katılımcıları (`Rule.ParticipantNotInSession`); aynı öğrenci tekrarında sonuncusu; ön yüz listeyi birleştirir (eskiden ezerdi). | Seans detayı → Devam |
+| Toplantı sonucu düzenleme | `PUT /api/meetings/outcomes/{outcomeId}` | Özet/karardan en az biri dolu; ekleme ile aynı görünürlük kuralı (toplantı tamamlanmış/iptal değilken). | Toplantı detayı → Sonuçlar → kalem |
+| Değerlendirme önerisi düzenleme | `PUT /api/assessment-sessions/{id}/recommendations/{recId}` | Yoğunluk + gerekçe; sunucu `rowVersion`'ı denetler (önceden denetlemiyordu) ve öneri yoldaki oturuma ait olmalı (404). | Değerlendirme detayı → Öneriler → kalem |
+| Burs ayrıntı ve düzenleme | `GET/PUT /api/payments/scholarships/{id}` | Yüzde ⊕ tutar; düzenleme doğrulayıcısı oluşturmayla hizalandı (bitiş ≥ başlangıç, not ≤ 1000); `rowVersion` → 409. | Burslar → satır → Ayrıntı/Düzenle |
+| Taslak faturaya indirim | `POST /api/payments/discounts` | Yalnızca `draft`; gerekçe ekranda zorunlu; **hata düzeltildi:** indirim toplamda iki kez sayılıyordu; yeni kural `Rule.DiscountExceedsSubtotal`. Geri alma ucu yoktur. | Fatura detayı → İndirim Uygula |
+| Veli portalı BEP özeti | `GET /api/portal/students/{studentId}/bep` | `CanViewPlan` bayrağına bağlı; **`approved` ve `active`** + veliye açık plan (önceden yalnızca `approved`: plan aktifleşince veliden kayboluyordu). | Portal → çocuk → BEP Özeti |
+| Oda takvimi görünümü | `GET /api/scheduling/calendar/room/{roomId}` | `room:read`; açık kurum süzgeci eklendi; kapalı gün kayıtları da gösterilir. | Takvim → "Oda" |
+| Eğitmen hiyerarşisinde ilişkiyi sonlandırma | `PATCH /api/educators/{id}/hierarchy/{edgeId}/end` | Kayıt silinmez (`active_to`); `{id}` ilişkinin alt eğitmeni olmalı (404); bitiş ≥ başlangıç; zaten sona ermiş ilişki tekrar sonlandırılamaz. | Eğitmen detayı → Hiyerarşi → Sonlandır |
+
+Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortasında biten haftanın günlerini üretmiyordu (ör. 1–14 Aralık penceresinde 14 Aralık Pazartesi atlanıyordu); indirim toplama iki kez yazılıyordu; portal BEP aktif planı gizliyordu; öneri güncellemede `rowVersion`/oturum denetimi yoktu.
+
 **Seans notu düzenlendi bilgisi (güncellendi, V55):** `scheduling.session_note`'a `edited_at timestamptz` + `edited_by uuid` eklendi; **yalnızca not metni değişince** dolar (salt görünürlük değişikliği düzenleme sayılmaz; o iz `core.audit_log`'ta). Personel ekranı ve **veli portalı** (çocuk detayı → Seanslar, seansın altında) "düzenlendi" gösterir. Portal yalnızca `parent_visible = true` ve silinmemiş notları döner, `CanViewSessions` kapalıysa seans listesiyle birlikte hiç göndermez (`PortalAccessHelper`); görünürlük sonradan kapatılan not portaldan kalkar. **V56 (grup seansı sızıntısı):** not `student_id`'ye bağlanır; portal yalnızca velinin kendi çocuğuna bağlı notları gösterir, `student_id` boş not (grup seansı dahil) hiçbir veliye gösterilmez; grup seansında veliye görünür not için öğrenci seçimi zorunludur (422 `Rule.SessionNoteStudentRequired`). Eski veri: tek katılımcılı seanslardaki görünür notlar bağlandı, grup/katılımcısız seanslardakiler kapatıldı (yerel veritabanında 12 bağlandı, 0 kapatıldı).
 
 **Kamera izleme ↔ rıza ilişkisi (doğrulandı):** veliye izleme yetkisi (`ViewingAuthorization`) verilirken öğrenci + **o veli** adına verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2). İzleme başlatılırken **yetkinin bağlı olduğu velinin kendi** rızası yeniden kontrol edilir; geri alınmışsa/süresi dolmuşsa izleme başlamaz (`Rule.CameraConsentWithdrawn`). Rıza geri alınınca o veliye + öğrenciye ait açık izleme yetkileri iptal edilir (gerekçe "Rıza geri alındı", V52 `revoked_reason`); diğer velinin yetkisi etkilenmez. (Önceki turda öğrenci düzeyinde kontrol ediliyordu ve geri alma yetkiyi iptal etmiyordu; sıkılaştırıldı.)
 
 ## 3. (B) Belirli bir modül kullanılırsa gerekli
-
-**AssessmentSessions** — 1 uç. Öneri güncelleme; öneri ekleme ekranlı.
-
-| Metot | Route | İzin |
-|---|---|---|
-| PUT | `/api/assessment-sessions/{id}/recommendations/{recommendationId}` | ProgramRecommendations.Update |
 
 **Auth** — 1 uç. Davet e-postasındaki bağlantıyı doğrular; e-posta sağlayıcısı bağlanmadan (CLAUDE.md) çalışmaz. Davet akışı açılınca ekran gerekir. (Yönetici hesapları bugün `/users` ile parolalı açılıyor.)
 
@@ -159,12 +172,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 |---|---|---|
 | GET | `/api/education-plans/reports/student-summary` | GoalReports.Read |
 
-**Educators** — 1 uç. Hiyerarşi bitiş tarihi; hiyerarşi ekle/listele ekranlı, bitirme eksik (organizasyon şeması kullanılırsa).
-
-| Metot | Route | İzin |
-|---|---|---|
-| PATCH | `/api/educators/{id}/hierarchy/{edgeId}/end` | Educators.ManageHierarchy |
-
 **Goals** — 1 uç. Hedef ilerleme okuması; ilerleme ekleme ekranlı, ayrı okuma uçu gereksiz kalmış.
 
 | Metot | Route | İzin |
@@ -184,12 +191,11 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 |---|---|---|
 | POST | `/api/legal/consents/{id}/evidence` | StudentConsents.AttachEvidence |
 
-**Meetings** — 2 uç. Toplantı listesi ham ucu (takvim/ayrıntı ekranlı) ve çıktı güncelleme.
+**Meetings** — 1 uç. Toplantı listesi ham ucu (takvim/ayrıntı ekranlı; sonuç güncelleme artık ekranda).
 
 | Metot | Route | İzin |
 |---|---|---|
 | GET | `/api/meetings` | Meetings.Read |
-| PUT | `/api/meetings/outcomes/{outcomeId}` | Meetings.RecordOutcome |
 
 **NotificationTriggers** — 3 uç. Bildirim tetikleyici yönetimi; e-posta/SMS sağlayıcısı bağlanınca anlamlı (şimdilik yalnızca log).
 
@@ -206,12 +212,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | POST | `/api/payments/credits/consume` | CreditLedger.Consume |
 | POST | `/api/payments/credits/refund` | CreditLedger.Grant |
 
-**Payments** — 1 uç. Taslak faturaya indirim: muhasebe isteğine bağlı; oluşturma akışı fatura detayında yok.
-
-| Metot | Route | İzin |
-|---|---|---|
-| POST | `/api/payments/discounts` | Discounts.Apply |
-
 **Payments** — 3 uç. Finans ayrıntı/rapor okuması; ekranlı akışları engellemiyor.
 
 | Metot | Route | İzin |
@@ -220,13 +220,11 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | GET | `/api/payments/refunds/{id}` | Refunds.Read |
 | GET | `/api/payments/reports/credit-usage` | FinanceReports.Read |
 
-**Payments** — 3 uç. Burs/promosyon ayrıntı-güncelleme-doğrulama; liste ve oluşturma ekranlı, bu uçlar ince ayar.
+**Payments** — 1 uç. Promosyon doğrulama: ince ayar (burs ayrıntı/düzenleme artık ekranda).
 
 | Metot | Route | İzin |
 |---|---|---|
 | GET | `/api/payments/promotions/validate` | Promotions.Read |
-| GET | `/api/payments/scholarships/{id}` | Scholarships.Read |
-| PUT | `/api/payments/scholarships/{id}` | Scholarships.Update |
 
 **Payments** — 1 uç. Ödeme başarısız işaretleme ödeme sağlayıcısı (gateway) bağlanınca anlamlı; elle tahsilatlarda gerekmiyor.
 
@@ -257,35 +255,6 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | Metot | Route | İzin |
 |---|---|---|
 | POST | `/api/performance-kpi/parent-feedback` | ParentFeedback.Submit |
-
-**Portal** — 1 uç. Portalda BEP özeti sayfası yok (hedef/rapor/seans sayfaları var).
-
-| Metot | Route | İzin |
-|---|---|---|
-| GET | `/api/portal/students/{studentId}/bep` | Portal.Access |
-
-**Scheduling** — 3 uç. Takvim kaydı (tatil/etkinlik) oluşturma-listeleme-silme: yalnızca takvim görünümünü etkiler, seans planlamayı engellemez; API ile yapılabiliyor.
-
-| Metot | Route | İzin |
-|---|---|---|
-| GET | `/api/scheduling/calendar-entries` | Sessions.Read |
-| POST | `/api/scheduling/calendar-entries` | Sessions.ManageCalendar |
-| DELETE | `/api/scheduling/calendar-entries/{id}` | Sessions.ManageCalendar |
-
-**Scheduling** — 1 uç. Oda takvimi görünümü; okul/kampüs/eğitmen/öğrenci takvimleri ekranlı.
-
-| Metot | Route | İzin |
-|---|---|---|
-| GET | `/api/scheduling/calendar/room/{roomId}` | Rooms.Read |
-
-**Scheduling** — 4 uç. Toplu işlem (iptal/oda/yoklama) ve tekrar istisnası; tekil işlemler ekranda var.
-
-| Metot | Route | İzin |
-|---|---|---|
-| POST | `/api/scheduling/recurring-schedules/{id}/bulk-cancel` | Sessions.BulkCancel |
-| POST | `/api/scheduling/recurring-schedules/{id}/bulk-reassign-room` | Sessions.BulkReassign |
-| POST | `/api/scheduling/recurring-schedules/{id}/exceptions` | Sessions.Update |
-| POST | `/api/scheduling/sessions/{sessionId}/attendance/bulk` | Attendance.Record |
 
 **Surveys** — 9 uç. Anket modülünün frontend servisi/ekranı hiç yok (yalnızca API). Anket kullanılacaksa tümü birlikte yapılmalı.
 

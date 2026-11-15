@@ -18,7 +18,8 @@ Portal iki ayrı adımdan oluşur ve **ikisi de** gerekir:
 3. **Çocuğu seç:** `Portal → Çocuklarım`; kayıtlı çocukların listesi. Birine tıklayınca çocuğun sayfası açılır.
 4. **Sekmeleri gez** (hangi sekmelerin göründüğünü kurum belirler):
    - **Seanslar:** yaklaşan seanslar ve geçmiş. Eğitmenin **Veliye Görünür** işaretlediği notlar geçmişteki seansın altında görünür; sonradan düzenlenmişse "düzenlendi" yazar. Dahili notlar görünmez; grup seansında yalnızca o çocuğa bağlanan notlar gelir, diğer çocuklar için yazılanlar görünmez.
-   - **Hedefler:** hedefler, ilerleme ve tamamlananlar (BEP/IEP kutusu açıksa; yalnızca veliye açılmış onaylı plan görünür).
+   - **BEP Özeti:** kurumun onayladığı ve veliye açtığı bireysel eğitim planı(ları): başlık, sürüm, onay tarihi, hedef sayısı, geçerlilik aralığı ve "Güncel" işareti (BEP/IEP kutusu açıksa). Yalnızca **Onaylandı** ya da **Aktif** ve "Veli Görüntülüyor" açık plan görünür; taslak, incelemedeki, revize edilen ve kapatılmış planlar görünmez.
+   - **Hedefler:** hedefler, ilerleme ve tamamlananlar (BEP/IEP kutusu açıksa).
    - **Paketler:** aktif paketler, son kullanım tarihi, kalan seans hakkı (Finans kutusu açıksa).
    - **Belgeler:** paylaşılan belgeler ve raporlar (Raporlar kutusu açıksa). Veli yalnızca **kesinleşmiş** gelişim raporlarını görür.
    - **Toplantılar:** katıldığı toplantılar.
@@ -29,7 +30,7 @@ Portal iki ayrı adımdan oluşur ve **ikisi de** gerekir:
 - Bir sekme görünmüyorsa genellikle kurum o kutuyu kapatmıştır (Akış 2 / veli kartı → Portal Erişimi). Hata değildir.
 - Başka çocuğa erişmeye çalışırsa "Bu öğrenciye erişim yetkiniz bulunmuyor." yanıtı alır.
 - Toplantılar sekmesi her veliye açıktır (izin kutusu yok).
-- Taslak gelişim raporu ya da veliye açılmamış BEP velide görünmez.
+- Taslak gelişim raporu ya da veliye açılmamış BEP velide görünmez. Plan revize edilmeye başlandığında (durum "Revize Edildi") yeniden onaylanana kadar velide kalkar.
 - Portalda anket doldurma, rapor indirme gibi ek işlevler görmedim [doğrulanacak].
 - Bir kullanıcı en fazla bir veli kaydına bağlanabilir. Veli hesabına verilen rol "portal:access" iznini içermiyorsa sistem hesabı açmaz ve nedenini söyler.
 - Veli hesabı yalnızca portalı görür; personel ekranlarına (öğrenciler vb.) erişemez.
@@ -37,6 +38,7 @@ Portal iki ayrı adımdan oluşur ve **ikisi de** gerekir:
 ## Kendin dene
 - `veli1@demo-a.test` (iki çocuk, kamera yetkili) ile girin; `Çocuklarım`'dan iki çocuğu da gezin.
 - `veli2@demo-a.test` (tek çocuk) ile girip daha az çocuk görünmesini karşılaştırın.
+- `veli1@demo-a.test` → ilk çocuk (Ada) → **BEP Özeti**: veliye açık onaylı plan görünür; ikinci çocukta plan yoktur ("Sizinle paylaşılmış onaylı bir plan bulunmuyor."). `admin@demo-a.test` ile bir planın "Veli Görüntülüyor" anahtarını kapatıp veliyle yeniden girerek planın kaybolduğunu görün.
 - Yönetici hesabıyla (`admin@demo-a.test`) bir velinin **Portal Erişimi**'nde bir kutuyu kapatıp veliyle yeniden girerek ilgili sekmenin kaybolduğunu görün.
 - Uçtan uca: yönetici olarak hesabı olmayan bir veli açın (ör. bir babayı), Portal Erişimi'nde uyarıyı görün, **Erişim Aç** deyin, sonra Genel Bakış → Kullanıcı hesabı → Yeni kullanıcı oluştur ile hesap açıp geçici şifreyi not edin. Çıkış yapıp o hesapla girin, Çocuklarım'da çocuğu görün, ardından Şifre Değiştir'i deneyin.
 

@@ -70,6 +70,9 @@ En geniş yetki sahibi. Yönetim ekranları `Platform Yönetimi` menüsündedir.
 6. **Eğitmen ve veli hesapları** → hesap, kişinin kendi kartından açılır ve bağlanır (bkz. 3.14). Bu iş kullanıcı yönetimi izni gerektirdiği için yöneticiye aittir.
 7. **Menü Yönetimi** → `Platform Yönetimi → Menü Yönetimi`: sistemle gelen menü öğeleri **salt okunurdur** (düzenlenemez, gizlenemez, silinemez). Yalnızca kurumunuza özel öğe ekleyebilirsiniz. Normalde dokunmanız gerekmez.
 
+8. **Eğitmen hiyerarşisi** → `Eğitimciler → eğitmen → Hiyerarşi`: **Denetçi Bağla**; ilişki bitince **Sonlandır** (bitiş tarihi seçilir, kayıt geçmişte "Sona erdi" olarak kalır), yanlış kurulanı **Kaldır** siler.
+9. **Toplantı sonucu** → toplantı sayfasında **Sonuç Ekle**; yazılan sonucu kalem simgesiyle düzenlersiniz. Sonuç ekleme/düzenleme toplantı *Planlandı* durumundayken yapılır; **Tamamla**/**İptal Et** sonrası düğmeler kalkar.
+
 **Yöneticinin yapamadıkları (AyNesil teknik ekibinin işi):** yeni kurum açmak, kurumu etkinleştirmek veya pasifleştirmek, ek modülleri açıp kapatmak, şifresini unutan bir kullanıcıya yeni geçici şifre vermek.
 
 ### 3.2 CRM / Satış ekibi (Aday takibi)
@@ -87,7 +90,7 @@ En geniş yetki sahibi. Yönetim ekranları `Platform Yönetimi` menüsündedir.
 `Değerlendirme` menüsünden:
 1. `Şablonlar` → kullanacağınız değerlendirme formlarını oluşturun (bir kere yapılır).
 2. `Oturumlar → Oturum Oluştur` → aday veya öğrenci için değerlendirme planlayın.
-3. Oturum detayında **Başlat**, `Puanlama` sekmesinden formu doldurup **Tamamla**; `Rapor` sekmesinden raporu hazırlayıp **Raporu Sonuçlandır**; `Öneriler` sekmesinden program önerisi ekleyin. Sonuçlandırılan rapor değiştirilemez.
+3. Oturum detayında **Başlat**, `Puanlama` sekmesinden formu doldurup **Tamamla**; `Rapor` sekmesinden raporu hazırlayıp **Raporu Sonuçlandır**; `Öneriler` sekmesinden program önerisi ekleyin; önerinin yoğunluğunu ve gerekçesini kalem simgesiyle sonradan düzenleyebilirsiniz. Sonuçlandırılan rapor değiştirilemez.
 
 ### 3.4 Eğitimciler / Terapistler
 Seans notu yazabilmeniz için kullanıcı hesabınızın **eğitmen kaydınıza bağlı** olması gerekir. Bağlı değilse not yazarken "bir yönetici bu kullanıcıyı eğitmen kaydına bağlamalıdır" uyarısı çıkar; yöneticinize söyleyin.
@@ -95,7 +98,7 @@ Seans notu yazabilmeniz için kullanıcı hesabınızın **eğitmen kaydınıza 
 1. `Seans Planlama → Takvim` → günlük, haftalık veya aylık seanslarınızı görün. Ay görünümünde bir güne tıklayınca o günün ayrıntısı açılır.
 2. Seansa tıklayın → öğrenci bilgisi, hedefler, önceki notlar açılır.
 3. Seans sonunda sırasıyla:
-   - **Devam** sekmesi (yoklama): her öğrenci için Katıldı / Gelmedi / Geç Geldi.
+   - **Devam** sekmesi (yoklama): her öğrenci için Katıldı / Gelmedi / Geç Geldi. Kalabalık grupta **Tümünü Geldi İşaretle** ile hepsini işaretleyip gelmeyenleri tek tek düzeltin (kayıtlı yoklaması olan öğrenci varsa sistem önce sorar).
    - **Hedefler** sekmesi: çalışılan hedefleri işaretleyin, ilerleme girin. Hedef listede yoksa **Hedef Ekle** ile öğrencinin aktif hedeflerinden ekleyin; yanlış eklenen hedefi kartındaki **✕** ile seanstan çıkarın (öğrencinin hedefi silinmez).
    - **Notlar** sekmesi → **Not Ekle**. Veli görsün istiyorsanız **Veliye Görünür**'ü işaretleyin (bkz. "Seans notları" aşağıda).
    - **Tamamla** (önce yoklama, sonra Tamamla; bkz. 8.5).
@@ -119,10 +122,11 @@ Seans notu yazabilmeniz için kullanıcı hesabınızın **eğitmen kaydınıza 
 6. Dönem içinde **İnceleme Ekle**; plan değişecekse **Revize Et**; iş bitince **Kapat**.
 
 ### 3.6 Sekreter / Resepsiyon (Planlama)
-1. `Seans Planlama` ana sayfası → bugünkü seanslar ve bekleyen telafi talepleri. `Seans Planlama → Takvim` → haftalık tablo.
+1. `Seans Planlama` ana sayfası → bugünkü seanslar ve bekleyen telafi talepleri. `Seans Planlama → Takvim` → haftalık tablo. Üstteki seçeneklerle **Okul, Kampüs, Oda, Eğitimci, Öğrenci** takvimine geçilir; **Oda** görünümü bir odanın doluluğunu gösterir (oda görme izni gerekir). Resmi tatil ve kapalı günler tüm görünümlerde mor satırdır.
 2. **Öğrenciyi programa ekleme:** `Programlar → Kayıtlar → Kayıt Oluştur` → öğrenciyi ve programı seçin. Öğrencinin kurumda açık bir kaydı yoksa kayıt açılır ve program eklenir. Kaydı zaten varsa yeni kayıt açılmaz; program mevcut kayda eklenir. Ayrıntı: 8.3.
 3. `Seans Planlama → Seanslar → Seans Oluştur` → tek seferlik seans. Kampüs, oda, öğrenci ve sorumlu eğitimci formda adıyla seçilir. Grup seansı için ek öğrenci ve eğitimciler seans detayındaki `Katılımcılar` sekmesinden eklenir.
-4. `Seans Planlama → Tekrarlayan Programlar` (sayfa: Tekrar Eden Planlar) → **Plan Oluştur** ile haftalık tekrar eden seans düzeni. Öğrenciyi, aldığı programı, hizmeti, sorumlu eğitimciyi, kampüsü, odayı, günleri ve saati seçersiniz; örneğin "Her Pazartesi 10:00, Ayşe, Dil ve Konuşma, Pınar Öğretmen, 2 Nolu Oda". Ardından listede **Seansları Oluştur** ile bir tarih aralığı verirsiniz. Sistem seansları öğrenci, eğitimci ve hizmetle birlikte üretir. Eğitimcinin veya odanın o saatte dolu olduğu tarihleri atlar ve kaç tarihin atlandığını söyler.
+4. `Seans Planlama → Tekrarlayan Programlar` (sayfa: Tekrar Eden Planlar) → **Plan Oluştur** ile haftalık tekrar eden seans düzeni. Öğrenciyi, aldığı programı, hizmeti, sorumlu eğitimciyi, kampüsü, odayı, günleri ve saati seçersiniz; örneğin "Her Pazartesi 10:00, Ayşe, Dil ve Konuşma, Pınar Öğretmen, 2 Nolu Oda". Ardından listede **Seansları Oluştur** ile bir tarih aralığı verirsiniz. Sistem seansları öğrenci, eğitimci ve hizmetle birlikte üretir. Eğitimcinin veya odanın o saatte dolu olduğu tarihleri ve **tatil / kapalı gün / dönem arası** kaydına denk gelen tarihleri atlar, her nedenle kaç tarihin atlandığını ayrı ayrı söyler. Plan satırındaki simgelerle: **Toplu İptal** (tarih aralığı ve zorunlu gerekçeyle henüz yapılmamış seansları iptal eder), **Toplu Oda Değişikliği** (seçilen tarihten itibaren odayı değiştirir; oda dolu olan tarihler atlanır, plan yeni odayla devam eder) ve **Tek Tarih İstisnası** (tek bir tarihi atla / iptal et / başka saate taşı; o tarih için seans üretilmişse ona da uygulanır).
+   - **Tatil ve kapalı günler:** `Seans Planlama → Takvim → Tatil ve Kapalı Günler` → **Kayıt Ekle** (başlık, tür: resmi tatil / kapalı gün / dönem arası / etkinlik, kampüs ya da tüm kampüsler, tarih aralığı). *Etkinlik* yalnızca takvimde görünür, seans üretimini engellemez. Kayıt sonradan girilirse önceden üretilmiş seanslara dokunmaz; onları Toplu İptal ile kapatın.
 5. `Seans Planlama → Odalar` → çakışma kontrolü için oda listesini güncel tutun.
 6. **Telafi** → `Seans Planlama → Telafi Seansları` (sayfa: Telafi Talepleri):
    - Bekleyen talebi **Onayla** ya da **Reddet** (gerekçeyle).
@@ -134,11 +138,11 @@ Seans notu yazabilmeniz için kullanıcı hesabınızın **eğitmen kaydınıza 
 1. `Finans → Paket Kataloğu` (sayfa: Paket Tanımları) → sattığınız seans paketlerini tanımlayın (ör. "20 Seanslık Bireysel Terapi Paketi"). **Paketi mutlaka bir programa bağlayın**; seans hakkı otomatik düşerken bu bağlantıya bakılır.
 2. Öğrenciye paket satışı: `Finans → Öğrenci Paketleri → Paket Ata`. Öğrenciyi ve paketi seçersiniz; seans hakkı sayısı, fiyat ve son kullanım tarihi paketten gelir. Kaydedince paketteki haklar öğrenciye yüklenir. Paket atamak ödeme almaz; ödemeyi ayrıca kaydedin.
 3. `Finans → Kredi Defteri` → öğrencinin kalan seans hakkı. Seans tamamlanınca otomatik düşer (bkz. 8.5); gerekirse buradan bonus verilir ya da düzeltme yapılır.
-4. `Finans → Faturalar → Fatura Oluştur` → fatura taslak açılır; satırları ekleyip **Faturayı Kes**. Kesilen fatura değiştirilemez.
+4. `Finans → Faturalar → Fatura Oluştur` → fatura taslak açılır; satırları ekleyip gerekirse **İndirim Uygula** (yüzde ya da sabit tutar, gerekçe zorunlu; toplam indirim ara toplamı aşamaz, uygulanan indirim geri alınmaz), sonra **Faturayı Kes**. Kesilen fatura değiştirilemez ve artık indirim alamaz.
    - **Fatura iptalinde gerekçe yazmak zorunludur.** Ödenmiş fatura doğrudan iptal edilemez; önce iade yapılır.
 5. `Finans → Tahsilatlar` (sayfa: Ödemeler) → **Ödeme Ekle** ile tahsilat kaydı; para gelince **Onayla**. **Finansal kayıtlar silinmez**; yanlış kayıt için düzeltme (ters kayıt) yapılır.
 6. **İade:** ödemenin sayfasında **İade Et** (tutar ve gerekçe). Talep `Finans → İadeler` (sayfa: İade Talepleri) ekranında "Bekliyor" görünür; yetkili **İşleme al** ya da **Başarısız işaretle** der. İadeler silinmez.
-7. `Finans → Burslar` ve `Finans → Kampanyalar` → indirim tanımları.
+7. `Finans → Burslar` ve `Finans → Kampanyalar` → indirim tanımları. Bursun satırına tıklayınca ayrıntı açılır, **Düzenle** ile tür, yüzde ya da tutar (yalnızca biri), tarihler ve not güncellenir.
 
 ### 3.8 Sözleşme, Rıza ve Raporlar
 Menü: `Sözleşme ve Rıza Yönetimi`.
@@ -200,7 +204,7 @@ Kurallar:
 ### 3.15 Veli Portalı
 Veliler ayrı bir arayüz görür: `Veli Portalı` menüsü (Özet, Çocuklarım, Bildirimler).
 1. `Özet` → yaklaşan seans, okunmamış bildirimler, paket bakiyesi, aktif hedef sayısı.
-2. `Çocuklarım` → çocuğa tıklayın → **Seanslar, Hedefler, Paketler, Belgeler, Toplantılar** sekmeleri.
+2. `Çocuklarım` → çocuğa tıklayın → **Seanslar, BEP Özeti, Hedefler, Paketler, Belgeler, Toplantılar** sekmeleri. **BEP Özeti** yalnızca kurumun onayladığı ve veliye açtığı planı gösterir (sürüm, onay tarihi, geçerlilik).
 3. `Bildirimler` → veliye iletilenler.
 4. Veli yalnızca kendi çocuklarının verisini ve yalnızca kurumun açtığı bölümleri görür. Kurum her çocuk için ayrı ayrı şu kutuları açar: **Oturumlar** (seanslar ve veliye görünür notlar), **Devam**, **Raporlar** (yalnızca kesinleşmiş gelişim raporları), **BEP/IEP** (yalnızca onaylı ve veliye açılmış plan), **Finans** (paketler), **Kamera**.
 5. Grup seansında veli yalnızca kendi çocuğuna bağlanmış notları görür; diğer çocuklar için yazılanlar ve iç notlar görünmez.
@@ -269,6 +273,11 @@ Arayüz şu an Türkçedir. Altyapı başka dilleri destekleyecek şekilde kurul
 | İmzalı sözleşmede değişiklik gerekiyor | Feshedip yeni sözleşme açın. Yalnızca taslak sözleşme düzenlenir. |
 | Akademik dönem silinmiyor | Güncel dönemse önce başka dönemi güncel yapın; BEP bağlıysa silinemez. |
 | Veli portalda göremiyor | Veli öğrenciye bağlı mı, kullanıcı hesabı açık mı, portal erişimi açık mı, kontrol edin. |
+| Tekrar eden plan tatil gününe seans üretti | Tatil kaydı plan üretilmeden **önce** girilmeliydi. Kaydı girin, o günün seansını Toplu İptal / **İptal Et** ile kapatın (kayıt sonradan eklenince eski seanslara dokunulmaz). |
+| Bir tarih "tatil/kapalı gün" diye atlandı ama seans gerekiyor | `Takvim → Tatil ve Kapalı Günler`'den kaydı silin (ya da türünü *Etkinlik* olarak yeniden girin), sonra planı yeniden **Seansları Oluştur** ile çalıştırın. |
+| Faturaya indirim eklenemiyor | Fatura taslak olmalı ve toplam indirim ara toplamı aşmamalı. Kesilmiş faturaya indirim eklenmez; uygulanan indirim geri alınmaz. |
+| Toplantıya sonuç eklenemiyor / düzenlenemiyor | Toplantı tamamlanmış ya da iptal edilmişse düğmeler görünmez; sonucu toplantıyı kapatmadan önce girin. |
+| Velinin BEP Özeti boş | Plan **Onaylandı/Aktif** ve "Veli Görüntülüyor" açık mı, velinin **BEP/IEP** kutusu açık mı? Revize edilen plan yeniden onaylanana kadar gizlenir. |
 | Seans hakkı düşmedi | Yoklamada "Geldi" seçili mi, öğrencinin seansın programına bağlı ve hakkı kalan paketi var mı, kontrol edin (8.5). |
 | KPI panosu boş | `Performans Anlık Görüntüleri → Dönem Hesapla`. |
 | "Bu kullanıcı adı alınmış" uyarısı | Kullanıcı adı başka bir kurumda da kullanılıyor olabilir. E-posta adresi kullanın. |

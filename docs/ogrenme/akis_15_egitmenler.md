@@ -11,7 +11,7 @@ Kurum Yöneticisi ve Koordinatör. Eğitmen diğer eğitmenleri görüntüleyebi
 2. **Uzmanlık ata:** eğitmen sayfasında uzmanlık alanı ekleyin; seans atamasında doğru kişiyi bulmak kolaylaşır. Yanlışı **kaldırın**.
 3. **Kampüs ata:** kampüse görevlendirin; görevi bittiğinde **Bitir** ile tarihini kapatın (kayıt silinmez).
 4. **Sertifika ekle:** sertifika bilgisi ekleyin, düzenleyin ya da silin.
-5. **Hiyerarşi kur:** eğitmeni bir üst sorumluya bağlayın ya da bağı kaldırın (kim kime rapor veriyor).
+5. **Hiyerarşi kur:** eğitmeni bir üst sorumluya bağlayın (kim kime rapor veriyor). İlişki bittiğinde **Sonlandır** deyin ve bitiş tarihini seçin: kayıt silinmez, listede **Sona erdi** rozetiyle ve tarih aralığıyla geçmişte kalır (ileri bir tarih seçerseniz o tarihe kadar sürer). Yanlış kurulmuş bir ilişkiyi tamamen silmek için **Kaldır** kullanılır. Sonlandırma hem üst hem ast listesinde görünür.
 6. **Müsaitlik:** `Eğitimciler →` eğitmen → Müsaitlik sayfası, eğitmenin hangi saatlerde çalıştığını gösterir [doğrulanacak: düzenlenebilir mi].
 7. **Pasife al:** ayrılan eğitmen **Pasifleştir** ile pasife alınır, gerekirse yeniden **Aktifleştir**. Geçmiş seanslar bozulmaz.
 8. **Kullanıcı hesabına bağla:** eğitmen sayfası → Genel Bakış → **Kullanıcı hesabı** bölümü. Üç seçenek var:
@@ -28,8 +28,10 @@ Kurum Yöneticisi ve Koordinatör. Eğitmen diğer eğitmenleri görüntüleyebi
 - Yeni hesaba vereceğiniz rol eğitmenin işini kapsamalı (seans notu, yoklama…). Kurumda hazır "Eğitmen" rolü yoksa önce Roller ekranından oluşturun (Akış 16).
 - Eğitmen sayfasında "hiyerarşi" ve "doluluk" gibi alt menüler seed'de vardı ama pasifleştirildi.
 
+- Hiyerarşide sona ermiş bir ilişki tekrar sonlandırılamaz; bitiş tarihi ilişkinin başlangıcından önce olamaz.
+
 ## Kendin dene
-`demo_a`'da 6 eğitmen var. `koordinator@demo-a.test` ile `Eğitimciler`'den birini açın; uzmanlık, kampüs, sertifika ve hiyerarşi bölümlerini gezin, yeni eğitmen ekleyip ona bir uzmanlık atayın. `egitmen@demo-a.test` ile girip yalnızca okuyabildiğinizi görün.
+`demo_a`'da 6 eğitmen var. Demo'da bir denetim ilişkisi sürüyor, biri sona ermiş durumdadır (`admin@demo-a.test` ile Eğitimciler'den Merve Çalışkan'ın Hiyerarşi sekmesinde astlara, Berk Altın'ın sekmesinde sürmekte olan, Seda Korkmaz'ın sekmesinde "Sona erdi" rozetli ilişkiye bakın); sürmekte olanı **Sonlandır** ile bitirin. `koordinator@demo-a.test` ile `Eğitimciler`'den birini açın; uzmanlık, kampüs, sertifika ve hiyerarşi bölümlerini gezin, yeni eğitmen ekleyip ona bir uzmanlık atayın. `egitmen@demo-a.test` ile girip yalnızca okuyabildiğinizi görün.
 
 Hesap bağı: `admin@demo-a.test` ile Merve Çalışkan'ı açın; Kullanıcı hesabı bölümünde `egitmen@demo-a.test` bağlı görünür. Yeni eklediğiniz eğitmende **Yeni kullanıcı oluştur** ile "Eğitmen" rolünde hesap açın, geçici şifreyi not edin, çıkış yapıp o hesapla girin ve bir seansa not yazın. Aynı kullanıcıyı ikinci bir eğitmene bağlamayı deneyip reddi görün.
 

@@ -104,6 +104,9 @@ async function newFlowExamples(ctx) {
     const existing = await c.get(`/scheduling/calendar-entries?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
     if (!existing.some((e) => e.title === 'Yılbaşı (resmi tatil)'))
       await c.post('/scheduling/calendar-entries', { title: 'Yılbaşı (resmi tatil)', entryType: 'holiday', startsAt: '2026-12-31T21:00:00Z', endsAt: '2027-01-01T21:00:00Z', isAllDay: true })
+    // Demo tekrar eden planı Çarşamba günleri çalışır (16 Kas 2026 – 14 Oca 2027); 30 Aralık Çarşamba → seans üretiminde atlanır.
+    if (!existing.some((e) => e.title === 'Yıl sonu bakım günü (kurum kapalı)'))
+      await c.post('/scheduling/calendar-entries', { title: 'Yıl sonu bakım günü (kurum kapalı)', entryType: 'closure', startsAt: '2026-12-29T21:00:00Z', endsAt: '2026-12-30T21:00:00Z', isAllDay: true })
     if (!existing.some((e) => e.title === 'Veli buluşması (demo)'))
       await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })

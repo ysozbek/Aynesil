@@ -26,6 +26,7 @@ Ekransız uçları kapatan işlerin API düzeyi kanıtı (her çalıştırmada `
 - **Telafi:** talep → onay → telafi seansı → ata → tamamla; başka öğrencinin seansı atanamaz (reddedilir).
 - **İade:** fatura → satır → kes → ödeme → onay → iade → işleme al; ikinci iade → başarısız işaretle (tekrar işlenemez).
 - **İzin bakiyesi:** tanımla (aynı eğitmen/tür/yıl ikinci kez reddedilir). **KPI tanımı:** oluştur → güncelle (geçersiz `spec` reddedilir).
+- **Günlük iş akışları (`dailyOpsFlows`):** takvim kaydı oluştur → listele → tekrar eden plandan seans üret (tatil günü atlanır, `closureSkipped = 1`) → sil (ikinci silme 404); toplu oda değişikliği (durum "scheduled" kalır), toplu iptal (ters aralık reddedilir), tek tarih istisnası (seans yoksa 0, varsa iptal; ikinci istisna reddedilir); toplu yoklama (tümü geldi → tek tek düzeltme; katılımcı olmayan öğrenci reddedilir); toplantı sonucu ekle → düzenle (boş metin reddedilir); değerlendirme önerisi düzenle (eski `rowVersion` ve başka oturum yolu reddedilir); burs ver → ayrıntı → düzenle; taslak faturaya indirim (toplam tek sayılır, tavanı aşan/kesilmiş fatura reddedilir); oda takvimi; eğitmen hiyerarşisini sonlandır (yanlış yol 404, ters tarih ve ikinci sonlandırma reddedilir, geçmişte görünür). Veli turunda ayrıca `portal.bep` yalnızca onaylı/aktif plan döner.
 
 ## Turlar
 1. **Yönetici turu** (demo_a `admin@demo-a.test`): hazırlık + yazma akışları + tüm GET'ler (portal hariç).

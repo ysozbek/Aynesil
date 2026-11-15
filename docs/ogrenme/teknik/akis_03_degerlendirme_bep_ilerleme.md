@@ -76,3 +76,6 @@
 - `egitmen@demo-a.test`: `Hedefler → Öğrenci Hedefleri`: 24 hedef/96 ilerleme kaydı var. Bir hedefe **İlerleme Kaydet**. BEP'te sadece görüntüler ve **İnceleme Ekle** yapar.
 - `Değerlendirme`: 1 şablon, 4 oturum — birini **Başlat → Yanıtları Kaydet → Tamamla → Rapor Oluştur → Raporu Sonuçlandır** sırasıyla geçin.
 - Veli etkisi: planı veli-görünür yapıp `veli1@demo-a.test` ile `Portal → Çocuklarım → Hedefler`'e bakın.
+
+### Değerlendirme önerisi düzenleme (3. tur)
+`PUT /api/assessment-sessions/{id}/recommendations/{recommendationId}` (`program_recommendation:update`; gövde `recommendedProgramId`, `recommendedIntensity`, `rationale`, `recommendedBy`, `rowVersion`). Ekran: `views/assessment/SessionDetailView.vue` → Öneriler → kalem; yalnızca yoğunluk ve gerekçe düzenlenir, program ve öneren olduğu gibi gönderilir. `UpdateProgramRecommendationCommandHandler` artık (1) `RowVersion` uyuşmazsa `Error.Concurrency`, (2) yoldaki oturum önerinin oturumuyla aynı değilse 404 verir (önceden ikisi de denetlenmiyordu). Testler: `DetailEditCommandTests`; smoke-api `assessment.updateRecommendation*`. Veli tarafı: portal yalnızca `approved`/`active` + `guardian_visible` planı gösterir (Akış 14).

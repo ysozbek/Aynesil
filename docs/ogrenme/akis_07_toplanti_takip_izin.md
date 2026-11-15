@@ -14,7 +14,7 @@ Kurum Yöneticisi ve Koordinatör. Eğitmen toplantıları yalnızca görür.
 1. **Toplantı planla:** `Toplantılar → Yeni Toplantı`; başlık, tür, başlangıç ve bitiş, konum ya da link.
 2. **Katılımcı ekle:** toplantı sayfasında **Katılımcı Ekle**; kurum çalışanı, veli, aday ya da dışarıdan biri olabilir. Toplantıdan sonra herkes için **Katıldı** ya da **Katılmadı** işaretlenir.
 3. **Toplantıyı kapat:** **Tamamla**, ya da toplantı olmayacaksa **İptal Et**.
-4. **Sonucu yaz:** **Sonuç Ekle**; özet ve alınan kararlar.
+4. **Sonucu yaz:** **Sonuç Ekle**; özet ve alınan kararlar (en az biri dolu olmalı). Yazılan sonucu satırın yanındaki **kalem simgesiyle** düzenlersiniz. Sonuç ekleme ve düzenleme, toplantı **Planlandı** durumundayken yapılır; **Tamamla** ya da **İptal Et** dedikten sonra bu düğmeler görünmez, bu yüzden sonucu toplantıyı kapatmadan önce girin.
 5. **Takip görevi aç:** **Görev Ekle**; yapılacak iş, sorumlu kişi, son tarih. Görevler "Açık → Devam Ediyor → Tamamlandı" ilerler.
 6. **Görevleri izle:** `Toplantılar → Takip Görevleri` tüm bekleyen ve gecikmiş görevleri toplar; iş bitince **Tamamla**. `Toplantılar → Takvim` aylık/haftalık görünümü verir.
 
@@ -23,7 +23,7 @@ Kurum Yöneticisi ve Koordinatör. Eğitmen toplantıları yalnızca görür.
 - Tamamlanmış ya da iptal edilmiş bir takip görevi yeniden açılamaz; yanlış kapattıysanız yeni görev açın.
 
 ### Kendin dene
-`koordinator@demo-a.test` ile `Toplantılar`'a girin (4 toplantı; görevler tamamlanmış, gecikmiş ve açık). `Takip Görevleri`'nde gecikmiş bir görevi **Tamamla**. Yeni toplantı açıp katılımcı ekleyin, **Tamamla** → **Sonuç Ekle** → **Görev Ekle** sırasını izleyin. `egitmen@demo-a.test` ile yalnızca görüntüleyebildiğinizi görün.
+`koordinator@demo-a.test` ile `Toplantılar`'a girin (4 toplantı; görevler tamamlanmış, gecikmiş ve açık). `Takip Görevleri`'nde gecikmiş bir görevi **Tamamla**. Yeni toplantı açıp katılımcı ekleyin, **Sonuç Ekle** → kalemle düzenleyin → **Görev Ekle** → **Tamamla** sırasını izleyin. `egitmen@demo-a.test` ile yalnızca görüntüleyebildiğinizi görün.
 
 ## B. İzin talebi → onay
 

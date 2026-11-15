@@ -68,3 +68,8 @@
 3. `Öğrenci Paketleri → Paket Ata` → `Kredi Defteri`'nde yeni `grant`; **Kredi Düzelt** ile −1.
 4. Akış 4'ün 1. denemesi (seans tamamla) ile `consume` satırının doğduğunu doğrulayın.
 5. `koordinator@demo-a.test` ile girip Finans menüsünün **görünmediğini** kontrol edin. Veli tarafı: `veli1@demo-a.test` → `Portal → (çocuk) → Paketler` (izin: Finans anahtarı açık olmalı).
+
+### Taslak faturaya indirim, burs ayrıntı/düzenleme (3. tur)
+- `POST /api/payments/discounts` (`discount:apply`; gövde `invoiceId`, `isPercentage`, `value`, `reason`). Ekran: fatura detayı → **İndirim Uygula** (yalnızca `draft`; gerekçe ekranda zorunlu, yeni toplam önizlemesi), uygulanan indirimler listesi `InvoiceDto.discounts`'tan. `ApplyDiscountCommandHandler`: **hata düzeltmesi** — `Discounts.Add` + `invoice.Discounts.Add` indirimi koleksiyona iki kez ekliyordu (`DiscountTotal` iki katı); yeni kural `Rule.DiscountExceedsSubtotal` (toplam indirim ara toplamı aşamaz, tr/en mesaj). Uygulanan indirimi geri alan uç yoktur.
+- `GET/PUT /api/payments/scholarships/{id}` (`scholarship:read` / `scholarship:update`). Ekran: `ScholarshipListView` satır → ayrıntı → Düzenle. `UpdateScholarshipCommandValidator` artık oluşturmadaki kurallarla aynı (bitiş ≥ başlangıç, not ≤ 1000); yüzde ⊕ tutar zaten zorunluydu; `rowVersion` uyuşmazlığı `Error.Concurrency`. Güncelleme `approved_by`'yi düzenleyen kullanıcıya çevirir (mevcut davranış).
+- Testler: `DraftInvoiceDiscountTests`, `DetailEditCommandTests`; smoke-api `finance.applyDiscount*`, `finance.updateScholarship*`; demo-seed taslak faturaya "Kardeş indirimi (demo)".
