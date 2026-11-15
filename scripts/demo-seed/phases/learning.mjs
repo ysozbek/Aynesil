@@ -18,10 +18,12 @@ async function bep(ctx) {
     return list.find((p) => p.name === '2026-2027 Güz') ?? await c.post('/education-plans/academic-periods', { name: '2026-2027 Güz', startDate: '2026-09-07', endDate: '2027-01-22', termId: await ctx.ref('academic_term', 'fall'), isCurrent: true })
   })
   const approver = ctx.c.me.userId
-  let ec = null
-  const educatorClient = async () => {
-    if (!ec) { ec = new Client(`${ctx.code}-egitmen`); await ec.login(`${fx.users.educator.local}@${ctx.t.domain}`, fx.password) }
-    return ec
+  // BEP'i koordinatör onaylar (eğitmen rolünde education_plan:approve yok). Onaylayan, koordinatör kullanıcısına
+  // bağlı (ders vermeyen) eğitmen kaydıdır (people.mjs → ids.staffEducators.coordinator).
+  let cc = null
+  const coordinatorClient = async () => {
+    if (!cc) { cc = new Client(`${ctx.code}-koordinator`); await cc.login(`${fx.users.coordinator.local}@${ctx.t.domain}`, fx.password) }
+    return cc
   }
   const made = { plans: 0, goals: 0, progress: 0 }
   for (const s of ids.students.slice(0, 8)) {
@@ -53,7 +55,7 @@ async function bep(ctx) {
     // durum: 0-1 taslak; 2-3 incelemede; 4-5 onaylı; 6-7 aktif (+ gözden geçirme)
     if (s.idx >= 2) await step('plan gönder', () => c.post(`/education-plans/${plan.id}/submit`, {}))
     // Onaylayan = oturumdaki kullanıcıya bağlı eğitmen kaydı (ActingEducator); yönetici değil eğitmen kullanıcısı onaylar.
-    if (s.idx >= 4) await step('plan onayla', async () => (await educatorClient()).post(`/education-plans/${plan.id}/approve`, { approverId: ids.educators[0].id, comment: 'Hedefler yaş düzeyine uygun.' }))
+    if (s.idx >= 4) await step('plan onayla', async () => (await coordinatorClient()).post(`/education-plans/${plan.id}/approve`, { approverId: ids.staffEducators?.coordinator ?? null, comment: 'Hedefler yaş düzeyine uygun.' }))
     if (s.idx >= 6) {
       await step('plan aktif', () => c.post(`/education-plans/${plan.id}/activate`, {}))
       await step('plan veliye aç', () => c.patch(`/education-plans/${plan.id}/guardian-visibility`, { visible: true }))

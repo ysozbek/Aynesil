@@ -33,7 +33,12 @@ export async function setupSessions(ctx) {
     ids.studentPrograms[s.id] = sp
   })
 
-  if ((await count(c, '/scheduling/sessions')) > 0) { info('seanslar zaten var — atlandı'); return }
+  const hadSessions = (await count(c, '/scheduling/sessions')) > 0
+  // Demo senaryosu bugünkü seansı kullanır (yoklama → hedef → not → tamamla → hak düşer). Seed hangi gün çalışırsa
+  // çalışsın (hafta sonu dahil) bugün ve yarın için seanslar açılır; "demodan bir gün önce" çalıştırılan seed de
+  // demo gününe seans bırakır. Her çalıştırmada eksikse eklenir (--reset gerekmez).
+  await ensureDemoDaySessions(ctx)
+  if (hadSessions) { info('seanslar zaten var — atlandı'); return }
 
   const r = rng(code === 'demo_a' ? 5 : 9)
   const sessionType = await ctx.ref('session_type', 'individual')
@@ -54,7 +59,6 @@ export async function setupSessions(ctx) {
     for (let d = -56; d <= 13; d++) {
       const wd = weekdayOf(d)
       if (wd === 0 || wd === 6 || !days.includes(wd - 1)) continue
-      if (d === 0) continue   // bugünü boş bırak
       const past = d < 0
       const body = { sessionTypeId: sessionType, startsAt: at(d, hour), endsAt: at(d, hour, 45), campusId: s.campusId, roomId: room?.id ?? null,
         title: `Demo seans — ${s.name}`, isMakeup: false, participantStudentIds: [s.id], educatorAssignments: [{ educatorId: ed.id, role: 'lead' }] }
@@ -117,7 +121,8 @@ export async function setupSessions(ctx) {
     made.notes += 3
   }
   // ── Ertelenen seans: gelecekteki iki seansı ertele ──
-  const future = (await c.list('/scheduling/sessions?from=' + dayStr(1) + '&to=' + dayStr(13))).filter((x) => x.status === 'scheduled' || !x.status).slice(0, 2)
+  // dayStr(2)'den: bugün/yarın demo günü seanslarına (16:00/17:00) +7 saatlik erteleme çakışmasın.
+  const future = (await c.list('/scheduling/sessions?from=' + dayStr(2) + '&to=' + dayStr(13))).filter((x) => x.status === 'scheduled' || !x.status).slice(0, 2)
   for (const f of future) await step('erteleme', async () => {
     const d = await c.get(`/scheduling/sessions/${f.id}`)
     const ns = new Date(new Date(d.startsAt).getTime() + 7 * 36e5), ne = new Date(new Date(d.endsAt).getTime() + 7 * 36e5)
@@ -142,4 +147,39 @@ export async function setupSessions(ctx) {
   await step('takvim kaydı', () => c.post('/scheduling/calendar-entries', { title: 'Demo — Veli Toplantısı Haftası', entryType: 'event', startsAt: at(9, 9), endsAt: at(9, 17), isAllDay: false, campusId: ctx.campuses[0].id }))
   ids.pastSessions = pastSessions
   info(`seans: ${made.total} (geçmiş ${made.past}, gelecek ${made.future}) · iptal ${made.cancelled} · gelmedi ${made.noshow} · ertelenen ${made.resched} · yoklama ${JSON.stringify(made.att)} · not ${made.notes}`)
+}
+
+/**
+ * Bugün (d=0) ve yarın (d=1) için demo seansları: Merve/Tolga (educators[0], egitmen@ kullanıcısına bağlı) ile
+ * students[0] 16:00 ve ikinci eğitmenle students[1] 17:00. students[0] ABA programında ve ilk 8 öğrenci gibi ABA'ya
+ * bağlı paketi var (finance.mjs); seans ABA hizmetine bağlandığı için tamamlanınca paketten 1 hak düşer.
+ * Saatler düzenli seans saatlerinin (09–14) dışında: oda/eğitmen çakışması olmaz. Başlıkta tarih var; varsa atlanır.
+ */
+async function ensureDemoDaySessions(ctx) {
+  const { c, ids } = ctx
+  const s0 = ids.students[0], s1 = ids.students[1]
+  const aba = ids.programs.find((p) => p.code === 'ABA'), dil = ids.programs.find((p) => p.code === 'DIL')
+  if (!s0 || !s1 || !aba || !dil || ids.educators.length < 2) { info('bugünün seansları: önkoşul eksik — atlandı'); return }
+  const serviceOf = async (prog) => (await c.get(`/programs/${prog.id}`))?.services?.[0]?.id ?? null
+  const plan = [
+    { s: s0, ed: ids.educators[0], hour: 16, serviceId: await serviceOf(aba) },
+    { s: s1, ed: ids.educators[1], hour: 17, serviceId: await serviceOf(dil) },
+  ]
+  const sessionType = await ctx.ref('session_type', 'individual')
+  const physicalRoom = (campusId) => ids.rooms.find((x) => !x.virtual && x.homeCampusId === campusId)?.id ?? null
+  let made = 0
+  for (const d of [0, 1]) {
+    const day = dayStr(d)
+    const existing = await c.list(`/scheduling/sessions?from=${dayStr(d - 1)}&to=${dayStr(d + 1)}`)
+    for (const { s, ed, hour, serviceId } of plan) {
+      const title = `Demo günü seansı — ${s.name} (${day})`
+      if (existing.some((x) => x.title === title)) continue
+      const dto = await step(`demo günü seansı ${s.no} ${day}`, () => c.post('/scheduling/sessions', {
+        sessionTypeId: sessionType, startsAt: at(d, hour), endsAt: at(d, hour, 45), campusId: s.campusId, roomId: physicalRoom(s.campusId),
+        recurringScheduleId: null, programServiceId: serviceId, title, isMakeup: false,
+        participantStudentIds: [s.id], educatorAssignments: [{ educatorId: ed.id, role: 'lead' }] }))
+      if (dto?.id) made++
+    }
+  }
+  info(made ? `bugün/yarın: ${made} demo seansı eklendi (${dayStr(0)} 16:00 ${ids.educators[0].name} · ${s0.name})` : 'bugün/yarın demo seansları zaten var')
 }

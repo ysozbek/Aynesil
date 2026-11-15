@@ -61,6 +61,22 @@ export async function setupPeople(ctx) {
   if (ids.users.educator && ids.educators[0]) {
     await step('eğitmen ↔ kullanıcı bağı', () => c.put(`/educators/${ids.educators[0].id}/user-account`, { userId: ids.users.educator }))
   }
+  // Koordinatör ve kurum yöneticisi ders vermez ama BEP onaylar ve seans notu yazabilir: sistem yazarı/onaylayanı
+  // giriş yapan kullanıcının bağlı eğitmen kaydından alır (KURULUM_KILAVUZU B.5.2). Her birine ders vermeyen bir
+  // eğitmen kaydı (unvan: koordinatör) açılır ve bağlanır. Bu kayıtlar ids.educators'a girmez (seans üretimi 6
+  // öğreten eğitmenle kalır).
+  ids.staffEducators = {}
+  for (const key of ['coordinator', 'admin']) {
+    const uid = ids.users[key]; if (!uid) continue
+    const [fn, ...rest] = fx.users[key].fullName[code].split(' '); const ln = rest.join(' ')
+    let ed = edList.find((e) => e.firstName === fn && e.lastName === ln)
+    const id = ed?.id ?? await step(`eğitmen kaydı (${key})`, async () => idOf(await c.post('/educators', {
+      firstName: fn, lastName: ln, titleId: await ctx.ref('educator_title', 'coordinator'), email: `${fx.users[key].local}@${t.domain}`,
+      phone: null, employmentType: 'full_time', hireDate: '2020-09-01', primaryCampusId: ctx.campuses[0].id })))
+    if (!id) continue
+    ids.staffEducators[key] = id
+    await step(`eğitmen kaydı ↔ kullanıcı bağı (${key})`, () => c.put(`/educators/${id}/user-account`, { userId: uid }))
+  }
 
   // ── Veliler + öğrenciler ──
   const students = await c.list('/students')

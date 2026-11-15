@@ -68,7 +68,8 @@ async function newFlowExamples(ctx) {
     const approved = (await c.get('/scheduling/makeup-requests?status=approved&page=1&pageSize=20')).items ?? []
     for (const req of approved) {
       const cal = await c.get(`/scheduling/calendar/student/${req.studentId}?from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(new Date(Date.now() + 60 * 864e5).toISOString())}`)
-      const target = cal.find((s) => s.status === 'scheduled' && s.id !== req.missedSessionId)
+      // Demo günü seansları (sessions.mjs) senaryoda canlı kullanılır; telafiye bağlanmaz.
+      const target = cal.find((s) => s.status === 'scheduled' && s.id !== req.missedSessionId && !(s.title ?? '').startsWith('Demo günü seansı'))
       if (!target) continue
       const full = await c.get(`/scheduling/makeup-requests/${req.id}`)
       const assigned = await c.post(`/scheduling/makeup-requests/${req.id}/assign-session`, { makeupSessionId: target.id, rowVersion: full.rowVersion })

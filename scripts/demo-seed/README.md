@@ -27,21 +27,33 @@ Ortak yerel şifre: **`DemoSifre!2026`** (`fixtures.json`; yalnızca yerel/geli�
 | Veli portalı 2 (tek öğrenci) | `veli2@demo-a.test` | `veli2@demo-b.test` |
 | İlk giriş örneği (`must_change_password` açık) | `ilkgiris@demo-a.test` | `ilkgiris@demo-b.test` |
 
-Kullanıcı adı **globalde benzersiz** olduğundan alan adı kuruma özeldir. Roller: `admin` (kurulumla gelir), `coordinator`, `educator`, `finance`, `guardian` (izin alt kümeleri `phases/identity.mjs` içinde).
+Kullanıcı adı **globalde benzersiz** olduğundan alan adı kuruma özeldir. Roller: `admin` (kurulumla gelir), `coordinator`, `educator`, `finance`, `guardian`. İzin kümeleri `phases/identity.mjs` içindedir ve `docs/musteri/KURULUM_KILAVUZU.md` B.4'teki önerilen rol setiyle aynıdır. Seed her çalıştırmada rolleri **eşitler**: kurala uyan izni ekler, uymayanı (eski sürümden kalanı) kaldırır.
+
+**Eğitmen kaydına bağlı hesaplar:** `egitmen@…` öğreten eğitmen Merve Çalışkan / Tolga Bayram'a bağlıdır. `koordinator@…` ve `admin@…` için ders vermeyen birer eğitmen kaydı (unvan: koordinatör) açılır ve bağlanır. Böylece üçü de seans notu yazabilir; koordinatör ve yönetici BEP onaylayabilir (onaylayan/yazar, giriş yapan kullanıcının bağlı eğitmen kaydıdır).
 Kurum kodları `demo_a` / `demo_b` (alt çizgili; `new_tenant.py` tire kabul etmez).
 
 ## Ayırt edilebilirlik
 Kurumlar arası isim havuzları kesişmez: öğrenci no `GK-26xx` / `PP-26xx`, farklı öğrenci/veli/eğitmen/aday adları, farklı kampüs/okul/kamp adları, İstanbul / Ankara. Veriler deterministiktir. İsimler uydurmadır; gerçek kişi, telefon ya da geçerli TC no yoktur (TC ve telefon boş), e-postalar `.test`.
 
 ## Her kurumda ne var
-2 kampüs · 6 derslik (kampüs başına 2 fiziksel + 1 sanal) · 6 eğitmen · 15 öğrenci · 23 veli · 6 kullanıcı · 20 aday ·
-~225 seans (son 8 hafta + 2 hafta ileri; karışık yoklama, iptal, gelmedi, 2 ertelenen, tekrarlayan program, telafi talepleri, 8 seans notu) ·
+2 kampüs · 6 derslik (kampüs başına 2 fiziksel + 1 sanal) · 6 eğitmen (+ yönetici ve koordinatör için ders vermeyen 2 eğitmen kaydı) · 15 öğrenci · 23 veli · 7 kullanıcı · 20 aday ·
+~235 seans (son 8 hafta + bugün + 2 hafta ileri; karışık yoklama, iptal, gelmedi, 2 ertelenen, tekrarlayan program, telafi talepleri, 8 seans notu) ·
 3 program + kayıtlar · 8 BEP planı (taslak/incelemede/onaylı/aktif) + 24 hedef + 96 ilerleme kaydı + gözden geçirmeler · 1 değerlendirme şablonu + 4 oturum ·
 CRM (aşamalara dağılmış 20 aday, ~42 aktivite, 10 görüşme, 4 dönüşmüş) · finans (3 paket tanımı, 8 öğrenci paketi, 8 fatura [taslak/kısmi/ödenmiş/iptal/kesilmiş], 6 ödeme [1 bekleyen], 31 kredi hareketi, 1 burs, 1 promosyon) ·
 hukuk (2 sözleşme + 3 rıza şablonu, 8 sözleşme [taslak/gönderilmiş/imzalı/aktif/feshedilmiş], rızalar [kamera dahil, 1 geri çekilmiş]) ·
 4 toplantı + takip görevleri (tamamlanmış/gecikmiş/açık) · izin (8 bakiye, 4 talep: bekleyen/onaylı/reddedilmiş/iptal) ·
 danışmanlık (1 okul, plan, 2 ziyaret, gözlem, takip görevi, sözleşme) · 2 kamera + derslik ataması + veli1 izleme yetkisi ·
 1 kamp (2 dönem, 4 etkinlik, 8 kayıt [1 bekleme listesi], 2 eğitmen, yoklama) · KPI (önceki 2 ay, API'nin `compute/bulk` ucu) · bildirim şablonları + 7 örnek bildirim · 2 anket + yanıt + veli geri bildirimi.
+
+## Bugünün seansları (demo günü)
+Demo senaryosu bugünkü seansı kullanır. Seed hangi gün çalışırsa çalışsın (hafta sonu dahil) **bugün ve yarın** için şu seansları açar. Böylece demodan bir gün önce çalıştırılan seed de demo gününe seans bırakır:
+
+| Saat | Eğitmen | Öğrenci | Not |
+|---|---|---|---|
+| 16:00 | `egitmen@…` (Merve Çalışkan / Tolga Bayram) | ilk öğrenci (ABA) | ABA hizmetine bağlı; öğrencinin ABA paketi var → **tamamlanınca 1 seans hakkı düşer** |
+| 17:00 | ikinci eğitmen | ikinci öğrenci (Dil ve Konuşma) | |
+
+Başlıkları `Demo günü seansı — <öğrenci> (<tarih>)`. Eksikse her çalıştırmada eklenir (`--reset` gerekmez). Bunlara ek olarak haftalık düzendeki seanslar bugün için de üretilir (yalnızca hafta içi).
 
 ## Yöntem
 Her şey mümkün olduğunca **gerçek API** üzerinden oluşturulur (iş kuralları ve doğrulamalar sınanır). Kurum açma `devops/new_tenant.py` ile yapılır.
@@ -63,7 +75,7 @@ Geçmiş seanslar, yoklamalar, toplantılar, BEP ölçümleri ve KPI değerleri 
 
 ## Bilinen sınırlar
 - Sanal derslik kampüse bağlanamıyor (API kuralı) → kampüs başına sanal oda `campusId = null` ile oluşturulur.
-- Seans notları ve BEP onayları eğitmen kullanıcısı (`egitmen@…`, `educators[0]` ile bağlı) adına API ile yapılır: yazar/onaylayan oturumdaki kullanıcıya bağlı eğitmen kaydıdır. Bu yüzden demo `educator` rolü `education_plan:approve` içerir.
+- Seans notları eğitmen kullanıcısı (`egitmen@…`), BEP onayları koordinatör kullanıcısı (`koordinator@…`) adına API ile yapılır: yazar/onaylayan oturumdaki kullanıcıya bağlı eğitmen kaydıdır. Demo `educator` rolü BEP onaylamaz (`education_plan:approve` koordinatör ve yöneticidedir).
 - Eğitmen/veli kaydı ↔ kullanıcı bağı API ile kurulur (`PUT /educators/{id}/user-account`, `PUT /guardians/{id}/user-account`). Kullanıcılar sabit demo şifresiyle `/users` üzerinden açılır; ekrandaki "Yeni kullanıcı oluştur" akışı ise geçici şifre üretir (girişler tablodaki şifreyle kalsın diye burada kullanılmaz).
 - Fatura satırı/kesme/iptal/indirim, ödeme onayı, rapor kesinleştirme ve danışmanlık planı aktifleştirme artık API ile yapılır (eski `CreatedBy` EF eşleme hatası giderildi).
 

@@ -1,14 +1,34 @@
 // Her çalıştırmada: referans değer haritası, kampüs listesi, roller (+izinler).
 import { step, info, idOf } from '../lib.mjs'
 
+// Demo rolleri = KURULUM_KILAVUZU B.4'teki önerilen rol seti. Her çalıştırmada eşitlenir: kurala uyan izin eklenir,
+// uymayan (eski sürümlerden kalan) izin kaldırılır.
+
+// Koordinatör: günlük operasyonun tamamı; kurum yönetimi, finans ve raporlar hariç.
+const COORDINATOR_EXCLUDED_GROUPS = /^(user|role|corporation|settings|integration|audit|menu|ref_data|refdata|finance|invoice|refund|credit_ledger|package_definition|student_package|scholarship|promotion|discount|report|kpi_snapshot|kpi:manage|permission)/
+// Gruplar içinden yalnızca yöneticide kalanlar: başkasının seans/vaka notunu düzenleme-silme, ana kayıt silme,
+// kurum yapısı (kampüs), bildirim tetikleyicileri. Veli tarafı izinleri (portal, geri bildirim verme, anket yanıtlama)
+// personel rolüne ait değildir: koordinatöre portal menüsü açılıyordu.
+const COORDINATOR_DENIED = new Set([
+  'session_note:delete', 'case_note:delete',
+  'student:delete', 'guardian:delete', 'educator:delete',
+  'campus:create', 'campus:update', 'campus:delete',
+  'notification_trigger:manage',
+  'portal:access', 'parent_feedback:create', 'parent_feedback:submit', 'survey:respond',
+])
+// Gruplar dışından gerekenler: aday/değerlendirme/toplantı formlarında kişi seçmek için kullanıcı listesi (salt okuma).
+const COORDINATOR_EXTRA = new Set(['user:read'])
+
 const ROLE_RULES = {
   coordinator: {
     name: 'Koordinatör', desc: 'Demo: operasyon koordinatörü',
-    allow: (c) => !/^(user|role|corporation|settings|integration|audit|menu|ref_data|refdata|finance|invoice|refund|credit_ledger|package_definition|student_package|scholarship|promotion|discount|report|kpi_snapshot|kpi:manage|permission)/.test(c),
+    allow: (c) => COORDINATOR_EXTRA.has(c) || (!COORDINATOR_EXCLUDED_GROUPS.test(c) && !COORDINATOR_DENIED.has(c)),
   },
   educator: {
     name: 'Eğitmen', desc: 'Demo: eğitmen',
-    allow: (c) => /^(student:read|guardian:read|session:read|session_note:|attendance:|student_goal:|goal_progress:|goal_template:read|goal_library:read|education_plan:(read|add_review|approve)|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:|camp_participation:|notification:read|parent_feedback:read|enrollment:read|program:read)/.test(c),
+    // Seansını yürütür (yoklama, hedef, not, tamamlama); BEP'i okur ve gözden geçirme ekler, onaylamaz (koordinatör).
+    // session_note:delete yok: başkalarının notunu düzenleme/silme yönetici yetkisidir. Hedef silemez.
+    allow: (c) => /^(student:read|guardian:read|session:(read|complete|manage_goals)|session_note:write|attendance:(read|record)|student_goal:(read|create|update|change_status)|goal_progress:(read|record)|goal_template:read|goal_library:read|education_plan:(read|add_review)|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:(read|record)|camp_participation:(read|record)|notification:read|parent_feedback:read|enrollment:read|program:read)$/.test(c),
   },
   finance: {
     name: 'Muhasebe', desc: 'Demo: muhasebe / finans',
@@ -16,7 +36,7 @@ const ROLE_RULES = {
   },
   guardian: {
     name: 'Veli (portal)', desc: 'Demo: veli portalı',
-    allow: (c) => /^(portal:access|parent_feedback:(submit|create)|survey:respond|notification:read)/.test(c),
+    allow: (c) => /^(portal:access|parent_feedback:(submit|create)|survey:respond|notification:read)$/.test(c),
   },
 }
 
@@ -41,12 +61,15 @@ export async function ensureRoles(ctx) {
     await step(`rol ${code}`, async () => {
       let role = ctx.roles[code]
       if (!role) { const id = idOf(await c.post('/roles', { code, name: rule.name, description: rule.desc })); role = { id, code, permissionCount: 0 }; ctx.roles[code] = role }
-      const have = new Set((await c.list(`/roles/${role.id}/permissions`)).map((p) => p.permissionId ?? p.id))
+      const current = await c.list(`/roles/${role.id}/permissions`)
+      const have = new Set(current.map((p) => p.permissionId ?? p.id))
       const ids = perms.filter((p) => rule.allow(p.code) && !have.has(p.id)).map((p) => p.id)
-      if (!ids.length) return
+      const extra = current.filter((p) => !rule.allow(p.code))
       for (let i = 0; i < ids.length; i += 10)
         await Promise.all(ids.slice(i, i + 10).map((permissionId) => c.post(`/roles/${role.id}/permissions`, { permissionId })))
-      info(`rol ${code}: ${ids.length} izin`)
+      for (const p of extra) await c.call('DELETE', `/roles/${role.id}/permissions/${p.permissionId ?? p.id}`)
+      if (ids.length || extra.length)
+        info(`rol ${code}: +${ids.length} izin${extra.length ? `, −${extra.length} (${extra.map((p) => p.code).join(', ')})` : ''}`)
     })
   }
 }
