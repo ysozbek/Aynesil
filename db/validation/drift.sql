@@ -1,8 +1,8 @@
 -- =====================================================================
--- Schema drift check: layer DDL + seed (database `akran`) vs. Flyway migrations
--- (database `akran_flyway`), both built in the same PG17 container by smoke_test.sh.
+-- Schema drift check: layer DDL + seed (database `aynesil_ddl`) vs. Flyway migrations
+-- (database `aynesil_flyway`), both built in the same PG17 container by smoke_test.sh.
 --
--- Runs in a scratch database (`akran_drift`) so dblink is never installed in the compared
+-- Runs in a scratch database (`aynesil_drift`) so dblink is never installed in the compared
 -- schemas. Compares, by definition rather than by object name:
 --   tables      schema.table + relkind
 --   columns     type (format_type) + nullability
@@ -80,10 +80,10 @@ create temp table snapshot_sql as select $snap$
 $snap$ as q;
 
 create temp table snap_layer as
-  select * from dblink('dbname=akran user=postgres', (select q from snapshot_sql))
+  select * from dblink('dbname=aynesil_ddl user=postgres', (select q from snapshot_sql))
     as t(kind text, obj text, detail text);
 create temp table snap_flyway as
-  select * from dblink('dbname=akran_flyway user=postgres', (select q from snapshot_sql))
+  select * from dblink('dbname=aynesil_flyway user=postgres', (select q from snapshot_sql))
     as t(kind text, obj text, detail text);
 
 create temp table drift as
@@ -122,10 +122,10 @@ $inv$ as q;
 
 create temp table rls_violations as
   with tenant_tables as (
-    select 'akran (layer DDL)' as db, * from dblink('dbname=akran user=postgres', (select q from invariant_sql))
+    select 'aynesil_ddl (layer DDL)' as db, * from dblink('dbname=aynesil_ddl user=postgres', (select q from invariant_sql))
       as t(tbl text, rls_enabled boolean, policies text, has_tenant_isolation boolean)
     union all
-    select 'akran_flyway (migrations)', * from dblink('dbname=akran_flyway user=postgres', (select q from invariant_sql))
+    select 'aynesil_flyway (migrations)', * from dblink('dbname=aynesil_flyway user=postgres', (select q from invariant_sql))
       as t(tbl text, rls_enabled boolean, policies text, has_tenant_isolation boolean)
   )
   select t.db, t.tbl,
@@ -175,10 +175,10 @@ $acc$ as q;
 
 create temp table rls_off_violations as
   with exposed as (
-    select 'akran (layer DDL)' as db, * from dblink('dbname=akran user=postgres', (select q from app_access_sql))
+    select 'aynesil_ddl (layer DDL)' as db, * from dblink('dbname=aynesil_ddl user=postgres', (select q from app_access_sql))
       as t(tbl text, sch text, can_write boolean)
     union all
-    select 'akran_flyway (migrations)', * from dblink('dbname=akran_flyway user=postgres', (select q from app_access_sql))
+    select 'aynesil_flyway (migrations)', * from dblink('dbname=aynesil_flyway user=postgres', (select q from app_access_sql))
       as t(tbl text, sch text, can_write boolean)
   ),
   matched as (
@@ -199,11 +199,11 @@ create temp table rls_off_violations as
   -- Stale entries (table now has RLS, or the app lost access) keep the list honest.
   select d.db, e.tbl, 'stale exception: not an RLS-less table reachable by aynesil_app'
     from rls_off_exceptions e
-   cross join (values ('akran (layer DDL)'), ('akran_flyway (migrations)')) d(db)
+   cross join (values ('aynesil_ddl (layer DDL)'), ('aynesil_flyway (migrations)')) d(db)
    where e.tbl not like '%.*'
      and not exists (select 1 from exposed x where x.db = d.db and x.tbl = e.tbl)
      -- Flyway's own table and the Hangfire schema exist only in the migration-built database.
-     and not (d.db = 'akran (layer DDL)' and e.tbl = 'public.flyway_schema_history');
+     and not (d.db = 'aynesil_ddl (layer DDL)' and e.tbl = 'public.flyway_schema_history');
 delete from rls_off_violations where problem is null;
 
 \echo '== Invariant: every RLS-less table reachable by aynesil_app is a listed exception (both databases) =='
@@ -223,10 +223,10 @@ create temp table delete_policy_sql as select $del$
 $del$ as q;
 
 create temp table delete_violations as
-  select 'akran (layer DDL)' as db, * from dblink('dbname=akran user=postgres', (select q from delete_policy_sql))
+  select 'aynesil_ddl (layer DDL)' as db, * from dblink('dbname=aynesil_ddl user=postgres', (select q from delete_policy_sql))
     as t(tbl text, polname text)
   union all
-  select 'akran_flyway (migrations)', * from dblink('dbname=akran_flyway user=postgres', (select q from delete_policy_sql))
+  select 'aynesil_flyway (migrations)', * from dblink('dbname=aynesil_flyway user=postgres', (select q from delete_policy_sql))
     as t(tbl text, polname text);
 
 \echo '== Invariant: DELETE policies never expose global rows (both databases) =='

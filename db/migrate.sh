@@ -168,7 +168,7 @@ if [[ "$SKIP_SEED" == "false" ]]; then
 
   SEED_FILES=(
     "db/seed/01_reference_data_seed.sql"
-    "db/seed/02_akran_bootstrap.sql"
+    "db/seed/02_platform_permissions_seed.sql"
   )
 
   for f in "${SEED_FILES[@]}"; do

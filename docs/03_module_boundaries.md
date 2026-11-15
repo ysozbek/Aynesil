@@ -32,7 +32,7 @@ db/
   99_triggers_rls_policies.sql       # cross-cutting wiring (run LAST)
   seed/
     01_reference_data_seed.sql       # locales + ref catalog + default values + tr/en
-    02_akran_bootstrap.sql           # example tenant + RBAC + tenant ref values/overrides
+    02_platform_permissions_seed.sql # initial permission catalog (tenants: devops/new_tenant.py)
 docs/                                # this analysis set (outputs 3–10)
 ```
 

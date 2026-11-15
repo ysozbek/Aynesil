@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# Akran Platform :: DDL smoke test (Docker-first, PostgreSQL 17 only)
+# AyNesil Platform :: DDL smoke test (Docker-first, PostgreSQL 17 only)
 # Spins up a clean PG17 container, applies all DDL + seed in dependency
 # order, then verifies extensions / schemas / RLS / exclusion constraints, and
 # compares the result with a second database built by the Flyway migrations (drift.sql). Exits non-zero with the exact failing file on error.
@@ -12,9 +12,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 COMPOSE=(docker compose -f docker-compose.yml)
-PSQL=("${COMPOSE[@]}" exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d akran)
+PSQL=("${COMPOSE[@]}" exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d aynesil_ddl)
 # Same, but quiets idempotent DROP ... IF EXISTS notices during DDL application.
-PSQL_QUIET=("${COMPOSE[@]}" exec -e "PGOPTIONS=-c client_min_messages=warning" -T db psql -v ON_ERROR_STOP=1 -U postgres -d akran)
+PSQL_QUIET=("${COMPOSE[@]}" exec -e "PGOPTIONS=-c client_min_messages=warning" -T db psql -v ON_ERROR_STOP=1 -U postgres -d aynesil_ddl)
 
 # DDL + seed in strict dependency order (matches numeric file prefixes).
 FILES=(
@@ -43,7 +43,7 @@ FILES=(
   db/99_triggers_rls_policies.sql
   db/layer2_sped/15_care_team_rls.sql
   db/seed/01_reference_data_seed.sql
-  db/seed/02_akran_bootstrap.sql
+  db/seed/02_platform_permissions_seed.sql
 )
 
 echo "==> [1/6] Fresh PostgreSQL 17 container"
@@ -52,11 +52,11 @@ echo "==> [1/6] Fresh PostgreSQL 17 container"
 
 echo "==> [2/6] Waiting for readiness"
 for _ in $(seq 1 60); do
-  if "${COMPOSE[@]}" exec -T db pg_isready -U postgres -d akran >/dev/null 2>&1; then break; fi
+  if "${COMPOSE[@]}" exec -T db pg_isready -U postgres -d aynesil_ddl >/dev/null 2>&1; then break; fi
   sleep 1
 done
 echo -n "    server: "
-"${COMPOSE[@]}" exec -T db psql -tA -U postgres -d akran -c "select version();"
+"${COMPOSE[@]}" exec -T db psql -tA -U postgres -d aynesil_ddl -c "select version();"
 
 echo "==> [3/6] Applying DDL + seed in dependency order"
 for f in "${FILES[@]}"; do
@@ -85,8 +85,8 @@ do $$ begin
   if not exists (select from pg_roles where rolname = 'aynesil_app')   then create role aynesil_app;   end if;
   if not exists (select from pg_roles where rolname = 'aynesil_owner') then create role aynesil_owner; end if;
 end $$;
-drop database if exists akran_flyway;
-create database akran_flyway;
+drop database if exists aynesil_flyway;
+create database aynesil_flyway;
 SQL
 # Same app-role grants as Flyway's afterMigrate callback, so drift.sql can check aynesil_app's
 # access (RLS-less tables, partitions) in the layer-DDL database too.
@@ -94,19 +94,19 @@ SQL
 if ! docker run --rm --network "$NETWORK" \
       -v "$REPO_ROOT/db/migrations:/flyway/sql:ro" \
       -v "$REPO_ROOT/docker/flyway.conf:/flyway/conf/flyway.conf:ro" \
-      -e FLYWAY_URL=jdbc:postgresql://db:5432/akran_flyway \
+      -e FLYWAY_URL=jdbc:postgresql://db:5432/aynesil_flyway \
       -e FLYWAY_USER=postgres -e FLYWAY_PASSWORD=postgres \
-      flyway/flyway:10.20-alpine migrate > /tmp/akran_flyway.log 2>&1; then
-  tail -40 /tmp/akran_flyway.log
+      flyway/flyway:10.20-alpine migrate > /tmp/aynesil_flyway.log 2>&1; then
+  tail -40 /tmp/aynesil_flyway.log
   echo ""
   echo "❌ FLYWAY MIGRATE FAILED (log above)"
   exit 1
 fi
-grep -E "Successfully applied|now at version" /tmp/akran_flyway.log | sed 's/^/    /'
+grep -E "Successfully applied|now at version" /tmp/aynesil_flyway.log | sed 's/^/    /'
 
 echo "==> [6/6] Schema drift: layer DDL vs Flyway migrations"
-"${PSQL[@]}" -q -c "drop database if exists akran_drift" -c "create database akran_drift"
-if ! "${COMPOSE[@]}" exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d akran_drift -f /repo/db/validation/drift.sql; then
+"${PSQL[@]}" -q -c "drop database if exists aynesil_drift" -c "create database aynesil_drift"
+if ! "${COMPOSE[@]}" exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d aynesil_drift -f /repo/db/validation/drift.sql; then
   echo ""
   echo "❌ SCHEMA DRIFT (differences listed above)"
   exit 1
@@ -116,5 +116,5 @@ echo ""
 echo "============================================================"
 echo "✅ GREEN BUILD — all DDL applied and all checks passed"
 echo "============================================================"
-echo "Container 'akran_pg17' left running for inspection."
+echo "Container 'aynesil_ddl_pg17' left running for inspection."
 echo "Tear down with: docker compose -f db/validation/docker-compose.yml down -v"

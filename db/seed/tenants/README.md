@@ -14,10 +14,9 @@ db/seed/tenants/
     01_corporation.sql
     02_campuses.sql
     03_rbac.sql
-  akran/              ← Akran Hareket tenant verisi
-    01_corporation.sql
-    02_campuses.sql
-    03_rbac.sql
+  akran/              ← Akran Hareket: new_tenant.py ile açılır
+    create.sh         ← tekrar çalıştırılabilir; şifre üretir, must_change_password = true
+    extras.sql        ← kampüs ilçeleri + kuruma özel referans değerleri (idempotent)
   <yeni_tenant>/      ← Yeni müşteri için buraya kopyalayın
 ```
 
@@ -60,6 +59,17 @@ psql "$DATABASE_URL" \
 > Aynı scripti birden fazla çalıştırmak veri bozukluğuna yol açmaz.
 
 ---
+
+## Akran Hareket
+
+Flyway migration'ları hiçbir kurum açmaz (V2/V28'deki örnek akran kurumu ve `admin`/`Admin123!` kullanıcısı henüz canlı kurulum yokken kaldırıldı). Akran gerekiyorsa:
+
+```bash
+db/seed/tenants/akran/create.sh --admin-username mudur@akranhareket.com --admin-name "Ad Soyad" --check   # dene
+db/seed/tenants/akran/create.sh --admin-username mudur@akranhareket.com --admin-name "Ad Soyad"           # aç
+```
+
+Kurum zaten varsa yeniden açılmaz; yalnızca `extras.sql` uygulanır.
 
 ## Kural
 

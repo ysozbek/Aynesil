@@ -68,8 +68,10 @@ begin
       'Apply V15 (Phase 2 DDL migration) before running V16.';
   end if;
 
-  -- At least one role must hold care_team:bypass (V15 Step 10)
-  if not exists (
+  -- At least one role must hold care_team:bypass (V15 Step 10) — only when tenant admin roles exist.
+  -- Migrations open no tenant (the example akran tenant was removed before any live install), so on an
+  -- empty database there is no role to grant; new_tenant.py grants every permission to its admin role.
+  if exists (select 1 from iam.role where code = 'admin') and not exists (
     select 1 from iam.role_permission rp
     join iam.permission p on p.id = rp.permission_id
     where p.code = 'care_team:bypass'

@@ -13,7 +13,7 @@
 -- ALL test data is rolled back at the end — safe to run repeatedly.
 --
 -- Usage:
---   psql -v ON_ERROR_STOP=1 -U postgres -d akran \
+--   psql -v ON_ERROR_STOP=1 -U postgres -d aynesil_ddl \
 --        -f /repo/db/validation/verify_abac_phase3.sql
 -- =====================================================================
 \pset pager off
@@ -51,8 +51,13 @@ declare
   v_student_id      uuid;
   v_role_id         uuid;
 begin
-  select id into strict v_corp_id  from core.corporation where code = 'akran';
-  select id into        v_campus_id from core.campus where corporation_id = v_corp_id limit 1;
+  -- Kendi geçici kurumunu açar (her şey sonda geri alınır); migration'lar kurum açmaz.
+  insert into core.corporation(code, legal_name, display_name)
+  values ('__p3_corp__', 'P3 Test', 'P3 Test')
+  returning id into v_corp_id;
+  insert into core.campus(corporation_id, code, name)
+  values (v_corp_id, 'P3', 'P3 Kampüs')
+  returning id into v_campus_id;
 
   -- Enable ABAC for this test run
   insert into core.setting_value(setting_key, scope_level, corporation_id, value)

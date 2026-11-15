@@ -56,7 +56,7 @@ for f in db/layer1_core/*.sql; do psql -v ON_ERROR_STOP=1 -f "$f"; done
 for f in db/layer2_sped/*.sql; do psql -v ON_ERROR_STOP=1 -f "$f"; done
 psql -v ON_ERROR_STOP=1 -f db/99_triggers_rls_policies.sql
 psql -v ON_ERROR_STOP=1 -f db/seed/01_reference_data_seed.sql
-psql -v ON_ERROR_STOP=1 -f db/seed/02_akran_bootstrap.sql
+psql -v ON_ERROR_STOP=1 -f db/seed/02_platform_permissions_seed.sql
 ```
 
 (Run as the owner role; the app then connects as the least-privilege role.)

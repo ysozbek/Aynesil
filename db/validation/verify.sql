@@ -1,5 +1,5 @@
 -- =====================================================================
--- Akran Platform :: DDL validation checks (run after all DDL + seed)
+-- AyNesil Platform :: DDL validation checks (run after all DDL + seed)
 -- Prints a summary, then asserts hard expectations (raises => psql exits non-zero).
 -- =====================================================================
 \pset pager off

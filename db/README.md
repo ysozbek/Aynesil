@@ -28,7 +28,7 @@ See `../docs/` for the full architecture analysis (ER explanations, boundaries, 
 ## Run order (fresh database)
 
 ```bash
-export PGURL="postgres://OWNER@localhost/akran"      # OWNER role bypasses RLS for setup
+export PGURL="postgres://OWNER@localhost/aynesil"      # OWNER role bypasses RLS for setup
 
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/00_extensions_conventions.sql
 for f in db/layer1_core/*.sql; do psql "$PGURL" -v ON_ERROR_STOP=1 -f "$f"; done
@@ -36,7 +36,7 @@ for f in db/layer2_sped/*.sql; do psql "$PGURL" -v ON_ERROR_STOP=1 -f "$f"; done
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/98_tenant_integrity.sql
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/99_triggers_rls_policies.sql
 psql "$PGURL" -v ON_ERROR_STOP=1 -f db/seed/01_reference_data_seed.sql
-psql "$PGURL" -v ON_ERROR_STOP=1 -f db/seed/02_akran_bootstrap.sql
+psql "$PGURL" -v ON_ERROR_STOP=1 -f db/seed/02_platform_permissions_seed.sql
 ```
 
 The numeric file prefixes encode dependency order.
@@ -60,7 +60,7 @@ db/
   layer1_core/   01_localization → 05_platform_services
   layer2_sped/   01_students → 13_parent_portal
   99_triggers_rls_policies.sql   # run LAST
-  seed/          01_reference_data_seed, 02_akran_bootstrap
+  seed/          01_reference_data_seed, 02_platform_permissions_seed
 ```
 
 ## Notes / TODO before production

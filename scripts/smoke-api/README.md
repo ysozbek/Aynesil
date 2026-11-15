@@ -37,7 +37,7 @@ Ekransız uçları kapatan işlerin API düzeyi kanıtı (her çalıştırmada `
 ## Fixture
 `fixtures.json` — demo kurum (`demo_a`), yönetici ve veli kullanıcı adı/şifresi (yalnızca yerel DB; ortak şifre `scripts/demo-seed/README.md`'de), izolasyon sabitleri, yol parametresi kaynakları,
 zorunlu sorgu parametresi override'ları (`{{today-30}}` jetonu desteklenir), beklenen durumlar (`expectedStatus`).
-Kurumlar yoksa `run.sh`, demo-seed ile oluşturur; mevcut kurumlara (ör. `akran`) dokunmaz.
+Kurumlar yoksa `run.sh`, demo-seed ile oluşturur; başka kurumlara dokunmaz.
 
 ## Bilinen sınırlar
 - Boş listelerin öğe alanları doğrulanamaz (raporda sayısı verilir).
