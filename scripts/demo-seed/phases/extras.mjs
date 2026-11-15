@@ -108,6 +108,23 @@ async function newFlowExamples(ctx) {
       await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })
 
+  // Veli portalı BEP özeti: veli1'in ilk çocuğu için onaylı ve veliye açık bir plan (diğer demo planları başka öğrencilerde)
+  await step('portal BEP örneği (onaylı + veliye açık)', async () => {
+    const p1 = ids.portal?.guardian1
+    const studentId = p1?.studentIds?.[0]
+    if (!studentId) return
+    const plans = (await c.get(`/education-plans?studentId=${studentId}&page=1&pageSize=50`)).items ?? []
+    if (plans.some((p) => p.guardianVisible && ['approved', 'active'].includes(p.status))) return
+    const stu = ids.students.find((x) => x.id === studentId)
+    const plan = await c.post('/education-plans', { studentId, title: `${stu?.name ?? 'Öğrenci'} — Güz BEP (veliye açık)`, academicPeriodId: null, campusId: stu?.campusId ?? null,
+      preparedBy: ids.educators[0].id, effectiveFrom: '2026-09-14', effectiveTo: '2027-01-22' })
+    await c.post(`/education-plans/${plan.id}/submit`, {})
+    const cc = new Client(`${code}-koordinator`)
+    await cc.login(`${fx.users.coordinator.local}@${t.domain}`, fx.password)
+    await cc.post(`/education-plans/${plan.id}/approve`, { approverId: ids.staffEducators?.coordinator ?? null, comment: 'Demo: veliye açık plan.' })
+    await c.patch(`/education-plans/${plan.id}/guardian-visibility`, { visible: true })
+  })
+
   // Eğitmen hiyerarşisi: biri sürüyor, biri sona ermiş (geçmiş görünür kalır)
   await step('eğitmen hiyerarşisi', async () => {
     const es = ids.educators ?? []

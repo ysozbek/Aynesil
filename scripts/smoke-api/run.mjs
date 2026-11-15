@@ -388,6 +388,7 @@ async function newFlows() {
 // ── B→A üçüncü tur: kurumların günlük işi (takvim kayıtları, tekrar eden plan toplu işlemleri, toplu yoklama, ...) ──
 async function dailyOpsFlows() {
   const adminToken = token
+  const ref = async (type) => (await http('GET', `/reference-data/${type}?activeOnly=true`)).json?.data ?? []
   const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
   const nextDay = (d) => new Date(new Date(`${d}T00:00:00Z`).getTime() + 864e5).toISOString()
 
