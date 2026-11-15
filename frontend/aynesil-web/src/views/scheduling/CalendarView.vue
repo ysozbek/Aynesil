@@ -7,19 +7,30 @@ import { campusService } from '@/services/campus.service'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StudentPicker from '@/components/pickers/StudentPicker.vue'
 import EducatorPicker from '@/components/pickers/EducatorPicker.vue'
+import RoomPicker from '@/components/pickers/RoomPicker.vue'
+import { usePermission } from '@/composables/usePermission'
+import { Permissions } from '@/constants/permissions'
 import type { CalendarEventDto } from '@/types/scheduling.types'
 import type { CampusListItemDto } from '@/types/campus.types'
 
 const { t } = useI18n()
 const router = useRouter()
 const calendarStore = useCalendarStore()
+const { can } = usePermission()
 
-type ViewMode = 'school' | 'campus' | 'educator' | 'student'
+type ViewMode = 'school' | 'campus' | 'room' | 'educator' | 'student'
 const viewMode = ref<ViewMode>('school')
 const resourceId = ref('')
 const campuses = ref<CampusListItemDto[]>([])
 const currentDate = ref(new Date())
 const calendarView = ref<'week' | 'month' | 'day' | 'agenda'>('week')
+
+// Oda takvimi ucu Rooms.Read ister; izni olmayan kullanıcıya "Oda" seçeneği gösterilmez.
+const viewModes = computed<ViewMode[]>(() => [
+  'school', 'campus',
+  ...(can(Permissions.Rooms.Read) ? (['room'] as ViewMode[]) : []),
+  'educator', 'student',
+])
 
 // ── Date range ────────────────────────────────────────────────────────────────
 // All calculations use the browser's local time. The API receives full ISO
@@ -112,6 +123,10 @@ async function loadCalendar() {
     case 'campus':
       if (resourceId.value)
         await calendarStore.fetchCampusCalendar(resourceId.value, query)
+      break
+    case 'room':
+      if (resourceId.value)
+        await calendarStore.fetchRoomCalendar(resourceId.value, query)
       break
     case 'educator':
       if (resourceId.value)
@@ -249,7 +264,7 @@ function openEvent(event: CalendarEventDto) {
       <!-- View Mode -->
       <div class="flex rounded-lg border border-border overflow-hidden">
         <button
-          v-for="mode in ['school', 'campus', 'educator', 'student']"
+          v-for="mode in viewModes"
           :key="mode"
           @click="viewMode = mode as ViewMode; resourceId = ''"
           :class="[
@@ -269,6 +284,9 @@ function openEvent(event: CalendarEventDto) {
         <option value="">{{ t('common.select') }}</option>
         <option v-for="c in campuses" :key="c.id" :value="c.id">{{ c.name }}</option>
       </select>
+      <div v-else-if="viewMode === 'room'" class="w-64">
+        <RoomPicker v-model="resourceId" size="sm" />
+      </div>
       <div v-else-if="viewMode === 'educator'" class="w-64">
         <EducatorPicker v-model="resourceId" size="sm" />
       </div>
@@ -309,6 +327,10 @@ function openEvent(event: CalendarEventDto) {
         <span class="ml-2 text-sm font-medium text-foreground min-w-[180px]">{{ formatDateHeader() }}</span>
       </div>
     </div>
+
+    <p v-if="viewMode !== 'school' && !resourceId" class="mb-3 text-sm text-muted-foreground">
+      {{ t(`scheduling.calendar.pick.${viewMode}`) }}
+    </p>
 
     <!-- Loading -->
     <div v-if="calendarStore.loading" class="h-96 rounded-xl bg-accent animate-pulse" />

@@ -532,6 +532,14 @@ async function dailyOpsFlows() {
       }
     }
   } else skip('finance.applyDiscount', 'POST', '/payments/discounts', 'öğrenci yok')
+
+  // 8) oda takvimi: yalnızca o odanın seansları (telafi/not seansları smoke odasına bağlandı)
+  if (ctx.roomId) {
+    const rc = await http('GET', `/scheduling/calendar/room/${ctx.roomId}?from=${encodeURIComponent(at(-1, 0))}&to=${encodeURIComponent(at(400, 0))}`)
+    const rows = rc.json?.data ?? []
+    record({ phase: 'yazma', id: 'scheduling.getRoomCalendar (yalnızca o odanın seansları)', verb: 'GET', url: `/scheduling/calendar/room/${ctx.roomId}`, status: rc.status,
+      outcome: rc.status === 200 && Array.isArray(rows) && rows.every(x => x.roomId === ctx.roomId) ? 'ok' : 'type', note: `${rows.length} seans`, mismatches: [] })
+  } else skip('scheduling.getRoomCalendar', 'GET', '/scheduling/calendar/room/{id}', 'oda yok')
   token = adminToken
 }
 

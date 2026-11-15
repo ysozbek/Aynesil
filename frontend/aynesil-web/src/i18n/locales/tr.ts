@@ -1327,8 +1327,15 @@ const tr = {
       view: {
         school: 'Okul',
         campus: 'Kampüs',
+        room: 'Oda',
         educator: 'Eğitimci',
         student: 'Öğrenci',
+      },
+      pick: {
+        campus: 'Takvimini görmek için bir kampüs seçin.',
+        room: 'Takvimini görmek için bir oda seçin.',
+        educator: 'Takvimini görmek için bir eğitimci seçin.',
+        student: 'Takvimini görmek için bir öğrenci seçin.',
       },
       campusId: 'Kampüs ID',
       educatorId: 'Eğitimci ID',

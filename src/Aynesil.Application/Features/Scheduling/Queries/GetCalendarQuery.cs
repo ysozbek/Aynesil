@@ -109,10 +109,13 @@ public sealed class GetRoomCalendarQueryHandler
     public async Task<IReadOnlyList<SessionListItemDto>> Handle(
         GetRoomCalendarQuery req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var items = await (
             from s in _db.Sessions.AsNoTracking()
             join r in _db.Rooms.AsNoTracking() on s.RoomId equals r.Id
-            where s.RoomId == req.RoomId
+            where s.CorporationId == corporationId
+               && s.RoomId == req.RoomId
                && s.StartsAt < req.To
                && s.EndsAt   > req.From
             orderby s.StartsAt
