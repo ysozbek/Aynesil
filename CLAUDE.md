@@ -13,7 +13,7 @@ AyNesil is a multi-tenant SaaS platform for special-education / therapy centers.
 
 ## Build / run / verify
 
-**Do not run `dotnet build`, `dotnet run`, `dotnet restore`, `npm run build` or `npm run dev` yourself to verify changes** unless the user explicitly asks. NuGet restore is unreliable in the sandbox. Instead, state clearly that the build was not verified and list which projects/files need building. When the user reports a build error, treat the exact message as ground truth.
+**Build ve testleri iş sonunda kendin çalıştır:** `dotnet build Aynesil.sln`, `dotnet test` (entegrasyon dahil, Docker açık), `npm run type-check`, `npm run build`; şema değiştiyse `db/validation/smoke_test.sh`; veri/akış değiştiyse `scripts/demo-seed/run.sh --reset` ve `scripts/smoke-api/run.sh`. Kırmızı bir adımla işi bitmiş sayma. Kullanıcı bir build hatası bildirirse tam mesajı esas al.
 
 Commands the user runs:
 
@@ -104,7 +104,7 @@ Vue 3 Composition API + Pinia + Vue Router + vue-i18n + Metronic 9 (Tailwind 4, 
 
 - **OrganizationGroup/holding tier:** don't build it, but don't hardcode "Corporation is the permanent top level".
 - **SaaS licensing/subscriptions:** don't build it, but don't assume every tenant has every module. `menu_item.feature_flag` is the seam.
-- **ABAC/Care-Team:** partially introduced via migrations V15/V16 (`students.user_can_access_student()`, `app.care_team_bypass`, `Application/Common/CareTeam`). Follow the existing implementation and don't extend it beyond what `db/` defines. Don't assume RBAC is the only permanent mechanism for clinical data.
+- **ABAC/Care-Team:** şema ve kurallar V15/V16'da (`students.user_can_access_student()`, `app.care_team_bypass`, `Application/Common/CareTeam`). Mevcut uçların arayüzü yapılabilir (kapsamda); şemayı ve erişim kuralını `db/`'nin tanımladığının ötesine genişletme. RBAC'ın klinik veri için tek kalıcı mekanizma olduğunu varsayma.
 
 - **E-posta/SMS sağlayıcısı:** henüz bağlı değil. `INotificationService` için `LoggingNotificationService` kayıtlı: bildirimi göndermez, yalnızca şablon kodu + alıcıyı log'a yazar (token gibi değişken değerleri asla loglanmaz). Gerçek sağlayıcı (SMTP/outbox + Hangfire işçisi) eklendiğinde `Infrastructure/DependencyInjection.cs`'teki kayıt onunla değiştirilir; o zamana kadar davet/parola sıfırlama e-postaları gitmez.
 - **DI doğrulaması:** servis kayıtları `AddAynesilApi` içindedir; `ServiceRegistrationTests` ValidateOnBuild + ValidateScopes ile hepsini doğrular (eksik kayıt testte kırılır).
@@ -117,4 +117,6 @@ Vue 3 Composition API + Pinia + Vue Router + vue-i18n + Metronic 9 (Tailwind 4, 
 
 ## Working style (from .cursorrules)
 
-Generate one requested module at a time, layer by layer. After each major layer, stop, summarize the files, and wait for confirmation.
+## Working style
+
+İşi baştan sona yürüt; yalnızca belirsizlik, şema kararı ya da kırmızı test olursa dur ve sor. Mantıklı adımlarla commit'le (push etme). Bitince kısa bir özet ver: yapılanlar, doğrulama sonuçları, kullanıcının karar vermesi gerekenler. Bir migration'ı uygulamadan önce onay gerekmez; uygulanmış (canlıya çıkmış) migration'ı değiştirme.
