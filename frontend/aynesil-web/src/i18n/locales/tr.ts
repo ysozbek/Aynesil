@@ -707,6 +707,7 @@ const tr = {
     recommendation: {
       title: 'Program Önerileri',
       add: 'Öneri Ekle',
+      edit: 'Öneriyi Düzenle',
       none: 'Henüz öneri bulunmuyor.',
       noProgram: '(Program belirtilmemiş)',
       intensity: 'Yoğunluk',
@@ -1529,6 +1530,14 @@ const tr = {
       validFrom: 'Başlangıç',
       validTo: 'Bitiş',
       allTypes: 'Tüm Türler',
+      detail: 'Burs Ayrıntısı',
+      edit: 'Bursu Düzenle',
+      note: 'Not',
+      percentOrAmount: 'Yüzde ya da sabit tutardan yalnızca biri girilmelidir.',
+      percentOrAmountHint: 'Yüzde veya sabit tutardan yalnızca biri girilir; diğeri boş kalmalıdır.',
+      percentRange: 'Yüzde 0 ile 100 arasında olmalıdır.',
+      amountPositive: 'Tutar sıfırdan büyük olmalıdır.',
+      validToBeforeFrom: 'Bitiş tarihi başlangıçtan önce olamaz.',
     },
     promotion: {
       title: 'Promosyon Kodları',
@@ -1742,6 +1751,8 @@ const tr = {
     outcomes: {
       title: 'Toplantı Sonuçları',
       add: 'Sonuç Ekle',
+      edit: 'Sonucu Düzenle',
+      atLeastOne: 'Özet ya da kararlardan en az biri doldurulmalıdır.',
       none: 'Henüz sonuç girilmemiş.',
       summary: 'Özet',
       decisions: 'Kararlar',

@@ -77,7 +77,8 @@ public record UpdateProgramRecommendationCommand(
     string? RecommendedIntensity,
     string? Rationale,
     Guid? RecommendedBy,
-    int RowVersion) : IRequest<ProgramRecommendationDto>;
+    int RowVersion,
+    Guid? AssessmentSessionId = null) : IRequest<ProgramRecommendationDto>;
 
 public class UpdateProgramRecommendationCommandValidator
     : AbstractValidator<UpdateProgramRecommendationCommand>
@@ -111,6 +112,13 @@ public sealed class UpdateProgramRecommendationCommandHandler
         var rec = await _db.ProgramRecommendations
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramRecommendation"));
+
+        // Yol üzerindeki oturum, önerinin ait olduğu oturumla aynı olmalı.
+        if (req.AssessmentSessionId.HasValue && rec.AssessmentSessionId != req.AssessmentSessionId)
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ProgramRecommendation"));
+
+        if (rec.RowVersion != req.RowVersion)
+            throw new BusinessRuleViolationException(MsgKeys.Error.Concurrency);
 
         rec.Update(req.RecommendedProgramId, req.RecommendedIntensity,
                    req.Rationale, req.RecommendedBy, _currentUser.UserId);

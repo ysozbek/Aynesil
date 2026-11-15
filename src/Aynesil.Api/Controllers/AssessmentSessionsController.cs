@@ -324,7 +324,8 @@ public sealed class AssessmentSessionsController : BaseController
             req.RecommendedIntensity,
             req.Rationale,
             req.RecommendedBy,
-            req.RowVersion), ct);
+            req.RowVersion,
+            id), ct);
 
         return OkResult(result);
     }

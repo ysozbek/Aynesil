@@ -13,7 +13,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
-import type { AssessmentItemDto, ResponseItemPayload } from '@/types/assessment.types'
+import type { AssessmentItemDto, ResponseItemPayload, ProgramRecommendationDto } from '@/types/assessment.types'
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
@@ -181,10 +181,38 @@ async function finalizeReport() {
 const showRecommendationForm = ref(false)
 const recForm = ref({ recommendedIntensity: '', rationale: '' })
 const recError = ref('')
+const editingRec = ref<ProgramRecommendationDto | null>(null)
+
+function openAddRecommendation() {
+  editingRec.value = null
+  recError.value = ''
+  recForm.value = { recommendedIntensity: '', rationale: '' }
+  showRecommendationForm.value = true
+}
+
+function openEditRecommendation(rec: ProgramRecommendationDto) {
+  editingRec.value = rec
+  recError.value = ''
+  recForm.value = { recommendedIntensity: rec.recommendedIntensity ?? '', rationale: rec.rationale ?? '' }
+  showRecommendationForm.value = true
+}
 
 async function submitRecommendation() {
   if (!session.value) return
+  recError.value = ''
   try {
+    if (editingRec.value) {
+      // Program ve öneren değişmez; yalnızca yoğunluk ve gerekçe düzenlenir (sunucu bu alanları olduğu gibi yazar).
+      await store.updateRecommendation(id.value, editingRec.value.id, {
+        recommendedProgramId: editingRec.value.recommendedProgramId ?? undefined,
+        recommendedBy: editingRec.value.recommendedBy ?? undefined,
+        recommendedIntensity: recForm.value.recommendedIntensity.trim() || undefined,
+        rationale: recForm.value.rationale.trim() || undefined,
+        rowVersion: editingRec.value.rowVersion,
+      })
+      showRecommendationForm.value = false
+      return
+    }
     await store.createRecommendation(id.value, {
       leadId: session.value.leadId ?? undefined,
       studentId: session.value.studentId ?? undefined,
@@ -450,7 +478,7 @@ function getChoices(item: AssessmentItemDto): string[] {
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-semibold text-foreground">{{ t('assessment.recommendation.title') }}</h3>
             <button v-if="can(Permissions.ProgramRecommendations.Create) && session.status === 'completed'"
-              @click="showRecommendationForm = true"
+              @click="openAddRecommendation"
               class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
               + {{ t('assessment.recommendation.add') }}
             </button>
@@ -471,9 +499,21 @@ function getChoices(item: AssessmentItemDto): string[] {
                   <p v-if="rec.recommendedIntensity" class="text-xs text-muted-foreground">{{ t('assessment.recommendation.intensity') }}: {{ rec.recommendedIntensity }}</p>
                   <p v-if="rec.rationale" class="text-xs text-foreground mt-1">{{ rec.rationale }}</p>
                 </div>
-                <span class="text-xs text-muted-foreground whitespace-nowrap font-mono">
-                  {{ rec.recommendedBy ? rec.recommendedBy.slice(0, 8) : '—' }}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-muted-foreground whitespace-nowrap font-mono">
+                    {{ rec.recommendedBy ? rec.recommendedBy.slice(0, 8) : '—' }}
+                  </span>
+                  <button
+                    v-if="can(Permissions.ProgramRecommendations.Update)"
+                    @click="openEditRecommendation(rec)"
+                    class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+                    :title="t('common.edit')"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -497,7 +537,7 @@ function getChoices(item: AssessmentItemDto): string[] {
     </FormModal>
 
     <!-- Recommendation Form Modal -->
-    <FormModal :open="showRecommendationForm" :title="t('assessment.recommendation.add')" :saving="store.saving" @submit="submitRecommendation" @close="showRecommendationForm = false">
+    <FormModal :open="showRecommendationForm" :title="editingRec ? t('assessment.recommendation.edit') : t('assessment.recommendation.add')" :saving="store.saving" @submit="submitRecommendation" @close="showRecommendationForm = false">
       <div class="space-y-4">
         <p v-if="recError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ recError }}</p>
         <div>

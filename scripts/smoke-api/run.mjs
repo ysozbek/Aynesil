@@ -455,6 +455,58 @@ async function dailyOpsFlows() {
         await http('POST', `/scheduling/sessions/${sid}/attendance/bulk`, { entries: [{ studentId: '00000000-0000-7000-8000-000000000001', status: 'present' }] }), [400, 409, 422], 'Rule.ParticipantNotInSession')
     }
   } else skip('scheduling.bulkRecordAttendance', 'POST', '/scheduling/sessions/{id}/attendance/bulk', 'ön koşul eksik')
+
+  // 4) toplantı sonucu ekle → düzenle
+  const mt = await write('yazma', 'meeting.schedule (sonuç düzenleme)', 'POST', '/meetings', {
+    campusId: ctx.campusId, title: `Smoke Sonuç Toplantısı ${RUN}`, location: 'Oda', scheduledAt: at(5, 10), endsAt: at(5, 11) })
+  const meetingId = idOf(mt.json?.data)
+  if (meetingId) {
+    const oc = await write('yazma', 'meeting.recordOutcome', 'POST', `/meetings/${meetingId}/outcomes`, { meetingId, summary: 'Smoke özet', decisions: 'Smoke karar' })
+    const outcomeId = oc.json?.data?.id
+    if (outcomeId) {
+      await write('yazma', 'meeting.updateOutcome', 'PUT', `/meetings/outcomes/${outcomeId}`, { summary: 'Smoke özet (düzenlendi)', decisions: 'Smoke karar 2' })
+      const got = (await http('GET', `/meetings/${meetingId}`)).json?.data?.outcomes?.find(o => o.id === outcomeId)
+      record({ phase: 'yazma', id: 'meeting.updateOutcome (kalıcılık)', verb: 'GET', url: `/meetings/${meetingId}`, status: 200,
+        outcome: got?.summary === 'Smoke özet (düzenlendi)' && got?.decisions === 'Smoke karar 2' ? 'ok' : 'type', note: got ? 'metin güncel' : 'sonuç okunamadı', mismatches: [] })
+      expectStatus('yazma', 'meeting.updateOutcome (boş metin → reddedilir)', 'PUT', `/meetings/outcomes/${outcomeId}`, await http('PUT', `/meetings/outcomes/${outcomeId}`, { summary: ' ', decisions: null }), [400, 422])
+    }
+  } else skip('meeting.updateOutcome', 'PUT', '/meetings/outcomes/{id}', 'toplantı oluşmadı')
+
+  // 5) değerlendirme önerisi düzenleme (tamamlanmış demo değerlendirmesi üzerinde; yoksa atlanır)
+  const doneAs = (await http('GET', '/assessment-sessions?status=completed&page=1&pageSize=1')).json?.data?.items?.[0]
+  if (doneAs?.id) {
+    const rc = await write('yazma', 'assessment.createRecommendation (düzenleme için)', 'POST', `/assessment-sessions/${doneAs.id}/recommendations`, {
+      leadId: doneAs.leadId ?? null, studentId: doneAs.studentId ?? null, recommendedProgramId: null, recommendedIntensity: 'haftada 1', rationale: 'Smoke gerekçe', recommendedBy: null })
+    const rec = rc.json?.data
+    if (rec?.id) {
+      const up = await write('yazma', 'assessment.updateRecommendation', 'PUT', `/assessment-sessions/${doneAs.id}/recommendations/${rec.id}`, {
+        recommendedProgramId: null, recommendedIntensity: 'haftada 3', rationale: 'Smoke gerekçe (düzenlendi)', recommendedBy: null, rowVersion: rec.rowVersion })
+      record({ phase: 'yazma', id: 'assessment.updateRecommendation (alanlar güncel)', verb: 'PUT', url: `/assessment-sessions/${doneAs.id}/recommendations/${rec.id}`, status: up.status,
+        outcome: up.json?.data?.recommendedIntensity === 'haftada 3' ? 'ok' : 'type', note: `yoğunluk=${up.json?.data?.recommendedIntensity}`, mismatches: [] })
+      expectStatus('yazma', 'assessment.updateRecommendation (eski rowVersion → reddedilir)', 'PUT', `/assessment-sessions/${doneAs.id}/recommendations/${rec.id}`,
+        await http('PUT', `/assessment-sessions/${doneAs.id}/recommendations/${rec.id}`, { recommendedProgramId: null, recommendedIntensity: 'x', rationale: null, recommendedBy: null, rowVersion: rec.rowVersion }), [400, 409, 422])
+      const other = (await http('GET', '/assessment-sessions?page=1&pageSize=20')).json?.data?.items?.find(x => x.id !== doneAs.id)
+      if (other) expectStatus('yazma', 'assessment.updateRecommendation (başka oturum yolundan → 404)', 'PUT', `/assessment-sessions/${other.id}/recommendations/${rec.id}`,
+        await http('PUT', `/assessment-sessions/${other.id}/recommendations/${rec.id}`, { recommendedProgramId: null, recommendedIntensity: 'x', rationale: null, recommendedBy: null, rowVersion: up.json?.data?.rowVersion ?? 1 }), [404])
+    }
+  } else skip('assessment.updateRecommendation', 'PUT', '/assessment-sessions/{id}/recommendations/{id}', 'tamamlanmış değerlendirme yok')
+
+  // 6) burs: ver → ayrıntı → düzenle (yüzde → sabit tutar); aynı anda ikisi reddedilir; eski rowVersion reddedilir
+  const sType = (await ref('scholarship_type'))[0]?.id
+  if (ctx.studentId && sType) {
+    const gs = await write('yazma', 'finance.grantScholarship (düzenleme için)', 'POST', '/payments/scholarships', { studentId: ctx.studentId, scholarshipTypeId: sType, percentage: 10, amount: null, validFrom: day(0), validTo: day(200), note: 'Smoke burs' })
+    const sch = gs.json?.data
+    if (sch?.id) {
+      const det = await write('yazma', 'finance.getScholarship', 'GET', `/payments/scholarships/${sch.id}`)
+      const upd = await write('yazma', 'finance.updateScholarship', 'PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: null, amount: 750, validFrom: day(0), validTo: day(300), note: 'Smoke burs (düzenlendi)', rowVersion: det.json?.data?.rowVersion })
+      record({ phase: 'yazma', id: 'finance.updateScholarship (yüzde → sabit tutar)', verb: 'PUT', url: `/payments/scholarships/${sch.id}`, status: upd.status,
+        outcome: upd.json?.data?.amount === 750 && upd.json?.data?.percentage == null ? 'ok' : 'type', note: `tutar=${upd.json?.data?.amount} yüzde=${upd.json?.data?.percentage}`, mismatches: [] })
+      expectStatus('yazma', 'finance.updateScholarship (yüzde + tutar birlikte → reddedilir)', 'PUT', `/payments/scholarships/${sch.id}`,
+        await http('PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: 10, amount: 100, validFrom: day(0), validTo: null, note: null, rowVersion: upd.json?.data?.rowVersion }), [400, 422])
+      expectStatus('yazma', 'finance.updateScholarship (eski rowVersion → reddedilir)', 'PUT', `/payments/scholarships/${sch.id}`,
+        await http('PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: 5, amount: null, validFrom: day(0), validTo: null, note: null, rowVersion: det.json?.data?.rowVersion }), [400, 409, 422])
+    }
+  } else skip('finance.updateScholarship', 'PUT', '/payments/scholarships/{id}', 'öğrenci/burs türü yok')
   token = adminToken
 }
 

@@ -9,7 +9,7 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
-import type { MeetingParticipantDto } from '@/types/meeting.types'
+import type { MeetingParticipantDto, MeetingOutcomeDto } from '@/types/meeting.types'
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
@@ -27,6 +27,8 @@ const showCancelConfirm = ref(false)
 const openParticipantMenu = ref<string | null>(null)
 
 const outcomeForm = ref({ summary: '', decisions: '' })
+const editingOutcomeId = ref<string | null>(null)
+const outcomeError = ref('')
 const followUpForm = ref({ action: '', dueDate: '' })
 
 const canEditMeeting = computed(() => {
@@ -85,10 +87,35 @@ async function removeParticipant(participantId: string) {
   await store.removeParticipant(id.value, participantId)
 }
 
-async function saveOutcome() {
-  await store.addOutcome(id.value, outcomeForm.value)
+function openAddOutcome() {
+  editingOutcomeId.value = null
+  outcomeError.value = ''
   outcomeForm.value = { summary: '', decisions: '' }
-  showOutcomeModal.value = false
+  showOutcomeModal.value = true
+}
+
+function openEditOutcome(o: MeetingOutcomeDto) {
+  editingOutcomeId.value = o.id
+  outcomeError.value = ''
+  outcomeForm.value = { summary: o.summary ?? '', decisions: o.decisions ?? '' }
+  showOutcomeModal.value = true
+}
+
+async function saveOutcome() {
+  outcomeError.value = ''
+  // Sunucu da doğrular: özet ya da karardan en az biri dolu olmalı.
+  if (!outcomeForm.value.summary.trim() && !outcomeForm.value.decisions.trim()) {
+    outcomeError.value = t('meeting.outcomes.atLeastOne')
+    return
+  }
+  try {
+    if (editingOutcomeId.value) await store.updateOutcome(id.value, editingOutcomeId.value, outcomeForm.value)
+    else await store.addOutcome(id.value, outcomeForm.value)
+    outcomeForm.value = { summary: '', decisions: '' }
+    showOutcomeModal.value = false
+  } catch (e: unknown) {
+    outcomeError.value = (e as Error).message
+  }
 }
 
 async function saveFollowUp() {
@@ -176,7 +203,7 @@ onMounted(async () => {
               <h3 class="font-semibold text-foreground">{{ t('meeting.outcomes.title') }}</h3>
               <button
                 v-if="canManageOutcomes"
-                @click="showOutcomeModal = true"
+                @click="openAddOutcome"
                 class="text-xs text-primary hover:underline"
               >
                 + {{ t('meeting.outcomes.add') }}
@@ -186,10 +213,22 @@ onMounted(async () => {
               {{ t('meeting.outcomes.none') }}
             </div>
             <div v-else class="divide-y divide-border">
-              <div v-for="o in meeting.outcomes" :key="o.id" class="px-4 py-4">
-                <p v-if="o.summary" class="text-sm font-medium text-foreground">{{ o.summary }}</p>
-                <p v-if="o.decisions" class="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{{ o.decisions }}</p>
-                <p class="text-xs text-muted-foreground mt-2">{{ formatDateTime(o.createdAt) }}</p>
+              <div v-for="o in meeting.outcomes" :key="o.id" class="px-4 py-4 flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                  <p v-if="o.summary" class="text-sm font-medium text-foreground">{{ o.summary }}</p>
+                  <p v-if="o.decisions" class="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{{ o.decisions }}</p>
+                  <p class="text-xs text-muted-foreground mt-2">{{ formatDateTime(o.createdAt) }}</p>
+                </div>
+                <button
+                  v-if="canManageOutcomes"
+                  @click="openEditOutcome(o)"
+                  class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground shrink-0"
+                  :title="t('common.edit')"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -304,11 +343,12 @@ onMounted(async () => {
 
     <FormModal
       :open="showOutcomeModal"
-      :title="t('meeting.outcomes.add')"
+      :title="editingOutcomeId ? t('meeting.outcomes.edit') : t('meeting.outcomes.add')"
       :saving="store.saving"
       @submit="saveOutcome"
       @close="showOutcomeModal = false"
     >
+      <div v-if="outcomeError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">{{ outcomeError }}</div>
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('meeting.outcomes.summary') }}</label>

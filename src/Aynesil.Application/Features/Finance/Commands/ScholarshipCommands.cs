@@ -127,6 +127,14 @@ public class UpdateScholarshipCommandValidator : AbstractValidator<UpdateScholar
         RuleFor(x => x.Amount)
             .GreaterThan(0)
             .When(x => x.Amount.HasValue);
+
+        // Oluşturmadakiyle aynı kurallar (düzenleme bunları atlatmasın).
+        RuleFor(x => x.ValidTo)
+            .GreaterThanOrEqualTo(x => x.ValidFrom!.Value)
+            .When(x => x.ValidFrom.HasValue && x.ValidTo.HasValue)
+            .WithKey(MsgKeys.Validation.MustNotBeBefore, Msg.FieldArg("ValidTo"), Msg.FieldArg("ValidFrom"));
+
+        RuleFor(x => x.Note).MaximumLength(1000).When(x => x.Note is not null);
     }
 }
 
