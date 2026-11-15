@@ -30,16 +30,19 @@ public static class CareTeamFilter
     public static bool HasBypass(ICurrentUserService currentUser)
         => currentUser.HasPermission(BypassPermissionCode);
     /// <summary>
-    /// Returns true when the current user has an active care-team assignment
-    /// for the specified student.
+    /// Same rule as the RESTRICTIVE RLS backstop: delegates to <c>students.user_can_access_student()</c> (V16), so the
+    /// pre-filter can never be stricter than the database. Returns true when:
+    ///   - the tenant is in RBAC-only mode (<c>core.setting_value care_team_abac_enabled</c> missing/false — the
+    ///     default for every tenant until it opts in), or
+    ///   - the user is linked to an educator with an active, effective care-team assignment for the student.
+    /// Returns false (early exit → empty list) only when the tenant has ABAC enabled and no such assignment exists
+    /// (or the user is unauthenticated).
     ///
-    /// Returns true (allow) when:
-    ///   - The user is linked to an educator with an active, effective assignment for the student.
-    ///
-    /// Returns false (early exit → empty list) when:
-    ///   - The user is unauthenticated (UserId is null).
-    ///   - No educator profile exists for this user.
-    ///   - No active assignment links this educator to the student.
+    /// Before this delegated to the DB, the helper checked the assignment table alone and ignored the per-tenant
+    /// switch: in RBAC-only tenants every user without care_team:bypass (e.g. educators) saw empty per-student goal,
+    /// progress, plan, assessment and sub-resource lists although RLS allowed the rows.
+    /// The function reads app.current_corporation_id / app.current_user_id, set on the connection by
+    /// TenantConnectionInterceptor. Callers check <see cref="HasBypass"/> first.
     /// </summary>
     public static async Task<bool> CanAccessStudentAsync(
         IAppDbContext db,
@@ -50,18 +53,8 @@ public static class CareTeamFilter
         if (!currentUser.UserId.HasValue)
             return false;
 
-        var userId = currentUser.UserId.Value;
-        var now    = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        return await db.StudentCareAssignments
-            .AsNoTracking()
-            .AnyAsync(a =>
-                a.StudentId  == studentId &&
-                a.Status     == "active"  &&
-                a.DeletedAt  == null      &&
-                a.ActiveFrom <= now       &&
-                (a.ActiveTo  == null || a.ActiveTo > now) &&
-                db.Educators.Any(e => e.Id == a.EducatorId && e.UserId == userId),
-            ct);
+        return await db.Database
+            .SqlQueryRaw<bool>(@"SELECT students.user_can_access_student({0}) AS ""Value""", studentId)
+            .FirstAsync(ct);
     }
 }
