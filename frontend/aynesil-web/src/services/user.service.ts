@@ -8,6 +8,7 @@ import type {
   CreateUserRequest,
   UpdateUserRequest,
   AssignUserRoleRequest,
+  ResetUserPasswordResult,
 } from '@/types/user.types'
 
 const BASE = '/users'
@@ -43,6 +44,11 @@ export const userService = {
 
   suspend(id: string) {
     return apiService.post(`${BASE}/${id}/suspend`)
+  },
+
+  /** New temporary password, returned once; the user must change it at next sign-in. */
+  resetPassword(id: string) {
+    return apiService.post<ResetUserPasswordResult>(`${BASE}/${id}/reset-password`)
   },
 
   assignRole(id: string, request: AssignUserRoleRequest) {

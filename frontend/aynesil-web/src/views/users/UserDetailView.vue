@@ -6,10 +6,13 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user.store'
 import { useRoleStore } from '@/stores/role.store'
 import { useBranchStore } from '@/stores/branch.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { usePermission } from '@/composables/usePermission'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import TemporaryPasswordModal from '@/components/shared/TemporaryPasswordModal.vue'
+import { userService } from '@/services/user.service'
 import type { UserRoleDto } from '@/types/user.types'
 import type { LinkedEducator, LinkedGuardian } from '@/types/userAccountLink.types'
 import { userAccountLinkService } from '@/services/userAccountLink.service'
@@ -22,6 +25,7 @@ const store = useUserStore()
 const roleStore = useRoleStore()
 const branchStore = useBranchStore()
 const { can } = usePermission()
+const currentUserId = computed(() => useAuthStore().user?.userId)
 
 const id = computed(() => route.params.id as string)
 const activeTab = ref<'info' | 'roles'>('info')
@@ -88,6 +92,27 @@ async function toggleStatus() {
   if (!store.current) return
   if (store.current.status === UserStatus.Active) await store.suspend(id.value)
   else await store.activate(id.value)
+}
+
+// ── Reset password (admin) ─────────────────────────────────────────────────────
+const showResetPassword = ref(false)
+const resetLoading = ref(false)
+const resetError = ref('')
+/** Held only in memory and dropped when the dialog closes. */
+const resetTemporaryPassword = ref('')
+
+async function doResetPassword() {
+  resetLoading.value = true
+  resetError.value = ''
+  try {
+    const res = await userService.resetPassword(id.value)
+    resetTemporaryPassword.value = res.data?.temporaryPassword ?? ''
+    showResetPassword.value = false
+  } catch (err: unknown) {
+    resetError.value = (err as Error).message
+  } finally {
+    resetLoading.value = false
+  }
 }
 
 // ── Assign role ────────────────────────────────────────────────────────────────
@@ -176,6 +201,11 @@ function getBranchName(campusId?: string) {
           {{ store.current.status === UserStatus.Active ? t('user.suspend') : t('user.activate') }}
         </button>
       </div>
+      <button v-if="store.current && can(Permissions.Users.ResetPassword) && store.current.id !== currentUserId"
+        @click="resetError = ''; showResetPassword = true"
+        class="px-3 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">
+        {{ t('user.resetPassword') }}
+      </button>
     </div>
 
     <!-- Tabs -->
@@ -350,6 +380,14 @@ function getBranchName(campusId?: string) {
         </div>
       </div>
     </FormModal>
+
+    <!-- Reset password confirm + one-time temporary password -->
+    <ConfirmModal :open="showResetPassword" :title="t('user.resetPasswordTitle')"
+      :message="resetError || t('user.resetPasswordMessage', { name: store.current?.fullName })"
+      :confirm-label="t('user.resetPassword')" :loading="resetLoading" @confirm="doResetPassword" @cancel="showResetPassword = false" />
+    <TemporaryPasswordModal :password="resetTemporaryPassword"
+      :intro="t('user.resetPasswordIntro', { username: store.current?.username })"
+      @close="resetTemporaryPassword = ''" />
 
     <!-- Remove role confirm -->
     <ConfirmModal :open="!!removeRoleTarget" :title="t('user.removeRoleTitle')"

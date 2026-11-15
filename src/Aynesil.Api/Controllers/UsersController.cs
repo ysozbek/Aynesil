@@ -136,6 +136,21 @@ public sealed class UsersController : BaseController
         return NoContentResult(MsgKeys.Success.UserSuspended);
     }
 
+    /// <summary>
+    /// Yönetici şifre sıfırlama: yeni geçici şifre yanıtta bir kez döner, kullanıcı ilk girişte şifresini değiştirmek
+    /// zorundadır ve açık oturumları iptal edilir. Kendi kurumu dışındaki kullanıcı 404.
+    /// </summary>
+    [HttpPost("{id:guid}/reset-password")]
+    [HasPermission(Permissions.Users.ResetPassword)]
+    [ProducesResponseType(typeof(ApiResponse<ResetUserPasswordResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> ResetPassword(Guid id, CancellationToken ct)
+    {
+        var result = await Sender.Send(new ResetUserPasswordCommand(id), ct);
+        return OkResult(result);
+    }
+
     /// <summary>Grants a role to a user, optionally scoped to a specific campus.</summary>
     [HttpPost("{id:guid}/roles")]
     [HasPermission(Permissions.Users.Update)]

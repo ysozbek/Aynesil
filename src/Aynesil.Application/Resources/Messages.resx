@@ -81,6 +81,7 @@
   <data name="Rule.CampusCodeExists" xml:space="preserve"><value>'{0}' kampüs kodu bu kurumda zaten mevcut.</value></data>
   <data name="Rule.CannotDeleteSelf" xml:space="preserve"><value>Kendi hesabınızı silemezsiniz.</value></data>
   <data name="Rule.CannotSuspendSelf" xml:space="preserve"><value>Kendi hesabınızı askıya alamazsınız.</value></data>
+  <data name="Rule.CannotResetOwnPassword" xml:space="preserve"><value>Kendi şifrenizi buradan sıfırlayamazsınız; Şifre Değiştir sayfasını kullanın.</value></data>
   <data name="Rule.ClosedCorporationNoReactivate" xml:space="preserve"><value>Kapatılmış bir kurum yeniden etkinleştirilemez.</value></data>
   <data name="Rule.ClosedCorporationNoSuspend" xml:space="preserve"><value>Kapatılmış bir kurum askıya alınamaz.</value></data>
   <data name="Rule.CodeAlreadyExists" xml:space="preserve"><value>'{1}' kodlu {0} zaten mevcut.</value></data>

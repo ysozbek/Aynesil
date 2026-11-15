@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
+import TemporaryPasswordModal from '@/components/shared/TemporaryPasswordModal.vue'
 import { usePermission } from '@/composables/usePermission'
 import { Permissions, type PermissionCode } from '@/constants/permissions'
 import { userAccountLinkService } from '@/services/userAccountLink.service'
@@ -146,7 +147,6 @@ async function openCreate() {
 
 const temporaryPassword = ref('')
 const createdUsername = ref('')
-const copied = ref(false)
 
 async function submitCreate() {
   createError.value = ''
@@ -168,22 +168,12 @@ async function submitCreate() {
       setAccount(res.data.user)
       createdUsername.value = res.data.user.username
       temporaryPassword.value = res.data.temporaryPassword
-      copied.value = false
     }
     showCreate.value = false
   } catch (e: unknown) {
     createError.value = (e as Error).message
   } finally {
     createSaving.value = false
-  }
-}
-
-async function copyPassword() {
-  try {
-    await navigator.clipboard.writeText(temporaryPassword.value)
-    copied.value = true
-  } catch {
-    copied.value = false
   }
 }
 
@@ -349,23 +339,11 @@ async function doUnlink() {
     </FormModal>
 
     <!-- One-time temporary password -->
-    <FormModal
-      :open="!!temporaryPassword"
-      :title="t('userLink.passwordTitle')"
+    <TemporaryPasswordModal
+      :password="temporaryPassword"
+      :intro="t('userLink.passwordIntro', { username: createdUsername })"
       @close="closePassword"
-      @submit="closePassword"
-    >
-      <div class="space-y-3 text-sm">
-        <p class="text-foreground">{{ t('userLink.passwordIntro', { username: createdUsername }) }}</p>
-        <div class="flex items-center gap-2">
-          <code class="flex-1 rounded-lg border border-border bg-accent px-3 py-2 font-mono text-base tracking-wider select-all">{{ temporaryPassword }}</code>
-          <button type="button" class="px-3 py-2 text-xs rounded-lg border border-border hover:bg-accent" @click="copyPassword">
-            {{ copied ? t('userLink.copied') : t('userLink.copy') }}
-          </button>
-        </div>
-        <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">{{ t('userLink.passwordWarning') }}</p>
-      </div>
-    </FormModal>
+    />
 
     <ConfirmModal
       :open="showUnlink"

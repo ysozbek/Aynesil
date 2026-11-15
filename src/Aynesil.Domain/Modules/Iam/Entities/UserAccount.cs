@@ -152,6 +152,19 @@ public class UserAccount : TenantEntity
         AddDomainEvent(new UserPasswordChangedEvent(Id, CorporationId));
     }
 
+    /// <summary>
+    /// Yönetici, kullanıcıya yeni bir geçici şifre verir: kullanıcı ilk girişte şifresini değiştirmek zorundadır
+    /// (<see cref="MustChangePassword"/> = true). Oturumların iptali çağıranın işidir (token servisi).
+    /// </summary>
+    public void ResetPasswordByAdmin(string temporaryPasswordHash, Guid? resetBy)
+    {
+        PasswordHash = temporaryPasswordHash;
+        MustChangePassword = true;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedBy = resetBy ?? UpdatedBy;
+        AddDomainEvent(new UserPasswordChangedEvent(Id, CorporationId));
+    }
+
     /// <summary>Updates the last login timestamp. Called by the token service after successful authentication.</summary>
     public void RecordLogin() => LastLoginAt = DateTimeOffset.UtcNow;
 }

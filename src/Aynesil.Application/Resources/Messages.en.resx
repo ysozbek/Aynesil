@@ -81,6 +81,7 @@
   <data name="Rule.CampusCodeExists" xml:space="preserve"><value>Campus code '{0}' already exists in this corporation.</value></data>
   <data name="Rule.CannotDeleteSelf" xml:space="preserve"><value>You cannot delete your own account.</value></data>
   <data name="Rule.CannotSuspendSelf" xml:space="preserve"><value>You cannot suspend your own account.</value></data>
+  <data name="Rule.CannotResetOwnPassword" xml:space="preserve"><value>You cannot reset your own password here; use the Change Password page.</value></data>
   <data name="Rule.ClosedCorporationNoReactivate" xml:space="preserve"><value>A closed corporation cannot be reactivated.</value></data>
   <data name="Rule.ClosedCorporationNoSuspend" xml:space="preserve"><value>A closed corporation cannot be suspended.</value></data>
   <data name="Rule.CodeAlreadyExists" xml:space="preserve"><value>A {0} with code '{1}' already exists.</value></data>

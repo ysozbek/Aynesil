@@ -103,6 +103,8 @@ public static class MsgKeys
         public static readonly MsgKey CampusCodeExists = new("Rule.CampusCodeExists");
         public static readonly MsgKey CannotDeleteSelf = new("Rule.CannotDeleteSelf");
         public static readonly MsgKey CannotSuspendSelf = new("Rule.CannotSuspendSelf");
+        /// <summary>Yönetici şifre sıfırlama kendi hesabına uygulanmaz; kişi kendi şifresini Şifre Değiştir ile değiştirir.</summary>
+        public static readonly MsgKey CannotResetOwnPassword = new("Rule.CannotResetOwnPassword");
         public static readonly MsgKey ClosedCorporationNoReactivate = new("Rule.ClosedCorporationNoReactivate");
         public static readonly MsgKey ClosedCorporationNoSuspend = new("Rule.ClosedCorporationNoSuspend");
         public static readonly MsgKey CorporationCodeTaken = new("Rule.CorporationCodeTaken");

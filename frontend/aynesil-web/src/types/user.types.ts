@@ -62,3 +62,10 @@ export interface UserQuery extends PagedQuery {
   roleId?: string
   campusId?: string
 }
+
+/** POST /users/{id}/reset-password — the temporary password is shown once and never stored. */
+export interface ResetUserPasswordResult {
+  userId: string
+  username: string
+  temporaryPassword: string
+}
