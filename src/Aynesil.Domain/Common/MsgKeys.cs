@@ -163,6 +163,8 @@ public static class MsgKeys
         public static readonly MsgKey ContractTerminateStatus = new("Rule.ContractTerminateStatus");
         public static readonly MsgKey DiscountNeedsDraftInvoice = new("Rule.DiscountNeedsDraftInvoice");
         public static readonly MsgKey DiscountExceedsSubtotal = new("Rule.DiscountExceedsSubtotal");
+        public static readonly MsgKey HierarchyAlreadyEnded = new("Rule.HierarchyAlreadyEnded");
+        public static readonly MsgKey HierarchyEndBeforeStart = new("Rule.HierarchyEndBeforeStart");
         public static readonly MsgKey EducatorAlreadyAtScope = new("Rule.EducatorAlreadyAtScope");
         public static readonly MsgKey EducatorAlreadyInSession = new("Rule.EducatorAlreadyInSession");
         public static readonly MsgKey EducatorAlreadyOnCampus = new("Rule.EducatorAlreadyOnCampus");

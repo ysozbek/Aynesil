@@ -936,6 +936,13 @@ const tr = {
       link: 'Denetçi Bağla',
       supervisor: 'Denetçi',
       subordinates: 'Astlar',
+      end: 'Sonlandır',
+      endTitle: 'İlişkiyi Sonlandır',
+      endHint: 'İlişki silinmez; seçilen tarihte sona erer ve geçmişte görünür kalır. Yanlış kurulmuş bir ilişkiyi tamamen kaldırmak için "Kaldır" kullanın.',
+      endDate: 'Bitiş tarihi',
+      endBeforeStart: 'Bitiş tarihi ilişkinin başlangıcından önce olamaz.',
+      ended: 'Sona erdi',
+      openEnded: 'devam ediyor',
     },
   },
 

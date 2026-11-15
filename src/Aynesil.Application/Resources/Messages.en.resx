@@ -107,6 +107,8 @@
   <data name="Rule.CurrentPasswordIncorrect" xml:space="preserve"><value>The current password is incorrect.</value></data>
   <data name="Rule.DiscountNeedsDraftInvoice" xml:space="preserve"><value>Discounts can only be applied to draft invoices.</value></data>
   <data name="Rule.DiscountExceedsSubtotal" xml:space="preserve"><value>Total discounts cannot exceed the invoice subtotal.</value></data>
+  <data name="Rule.HierarchyAlreadyEnded" xml:space="preserve"><value>This supervisory relationship has already ended.</value></data>
+  <data name="Rule.HierarchyEndBeforeStart" xml:space="preserve"><value>The end date cannot be before the relationship start date.</value></data>
   <data name="Rule.EducatorAlreadyAtScope" xml:space="preserve"><value>Educator is already assigned at this scope.</value></data>
   <data name="Rule.EducatorAlreadyInSession" xml:space="preserve"><value>Educator is already assigned to this session.</value></data>
   <data name="Rule.EducatorAlreadyOnCampus" xml:space="preserve"><value>Educator is already actively assigned to this campus.</value></data>

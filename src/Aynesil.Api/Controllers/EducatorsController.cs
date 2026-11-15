@@ -296,7 +296,7 @@ public sealed class EducatorsController : BaseController
     public async Task<IActionResult> EndHierarchy(
         Guid id, Guid edgeId, [FromBody] EndHierarchyRequest req, CancellationToken ct)
     {
-        var result = await Sender.Send(new EndHierarchyCommand(edgeId, req.EndDate), ct);
+        var result = await Sender.Send(new EndHierarchyCommand(edgeId, req.EndDate, id), ct);
         return OkResult(result);
     }
 

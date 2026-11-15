@@ -132,7 +132,7 @@ public sealed class UnlinkHierarchyCommandHandler : IRequestHandler<UnlinkHierar
 
 // ── EndHierarchyCommand ───────────────────────────────────────────────────────
 
-public record EndHierarchyCommand(Guid HierarchyEdgeId, DateOnly? EndDate) : IRequest<EducatorHierarchyDto>;
+public record EndHierarchyCommand(Guid HierarchyEdgeId, DateOnly? EndDate, Guid? EducatorId = null) : IRequest<EducatorHierarchyDto>;
 
 public sealed class EndHierarchyCommandHandler : IRequestHandler<EndHierarchyCommand, EducatorHierarchyDto>
 {
@@ -146,7 +146,21 @@ public sealed class EndHierarchyCommandHandler : IRequestHandler<EndHierarchyCom
             .FirstOrDefaultAsync(h => h.Id == req.HierarchyEdgeId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "HierarchyEdge"));
 
-        edge.ActiveTo = req.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        // Yoldaki eğitmen, ilişkinin alt (denetlenen) tarafı olmalı.
+        if (req.EducatorId.HasValue && edge.EducatorId != req.EducatorId.Value)
+            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "HierarchyEdge"));
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // Süresi zaten dolmuş ilişkinin geçmişi değiştirilmez; ileri tarihli bitiş ise güncellenebilir.
+        if (edge.ActiveTo.HasValue && edge.ActiveTo.Value < today)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.HierarchyAlreadyEnded);
+
+        var endDate = req.EndDate ?? today;
+        if (endDate < edge.ActiveFrom)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.HierarchyEndBeforeStart);
+
+        edge.ActiveTo = endDate;
         await _db.SaveChangesAsync(ct);
 
         var educatorName = await _db.Educators.AsNoTracking()

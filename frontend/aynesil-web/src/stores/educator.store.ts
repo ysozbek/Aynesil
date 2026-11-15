@@ -10,6 +10,7 @@ import type {
   EducatorDto,
   EducatorListItemDto,
   EducatorAvailabilityDto,
+  EducatorHierarchyDto,
   EducatorUtilizationDto,
   EducatorListQuery,
   UtilizationQuery,
@@ -264,6 +265,22 @@ export const useEducatorStore = defineStore('educator', () => {
     }
   }
 
+  /** İlişkiyi kaydı silmeden sonlandırır (ActiveTo yazılır); geçmiş görünür kalır. */
+  async function endHierarchy(educatorId: string, edgeId: string, endDate: string | null) {
+    saving.value = true
+    try {
+      const res = await educatorService.endHierarchy(educatorId, edgeId, { endDate })
+      if (!res.success || !res.data) throw new Error(res.message ?? 'İlişki sonlandırılamadı.')
+      const updated = res.data
+      if (current.value) {
+        const swap = (list: EducatorHierarchyDto[]) => list.map(e => (e.id === edgeId ? updated : e))
+        current.value = { ...current.value, supervisors: swap(current.value.supervisors), subordinates: swap(current.value.subordinates) }
+      }
+    } finally {
+      saving.value = false
+    }
+  }
+
   function clearCurrent() {
     current.value = null
     availability.value = null
@@ -275,7 +292,7 @@ export const useEducatorStore = defineStore('educator', () => {
     create, update, remove, activate, deactivate,
     assignSpecialty, removeSpecialty, assignCampus, endCampusAssignment,
     addCertification, updateCertification, deleteCertification,
-    linkHierarchy, unlinkHierarchy,
+    linkHierarchy, unlinkHierarchy, endHierarchy,
     clearCurrent,
   }
 })

@@ -540,6 +540,29 @@ async function dailyOpsFlows() {
     record({ phase: 'yazma', id: 'scheduling.getRoomCalendar (yalnızca o odanın seansları)', verb: 'GET', url: `/scheduling/calendar/room/${ctx.roomId}`, status: rc.status,
       outcome: rc.status === 200 && Array.isArray(rows) && rows.every(x => x.roomId === ctx.roomId) ? 'ok' : 'type', note: `${rows.length} seans`, mismatches: [] })
   } else skip('scheduling.getRoomCalendar', 'GET', '/scheduling/calendar/room/{id}', 'oda yok')
+
+  // 9) eğitmen hiyerarşisi: bağla → yanlış yoldaki eğitmenle sonlandırma 404 → başlangıçtan önceki tarih reddedilir → sonlandır → ikinci kez reddedilir
+  if (ctx.educatorId) {
+    const sup = await write('yazma', 'educator.create (denetçi)', 'POST', '/educators', { firstName: 'Smoke', lastName: `Denetçi${RUN}`, titleId: null, email: null, phone: null, employmentType: null, hireDate: null, primaryCampusId: ctx.campusId ?? null })
+    const supId = idOf(sup.json?.data)
+    if (supId) {
+      const edge = (await write('yazma', 'educator.linkHierarchy', 'POST', `/educators/${ctx.educatorId}/hierarchy`, { supervisorId: supId, relationshipId: null, campusId: null, activeFrom: day(-10) })).json?.data
+      if (edge?.id) {
+        expectStatus('yazma', 'educator.endHierarchy (yoldaki eğitmen astı değil → 404)', 'PATCH', `/educators/${supId}/hierarchy/${edge.id}/end`,
+          await http('PATCH', `/educators/${supId}/hierarchy/${edge.id}/end`, { endDate: day(0) }), [404])
+        expectStatus('yazma', 'educator.endHierarchy (bitiş < başlangıç → reddedilir)', 'PATCH', `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`,
+          await http('PATCH', `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`, { endDate: day(-11) }), [400, 409, 422], 'Rule.HierarchyEndBeforeStart')
+        const ended = await write('yazma', 'educator.endHierarchy', 'PATCH', `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`, { endDate: day(-1) })
+        record({ phase: 'yazma', id: 'educator.endHierarchy (isActive=false, kayıt durur)', verb: 'PATCH', url: `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`, status: ended.status,
+          outcome: ended.json?.data?.isActive === false && ended.json?.data?.activeTo === day(-1) ? 'ok' : 'type', note: `isActive=${ended.json?.data?.isActive} activeTo=${ended.json?.data?.activeTo}`, mismatches: [] })
+        const detail = (await http('GET', `/educators/${ctx.educatorId}`)).json?.data
+        record({ phase: 'yazma', id: 'educator.get (sona eren ilişki geçmişte görünür)', verb: 'GET', url: `/educators/${ctx.educatorId}`, status: 200,
+          outcome: (detail?.supervisors ?? []).some(x => x.id === edge.id && x.isActive === false) ? 'ok' : 'type', note: 'supervisors içinde isActive=false kayıt bekleniyor', mismatches: [] })
+        expectStatus('yazma', 'educator.endHierarchy (zaten sona ermiş → reddedilir)', 'PATCH', `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`,
+          await http('PATCH', `/educators/${ctx.educatorId}/hierarchy/${edge.id}/end`, { endDate: day(0) }), [400, 409, 422], 'Rule.HierarchyAlreadyEnded')
+      }
+    }
+  } else skip('educator.endHierarchy', 'PATCH', '/educators/{id}/hierarchy/{edgeId}/end', 'eğitmen yok')
   token = adminToken
 }
 

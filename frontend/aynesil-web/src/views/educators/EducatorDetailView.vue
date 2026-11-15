@@ -17,7 +17,9 @@ import type {
   AddCertificationPayload,
   UpdateCertificationPayload,
   LinkHierarchyPayload,
+  EducatorHierarchyDto,
 } from '@/types/educator.types'
+import { toLocalDateString } from '@/utils/datetime'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
 
@@ -268,8 +270,41 @@ async function submitHierarchy() {
   }
 }
 
+// İlişkiyi sonlandırma (kayıt silinmez, bitiş tarihi yazılır)
+const endHierarchyTarget = ref<EducatorHierarchyDto | null>(null)
+const endHierarchyDate = ref('')
+const endHierarchyError = ref('')
+
+function openEndHierarchy(edge: EducatorHierarchyDto) {
+  endHierarchyTarget.value = edge
+  endHierarchyDate.value = toLocalDateString()
+  endHierarchyError.value = ''
+}
+
+async function doEndHierarchy() {
+  const edge = endHierarchyTarget.value
+  if (!edge) return
+  if (!endHierarchyDate.value) { endHierarchyError.value = t('validation.required', { field: t('educator.hierarchy.endDate') }); return }
+  if (endHierarchyDate.value < edge.activeFrom.slice(0, 10)) { endHierarchyError.value = t('educator.hierarchy.endBeforeStart'); return }
+  endHierarchyError.value = ''
+  try {
+    // Yol, ilişkinin alt (denetlenen) eğitmenini taşır; ast listesinde bu, satırdaki eğitmendir.
+    await store.endHierarchy(edge.educatorId, edge.id, endHierarchyDate.value)
+    endHierarchyTarget.value = null
+  } catch (e: unknown) {
+    endHierarchyError.value = (e as Error).message
+  }
+}
+
 const unlinkHierarchyTarget = ref<string | null>(null)
 const unlinkHierarchyLoading = ref(false)
+
+function edgePeriod(edge: EducatorHierarchyDto): string {
+  const from = new Date(edge.activeFrom).toLocaleDateString('tr-TR')
+  return edge.activeTo
+    ? `${from} – ${new Date(edge.activeTo).toLocaleDateString('tr-TR')}`
+    : `${from} – ${t('educator.hierarchy.openEnded')}`
+}
 
 async function doUnlinkHierarchy() {
   if (!unlinkHierarchyTarget.value) return
@@ -576,14 +611,25 @@ async function doUnlinkHierarchy() {
                 <div>
                   <p class="text-sm font-medium text-foreground">{{ edge.supervisorFullName }}</p>
                   <p class="text-xs text-muted-foreground">{{ edge.relationshipLabel ?? '—' }}</p>
+                  <p class="text-xs text-muted-foreground mt-0.5">{{ edgePeriod(edge) }}</p>
                 </div>
-                <button
-                  v-if="can(Permissions.Educators.ManageHierarchy) && edge.isActive"
-                  @click="unlinkHierarchyTarget = edge.id"
-                  class="px-2 py-1 text-xs rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
-                >
-                  {{ t('common.unlink') }}
-                </button>
+                <div class="flex items-center gap-2">
+                  <span v-if="!edge.isActive" class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{{ t('educator.hierarchy.ended') }}</span>
+                  <button
+                    v-if="can(Permissions.Educators.ManageHierarchy) && edge.isActive"
+                    @click="openEndHierarchy(edge)"
+                    class="px-2 py-1 text-xs rounded-lg hover:bg-amber-50 text-amber-700 border border-amber-200 transition-colors"
+                  >
+                    {{ t('educator.hierarchy.end') }}
+                  </button>
+                  <button
+                    v-if="can(Permissions.Educators.ManageHierarchy) && edge.isActive"
+                    @click="unlinkHierarchyTarget = edge.id"
+                    class="px-2 py-1 text-xs rounded-lg hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
+                  >
+                    {{ t('common.unlink') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -598,16 +644,48 @@ async function doUnlinkHierarchy() {
               <div
                 v-for="edge in educator.subordinates"
                 :key="edge.id"
-                class="rounded-xl border border-border bg-card p-3 shadow-sm"
+                class="rounded-xl border border-border bg-card p-3 shadow-sm flex items-center justify-between"
               >
-                <p class="text-sm font-medium text-foreground">{{ edge.educatorFullName }}</p>
-                <p class="text-xs text-muted-foreground">{{ edge.relationshipLabel ?? '—' }}</p>
+                <div>
+                  <p class="text-sm font-medium text-foreground">{{ edge.educatorFullName }}</p>
+                  <p class="text-xs text-muted-foreground">{{ edge.relationshipLabel ?? '—' }}</p>
+                  <p class="text-xs text-muted-foreground mt-0.5">{{ edgePeriod(edge) }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span v-if="!edge.isActive" class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{{ t('educator.hierarchy.ended') }}</span>
+                  <button
+                    v-if="can(Permissions.Educators.ManageHierarchy) && edge.isActive"
+                    @click="openEndHierarchy(edge)"
+                    class="px-2 py-1 text-xs rounded-lg hover:bg-amber-50 text-amber-700 border border-amber-200 transition-colors"
+                  >
+                    {{ t('educator.hierarchy.end') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </template>
+
+    <!-- End Hierarchy Modal -->
+    <FormModal
+      :open="!!endHierarchyTarget"
+      :title="t('educator.hierarchy.endTitle')"
+      :subtitle="endHierarchyTarget ? `${endHierarchyTarget.educatorFullName} → ${endHierarchyTarget.supervisorFullName}` : ''"
+      :saving="store.saving"
+      @submit="doEndHierarchy"
+      @close="endHierarchyTarget = null"
+    >
+      <div class="space-y-3">
+        <p v-if="endHierarchyError" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ endHierarchyError }}</p>
+        <p class="text-sm text-muted-foreground">{{ t('educator.hierarchy.endHint') }}</p>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('educator.hierarchy.endDate') }} *</label>
+          <input v-model="endHierarchyDate" type="date" class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary" />
+        </div>
+      </div>
+    </FormModal>
 
     <!-- Assign Specialty Modal -->
     <FormModal :open="showSpecialtyModal" :title="t('educator.specialty.assign')" :saving="store.saving" @submit="submitSpecialty" @close="showSpecialtyModal = false">

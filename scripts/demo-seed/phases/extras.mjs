@@ -108,6 +108,18 @@ async function newFlowExamples(ctx) {
       await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })
 
+  // Eğitmen hiyerarşisi: biri sürüyor, biri sona ermiş (geçmiş görünür kalır)
+  await step('eğitmen hiyerarşisi', async () => {
+    const es = ids.educators ?? []
+    if (es.length < 3) return
+    const d = await c.get(`/educators/${es[1].id}`)
+    if ((d.supervisors ?? []).length > 0) return
+    const rel = await ctx.ref('educator_relationship', 'supervises')
+    await c.post(`/educators/${es[1].id}/hierarchy`, { supervisorId: es[0].id, relationshipId: rel, campusId: null, activeFrom: dayStr(-90) })
+    const old = await c.post(`/educators/${es[2].id}/hierarchy`, { supervisorId: es[0].id, relationshipId: rel, campusId: null, activeFrom: dayStr(-120) })
+    await c.patch(`/educators/${es[2].id}/hierarchy/${old.id}/end`, { endDate: dayStr(-30) })
+  })
+
   // Taslak faturaya indirim (kalemi olan bir taslak; ikinci çalıştırmada zaten indirimli olduğu için atlanır)
   await step('taslak faturaya indirim', async () => {
     const drafts = (await c.get('/payments/invoices?status=draft&page=1&pageSize=20')).items ?? []
