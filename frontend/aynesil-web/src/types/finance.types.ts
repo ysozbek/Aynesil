@@ -213,6 +213,8 @@ export interface InvoiceDto {
   status: string
   voidReason?: string | null
   lines: InvoiceLineDto[]
+  /** Faturaya uygulanmış indirimler (yalnızca taslakta eklenebilir). */
+  discounts?: DiscountDto[]
   rowVersion: number
 }
 
@@ -353,9 +355,10 @@ export interface DiscountDto {
 export interface CreateDiscountPayload {
   invoiceId?: string
   studentPackageId?: string
-  discountTypeId: string
+  discountTypeId?: string
   isPercentage: boolean
   value: number
+  reason?: string
 }
 
 // ── Scholarships ──────────────────────────────────────────────────────────────

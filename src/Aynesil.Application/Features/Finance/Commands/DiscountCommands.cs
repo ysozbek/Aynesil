@@ -71,8 +71,14 @@ public sealed class ApplyDiscountCommandHandler
                 req.InvoiceId, req.StudentPackageId, req.DiscountTypeId, req.Reason);
 
             _db.Discounts.Add(discount);
-            invoice.Discounts.Add(discount);
+            // InvoiceId dolu olduğundan EF ilişkiyi kendisi kurar; elle ikinci kez eklemek indirimi toplamda iki kez sayardı.
+            if (!invoice.Discounts.Contains(discount))
+                invoice.Discounts.Add(discount);
             invoice.RecalculateTotals();
+
+            // Yüzde + sabit indirimler toplamı ara toplamı aşarsa fatura negatife düşer.
+            if (invoice.DiscountTotal > invoice.Subtotal)
+                throw new BusinessRuleViolationException(MsgKeys.Rule.DiscountExceedsSubtotal);
 
             await _db.SaveChangesAsync(ct);
 

@@ -108,6 +108,21 @@ async function newFlowExamples(ctx) {
       await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })
 
+  // Taslak faturaya indirim (kalemi olan bir taslak; ikinci çalıştırmada zaten indirimli olduğu için atlanır)
+  await step('taslak faturaya indirim', async () => {
+    const drafts = (await c.get('/payments/invoices?status=draft&page=1&pageSize=20')).items ?? []
+    for (const d of drafts) {
+      const inv = await c.get(`/payments/invoices/${d.id}`)
+      if ((inv.discounts ?? []).length > 0) return // zaten var
+    }
+    for (const d of drafts) {
+      const inv = await c.get(`/payments/invoices/${d.id}`)
+      if ((inv.lines ?? []).length === 0 || inv.subtotal <= 0) continue
+      await c.post('/payments/discounts', { invoiceId: inv.id, isPercentage: true, value: 10, reason: 'Kardeş indirimi (demo)' })
+      return
+    }
+  })
+
   // Tekrar eden plan: tek tarih istisnası (henüz seansı üretilmemiş tarih → sonraki üretimde atlanır)
   await step('tekrar eden plan istisnası', async () => {
     const plans = (await c.get('/scheduling/recurring-schedules?isActive=true&page=1&pageSize=5')).items ?? []

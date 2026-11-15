@@ -106,6 +106,7 @@
   <data name="Rule.CorporationCodeTaken" xml:space="preserve"><value>'{0}' kurum kodu zaten alınmış.</value></data>
   <data name="Rule.CurrentPasswordIncorrect" xml:space="preserve"><value>Mevcut parola hatalı.</value></data>
   <data name="Rule.DiscountNeedsDraftInvoice" xml:space="preserve"><value>İndirimler yalnızca taslak faturalara uygulanabilir.</value></data>
+  <data name="Rule.DiscountExceedsSubtotal" xml:space="preserve"><value>Toplam indirim, fatura ara toplamını aşamaz.</value></data>
   <data name="Rule.EducatorAlreadyAtScope" xml:space="preserve"><value>Eğitimci zaten bu kapsamda atanmış.</value></data>
   <data name="Rule.EducatorAlreadyInSession" xml:space="preserve"><value>Eğitimci zaten bu seansa atanmış.</value></data>
   <data name="Rule.EducatorAlreadyOnCampus" xml:space="preserve"><value>Eğitimci zaten bu kampüse aktif olarak atanmış.</value></data>

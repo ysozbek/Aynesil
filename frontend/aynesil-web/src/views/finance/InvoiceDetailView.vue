@@ -20,6 +20,9 @@ const invoiceId = route.params.id as string
 
 const addLineModal = ref(false)
 const lineForm = reactive<AddInvoiceLinePayload>({ description: '', quantity: 1, unitPrice: 0 })
+const discountModal = ref(false)
+const discountForm = reactive({ isPercentage: true, value: '' as string | number, reason: '' })
+const discountErrors = reactive<Record<string, string>>({})
 const voidModal = ref(false)
 const voidReason = ref('')
 const issueModal = ref(false)
@@ -42,6 +45,44 @@ async function doAddLine() {
   await store.addInvoiceLine(invoiceId, { ...lineForm })
   addLineModal.value = false
   Object.assign(lineForm, { description: '', quantity: 1, unitPrice: 0 })
+}
+
+function openDiscount() {
+  Object.assign(discountForm, { isPercentage: true, value: '', reason: '' })
+  Object.keys(discountErrors).forEach(k => delete discountErrors[k])
+  discountModal.value = true
+}
+
+/** Uygulanacak indirimin tutarı (önizleme); yüzde ise ara toplam üzerinden. */
+const discountPreview = computed(() => {
+  const v = Number(discountForm.value)
+  if (!invoice.value || !v || v <= 0) return 0
+  return discountForm.isPercentage ? Math.round(invoice.value.subtotal * v) / 100 : v
+})
+const remainingDiscountRoom = computed(() => (invoice.value ? invoice.value.subtotal - invoice.value.discountTotal : 0))
+
+function validateDiscount(): boolean {
+  Object.keys(discountErrors).forEach(k => delete discountErrors[k])
+  const v = Number(discountForm.value)
+  if (!v || v <= 0) discountErrors.value = t('finance.invoice.discount.valuePositive')
+  else if (discountForm.isPercentage && v > 100) discountErrors.value = t('finance.invoice.discount.percentMax')
+  else if (discountPreview.value > remainingDiscountRoom.value) discountErrors.value = t('finance.invoice.discount.exceeds')
+  if (!discountForm.reason.trim()) discountErrors.reason = t('validation.required', { field: t('finance.invoice.discount.reason') })
+  return Object.keys(discountErrors).length === 0
+}
+
+async function doApplyDiscount() {
+  if (!validateDiscount()) return
+  try {
+    await store.applyDiscount(invoiceId, {
+      isPercentage: discountForm.isPercentage,
+      value: Number(discountForm.value),
+      reason: discountForm.reason.trim(),
+    })
+    discountModal.value = false
+  } catch (e: unknown) {
+    discountErrors.submit = (e as Error).message
+  }
 }
 
 async function removeLine(lineId: string) {
@@ -79,6 +120,11 @@ function printInvoice() {
           @click="issueModal = true"
           class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
         >{{ t('finance.invoice.issue') }}</button>
+        <button
+          v-if="can(Permissions.Discounts.Apply) && invoice.status === 'draft'"
+          @click="openDiscount"
+          class="px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-accent"
+        >{{ t('finance.invoice.discount.apply') }}</button>
         <button
           v-if="can(Permissions.Invoices.Update) && (invoice.status === 'issued' || invoice.status === 'overdue')"
           @click="voidModal = true"
@@ -162,6 +208,21 @@ function printInvoice() {
               </tbody>
             </table>
           </div>
+
+          <!-- Uygulanan indirimler -->
+          <div v-if="invoice.discounts?.length" class="border border-border rounded-lg overflow-hidden mt-4">
+            <div class="p-3 border-b border-border bg-accent/50">
+              <h4 class="text-sm font-medium">{{ t('finance.invoice.discount.applied') }}</h4>
+            </div>
+            <ul class="divide-y divide-border text-sm">
+              <li v-for="d in invoice.discounts" :key="d.id" class="px-3 py-2 flex items-start justify-between gap-3">
+                <span class="text-muted-foreground">{{ d.reason || '—' }}</span>
+                <span class="font-mono text-red-600 whitespace-nowrap">
+                  {{ d.isPercentage ? '%' + d.value : '-' + formatCurrency(d.value, invoice.currency) }}
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- Totals -->
@@ -208,6 +269,46 @@ function printInvoice() {
           <button @click="addLineModal = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
           <button @click="doAddLine" :disabled="store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
             {{ store.saving ? t('common.saving') : t('common.add') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Discount Modal -->
+    <div v-if="discountModal && invoice" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div class="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border">
+        <h3 class="font-semibold mb-1">{{ t('finance.invoice.discount.apply') }}</h3>
+        <p class="text-xs text-muted-foreground mb-4">{{ t('finance.invoice.discount.hint') }}</p>
+        <p v-if="discountErrors.submit" class="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-3">{{ discountErrors.submit }}</p>
+        <div class="space-y-3">
+          <div class="flex rounded-lg border border-border overflow-hidden w-fit">
+            <button type="button" @click="discountForm.isPercentage = true"
+              :class="['px-3 py-1.5 text-sm', discountForm.isPercentage ? 'bg-primary text-primary-foreground' : 'hover:bg-accent']">{{ t('finance.invoice.discount.percentage') }}</button>
+            <button type="button" @click="discountForm.isPercentage = false"
+              :class="['px-3 py-1.5 text-sm', !discountForm.isPercentage ? 'bg-primary text-primary-foreground' : 'hover:bg-accent']">{{ t('finance.invoice.discount.fixed') }}</button>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">{{ discountForm.isPercentage ? t('finance.invoice.discount.percentValue') : t('finance.invoice.discount.amountValue') }} *</label>
+            <input v-model="discountForm.value" type="number" min="0" :max="discountForm.isPercentage ? 100 : undefined" step="0.01"
+              :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none', discountErrors.value ? 'border-red-400' : 'border-border']" />
+            <p v-if="discountErrors.value" class="mt-1 text-xs text-red-600">{{ discountErrors.value }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">{{ t('finance.invoice.discount.reason') }} *</label>
+            <input v-model="discountForm.reason" type="text" maxlength="500"
+              :class="['w-full px-3 py-2 text-sm rounded-lg border bg-transparent focus:outline-none', discountErrors.reason ? 'border-red-400' : 'border-border']" />
+            <p v-if="discountErrors.reason" class="mt-1 text-xs text-red-600">{{ discountErrors.reason }}</p>
+          </div>
+          <div class="rounded-lg bg-accent/50 p-3 text-sm space-y-1">
+            <div class="flex justify-between"><span class="text-muted-foreground">{{ t('finance.invoice.subtotal') }}</span><span class="font-mono">{{ formatCurrency(invoice.subtotal, invoice.currency) }}</span></div>
+            <div class="flex justify-between"><span class="text-muted-foreground">{{ t('finance.invoice.discount.thisDiscount') }}</span><span class="font-mono text-red-600">-{{ formatCurrency(discountPreview, invoice.currency) }}</span></div>
+            <div class="flex justify-between font-semibold"><span>{{ t('finance.invoice.discount.newTotal') }}</span><span class="font-mono">{{ formatCurrency(invoice.grandTotal - discountPreview, invoice.currency) }}</span></div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button @click="discountModal = false" class="px-4 py-2 text-sm border border-border rounded-lg hover:bg-accent">{{ t('common.cancel') }}</button>
+          <button @click="doApplyDiscount" :disabled="store.saving" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
+            {{ store.saving ? t('common.saving') : t('finance.invoice.discount.apply') }}
           </button>
         </div>
       </div>

@@ -11,6 +11,7 @@ import type {
   InvoiceListQuery,
   CreateInvoicePayload,
   AddInvoiceLinePayload,
+  CreateDiscountPayload,
 } from '@/types/finance.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -74,6 +75,17 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
 
+  async function applyDiscount(id: string, payload: CreateDiscountPayload) {
+    saving.value = true
+    try {
+      const res = await financeService.createDiscount({ ...payload, invoiceId: id })
+      if (!res.success) throw new Error(res.message ?? 'İndirim uygulanamadı.')
+      await fetchInvoice(id)
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function removeInvoiceLine(id: string, lineId: string) {
     saving.value = true
     try {
@@ -115,7 +127,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
   return {
     invoiceList, currentInvoice, loading, saving, error,
     fetchInvoices, fetchInvoice, createInvoice,
-    addInvoiceLine, removeInvoiceLine,
+    addInvoiceLine, removeInvoiceLine, applyDiscount,
     issueInvoice, voidInvoice,
     clearCurrent,
   }

@@ -507,6 +507,31 @@ async function dailyOpsFlows() {
         await http('PUT', `/payments/scholarships/${sch.id}`, { scholarshipTypeId: sType, percentage: 5, amount: null, validFrom: day(0), validTo: null, note: null, rowVersion: det.json?.data?.rowVersion }), [400, 409, 422])
     }
   } else skip('finance.updateScholarship', 'PUT', '/payments/scholarships/{id}', 'öğrenci/burs türü yok')
+
+  // 7) taslak faturaya indirim: yüzde → sabit; toplam tek sayılır; tavanı aşan reddedilir; kesilen faturaya eklenemez
+  if (ctx.studentId) {
+    const inv = await write('yazma', 'finance.createInvoice (indirim için)', 'POST', '/payments/invoices', { issueDate: day(0), currency: 'TRY', studentId: ctx.studentId, guardianId: null, dueDate: day(14) })
+    const iid = idOf(inv.json?.data)
+    if (iid) {
+      const ln = await write('yazma', 'finance.addInvoiceLine (indirim için)', 'POST', `/payments/invoices/${iid}/lines`, { description: 'Smoke indirimli', unitPrice: 1000, quantity: 1, studentPackageId: null, sortOrder: 1 })
+      await write('yazma', 'finance.applyDiscount (yüzde 10)', 'POST', '/payments/discounts', { invoiceId: iid, isPercentage: true, value: 10, reason: 'Smoke indirimi' })
+      await write('yazma', 'finance.applyDiscount (sabit 50)', 'POST', '/payments/discounts', { invoiceId: iid, isPercentage: false, value: 50, reason: 'Smoke sabit' })
+      const after = (await http('GET', `/payments/invoices/${iid}`)).json?.data
+      record({ phase: 'yazma', id: 'finance.applyDiscount (toplam: 1000 - 100 - 50 = 850, indirim tek sayıldı)', verb: 'GET', url: `/payments/invoices/${iid}`, status: 200,
+        outcome: after?.discountTotal === 150 && after?.grandTotal === 850 && after?.discounts?.length === 2 ? 'ok' : 'type',
+        note: `indirim=${after?.discountTotal} toplam=${after?.grandTotal} kayıt=${after?.discounts?.length}`, mismatches: [] })
+      expectStatus('yazma', 'finance.applyDiscount (ara toplamı aşan → reddedilir)', 'POST', '/payments/discounts',
+        await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: false, value: 900, reason: 'fazla' }), [400, 409, 422], 'Rule.DiscountExceedsSubtotal')
+      expectStatus('yazma', 'finance.applyDiscount (yüzde > 100 → reddedilir)', 'POST', '/payments/discounts',
+        await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: true, value: 101, reason: 'fazla' }), [400, 422])
+      if (ln.json?.data) {
+        const cur = (await http('GET', `/payments/invoices/${iid}`)).json?.data
+        await write('yazma', 'finance.issueInvoice (indirimli)', 'POST', `/payments/invoices/${iid}/issue`, { invoiceNo: `SMD-${RUN}`, rowVersion: cur?.rowVersion })
+        expectStatus('yazma', 'finance.applyDiscount (kesilmiş fatura → reddedilir)', 'POST', '/payments/discounts',
+          await http('POST', '/payments/discounts', { invoiceId: iid, isPercentage: true, value: 5, reason: 'geç' }), [400, 409, 422], 'Rule.DiscountNeedsDraftInvoice')
+      }
+    }
+  } else skip('finance.applyDiscount', 'POST', '/payments/discounts', 'öğrenci yok')
   token = adminToken
 }
 
