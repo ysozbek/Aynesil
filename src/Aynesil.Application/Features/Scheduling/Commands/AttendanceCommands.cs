@@ -156,7 +156,17 @@ public sealed class BulkRecordAttendanceCommandHandler
             .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.CorporationId == corporationId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Session"));
 
-        var studentIds = req.Entries.Select(e => e.StudentId).ToList();
+        // Aynı öğrenci birden çok kez gelirse sonuncusu geçerlidir (aksi halde iki satır eklenmeye çalışılır).
+        var entries = req.Entries.GroupBy(e => e.StudentId).Select(g => g.Last()).ToList();
+        var studentIds = entries.Select(e => e.StudentId).ToList();
+
+        // Yoklama yalnızca seansın katılımcıları için alınır.
+        var participantIds = await _db.SessionParticipants.AsNoTracking()
+            .Where(p => p.SessionId == req.SessionId && studentIds.Contains(p.StudentId))
+            .Select(p => p.StudentId)
+            .ToListAsync(ct);
+        if (participantIds.Count != studentIds.Count)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ParticipantNotInSession);
 
         var existingMap = await _db.Attendances
             .Where(a => a.SessionId == req.SessionId && studentIds.Contains(a.StudentId))
@@ -167,12 +177,12 @@ public sealed class BulkRecordAttendanceCommandHandler
             .Select(s => new { s.Id, s.FirstName, s.LastName })
             .ToDictionaryAsync(s => s.Id, s => $"{s.FirstName} {s.LastName}".Trim(), ct);
 
-        var reasonIds = req.Entries.Where(e => e.ReasonId.HasValue).Select(e => e.ReasonId!.Value).Distinct().ToList();
+        var reasonIds = entries.Where(e => e.ReasonId.HasValue).Select(e => e.ReasonId!.Value).Distinct().ToList();
         var reasonLabels = await RefLabelLoader.LoadAsync(_db, reasonIds, _tenant.Locale, ct);
 
         var results = new List<AttendanceDto>();
 
-        foreach (var entry in req.Entries)
+        foreach (var entry in entries)
         {
             Attendance attendance;
 

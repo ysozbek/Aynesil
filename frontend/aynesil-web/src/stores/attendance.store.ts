@@ -58,7 +58,12 @@ export const useAttendanceStore = defineStore('attendance', () => {
     try {
       const res = await schedulingService.bulkRecordAttendance(sessionId, payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'Toplu devam kaydedilemedi.')
-      sessionAttendance.value = res.data
+      // Yalnızca gönderilen öğrencilerin kaydı döner; listedeki diğer kayıtlar korunur.
+      for (const a of res.data) {
+        const idx = sessionAttendance.value.findIndex(x => x.studentId === a.studentId)
+        if (idx >= 0) sessionAttendance.value[idx] = a
+        else sessionAttendance.value.push(a)
+      }
       return res.data
     } finally {
       saving.value = false

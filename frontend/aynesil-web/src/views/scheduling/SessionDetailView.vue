@@ -205,6 +205,34 @@ async function doRecordAttendance(studentId: string, status: string, reasonId?: 
 function getAttendance(studentId: string) {
   return attendanceStore.sessionAttendance.find(a => a.studentId === studentId)
 }
+
+// ── Toplu yoklama: tümünü "geldi" işaretle, sonra tek tek düzelt ─────────────
+const bulkPresentConfirm = ref(false)
+const bulkPresentError = ref('')
+const bulkPresentDone = ref<number | null>(null)
+const alreadyRecordedCount = computed(
+  () => session.value?.participants.filter(p => getAttendance(p.studentId)).length ?? 0,
+)
+
+function startBulkPresent() {
+  bulkPresentError.value = ''
+  bulkPresentDone.value = null
+  // Kaydı olan öğrencilerin üzerine yazılacaksa önce onay istenir.
+  if (alreadyRecordedCount.value > 0) bulkPresentConfirm.value = true
+  else doBulkPresent()
+}
+
+async function doBulkPresent() {
+  if (!session.value) return
+  bulkPresentConfirm.value = false
+  try {
+    const entries = session.value.participants.map(p => ({ studentId: p.studentId, status: 'present' }))
+    const saved = await attendanceStore.bulkRecordAttendance(sessionId, { entries })
+    bulkPresentDone.value = saved.length
+  } catch (e: unknown) {
+    bulkPresentError.value = (e as Error).message
+  }
+}
 </script>
 
 <template>
@@ -394,8 +422,18 @@ function getAttendance(studentId: string) {
 
       <!-- Attendance Tab -->
       <div v-if="activeTab === 'attendance'" class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-border">
+        <div class="p-4 border-b border-border flex items-center justify-between gap-3 flex-wrap">
           <h3 class="font-semibold text-foreground">{{ t('scheduling.attendance.title') }}</h3>
+          <button
+            v-if="can(Permissions.Attendance.Record) && session.participants.length > 0"
+            @click="startBulkPresent"
+            :disabled="attendanceStore.saving"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 disabled:opacity-50"
+          >{{ t('scheduling.attendance.markAllPresent') }}</button>
+        </div>
+        <div v-if="bulkPresentError" class="mx-4 mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{{ bulkPresentError }}</div>
+        <div v-if="bulkPresentDone !== null" class="mx-4 mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800">
+          {{ t('scheduling.attendance.markAllPresentDone', { count: bulkPresentDone }) }}
         </div>
         <div v-if="session.participants.length === 0" class="py-8 text-center text-muted-foreground text-sm">
           {{ t('scheduling.session.noParticipants') }}
@@ -614,6 +652,17 @@ function getAttendance(studentId: string) {
       :loading="store.saving"
       @confirm="doComplete"
       @cancel="completeModal = false"
+    />
+
+    <ConfirmModal
+      :open="bulkPresentConfirm"
+      :title="t('scheduling.attendance.markAllPresent')"
+      :message="t('scheduling.attendance.markAllPresentConfirm', { count: alreadyRecordedCount })"
+      :confirm-label="t('scheduling.attendance.markAllPresent')"
+      confirm-class="bg-primary text-primary-foreground hover:opacity-90"
+      :loading="attendanceStore.saving"
+      @confirm="doBulkPresent"
+      @cancel="bulkPresentConfirm = false"
     />
 
     <ConfirmModal

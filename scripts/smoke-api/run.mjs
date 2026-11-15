@@ -436,6 +436,25 @@ async function dailyOpsFlows() {
     await write('yazma', 'scheduling.deleteCalendarEntry', 'DELETE', `/scheduling/calendar-entries/${entry.id}`)
     expectStatus('yazma', 'scheduling.deleteCalendarEntry (silinmiş → 404)', 'DELETE', `/scheduling/calendar-entries/${entry.id}`, await http('DELETE', `/scheduling/calendar-entries/${entry.id}`), [404])
   }
+
+  // 3) toplu yoklama: tümü "present" → bir öğrenci "absent" düzeltmesi → katılımcı olmayan öğrenci reddedilir
+  if (ctx.studentId && ctx.sessionTypeId && ctx.educatorId) {
+    const sr = await write('yazma', 'scheduling.createSession (toplu yoklama)', 'POST', '/scheduling/sessions', {
+      sessionTypeId: ctx.sessionTypeId, startsAt: at(22, 9), endsAt: at(22, 10), campusId: ctx.campusId, roomId: null,
+      title: `Smoke Yoklama ${RUN}`, isMakeup: false, participantStudentIds: [ctx.studentId], educatorAssignments: [{ educatorId: ctx.educatorId, role: 'lead' }] })
+    const sid = idOf(sr.json?.data)
+    if (sid) {
+      const bulk = await write('yazma', 'scheduling.bulkRecordAttendance (tümü geldi)', 'POST', `/scheduling/sessions/${sid}/attendance/bulk`, { entries: [{ studentId: ctx.studentId, status: 'present' }] })
+      record({ phase: 'yazma', id: 'scheduling.bulkRecordAttendance (1 kayıt, present)', verb: 'POST', url: `/scheduling/sessions/${sid}/attendance/bulk`, status: bulk.status,
+        outcome: bulk.status === 200 && bulk.json?.data?.length === 1 && bulk.json.data[0].status === 'present' ? 'ok' : 'type', note: `kayıt=${bulk.json?.data?.length}`, mismatches: [] })
+      await write('yazma', 'scheduling.recordAttendance (tek tek düzeltme)', 'POST', `/scheduling/sessions/${sid}/attendance`, { studentId: ctx.studentId, status: 'absent' })
+      const after = (await http('GET', `/scheduling/sessions/${sid}/attendance`)).json?.data ?? []
+      record({ phase: 'yazma', id: 'scheduling.getSessionAttendance (düzeltme kalıcı, tek satır)', verb: 'GET', url: `/scheduling/sessions/${sid}/attendance`, status: 200,
+        outcome: after.length === 1 && after[0].status === 'absent' ? 'ok' : 'type', note: `satır=${after.length} durum=${after[0]?.status}`, mismatches: [] })
+      expectStatus('yazma', 'scheduling.bulkRecordAttendance (katılımcı olmayan öğrenci → reddedilir)', 'POST', `/scheduling/sessions/${sid}/attendance/bulk`,
+        await http('POST', `/scheduling/sessions/${sid}/attendance/bulk`, { entries: [{ studentId: '00000000-0000-7000-8000-000000000001', status: 'present' }] }), [400, 409, 422], 'Rule.ParticipantNotInSession')
+    }
+  } else skip('scheduling.bulkRecordAttendance', 'POST', '/scheduling/sessions/{id}/attendance/bulk', 'ön koşul eksik')
   token = adminToken
 }
 
