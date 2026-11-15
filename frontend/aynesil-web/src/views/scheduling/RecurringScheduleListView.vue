@@ -129,9 +129,12 @@ async function doGenerate() {
     if (result.educatorConflictSkipped > 0) {
       lines.push(t('scheduling.recurring.generateSkippedEducator', { count: result.educatorConflictSkipped }))
     }
+    if (result.closureSkipped > 0) {
+      lines.push(t('scheduling.recurring.generateSkippedClosure', { count: result.closureSkipped }))
+    }
     generateResult.value = lines.join(' ')
     loadList()
-    if (result.roomConflictSkipped === 0 && result.educatorConflictSkipped === 0) {
+    if (result.roomConflictSkipped === 0 && result.educatorConflictSkipped === 0 && result.closureSkipped === 0) {
       setTimeout(() => { generateTarget.value = null; generateResult.value = null }, 2000)
     }
   } finally {

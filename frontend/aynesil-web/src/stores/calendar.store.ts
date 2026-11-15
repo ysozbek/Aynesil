@@ -78,14 +78,27 @@ export const useCalendarStore = defineStore('calendar', () => {
     }
   }
 
+  /** Oda / eğitimci / öğrenci takvimleri yalnızca seans döner; tatil ve kapalı günler ayrıca çekilir. */
+  async function loadEntries(query: CalendarQuery): Promise<CalendarEntryDto[]> {
+    try {
+      const res = await schedulingService.listCalendarEntries(undefined, query.from, query.to)
+      return res.success && res.data ? res.data : []
+    } catch {
+      return []
+    }
+  }
+
   async function fetchRoomCalendar(roomId: string, query: CalendarQuery) {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getRoomCalendar(roomId, query)
+      const [res, found] = await Promise.all([
+        schedulingService.getRoomCalendar(roomId, query),
+        loadEntries(query),
+      ])
       if (res.success && res.data) {
         sessions.value = res.data
-        entries.value = []
+        entries.value = found
       } else {
         reset()
       }
@@ -104,10 +117,13 @@ export const useCalendarStore = defineStore('calendar', () => {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getEducatorCalendar(educatorId, query)
+      const [res, found] = await Promise.all([
+        schedulingService.getEducatorCalendar(educatorId, query),
+        loadEntries(query),
+      ])
       if (res.success && res.data) {
         sessions.value = res.data
-        entries.value = []
+        entries.value = found
       } else {
         reset()
       }
@@ -126,10 +142,13 @@ export const useCalendarStore = defineStore('calendar', () => {
     loading.value = true
     error.value = null
     try {
-      const res = await schedulingService.getStudentCalendar(studentId, query)
+      const [res, found] = await Promise.all([
+        schedulingService.getStudentCalendar(studentId, query),
+        loadEntries(query),
+      ])
       if (res.success && res.data) {
         sessions.value = res.data
-        entries.value = []
+        entries.value = found
       } else {
         reset()
       }
@@ -177,5 +196,7 @@ function entryToEvent(e: CalendarEntryDto): CalendarEventDto {
     start: e.startsAt,
     end: e.endsAt,
     type: 'calendar_entry',
+    entryType: e.entryType,
+    isAllDay: e.isAllDay,
   }
 }

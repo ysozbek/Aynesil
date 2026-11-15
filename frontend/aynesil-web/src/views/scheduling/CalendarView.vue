@@ -161,9 +161,12 @@ const weekDaysOfGrid = computed(() => monthDays.value.slice(0, 7))
 // Hours for day/week view
 const hours = Array.from({ length: 14 }, (_, i) => i + 7) // 7am to 8pm
 
+// Seanslar başladıkları güne yazılır; tatil/kapalı gün/etkinlik kayıtları kapsadıkları her güne
+// (çok günlü kayıtlar dahil) ayrı ayrı gösterilir.
 const eventsByDay = computed(() => {
   const map = new Map<string, CalendarEventDto[]>()
   for (const e of calendarStore.events) {
+    if (e.type === 'calendar_entry') continue
     const key = dayKey(new Date(e.start))
     const list = map.get(key)
     if (list) list.push(e)
@@ -173,14 +176,35 @@ const eventsByDay = computed(() => {
   return map
 })
 
-function eventsOnDay(day: Date): CalendarEventDto[] {
+function sessionsOnDay(day: Date): CalendarEventDto[] {
   return eventsByDay.value.get(dayKey(day)) ?? []
+}
+
+/** Günü (yerel 00:00 – ertesi gün 00:00) kesen takvim kayıtları. */
+function entriesOnDay(day: Date): CalendarEventDto[] {
+  const start = startOfDay(day).getTime()
+  const end = addDays(startOfDay(day), 1).getTime()
+  return calendarStore.events.filter(
+    (e) => e.type === 'calendar_entry' && new Date(e.start).getTime() < end && new Date(e.end).getTime() > start,
+  )
+}
+
+/** Ay görünümü ve ajanda için: önce kapalı gün kayıtları, sonra seanslar. */
+function eventsOnDay(day: Date): CalendarEventDto[] {
+  return [...entriesOnDay(day), ...sessionsOnDay(day)]
+}
+
+function entryLabel(e: CalendarEventDto): string {
+  const kind = e.entryType ? t(`scheduling.calendarEntries.types.${e.entryType}`) : ''
+  return e.isAllDay || !kind ? e.title : `${formatTime(e.start)} ${e.title}`
 }
 
 /** Local hour of the event start (API timestamps are UTC). */
 function eventHour(event: CalendarEventDto): number {
   return new Date(event.start).getHours()
 }
+
+const hasEntriesInRange = computed(() => calendarStore.entries.length > 0)
 
 function isToday(day: Date): boolean {
   return dayKey(day) === dayKey(new Date())
@@ -203,6 +227,12 @@ function openEvent(event: CalendarEventDto) {
 <template>
   <div>
     <PageHeader :title="t('scheduling.calendar.title')" :description="t('scheduling.calendar.description')">
+      <button
+        @click="router.push({ name: 'scheduling-calendar-entries' })"
+        class="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm hover:bg-accent"
+      >
+        {{ t('scheduling.calendar.manageEntries') }}
+      </button>
       <button
         @click="router.push({ name: 'session-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90"
@@ -325,6 +355,17 @@ function openEvent(event: CalendarEventDto) {
           </p>
         </div>
       </div>
+      <div v-if="hasEntriesInRange" class="grid grid-cols-8 border-b border-border bg-violet-50/40">
+        <div class="px-2 py-1 text-[11px] text-muted-foreground">{{ t('scheduling.calendar.allDayRow') }}</div>
+        <div v-for="day in weekDays" :key="`ad-${day.toISOString()}`" class="border-l border-border/50 p-0.5 space-y-0.5">
+          <div
+            v-for="e in entriesOnDay(day)"
+            :key="e.id"
+            :class="['rounded px-1 py-0.5 text-[11px] leading-tight border truncate', eventColor(e)]"
+            :title="`${t('scheduling.calendarEntries.types.' + e.entryType)}: ${e.title}`"
+          >{{ entryLabel(e) }}</div>
+        </div>
+      </div>
       <div class="overflow-y-auto max-h-[600px]">
         <div
           v-for="hour in hours"
@@ -339,7 +380,7 @@ function openEvent(event: CalendarEventDto) {
             :key="day.toISOString()"
             class="border-r border-border/50 p-0.5"
           >
-            <template v-for="event in eventsOnDay(day)" :key="event.id">
+            <template v-for="event in sessionsOnDay(day)" :key="event.id">
               <div
                 v-if="eventHour(event) === hour"
                 :class="['rounded p-1 mb-0.5 cursor-pointer text-xs border truncate', eventColor(event)]"
@@ -408,6 +449,19 @@ function openEvent(event: CalendarEventDto) {
 
     <!-- Day View -->
     <div v-else class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      <div v-if="entriesOnDay(currentDate).length" class="flex gap-4 border-b border-border bg-violet-50/40 px-4 py-2">
+        <div class="w-16 text-xs text-muted-foreground py-1">{{ t('scheduling.calendar.allDayRow') }}</div>
+        <div class="flex-1 space-y-1">
+          <div
+            v-for="e in entriesOnDay(currentDate)"
+            :key="e.id"
+            :class="['rounded-lg px-2 py-1 border text-xs', eventColor(e)]"
+          >
+            <span class="font-medium">{{ e.title }}</span>
+            <span v-if="e.entryType" class="opacity-75"> · {{ t(`scheduling.calendarEntries.types.${e.entryType}`) }}</span>
+          </div>
+        </div>
+      </div>
       <div class="overflow-y-auto max-h-[600px]">
         <div
           v-for="hour in hours"
@@ -416,7 +470,7 @@ function openEvent(event: CalendarEventDto) {
         >
           <div class="w-16 text-xs text-muted-foreground py-2">{{ hour.toString().padStart(2, '0') }}:00</div>
           <div class="flex-1 py-1 space-y-1">
-            <template v-for="event in eventsOnDay(currentDate)" :key="event.id">
+            <template v-for="event in sessionsOnDay(currentDate)" :key="event.id">
               <div
                 v-if="eventHour(event) === hour"
                 :class="['rounded-lg p-2 cursor-pointer border text-xs', eventColor(event)]"

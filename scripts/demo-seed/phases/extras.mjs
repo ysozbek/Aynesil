@@ -1,5 +1,5 @@
 // Bildirim şablonları/tetikleyiciler (API) + örnek bildirim kutusu (SQL) + anketler ve yanıtlar (API, veli portalı kullanıcısıyla).
-import { step, info, idOf, count, sqlStep, q, Client, fx, dayStr } from '../lib.mjs'
+import { step, info, idOf, count, sqlStep, q, Client, fx, dayStr, at } from '../lib.mjs'
 
 export async function setupExtras(ctx) {
   const { c, code, t, ids } = ctx
@@ -95,6 +95,17 @@ async function newFlowExamples(ctx) {
     const defs = await c.list('/performance-kpi/definitions')
     if (defs.some((d) => d.code === code2)) return
     await c.post('/performance-kpi/definitions', { code: code2, name: 'Veli geri bildirim oranı (demo)', unit: '%', spec: '{"source":"parent_feedback"}' })
+  })
+
+  // Takvim kayıtları: resmi tatil (kurum geneli) + etkinlik. Tatil, tekrar eden plandan seans üretiminde atlanır.
+  await step('takvim kaydı (resmi tatil / etkinlik)', async () => {
+    const from = new Date(Date.now() - 30 * 864e5).toISOString()
+    const to = new Date(Date.now() + 400 * 864e5).toISOString()
+    const existing = await c.get(`/scheduling/calendar-entries?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+    if (!existing.some((e) => e.title === 'Yılbaşı (resmi tatil)'))
+      await c.post('/scheduling/calendar-entries', { title: 'Yılbaşı (resmi tatil)', entryType: 'holiday', startsAt: '2026-12-31T21:00:00Z', endsAt: '2027-01-01T21:00:00Z', isAllDay: true })
+    if (!existing.some((e) => e.title === 'Veli buluşması (demo)'))
+      await c.post('/scheduling/calendar-entries', { title: 'Veli buluşması (demo)', entryType: 'event', startsAt: at(9, 18), endsAt: at(9, 20), isAllDay: false })
   })
 
   // İlk giriş örneği: ilkgiris@… kullanıcısı must_change_password=true ile açık bırakılır (seed.mjs temizlemez).

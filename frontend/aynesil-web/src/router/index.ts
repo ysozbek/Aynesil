@@ -445,6 +445,12 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: Permissions.Sessions.Read },
       },
       {
+        path: 'scheduling/calendar-entries',
+        name: 'scheduling-calendar-entries',
+        component: () => import('@/views/scheduling/CalendarEntriesView.vue'),
+        meta: { permission: Permissions.Sessions.Read },
+      },
+      {
         path: 'scheduling/sessions',
         name: 'sessions',
         component: () => import('@/views/scheduling/SessionListView.vue'),

@@ -248,7 +248,8 @@ public record BulkOperationResultDto(
     int AffectedCount,
     string Message,
     int RoomConflictSkipped = 0,
-    int EducatorConflictSkipped = 0);
+    int EducatorConflictSkipped = 0,
+    int ClosureSkipped = 0);
 
 // ── Projection Helper ─────────────────────────────────────────────────────────
 

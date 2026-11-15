@@ -300,6 +300,17 @@ public sealed class BulkGenerateSessionsCommandHandler
 
         var existingDates = existing.ToHashSet();
 
+        // Kapalı gün kayıtları (tatil / kapalı / dönem arası): kurum geneli ya da planın kampüsü.
+        // "event" seans üretimini engellemez.
+        var closures = await _db.CalendarEntries
+            .AsNoTracking()
+            .Where(c => (c.EntryType == "holiday" || c.EntryType == "closure" || c.EntryType == "term_break")
+                     && (c.CampusId == null || c.CampusId == schedule.CampusId)
+                     && c.EndsAt > windowStart.AddDays(-2)
+                     && c.StartsAt < windowEnd.AddDays(2))
+            .Select(c => new { c.StartsAt, c.EndsAt })
+            .ToListAsync(ct);
+
         var exceptionMap = schedule.Exceptions
             .ToDictionary(e => e.ExceptionDate, e => e);
 
@@ -309,6 +320,7 @@ public sealed class BulkGenerateSessionsCommandHandler
         int created = 0;
         int roomSkipped = 0;
         int educatorSkipped = 0;
+        int closureSkipped = 0;
 
         foreach (var date in occurrences)
         {
@@ -334,6 +346,13 @@ public sealed class BulkGenerateSessionsCommandHandler
             }
 
             var endsAt = startsAt.AddMinutes(schedule.DurationMinutes);
+
+            // Tatil / kapalı gün: seans üretilmez, atlanan tarih sayılır.
+            if (closures.Any(c => startsAt < c.EndsAt && endsAt > c.StartsAt))
+            {
+                closureSkipped++;
+                continue;
+            }
 
             // Room conflict check
             if (schedule.RoomId.HasValue)
@@ -389,9 +408,11 @@ public sealed class BulkGenerateSessionsCommandHandler
         return new BulkOperationResultDto(
             created,
             $"{created} session(s) generated; {roomSkipped} skipped due to room conflict; " +
-            $"{educatorSkipped} skipped due to educator conflict.",
+            $"{educatorSkipped} skipped due to educator conflict; " +
+            $"{closureSkipped} skipped due to holiday/closure.",
             roomSkipped,
-            educatorSkipped);
+            educatorSkipped,
+            closureSkipped);
     }
 
     /// <summary>
@@ -429,22 +450,21 @@ public sealed class BulkGenerateSessionsCommandHandler
             yield break;
         }
 
-        // Find the first week anchor
-        var anchor = start;
+        // Haftalar, başlangıç gününün haftasından (Pazar=0) itibaren aralıklarla gezilir; döngü
+        // hafta başına bakar, aksi halde pencerenin ortasında biten haftadaki günler kaçardı.
+        var weekStart = start.AddDays(-(int)start.DayOfWeek);
 
-        while (anchor <= end)
+        while (weekStart <= end)
         {
             foreach (var dow in byWeekday.OrderBy(x => x))
             {
-                // Find the date in this week matching the weekday
-                var startOfWeek = anchor.AddDays(-(int)anchor.DayOfWeek);
-                var candidate   = startOfWeek.AddDays(dow);
+                var candidate = weekStart.AddDays(dow);
 
                 if (candidate >= start && candidate <= end)
                     yield return candidate;
             }
 
-            anchor = anchor.AddDays(7 * intervalWeeks);
+            weekStart = weekStart.AddDays(7 * intervalWeeks);
         }
     }
 

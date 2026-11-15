@@ -385,6 +385,41 @@ async function newFlows() {
   token = adminToken
 }
 
+// ── B→A üçüncü tur: kurumların günlük işi (takvim kayıtları, tekrar eden plan toplu işlemleri, toplu yoklama, ...) ──
+async function dailyOpsFlows() {
+  const adminToken = token
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+  const nextDay = (d) => new Date(new Date(`${d}T00:00:00Z`).getTime() + 864e5).toISOString()
+
+  // 1) takvim kaydı: oluştur → listede → tekrar eden plandan seans üretimi tatili atlar → sil → ikinci silme 404
+  const holiday = day(300)
+  const wd = new Date(`${holiday}T00:00:00Z`).getUTCDay()
+  const ce = await write('yazma', 'scheduling.createCalendarEntry (resmi tatil)', 'POST', '/scheduling/calendar-entries', {
+    title: `Smoke Tatil ${RUN}`, entryType: 'holiday', campusId: null, startsAt: `${holiday}T00:00:00Z`, endsAt: nextDay(holiday), isAllDay: true })
+  const entry = ce.json?.data
+  if (entry?.id) {
+    const lst = await http('GET', `/scheduling/calendar-entries?from=${encodeURIComponent(`${holiday}T00:00:00Z`)}&to=${encodeURIComponent(nextDay(holiday))}`)
+    record({ phase: 'yazma', id: 'scheduling.listCalendarEntries (kayıt listede)', verb: 'GET', url: '/scheduling/calendar-entries', status: lst.status,
+      outcome: lst.status === 200 && (lst.json?.data ?? []).some(x => x.id === entry.id) ? 'ok' : 'type', note: 'oluşturulan tatil listelenmeli', mismatches: [] })
+    if (ctx.sessionTypeId) {
+      const sc = await write('yazma', 'scheduling.createRecurringSchedule (tatil sınaması)', 'POST', '/scheduling/recurring-schedules', {
+        frequency: 'weekly', startTime: '10:00:00', durationMinutes: 40, rangeStart: holiday, rangeEnd: day(314), campusId: ctx.campusId, studentProgramId: null,
+        sessionTypeId: ctx.sessionTypeId, roomId: null, intervalCount: 1, byWeekday: [wd], byMonthday: null, maxOccurrences: null })
+      const schedId = idOf(sc.json?.data)
+      if (schedId) {
+        const gen = await write('yazma', 'scheduling.generateSessions (tatil günü atlanır)', 'POST', `/scheduling/recurring-schedules/${schedId}/generate`, { windowStart: holiday, windowEnd: day(313) })
+        const g = gen.json?.data
+        record({ phase: 'yazma', id: 'scheduling.generateSessions (closureSkipped = 1, 1 seans üretildi)', verb: 'POST', url: `/scheduling/recurring-schedules/${schedId}/generate`, status: gen.status,
+          outcome: g?.closureSkipped === 1 && g?.affectedCount === 1 ? 'ok' : 'type', note: `closureSkipped=${g?.closureSkipped} affectedCount=${g?.affectedCount}`, mismatches: [] })
+        ctx.recurringId = schedId
+      }
+    } else skip('scheduling.generateSessions (tatil günü atlanır)', 'POST', '/scheduling/recurring-schedules/{id}/generate', 'seans türü yok')
+    await write('yazma', 'scheduling.deleteCalendarEntry', 'DELETE', `/scheduling/calendar-entries/${entry.id}`)
+    expectStatus('yazma', 'scheduling.deleteCalendarEntry (silinmiş → 404)', 'DELETE', `/scheduling/calendar-entries/${entry.id}`, await http('DELETE', `/scheduling/calendar-entries/${entry.id}`), [404])
+  }
+  token = adminToken
+}
+
 // ── B→A kapanışı: seans notu/hedefi, akademik dönem, taslak sözleşme, modül görünürlüğü ──
 async function closureFlows() {
   const tag = RUN.toLowerCase()
@@ -784,6 +819,7 @@ await setup()
 await writeFlows()
 await newFlows()
 await closureFlows()
+await dailyOpsFlows()
 await sweep()
 await isolation()
 await guardianRound()

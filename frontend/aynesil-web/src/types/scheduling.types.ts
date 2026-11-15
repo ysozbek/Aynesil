@@ -70,7 +70,8 @@ export interface CalendarEntryDto {
 }
 
 export interface CreateCalendarEntryPayload {
-  campusId: string
+  /** Boş = kurum geneli (tüm kampüsler). */
+  campusId?: string
   title: string
   entryType: string
   startsAt: string
@@ -471,6 +472,9 @@ export interface CalendarEventDto {
   start: string
   end: string
   type: 'session' | 'calendar_entry'
+  /** Yalnızca `calendar_entry`: holiday | closure | event | term_break */
+  entryType?: string
+  isAllDay?: boolean
   status?: string
   roomName?: string
   participantCount?: number
@@ -489,6 +493,8 @@ export interface BulkOperationResultDto {
   message: string
   roomConflictSkipped: number
   educatorConflictSkipped: number
+  /** Tatil / kapalı gün kaydına denk geldiği için atlanan tarih sayısı (yalnızca seans üretiminde). */
+  closureSkipped: number
 }
 
 // ── Conflict Check ─────────────────────────────────────────────────────────────
