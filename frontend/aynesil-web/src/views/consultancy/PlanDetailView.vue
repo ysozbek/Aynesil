@@ -3,7 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
@@ -13,17 +14,31 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 
 const plan = computed(() => store.currentPlan)
 const actionTarget = ref<'activate' | 'complete' | 'cancel' | null>(null)
 const actionLoading = ref(false)
+const showDelete = ref(false)
+const deleteError = ref('')
 
 onMounted(() => store.fetchPlan(String(route.params.id)))
 
 function formatDate(val?: string | null) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('tr-TR')
+}
+
+async function doDelete() {
+  deleteError.value = ''
+  try {
+    await store.deletePlan(String(route.params.id))
+    router.replace({ name: 'consultancy-plans' })
+  } catch (e: unknown) {
+    // Ziyaret/sözleşme/rapor/takip varsa sunucunun anlamlı mesajı gösterilir.
+    deleteError.value = (e as Error).message
+  }
+  showDelete.value = false
 }
 
 async function runAction() {
@@ -54,7 +69,7 @@ async function runAction() {
         {{ t('common.back') }}
       </button>
       <button
-        v-if="plan?.status === 'draft' && can(Permissions.ConsultancyPlans.Activate)"
+        v-if="plan?.status === 'draft' && visible(Permissions.ConsultancyPlans.Activate)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
         @click="actionTarget = 'activate'"
@@ -62,7 +77,7 @@ async function runAction() {
         {{ t('consultancy.plan.actions.activate') }}
       </button>
       <button
-        v-if="plan?.status === 'active' && can(Permissions.ConsultancyPlans.Complete)"
+        v-if="plan?.status === 'active' && visible(Permissions.ConsultancyPlans.Complete)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
         @click="actionTarget = 'complete'"
@@ -70,14 +85,24 @@ async function runAction() {
         {{ t('consultancy.plan.actions.complete') }}
       </button>
       <button
-        v-if="(plan?.status === 'draft' || plan?.status === 'active') && can(Permissions.ConsultancyPlans.Cancel)"
+        v-if="(plan?.status === 'draft' || plan?.status === 'active') && visible(Permissions.ConsultancyPlans.Cancel)"
         type="button"
         class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
         @click="actionTarget = 'cancel'"
       >
         {{ t('consultancy.plan.actions.cancel') }}
       </button>
+      <button
+        v-if="plan?.status === 'draft' && visible(Permissions.ConsultancyPlans.Delete)"
+        type="button"
+        class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
+        @click="showDelete = true"
+      >
+        {{ t('consultancy.plan.actions.delete') }}
+      </button>
     </PageHeader>
+
+    <p v-if="deleteError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ deleteError }}</p>
 
     <div v-if="store.loading && !plan" class="py-16 text-center text-muted-foreground text-sm">
       {{ t('common.loading') }}
@@ -124,6 +149,14 @@ async function runAction() {
       </div>
     </div>
 
+    <ConfirmModal
+      :open="showDelete"
+      :title="t('consultancy.plan.actions.delete')"
+      :message="t('consultancy.plan.actions.deleteConfirm')"
+      :loading="store.saving"
+      @confirm="doDelete"
+      @cancel="showDelete = false"
+    />
     <ConfirmModal
       :open="!!actionTarget"
       :title="actionTarget ? t(`consultancy.plan.actions.${actionTarget}`) : ''"

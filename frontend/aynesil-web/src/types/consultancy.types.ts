@@ -379,6 +379,35 @@ export interface CreateVisitPayload {
   purpose?: string
 }
 
+export interface UpdateVisitPayload {
+  visitDate: string
+  visitorId?: string
+  purpose?: string
+  consultancyPlanId?: string
+}
+
+export type UpdateObservationPayload = AddObservationPayload
+
+/** GET /consultancy/reporting/visit-history satırı (VisitHistoryItemDto). */
+export interface VisitHistoryItemDto {
+  visitId: string
+  institutionId: string
+  institutionName: string
+  planName?: string
+  visitDate: string
+  purpose?: string
+  status: string
+  observationCount: number
+  reportCount: number
+  createdAt: string
+}
+
+export interface VisitHistoryQuery {
+  institutionId?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
 export interface AddObservationPayload {
   observationTypeId?: string
   subject?: string

@@ -10,6 +10,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { Permissions } from '@/constants/permissions'
+import { Modules, type ModuleCode } from '@/constants/modules'
+import { useModulesStore } from '@/stores/modules.store'
 
 const routes: RouteRecordRaw[] = [
   // ── Public routes ─────────────────────────────────────────────────────────
@@ -908,121 +910,127 @@ const routes: RouteRecordRaw[] = [
         path: 'consultancy',
         name: 'consultancy-dashboard',
         component: () => import('@/views/consultancy/ConsultancyDashboardView.vue'),
-        meta: { permission: Permissions.Institutions.Read },
+        meta: { permission: Permissions.Institutions.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/institutions',
         name: 'institutions',
         component: () => import('@/views/consultancy/InstitutionListView.vue'),
-        meta: { permission: Permissions.Institutions.Read },
+        meta: { permission: Permissions.Institutions.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/institutions/new',
         name: 'institution-new',
         component: () => import('@/views/consultancy/InstitutionFormView.vue'),
-        meta: { permission: Permissions.Institutions.Create },
+        meta: { permission: Permissions.Institutions.Create, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/institutions/:id',
         name: 'institution-detail',
         component: () => import('@/views/consultancy/InstitutionFormView.vue'),
-        meta: { permission: Permissions.Institutions.Read },
+        meta: { permission: Permissions.Institutions.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/institutions/:id/edit',
         name: 'institution-edit',
         component: () => import('@/views/consultancy/InstitutionFormView.vue'),
-        meta: { permission: Permissions.Institutions.Update },
+        meta: { permission: Permissions.Institutions.Update, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/plans',
         name: 'consultancy-plans',
         component: () => import('@/views/consultancy/PlanListView.vue'),
-        meta: { permission: Permissions.ConsultancyPlans.Read },
+        meta: { permission: Permissions.ConsultancyPlans.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/plans/:id',
         name: 'consultancy-plan-detail',
         component: () => import('@/views/consultancy/PlanDetailView.vue'),
-        meta: { permission: Permissions.ConsultancyPlans.Read },
+        meta: { permission: Permissions.ConsultancyPlans.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/visits',
         name: 'consultancy-visits',
         component: () => import('@/views/consultancy/VisitListView.vue'),
-        meta: { permission: Permissions.SchoolVisits.Read },
+        meta: { permission: Permissions.SchoolVisits.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/visits/:id',
         name: 'consultancy-visit-detail',
-        component: () => import('@/views/consultancy/VisitListView.vue'),
-        meta: { permission: Permissions.SchoolVisits.Read },
+        component: () => import('@/views/consultancy/VisitDetailView.vue'),
+        meta: { permission: Permissions.SchoolVisits.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/observations',
         name: 'consultancy-observations',
         component: () => import('@/views/consultancy/ObservationListView.vue'),
-        meta: { permission: Permissions.Observations.Read },
+        meta: { permission: Permissions.Observations.Read, module: Modules.Consultancy },
+      },
+      {
+        path: 'consultancy/analytics',
+        name: 'consultancy-analytics',
+        component: () => import('@/views/consultancy/ConsultancyAnalyticsView.vue'),
+        meta: { permission: Permissions.Institutions.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/reports',
         name: 'consultancy-reports',
         component: () => import('@/views/consultancy/ReportListView.vue'),
-        meta: { permission: Permissions.ConsultancyReports.Read },
+        meta: { permission: Permissions.ConsultancyReports.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/agreements',
         name: 'consultancy-agreements',
         component: () => import('@/views/consultancy/AgreementListView.vue'),
-        meta: { permission: Permissions.ConsultancyAgreements.Read },
+        meta: { permission: Permissions.ConsultancyAgreements.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/agreements/new',
         name: 'agreement-new',
         component: () => import('@/views/consultancy/AgreementFormView.vue'),
-        meta: { permission: Permissions.ConsultancyAgreements.Create },
+        meta: { permission: Permissions.ConsultancyAgreements.Create, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/agreements/:id',
         name: 'agreement-detail',
         component: () => import('@/views/consultancy/AgreementDetailView.vue'),
-        meta: { permission: Permissions.ConsultancyAgreements.Read },
+        meta: { permission: Permissions.ConsultancyAgreements.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/agreements/:id/edit',
         name: 'agreement-edit',
         component: () => import('@/views/consultancy/AgreementFormView.vue'),
-        meta: { permission: Permissions.ConsultancyAgreements.Update },
+        meta: { permission: Permissions.ConsultancyAgreements.Update, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/follow-ups',
         name: 'consultancy-follow-ups',
         component: () => import('@/views/consultancy/FollowUpListView.vue'),
-        meta: { permission: Permissions.FollowUps.Read },
+        meta: { permission: Permissions.FollowUps.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/follow-ups/open',
         name: 'follow-ups-open-report',
         component: () => import('@/views/consultancy/OpenFollowUpReportView.vue'),
-        meta: { permission: Permissions.FollowUps.Read },
+        meta: { permission: Permissions.FollowUps.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/follow-ups/new',
         name: 'follow-up-new',
         component: () => import('@/views/consultancy/FollowUpFormView.vue'),
-        meta: { permission: Permissions.FollowUps.Create },
+        meta: { permission: Permissions.FollowUps.Create, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/follow-ups/:id',
         name: 'follow-up-detail',
         component: () => import('@/views/consultancy/FollowUpDetailView.vue'),
-        meta: { permission: Permissions.FollowUps.Read },
+        meta: { permission: Permissions.FollowUps.Read, module: Modules.Consultancy },
       },
       {
         path: 'consultancy/follow-ups/:id/edit',
         name: 'follow-up-edit',
         component: () => import('@/views/consultancy/FollowUpFormView.vue'),
-        meta: { permission: Permissions.FollowUps.Update },
+        meta: { permission: Permissions.FollowUps.Update, module: Modules.Consultancy },
       },
 
       // ── KPI & Performance Management ───────────────────────────────────────────
@@ -1205,6 +1213,14 @@ router.beforeEach(async (to) => {
 
   if (to.meta.permission && !auth.hasPermission(to.meta.permission as string)) {
     return { name: 'forbidden' }
+  }
+
+  // Kurumda kapalı modülün ekranları açılmaz (uçlar zaten 403 Error.ModuleDisabled verir).
+  // Durum /modules/me'den gelir; ilk girişte yüklenmemişse burada beklenir (önbellekli).
+  if (to.meta.module && auth.isAuthenticated) {
+    const modules = useModulesStore()
+    await modules.load()
+    if (!modules.isEnabled(to.meta.module as ModuleCode)) return { name: 'forbidden' }
   }
 })
 

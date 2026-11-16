@@ -4,7 +4,8 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
@@ -12,7 +13,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 
 const upcomingVisits = computed(() =>
   consultancyStore.visits.items.filter(v => v.status !== SchoolVisitStatus.Completed && v.status !== SchoolVisitStatus.Cancelled).slice(0, 5)
@@ -35,7 +36,14 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('consultancy.dashboard.title')" :description="t('consultancy.dashboard.subtitle')">
       <button
-        v-if="can(Permissions.Institutions.Create)"
+        v-if="visible(Permissions.Institutions.Read)"
+        @click="router.push({ name: 'consultancy-analytics' })"
+        class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-accent"
+      >
+        {{ t('consultancyAnalytics.title') }}
+      </button>
+      <button
+        v-if="visible(Permissions.Institutions.Create)"
         @click="router.push('/consultancy/institutions/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >

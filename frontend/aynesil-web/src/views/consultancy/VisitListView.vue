@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { SchoolVisitStatus } from '@/constants/statuses'
-import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import FormModal from '@/components/shared/FormModal.vue'
@@ -14,9 +15,10 @@ import type { SchoolVisitListItemDto, VisitListQuery } from '@/types/consultancy
 import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 const showCreateModal = ref(false)
 
 const filters = reactive<VisitListQuery>({
@@ -25,8 +27,23 @@ const filters = reactive<VisitListQuery>({
   status: '',
   dateFrom: '',
   dateTo: '',
+  consultancyPlanId: (route.query.planId as string) || '',
 })
-const createForm = reactive({ institutionId: '', visitDate: '', purpose: '' })
+const createForm = reactive({ institutionId: '', consultancyPlanId: '', visitDate: '', purpose: '' })
+const createError = ref('')
+const institutionPlans = computed(() =>
+  consultancyStore.plans.items.filter((p) => p.institutionId === createForm.institutionId && p.status === 'active'),
+)
+
+async function openCreate() {
+  Object.assign(createForm, { institutionId: '', consultancyPlanId: '', visitDate: '', purpose: '' })
+  createError.value = ''
+  showCreateModal.value = true
+  await Promise.all([
+    consultancyStore.fetchInstitutions({ page: 1, pageSize: 200 }),
+    consultancyStore.fetchPlans({ page: 1, pageSize: 200, status: 'active' }),
+  ])
+}
 
 const columns: Column<SchoolVisitListItemDto>[] = [
   { key: 'institutionName', label: t('consultancy.institution.fields.name') },
@@ -39,17 +56,29 @@ const columns: Column<SchoolVisitListItemDto>[] = [
 
 async function doFetch() {
   filters.page = 1
-  await consultancyStore.fetchVisits(filters)
+  await consultancyStore.fetchVisits({ ...filters, consultancyPlanId: filters.consultancyPlanId || undefined })
 }
 
 async function doCreate() {
-  const result = await consultancyStore.createVisit({
-    institutionId: createForm.institutionId,
-    visitDate: createForm.visitDate,
-    purpose: createForm.purpose || undefined,
-  })
-  showCreateModal.value = false
-  router.push(`/consultancy/visits/${result.id}`)
+  if (!createForm.institutionId || !createForm.visitDate) {
+    createError.value = t('validation.required', {
+      field: !createForm.institutionId ? t('consultancy.visit.fields.institution') : t('consultancy.visit.fields.visitDate'),
+    })
+    return
+  }
+  createError.value = ''
+  try {
+    const result = await consultancyStore.createVisit({
+      institutionId: createForm.institutionId,
+      consultancyPlanId: createForm.consultancyPlanId || undefined,
+      visitDate: createForm.visitDate,
+      purpose: createForm.purpose || undefined,
+    })
+    showCreateModal.value = false
+    router.push({ name: 'consultancy-visit-detail', params: { id: result.id } })
+  } catch (e: unknown) {
+    createError.value = (e as Error).message
+  }
 }
 
 onMounted(doFetch)
@@ -59,8 +88,8 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('consultancy.visit.list.title')" :description="t('consultancy.visit.list.subtitle')">
       <button
-        v-if="can(Permissions.SchoolVisits.Create)"
-        @click="showCreateModal = true"
+        v-if="visible(Permissions.SchoolVisits.Create)"
+        @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,9 +154,20 @@ onMounted(doFetch)
       @close="showCreateModal = false"
     >
       <div class="space-y-4">
+        <p v-if="createError" class="text-sm text-red-600">{{ createError }}</p>
         <div>
-          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.institution.fields.name') }} ID *</label>
-          <input v-model="createForm.institutionId" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" />
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.visit.fields.institution') }} *</label>
+          <select v-model="createForm.institutionId" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent" @change="createForm.consultancyPlanId = ''">
+            <option value="">{{ t('common.select') }}</option>
+            <option v-for="i in consultancyStore.institutions.items" :key="i.id" :value="i.id">{{ i.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.visit.fields.plan') }}</label>
+          <select v-model="createForm.consultancyPlanId" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
+            <option value="">{{ t('consultancy.visit.fields.noPlan') }}</option>
+            <option v-for="p in institutionPlans" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-foreground mb-1">{{ t('consultancy.visit.fields.visitDate') }} *</label>

@@ -19,7 +19,8 @@ import type {
   OpenFollowUpReportQuery, AgreementSummaryQuery,
   CreateInstitutionPayload, UpdateInstitutionPayload,
   CreatePlanPayload, CreateVisitPayload,
-  AddObservationPayload,
+  AddObservationPayload, UpdateObservationPayload, UpdateVisitPayload,
+  ObservationRecordDto, VisitHistoryItemDto, VisitHistoryQuery,
   CreateAgreementPayload, UpdateAgreementPayload, SignAgreementPayload,
   CreateFollowUpPayload, UpdateFollowUpPayload,
   CompleteFollowUpPayload,
@@ -50,6 +51,9 @@ export const consultancyService = {
   updateInstitution: (id: string, payload: UpdateInstitutionPayload) =>
     apiService.put<void>(`/consultancy/institutions/${id}`, payload),
 
+  deleteInstitution: (id: string) =>
+    apiService.delete(`/consultancy/institutions/${id}`),
+
   // ── Plans ──────────────────────────────────────────────────────────────────
   listPlans: (query: PlanListQuery) =>
     apiService.get<PaginatedResult<ConsultancyPlanListItemDto>>(
@@ -75,6 +79,9 @@ export const consultancyService = {
   cancelPlan: (id: string) =>
     apiService.post(`/consultancy/plans/${id}/cancel`),
 
+  deletePlan: (id: string) =>
+    apiService.delete(`/consultancy/plans/${id}`),
+
   // ── Visits ─────────────────────────────────────────────────────────────────
   listVisits: (query: VisitListQuery) =>
     apiService.get<PaginatedResult<SchoolVisitListItemDto>>(
@@ -87,6 +94,12 @@ export const consultancyService = {
   createVisit: (payload: CreateVisitPayload) =>
     apiService.post<SchoolVisitDto>('/consultancy/visits', payload),
 
+  updateVisit: (id: string, payload: UpdateVisitPayload) =>
+    apiService.put<null>(`/consultancy/visits/${id}`, payload),
+
+  deleteVisit: (id: string) =>
+    apiService.delete(`/consultancy/visits/${id}`),
+
   completeVisit: (id: string) =>
     apiService.post(`/consultancy/visits/${id}/complete`),
 
@@ -94,8 +107,20 @@ export const consultancyService = {
     apiService.post(`/consultancy/visits/${id}/cancel`),
 
   // ── Observations ───────────────────────────────────────────────────────────
+  listObservations: (visitId: string) =>
+    apiService.get<ObservationRecordDto[]>(`/consultancy/visits/${visitId}/observations`),
+
+  getObservation: (id: string) =>
+    apiService.get<ObservationRecordDto>(`/consultancy/observations/${id}`),
+
   addObservation: (visitId: string, payload: AddObservationPayload) =>
-    apiService.post(`/consultancy/visits/${visitId}/observations`, payload),
+    apiService.post<ObservationRecordDto>(`/consultancy/visits/${visitId}/observations`, payload),
+
+  updateObservation: (id: string, payload: UpdateObservationPayload) =>
+    apiService.put<null>(`/consultancy/observations/${id}`, payload),
+
+  deleteObservation: (id: string) =>
+    apiService.delete(`/consultancy/observations/${id}`),
 
   // ── Reports ────────────────────────────────────────────────────────────────
   listReports: (query: { consultancyPlanId?: string } & Record<string, unknown>) =>
@@ -108,6 +133,9 @@ export const consultancyService = {
 
   createReport: (payload: CreateConsultancyReportPayload) =>
     apiService.post<ConsultancyReportDto>('/consultancy/reports', payload),
+
+  deleteReport: (id: string) =>
+    apiService.delete(`/consultancy/reports/${id}`),
 
   // ── Agreements ─────────────────────────────────────────────────────────────
   listAgreements: (query: AgreementListQuery) =>
@@ -188,8 +216,8 @@ export const consultancyService = {
       `/consultancy/reporting/outcomes${qs(query)}`
     ),
 
-  getVisitHistory: (query: { institutionId?: string; dateFrom?: string; dateTo?: string }) =>
-    apiService.get<unknown[]>(
+  getVisitHistory: (query: VisitHistoryQuery) =>
+    apiService.get<VisitHistoryItemDto[]>(
       `/consultancy/reporting/visit-history${qs(query)}`
     ),
 }

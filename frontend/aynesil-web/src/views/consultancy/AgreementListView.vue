@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
 import { useRefDataStore } from '@/stores/refdata.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -17,7 +18,7 @@ const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
 const refDataStore = useRefDataStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 
 const filters = reactive<AgreementListQuery>({
   page: 1,
@@ -66,7 +67,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('consultancyContract.title')" :description="t('consultancyContract.subtitle')">
       <button
-        v-if="can(Permissions.ConsultancyAgreements.Create)"
+        v-if="visible(Permissions.ConsultancyAgreements.Create)"
         @click="router.push('/consultancy/agreements/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >

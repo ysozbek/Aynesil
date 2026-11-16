@@ -20,6 +20,7 @@ import type {
   OpenFollowUpReportQuery, AgreementSummaryQuery,
   CreateInstitutionPayload, UpdateInstitutionPayload,
   CreatePlanPayload, CreateVisitPayload, AddObservationPayload,
+  UpdateVisitPayload, UpdateObservationPayload, VisitHistoryItemDto, VisitHistoryQuery,
   CreateAgreementPayload, UpdateAgreementPayload, SignAgreementPayload,
   CreateFollowUpPayload, UpdateFollowUpPayload,
   CompleteFollowUpPayload,
@@ -47,6 +48,7 @@ export const useConsultancyStore = defineStore('consultancy', () => {
   const followUps = ref<PaginatedResult<FollowUpActivityListItemDto>>(emptyPage<FollowUpActivityListItemDto>())
   const currentFollowUp = ref<FollowUpActivityDto | null>(null)
   const openFollowUps = ref<OpenFollowUpReportItemDto[]>([])
+  const visitHistory = ref<VisitHistoryItemDto[]>([])
   // ── Analytics state ──────────────────────────────────────────────────────────
   const institutionReport = ref<InstitutionReportDto[]>([])
   const outcomes = ref<ConsultancyOutcomesDto[]>([])
@@ -149,6 +151,16 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     } finally { saving.value = false }
   }
 
+  async function deleteInstitution(id: string) {
+    saving.value = true
+    try { await consultancyService.deleteInstitution(id) } finally { saving.value = false }
+  }
+
+  async function deletePlan(id: string) {
+    saving.value = true
+    try { await consultancyService.deletePlan(id) } finally { saving.value = false }
+  }
+
   // ── Visits ─────────────────────────────────────────────────────────────────
   async function fetchVisits(query: VisitListQuery) {
     loading.value = true; error.value = null
@@ -185,6 +197,43 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     } finally { saving.value = false }
   }
 
+  async function updateVisit(id: string, payload: UpdateVisitPayload) {
+    saving.value = true
+    try {
+      await consultancyService.updateVisit(id, payload)
+      await fetchVisit(id)
+    } finally { saving.value = false }
+  }
+
+  async function cancelVisit(id: string) {
+    saving.value = true
+    try {
+      await consultancyService.cancelVisit(id)
+      await fetchVisit(id)
+    } finally { saving.value = false }
+  }
+
+  async function deleteVisit(id: string) {
+    saving.value = true
+    try { await consultancyService.deleteVisit(id) } finally { saving.value = false }
+  }
+
+  async function updateObservation(visitId: string, id: string, payload: UpdateObservationPayload) {
+    saving.value = true
+    try {
+      await consultancyService.updateObservation(id, payload)
+      await fetchVisit(visitId)
+    } finally { saving.value = false }
+  }
+
+  async function deleteObservation(visitId: string, id: string) {
+    saving.value = true
+    try {
+      await consultancyService.deleteObservation(id)
+      await fetchVisit(visitId)
+    } finally { saving.value = false }
+  }
+
   async function addObservation(visitId: string, payload: AddObservationPayload) {
     saving.value = true
     try {
@@ -214,6 +263,11 @@ export const useConsultancyStore = defineStore('consultancy', () => {
   }
 
   // ── Agreements ─────────────────────────────────────────────────────────────
+
+  async function deleteReport(id: string) {
+    saving.value = true
+    try { await consultancyService.deleteReport(id) } finally { saving.value = false }
+  }
 
   async function fetchAgreements(query: AgreementListQuery) {
     loading.value = true; error.value = null
@@ -405,6 +459,15 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     finally { loading.value = false }
   }
 
+  async function fetchVisitHistory(query: VisitHistoryQuery) {
+    loading.value = true; error.value = null
+    try {
+      const res = await consultancyService.getVisitHistory(query)
+      visitHistory.value = res.success && res.data ? res.data : []
+    } catch (e: unknown) { error.value = (e as Error).message }
+    finally { loading.value = false }
+  }
+
   function clearCurrent() {
     currentInstitution.value = null
     currentPlan.value = null
@@ -418,11 +481,13 @@ export const useConsultancyStore = defineStore('consultancy', () => {
     visits, currentVisit, reports,
     agreements, currentAgreement, agreementSummary,
     followUps, currentFollowUp, openFollowUps,
-    institutionReport, outcomes, loading, saving, error,
+    institutionReport, outcomes, visitHistory, loading, saving, error,
     fetchInstitutions, fetchInstitution, createInstitution, updateInstitution,
     fetchPlans, fetchPlan, createPlan, activatePlan, completePlan, cancelPlan,
-    fetchVisits, fetchVisit, createVisit, completeVisit, addObservation,
-    fetchReports, createReport,
+    deleteInstitution, deletePlan,
+    fetchVisits, fetchVisit, createVisit, updateVisit, completeVisit, cancelVisit, deleteVisit,
+    addObservation, updateObservation, deleteObservation,
+    fetchReports, createReport, deleteReport, fetchVisitHistory,
     fetchAgreements, fetchAgreement, createAgreement, updateAgreement,
     sendAgreement, signAgreement, expireAgreement, cancelAgreement, deleteAgreement,
     fetchAgreementSummary,

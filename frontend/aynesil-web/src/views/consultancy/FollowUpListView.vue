@@ -3,7 +3,8 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -16,7 +17,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 const showCreateModal = ref(false)
 
 const filters = reactive({
@@ -133,7 +134,7 @@ onMounted(doFetch)
           {{ t('followUp.openReportLabel') }}
         </button>
         <button
-          v-if="can(Permissions.FollowUps.Create)"
+          v-if="visible(Permissions.FollowUps.Create)"
           @click="showCreateModal = true"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         >
@@ -205,7 +206,7 @@ onMounted(doFetch)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="row.status === 'pending' && can(Permissions.FollowUps.Start)"
+            v-if="row.status === 'pending' && visible(Permissions.FollowUps.Start)"
             :disabled="store.saving"
             @click="quickStart(row.id)"
             class="p-1.5 rounded-lg hover:bg-accent text-sky-600 hover:text-sky-700"
@@ -216,7 +217,7 @@ onMounted(doFetch)
             </svg>
           </button>
           <button
-            v-if="row.status === 'in_progress' && can(Permissions.FollowUps.Complete)"
+            v-if="row.status === 'in_progress' && visible(Permissions.FollowUps.Complete)"
             @click="openCompleteModal(row.id, rowVersionOf(row))"
             class="p-1.5 rounded-lg hover:bg-accent text-green-600 hover:text-green-700"
             :title="t('followUp.markCompleted')"

@@ -3,7 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
@@ -14,11 +15,13 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 const id = route.params.id as string
 const followUp = computed(() => store.currentFollowUp)
 const showCompleteModal = ref(false)
 const showCancelConfirm = ref(false)
+const showDeleteConfirm = ref(false)
+const actionError = ref('')
 const completionNotes = ref('')
 
 function formatDate(dt: string) {
@@ -62,6 +65,17 @@ async function doCancel() {
   showCancelConfirm.value = false
 }
 
+async function doDelete() {
+  actionError.value = ''
+  try {
+    await store.deleteFollowUp(id)
+    router.replace('/consultancy/follow-ups')
+  } catch (e: unknown) {
+    actionError.value = (e as Error).message
+  }
+  showDeleteConfirm.value = false
+}
+
 onMounted(() => {
   store.currentFollowUp = null
   store.fetchFollowUp(id)
@@ -88,14 +102,14 @@ onMounted(() => {
         <div class="flex flex-wrap items-center gap-2">
           <StatusBadge entity="consultancyFollowUp" :status="followUp.status" />
           <button
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can(Permissions.FollowUps.Update)"
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && visible(Permissions.FollowUps.Update)"
             @click="router.push(`/consultancy/follow-ups/${followUp.id}/edit`)"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="followUp.status === 'pending' && can(Permissions.FollowUps.Start)"
+            v-if="followUp.status === 'pending' && visible(Permissions.FollowUps.Start)"
             :disabled="store.saving"
             @click="doStart"
             class="px-3 py-1.5 text-sm rounded-lg bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
@@ -103,22 +117,31 @@ onMounted(() => {
             {{ t('followUp.start') }}
           </button>
           <button
-            v-if="followUp.status === 'in_progress' && can(Permissions.FollowUps.Complete)"
+            v-if="followUp.status === 'in_progress' && visible(Permissions.FollowUps.Complete)"
             @click="showCompleteModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('followUp.markCompleted') }}
           </button>
           <button
-            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && can(Permissions.FollowUps.Cancel)"
+            v-if="(followUp.status === 'pending' || followUp.status === 'in_progress') && visible(Permissions.FollowUps.Cancel)"
             :disabled="store.saving"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >
             {{ t('followUp.cancel') }}
           </button>
+          <button
+            v-if="followUp.status !== 'completed' && visible(Permissions.FollowUps.Delete)"
+            :disabled="store.saving"
+            @click="showDeleteConfirm = true"
+            class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+          >
+            {{ t('followUp.delete') }}
+          </button>
         </div>
       </PageHeader>
+      <p v-if="actionError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ actionError }}</p>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
@@ -261,6 +284,15 @@ onMounted(() => {
       :loading="store.saving"
       @confirm="doCancel"
       @cancel="showCancelConfirm = false"
+    />
+    <ConfirmModal
+      :open="showDeleteConfirm"
+      :title="t('followUp.delete')"
+      :message="t('followUp.deleteConfirm')"
+      :confirm-label="t('common.delete')"
+      :loading="store.saving"
+      @confirm="doDelete"
+      @cancel="showDeleteConfirm = false"
     />
   </div>
 </template>

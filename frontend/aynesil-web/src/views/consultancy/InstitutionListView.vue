@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
+import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import type { Column } from '@/components/shared/DataTable.vue'
@@ -14,7 +16,23 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const consultancyStore = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
+
+const toDelete = ref<InstitutionListItemDto | null>(null)
+const deleteError = ref('')
+
+async function doDelete() {
+  if (!toDelete.value) return
+  deleteError.value = ''
+  try {
+    await consultancyStore.deleteInstitution(toDelete.value.id)
+    await consultancyStore.fetchInstitutions(filters)
+  } catch (e: unknown) {
+    // Aktif planı / planı / ziyareti / sözleşmesi olan kurumda sunucunun mesajı gösterilir.
+    deleteError.value = (e as Error).message
+  }
+  toDelete.value = null
+}
 
 const filters = reactive<InstitutionListQuery>({
   page: 1,
@@ -61,7 +79,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('consultancy.institution.list.title')" :description="t('consultancy.institution.list.subtitle')">
       <button
-        v-if="can(Permissions.Institutions.Create)"
+        v-if="visible(Permissions.Institutions.Create)"
         @click="router.push('/consultancy/institutions/new')"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -96,6 +114,8 @@ onMounted(doFetch)
       </button>
     </div>
 
+    <p v-if="deleteError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ deleteError }}</p>
+
     <DataTable
       :columns="columns"
       :rows="consultancyStore.institutions.items"
@@ -121,7 +141,7 @@ onMounted(doFetch)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="can(Permissions.Institutions.Update)"
+            v-if="visible(Permissions.Institutions.Update)"
             @click="router.push(`/consultancy/institutions/${row.id}/edit`)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"
@@ -130,9 +150,29 @@ onMounted(doFetch)
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
+          <button
+            v-if="visible(Permissions.Institutions.Delete)"
+            @click="deleteError = ''; toDelete = row"
+            class="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600"
+            :title="t('common.delete')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </template>
     </DataTable>
+
+    <ConfirmModal
+      :open="!!toDelete"
+      :title="t('consultancy.institution.delete.title')"
+      :message="t('consultancy.institution.delete.message', { name: toDelete?.name ?? '' })"
+      :confirm-label="t('common.delete')"
+      :loading="consultancyStore.saving"
+      @confirm="doDelete"
+      @cancel="toDelete = null"
+    />
 
     <div class="mt-4">
       <Pagination

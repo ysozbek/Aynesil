@@ -3,7 +3,8 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
@@ -14,7 +15,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 const id = route.params.id as string
 const agreement = computed(() => store.currentAgreement)
 const showSignModal = ref(false)
@@ -90,14 +91,14 @@ onMounted(() => {
         <div class="flex flex-wrap items-center gap-2">
           <StatusBadge entity="consultancyAgreement" :status="agreement.status" />
           <button
-            v-if="agreement.status === 'draft' && can(Permissions.ConsultancyAgreements.Update)"
+            v-if="agreement.status === 'draft' && visible(Permissions.ConsultancyAgreements.Update)"
             @click="router.push(`/consultancy/agreements/${agreement.id}/edit`)"
             class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="agreement.status === 'draft' && can(Permissions.ConsultancyAgreements.Send)"
+            v-if="agreement.status === 'draft' && visible(Permissions.ConsultancyAgreements.Send)"
             :disabled="store.saving"
             @click="doSend"
             class="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
@@ -105,7 +106,7 @@ onMounted(() => {
             {{ t('consultancyContract.send') }}
           </button>
           <button
-            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can(Permissions.ConsultancyAgreements.Cancel)"
+            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && visible(Permissions.ConsultancyAgreements.Cancel)"
             :disabled="store.saving"
             @click="showCancelConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
@@ -113,14 +114,14 @@ onMounted(() => {
             {{ t('common.cancel') }}
           </button>
           <button
-            v-if="agreement.status === 'sent' && can(Permissions.ConsultancyAgreements.Sign)"
+            v-if="agreement.status === 'sent' && visible(Permissions.ConsultancyAgreements.Sign)"
             @click="showSignModal = true"
             class="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
             {{ t('consultancyContract.markSigned') }}
           </button>
           <button
-            v-if="agreement.status === 'signed' && can(Permissions.ConsultancyAgreements.Expire)"
+            v-if="agreement.status === 'signed' && visible(Permissions.ConsultancyAgreements.Expire)"
             :disabled="store.saving"
             @click="showExpireConfirm = true"
             class="px-3 py-1.5 text-sm rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50"
@@ -128,7 +129,7 @@ onMounted(() => {
             {{ t('consultancyContract.markExpired') }}
           </button>
           <button
-            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && can(Permissions.ConsultancyAgreements.Delete)"
+            v-if="(agreement.status === 'draft' || agreement.status === 'sent') && visible(Permissions.ConsultancyAgreements.Delete)"
             :disabled="store.saving"
             @click="showDeleteConfirm = true"
             class="p-1.5 rounded-lg hover:bg-red-50 text-red-600"
@@ -194,7 +195,7 @@ onMounted(() => {
                 </p>
               </div>
               <a
-                v-if="can(Permissions.ConsultancyAgreements.Read)"
+                v-if="visible(Permissions.ConsultancyAgreements.Read)"
                 :href="`/api/files/${agreement.fileId}`"
                 target="_blank"
                 class="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-accent shrink-0"

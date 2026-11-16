@@ -3,7 +3,8 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConsultancyStore } from '@/stores/consultancy.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import { useRefDataStore } from '@/stores/refdata.store'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -18,7 +19,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const store = useConsultancyStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Consultancy)
 const refData = useRefDataStore()
 
 const filters = reactive<PlanListQuery>({
@@ -115,7 +116,7 @@ async function submitCreate() {
   <div>
     <PageHeader :title="t('consultancy.plan.list.title')" :description="t('consultancy.plan.list.subtitle')">
       <button
-        v-if="can(Permissions.ConsultancyPlans.Create)"
+        v-if="visible(Permissions.ConsultancyPlans.Create)"
         type="button"
         @click="openCreate"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
