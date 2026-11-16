@@ -113,14 +113,32 @@ public class UpdateSchoolVisitCommandValidator : AbstractValidator<UpdateSchoolV
 public sealed class UpdateSchoolVisitCommandHandler : IRequestHandler<UpdateSchoolVisitCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public UpdateSchoolVisitCommandHandler(IAppDbContext db) => _db = db;
+    public UpdateSchoolVisitCommandHandler(IAppDbContext db, ITenantContext tenant)
+    {
+        _db = db;
+        _tenant = tenant;
+    }
 
     public async Task Handle(UpdateSchoolVisitCommand req, CancellationToken ct)
     {
+        var corporationId = _tenant.RequireCorporationId();
+
         var visit = await _db.SchoolVisits
-            .FirstOrDefaultAsync(v => v.Id == req.Id, ct)
+            .FirstOrDefaultAsync(v => v.Id == req.Id && v.CorporationId == corporationId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SchoolVisit"));
+
+        // Plan değişiyorsa Schedule ile aynı kural: aynı kurumun, aynı kiracının aktif planı.
+        if (req.ConsultancyPlanId.HasValue && req.ConsultancyPlanId != visit.ConsultancyPlanId)
+        {
+            var planOk = await _db.ConsultancyPlans
+                .AnyAsync(p => p.CorporationId == corporationId && p.Id == req.ConsultancyPlanId.Value
+                            && p.InstitutionId == visit.InstitutionId
+                            && p.Status == "active", ct);
+            if (!planOk)
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ConsultancyPlanNotActive, req.ConsultancyPlanId);
+        }
 
         visit.Update(req.VisitDate, req.VisitorId, req.Purpose, req.ConsultancyPlanId);
         await _db.SaveChangesAsync(ct);
@@ -194,6 +212,12 @@ public sealed class DeleteSchoolVisitCommandHandler : IRequestHandler<DeleteScho
 
         if (hasObservations)
             throw new BusinessRuleViolationException(MsgKeys.Rule.VisitHasObservations);
+
+        if (await _db.ConsultancyReports.AnyAsync(r => r.SchoolVisitId == req.Id, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.VisitHasReports);
+
+        if (await _db.FollowUpActivities.AnyAsync(f => f.SchoolVisitId == req.Id, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.VisitHasFollowUps);
 
         _db.SchoolVisits.Remove(visit);
         await _db.SaveChangesAsync(ct);

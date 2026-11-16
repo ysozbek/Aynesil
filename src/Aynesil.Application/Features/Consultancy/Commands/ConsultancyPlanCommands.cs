@@ -250,6 +250,17 @@ public sealed class DeleteConsultancyPlanCommandHandler
         if (hasVisits)
             throw new BusinessRuleViolationException(MsgKeys.Rule.PlanHasVisits);
 
+        // Sözleşme FK'si RESTRICT (soft-delete edilmiş sözleşme de engeller), rapor FK'si cascade'siz,
+        // takipler ise sessizce silinirdi: üçü için de anlamlı hata ver.
+        if (await _db.ConsultancyAgreements.IgnoreQueryFilters().AnyAsync(a => a.ConsultancyPlanId == req.Id, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanHasAgreements);
+
+        if (await _db.ConsultancyReports.AnyAsync(r => r.ConsultancyPlanId == req.Id, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanHasReports);
+
+        if (await _db.FollowUpActivities.AnyAsync(f => f.ConsultancyPlanId == req.Id, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.PlanHasFollowUps);
+
         _db.ConsultancyPlans.Remove(plan);
         await _db.SaveChangesAsync(ct);
     }

@@ -387,4 +387,10 @@
   <data name="Rule.UserAlreadyLinkedToGuardian" xml:space="preserve"><value>User '{0}' is already linked to guardian {1}. A user can be linked to at most one guardian record.</value></data>
   <data name="Rule.RoleLacksPermission" xml:space="preserve"><value>The selected role does not include the '{0}' permission; choose a role that does (e.g. Guardian (portal)).</value></data>
   <data name="Success.UserAccountUnlinked" xml:space="preserve"><value>User account link removed.</value></data>
+  <data name="Rule.InstitutionHasRecords" xml:space="preserve"><value>Cannot delete an institution that has plans, visits or agreements.</value></data>
+  <data name="Rule.PlanHasAgreements" xml:space="preserve"><value>Cannot delete a plan that has agreements.</value></data>
+  <data name="Rule.PlanHasReports" xml:space="preserve"><value>Cannot delete a plan that has reports.</value></data>
+  <data name="Rule.PlanHasFollowUps" xml:space="preserve"><value>Cannot delete a plan that has follow-up activities.</value></data>
+  <data name="Rule.VisitHasReports" xml:space="preserve"><value>Cannot delete a visit that has reports.</value></data>
+  <data name="Rule.VisitHasFollowUps" xml:space="preserve"><value>Cannot delete a visit that has follow-up activities.</value></data>
 </root>

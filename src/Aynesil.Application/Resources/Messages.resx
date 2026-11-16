@@ -387,4 +387,10 @@
   <data name="Rule.UserAlreadyLinkedToGuardian" xml:space="preserve"><value>'{0}' kullanıcısı zaten {1} veli kaydına bağlı. Bir kullanıcı en fazla bir veli kaydına bağlanabilir.</value></data>
   <data name="Rule.RoleLacksPermission" xml:space="preserve"><value>Seçilen rol '{0}' iznini içermiyor; bu izni içeren bir rol seçin (ör. Veli (portal)).</value></data>
   <data name="Success.UserAccountUnlinked" xml:space="preserve"><value>Kullanıcı hesabı bağlantısı kaldırıldı.</value></data>
+  <data name="Rule.InstitutionHasRecords" xml:space="preserve"><value>Planı, ziyareti veya sözleşmesi olan bir kurum silinemez.</value></data>
+  <data name="Rule.PlanHasAgreements" xml:space="preserve"><value>Sözleşmesi olan bir plan silinemez.</value></data>
+  <data name="Rule.PlanHasReports" xml:space="preserve"><value>Raporu olan bir plan silinemez.</value></data>
+  <data name="Rule.PlanHasFollowUps" xml:space="preserve"><value>Takip faaliyeti olan bir plan silinemez.</value></data>
+  <data name="Rule.VisitHasReports" xml:space="preserve"><value>Raporu olan bir ziyaret silinemez.</value></data>
+  <data name="Rule.VisitHasFollowUps" xml:space="preserve"><value>Takip faaliyeti olan bir ziyaret silinemez.</value></data>
 </root>

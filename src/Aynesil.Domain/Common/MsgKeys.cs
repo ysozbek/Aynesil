@@ -191,6 +191,7 @@ public static class MsgKeys
         public static readonly MsgKey GuardianStudentCorpMismatch = new("Rule.GuardianStudentCorpMismatch");
         public static readonly MsgKey GuardianVisibilityNeedsApprovedPlan = new("Rule.GuardianVisibilityNeedsApprovedPlan");
         public static readonly MsgKey InstitutionHasActivePlans = new("Rule.InstitutionHasActivePlans");
+        public static readonly MsgKey InstitutionHasRecords = new("Rule.InstitutionHasRecords");
         public static readonly MsgKey InsufficientCredits = new("Rule.InsufficientCredits");
         public static readonly MsgKey InsufficientLeaveAvailable = new("Rule.InsufficientLeaveAvailable");
         public static readonly MsgKey InsufficientLeaveDetail = new("Rule.InsufficientLeaveDetail");
@@ -262,6 +263,9 @@ public static class MsgKeys
         public static readonly MsgKey PlanCloseStatus = new("Rule.PlanCloseStatus");
         public static readonly MsgKey PlanCompleteNeedsActive = new("Rule.PlanCompleteNeedsActive");
         public static readonly MsgKey PlanHasVisits = new("Rule.PlanHasVisits");
+        public static readonly MsgKey PlanHasAgreements = new("Rule.PlanHasAgreements");
+        public static readonly MsgKey PlanHasReports = new("Rule.PlanHasReports");
+        public static readonly MsgKey PlanHasFollowUps = new("Rule.PlanHasFollowUps");
         public static readonly MsgKey PlanOperationStatus = new("Rule.PlanOperationStatus");
         public static readonly MsgKey PlanRejectNeedsInReview = new("Rule.PlanRejectNeedsInReview");
         public static readonly MsgKey PlanRemoveGoalsStatus = new("Rule.PlanRemoveGoalsStatus");
@@ -312,6 +316,8 @@ public static class MsgKeys
         public static readonly MsgKey ViewingSessionEnded = new("Rule.ViewingSessionEnded");
         public static readonly MsgKey VisitActionStatus = new("Rule.VisitActionStatus");
         public static readonly MsgKey VisitHasObservations = new("Rule.VisitHasObservations");
+        public static readonly MsgKey VisitHasReports = new("Rule.VisitHasReports");
+        public static readonly MsgKey VisitHasFollowUps = new("Rule.VisitHasFollowUps");
         public static readonly MsgKey DevelopmentReportFinalized = new("Rule.DevelopmentReportFinalized");
         public static readonly MsgKey DevelopmentReportAlreadyFinalized = new("Rule.DevelopmentReportAlreadyFinalized");
     }

@@ -158,6 +158,14 @@ public sealed class DeleteInstitutionCommandHandler : IRequestHandler<DeleteInst
         if (hasActivePlans)
             throw new BusinessRuleViolationException(MsgKeys.Rule.InstitutionHasActivePlans);
 
+        // Kurum soft-delete olduğundan bağlı kayıtlar yetim kalmasın: plan, ziyaret ya da sözleşme varsa silinmez.
+        var hasRecords = await _db.ConsultancyPlans.AnyAsync(p => p.InstitutionId == req.Id, ct)
+            || await _db.SchoolVisits.AnyAsync(v => v.InstitutionId == req.Id, ct)
+            || await _db.ConsultancyAgreements.AnyAsync(a => a.InstitutionId == req.Id, ct);
+
+        if (hasRecords)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.InstitutionHasRecords);
+
         institution.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
