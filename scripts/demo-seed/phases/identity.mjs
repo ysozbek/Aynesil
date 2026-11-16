@@ -28,7 +28,7 @@ const ROLE_RULES = {
     name: 'Eğitmen', desc: 'Demo: eğitmen',
     // Seansını yürütür (yoklama, hedef, not, tamamlama); BEP'i okur ve gözden geçirme ekler, onaylamaz (koordinatör).
     // session_note:delete yok: başkalarının notunu düzenleme/silme yönetici yetkisidir. Hedef silemez.
-    allow: (c) => /^(student:read|guardian:read|session:(read|complete|manage_goals)|session_note:write|attendance:(read|record)|student_goal:(read|create|update|change_status)|goal_progress:(read|record)|goal_template:read|goal_library:read|education_plan:(read|add_review)|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:(read|record)|camp_participation:(read|record)|notification:read|parent_feedback:read|enrollment:read|program:read)$/.test(c),
+    allow: (c) => /^(student:read|guardian:read|session:(read|complete|manage_goals)|session_note:write|attendance:(read|record)|student_goal:(read|create|update|change_status)|goal_progress:(read|record)|goal_template:read|goal_library:read|education_plan:(read|add_review)|care_team:read|educator:read|room:read|campus:read|meeting:read|leave_request:(submit|read|cancel)|leave_balance:read|kpi_dashboard:read|case_note:(create|read|update)|assessment_session:read|makeup_request:(read|request)|camp:read|camp_attendance:(read|record)|camp_participation:(read|record)|notification:read|parent_feedback:read|enrollment:read|program:read)$/.test(c),
   },
   finance: {
     name: 'Muhasebe', desc: 'Demo: muhasebe / finans',

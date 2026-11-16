@@ -140,6 +140,21 @@ async function newFlowExamples(ctx) {
     await c.patch(`/educators/${es[2].id}/hierarchy/${old.id}/end`, { endDate: dayStr(-30) })
   })
 
+  // Bakım ekibi: ilk 3 öğrencide ekip kurulu (egitmen@… birincil terapist → "Benim öğrencilerim" dolu); diğerlerinde boş
+  // (öğrenci panosu "seanslardan" türetilen eğitmenleri + "Ekibe ekle" kısayolunu gösterir). Erişim kısıtı (ABAC) demoda KAPALI.
+  await step('bakım ekibi', async () => {
+    const es = ids.educators ?? []
+    const stu = ids.students ?? []
+    if (es.length < 4 || stu.length < 3) return
+    const plan = [[0, 0, 'primary_therapist', true], [1, 0, 'primary_therapist', true], [2, 0, 'primary_therapist', true],
+      [0, 1, 'secondary_therapist', false], [0, 3, 'psychologist', false]]
+    for (const [si, ei, role, isPrimary] of plan) {
+      const existing = await c.get(`/students/${stu[si].id}/care-team?activeOnly=true`)
+      if (existing.some((m) => m.educatorId === es[ei].id)) continue
+      await c.post(`/students/${stu[si].id}/care-team`, { educatorId: es[ei].id, roleId: await ctx.ref('care_team_role', role), isPrimary, activeFrom: dayStr(-30) })
+    }
+  })
+
   // Taslak faturaya indirim (kalemi olan bir taslak; ikinci çalıştırmada zaten indirimli olduğu için atlanır)
   await step('taslak faturaya indirim', async () => {
     const drafts = (await c.get('/payments/invoices?status=draft&page=1&pageSize=20')).items ?? []

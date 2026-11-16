@@ -594,6 +594,36 @@ async function dailyOpsFlows() {
     }
   } else skip('educator.endHierarchy', 'PATCH', '/educators/{id}/hierarchy/{edgeId}/end', 'eğitmen yok')
 
+  // 9b) bakım ekibi: ekle → listele (rowVersion) → güncelle → bayat rowVersion reddedilir → ekipten çıkar (geçmişte kalır) → benim öğrencilerim / seanslardan eğitmenler
+  if (ctx.studentId) {
+    const roleId = ((await http('GET', '/reference-data/care_team_role?activeOnly=true')).json?.data ?? [])[0]?.id
+    const edu = await write('yazma', 'educator.create (bakım ekibi üyesi)', 'POST', '/educators', { firstName: 'Smoke', lastName: `Bakım${RUN}`, titleId: null, email: null, phone: null, employmentType: null, hireDate: null, primaryCampusId: ctx.campusId ?? null })
+    const eduId = idOf(edu.json?.data)
+    if (roleId && eduId) {
+      const base = `/students/${ctx.studentId}/care-team`
+      const created = (await write('yazma', 'careTeam.assign', 'POST', base, { educatorId: eduId, roleId, isPrimary: false, activeFrom: day(-1), activeTo: null, campusId: null, grantTypeId: null, sourceAssignmentId: null, reason: null })).json?.data
+      if (created?.id) {
+        const list = (await http('GET', base)).json?.data ?? []
+        const row = list.find(x => x.id === created.id)
+        record({ phase: 'yazma', id: 'careTeam.list (rowVersion döner)', verb: 'GET', url: base, status: 200, outcome: row && row.rowVersion > 0 ? 'ok' : 'type', note: `rowVersion=${row?.rowVersion}`, mismatches: [] })
+        const rv = row?.rowVersion ?? 1
+        await write('yazma', 'careTeam.update', 'PUT', `${base}/${created.id}`, { roleId, isPrimary: false, activeFrom: day(-1), activeTo: null, campusId: null, reason: 'smoke', rowVersion: rv })
+        expectStatus('yazma', 'careTeam.update (bayat rowVersion → reddedilir)', 'PUT', `${base}/${created.id}`,
+          await http('PUT', `${base}/${created.id}`, { roleId, isPrimary: false, activeFrom: day(-1), activeTo: null, campusId: null, reason: 'smoke', rowVersion: rv }), [400, 409, 422])
+        const cur = (await http('GET', `${base}/${created.id}`)).json?.data
+        const rm = await http('DELETE', `${base}/${created.id}`, { reason: 'smoke', rowVersion: cur?.rowVersion ?? rv + 1 })
+        record({ phase: 'yazma', id: 'careTeam.remove', verb: 'DELETE', url: `${base}/${created.id}`, status: rm.status, outcome: rm.status < 300 ? 'ok' : classify(rm.status), note: rm.status < 300 ? '' : errNote(rm), mismatches: [] })
+        const hist = (await http('GET', `${base}?activeOnly=false`)).json?.data ?? []
+        record({ phase: 'yazma', id: 'careTeam.list (sona eren atama geçmişte görünür)', verb: 'GET', url: `${base}?activeOnly=false`, status: 200,
+          outcome: hist.some(x => x.id === created.id && x.status === 'ended') ? 'ok' : 'type', note: 'status=ended kayıt bekleniyor', mismatches: [] })
+      }
+    }
+    const my = await http('GET', '/care-team/my-students')
+    record({ phase: 'yazma', id: 'careTeam.myStudents', verb: 'GET', url: '/care-team/my-students', status: my.status, outcome: my.status === 200 && Array.isArray(my.json?.data) ? 'ok' : classify(my.status), note: `${(my.json?.data ?? []).length} öğrenci`, mismatches: [] })
+    const se = await http('GET', `/students/${ctx.studentId}/session-educators`)
+    record({ phase: 'yazma', id: 'students.sessionEducators', verb: 'GET', url: `/students/${ctx.studentId}/session-educators`, status: se.status, outcome: se.status === 200 && Array.isArray(se.json?.data) ? 'ok' : classify(se.status), note: `${(se.json?.data ?? []).length} eğitmen`, mismatches: [] })
+  } else skip('careTeam.*', 'POST', '/students/{id}/care-team', 'öğrenci yok')
+
   // 10) kapalı gün eklerken planlı seansları iptal et: sayı önizlenir, seçilmezse seans kalır, seçilirse gerekçe = kaydın adı
   if (ctx.sessionTypeId && ctx.educatorId) {
     const d2 = day(330), d3 = day(331)
