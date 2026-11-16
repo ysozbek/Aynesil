@@ -1894,7 +1894,7 @@ const tr = {
       questionTextRequired: 'Her sorunun metni dolu olmalı.',
       needTwoOptions: 'Çoktan seçmeli soru için en az iki seçenek girin.',
       optionTextRequired: 'Boş seçenek bırakmayın.',
-      targetHint: 'Veli portalında yalnızca "Veli" anketleri görünür ve yanıtlanabilir.',
+      targetHint: 'Şimdilik yalnızca veliye yönelik anket hazırlanır; personel anketi ileride eklenecek.',
       scaleHint: 'Seçenek girmezseniz 1-10 arası sayısal ölçek gösterilir.',
     },
     results: {

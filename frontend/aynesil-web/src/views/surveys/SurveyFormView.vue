@@ -35,6 +35,8 @@ const form = reactive({
   typeId: '',
   isActive: true,
 })
+// Yalnızca veli hedefli anketler doldurulabiliyor (portal); personel/öğrenci anketi ileride. Eski kayıtta başka hedef varsa o da listelenir.
+const targets = computed<SurveyTarget[]>(() => (form.target === 'guardian' ? ['guardian'] : ['guardian', form.target]))
 const questions = ref<QuestionRow[]>([newQuestion()])
 
 function newQuestion(): QuestionRow {
@@ -153,9 +155,9 @@ onMounted(async () => {
         <div>
           <label class="block text-sm font-medium mb-1">{{ t('surveys.fields.target') }}</label>
           <select v-model="form.target" class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-transparent">
-            <option v-for="tg in ['guardian', 'educator', 'student']" :key="tg" :value="tg">{{ t(`surveys.target.${tg}`) }}</option>
+            <option v-for="tg in targets" :key="tg" :value="tg">{{ t(`surveys.target.${tg}`) }}</option>
           </select>
-          <p v-if="form.target !== 'guardian'" class="text-xs text-muted-foreground mt-1">{{ t('surveys.form.targetHint') }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ t('surveys.form.targetHint') }}</p>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">{{ t('surveys.fields.type') }}</label>

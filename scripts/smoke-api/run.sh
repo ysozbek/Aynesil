@@ -13,6 +13,9 @@ export SMOKE_API="${SMOKE_API:-http://localhost:${API_PORT}/api}"
 
 echo "▶ DB + Redis"; docker compose up -d aynesil-db aynesil-redis >/dev/null
 echo "▶ Flyway migration"; docker compose run --rm aynesil-flyway >/dev/null
+# Şifre sıfırlama isteği sınırı IP başınadır (3/saat); kimlik değiştirmek onu aşmaz. Art arda duman testleri 429'a takılmasın diye
+# yalnızca bu API örneği için yükseltilir (üretim varsayılanı compose'ta 3; kontrol: AuthRateLimitTests).
+export AYNESIL_RateLimiting__Auth__PasswordResetRequest__PermitLimit="${AYNESIL_RateLimiting__Auth__PasswordResetRequest__PermitLimit:-100}"
 echo "▶ API imajı (üretim Dockerfile'ı ile derle + başlat)"
 docker compose up -d --build --force-recreate aynesil-api >/dev/null
 for i in $(seq 1 40); do curl -sf "${SMOKE_API%/api}/health" >/dev/null && break; sleep 3; done

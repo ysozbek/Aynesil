@@ -192,7 +192,7 @@ Bakım ekibi, bir öğrenciye bakan eğitmenleri belirler. Kurum öğrenci bazl�
 
 ### 3.12c Anketler ve Veli Geri Bildirimi (modül açıksa)
 Velilere anket gönderir, yanıtları soru bazında görürsünüz; velilerin eğitmen/seans puanlarını izlersiniz. Menü: **Öğrenciler → Anketler** ve **Öğrenciler → Veli Geri Bildirimi**.
-- **Anket hazırlama:** **Yeni Anket** → başlık, tür, kime yönelik (velinin portalında yalnızca **Veli** hedefli anketler görünür), sorular. Soru türleri: puan (1–5), evet/hayır, çoktan seçmeli (en az iki seçenek), ölçek, serbest metin; **Zorunlu** işaretlenen soru boş bırakılamaz; ↑/↓ ile sıra değişir. Anket **Aktif** olduğu sürece velilere görünür.
+- **Anket hazırlama:** **Yeni Anket** → başlık, tür, kime yönelik (şimdilik yalnızca **Veli**; personel anketi ileride eklenecek), sorular. Soru türleri: puan (1–5), evet/hayır, çoktan seçmeli (en az iki seçenek), ölçek, serbest metin; **Zorunlu** işaretlenen soru boş bırakılamaz; ↑/↓ ile sıra değişir. Anket **Aktif** olduğu sürece velilere görünür.
 - **Düzenleme ve silme:** listede **Düzenle** / **Sil**. **Yanıt gelen anketin soruları değiştirilemez** (başlık, açıklama, aktif/pasif düzenlenir); soruları değiştirmek için yeni anket açın. Yanıtlı anketi silmek onu **pasife alır** (yanıtlar korunur), yanıtsız anket silinir.
 - **Sonuçlar:** satıra tıklayın. Yanıt sayısı, her soru için ortalama ve dağılım (kaç kişi hangi puanı/seçeneği işaretledi), yazılı öneriler ve yanıtlayan veli/öğrenci listesi.
 - **Veli geri bildirimi:** velilerin bıraktığı yıldız puanı ve yorumlar (veli, eğitmen, tarih). Bir seans seçilerek verilen puan o seansın eğitmenine yazılır ve eğitmenin **KPI veli memnuniyeti** değerini besler; anket yanıtlarındaki puanlar KPI'a girmez.
