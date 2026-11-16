@@ -30,7 +30,7 @@ Koordinatör ve Kurum Yöneticisi. Eğitmen, kamp yoklaması ve etkinlik katıl�
 - **Engeller (hepsi ekranda sebebiyle yazar):** kontenjan, kayıtlı sayısının altına indirilemez; kayıtlı/bekleyen öğrencisi ya da etkinliği olan dönem silinemez; kayıtlı/bekleyen öğrencisi olan kamp silinemez; devam eden/başlamamış dönemlerinde kayıtlı ya da bekleyen öğrencisi olan kamp pasifleştirilemez; pasif kampa kayıt alınamaz; başlamamış dönem toplu tamamlanamaz; yalnızca kayıtlı öğrenci beklemeye alınır/tamamlanır.
 - Kamp kaydı, kurumun normal öğrenci/program kaydı (Akış 4) değildir; ikisi ayrı tutulur.
 - **Günlük işlerin kuralları:** katılım ve yoklama yalnızca dönemin **kayıtlı** öğrencileri içindir; tamamlanmış, iptal edilmiş ya da bekleme listesindeki öğrenci için girilemez ve düzeltilemez ("… aktif olarak kayıtlı değil"). Bu yüzden yoklamayı ve katılımı **tamamlamadan önce** girin. Rapor yalnızca tamamlanmış kayıt için yazılır ("Kamp sonu raporu yalnızca tamamlanmış kayıt için yazılabilir."). Aynı gün için aynı öğrenciye ikinci yoklama girilemez (toplu giriş mevcut kaydı atlar); etkinlik kontenjanı dolunca yeni katılım reddedilir.
-- Menüde "Kamp Devam Takibi" ve "Kamp Raporları" satırları olabilir ama ayrı ekrana bağlı değil; yoklama ve etkinlik dönem sayfasında, rapor kayıt ekranında, performans panoda.
+- Menüde "Kamp Raporları" performans raporu sayfasını açar; "Kamp Devam Takibi" satırı yoktur (yoklama dönem sayfasındaki sekmedir). Rapor yazma kayıt ekranındadır. Yoklamada devamsız/mazeretli işaretlenen öğrenciye nedeni de seçilebilir.
 
 ## Kendin dene
 `demo_a`'da 1 kamp var (4 dönem, 4 etkinlik, 10 kayıt, biri bekleme listesinde) ve **"Temmuz Dönemi" baştan sona işlenmiş**: etkinlik katılımı, üç günlük yoklama, tamamlama ve 3 rapor.

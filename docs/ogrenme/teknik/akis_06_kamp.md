@@ -22,7 +22,7 @@
 
 Ekran kuralları `utils/campRules.ts`'te (`canRecordForEnrollment`, `canWriteReport`, `planBulkSave`: taslağı mevcut kayıtlarla karşılaştırıp yeni → toplu uç, değişen → tekil düzeltme uçlarına ayırır, `attendanceRate`). Asıl denetim sunucudadır; düğmeler yalnızca kullanıcıyı yönlendirir.
 
-(Menü seed'indeki `camps.attendance` ve `camps.reports` satırları ayrı bir ekrana bağlı değil.)
+(Menü: V62 ile `camps.reports` → `/camps/performance` (`camp:read`); `camps.attendance` pasif, çünkü yoklama dönem sayfasındaki sekmedir.)
 
 ## Durumlar
 
@@ -30,7 +30,7 @@ Ekran kuralları `utils/campRules.ts`'te (`canRecordForEnrollment`, `canWriteRep
 |---|---|
 | Kamp | aktif / pasif (**Aktifleştir/Pasifleştir**; zaten aktifse "Kamp zaten aktif.", pasifse "Kamp zaten pasif.") |
 | Kamp kaydı (`CampEnrollmentStatus`) | `enrolled`, `waitlist`, `withdrawn`, `completed` |
-| Kamp yoklaması | `present`, `absent`, `late`, `excused` (mazeret `attendance_reason` ref değeri; ekran gerekçe seçtirmez, `reasonId` boş gider) |
+| Kamp yoklaması | `present`, `absent`, `late`, `excused` (neden `attendance_reason` ref değeri; dönem sayfasında `absent`/`excused` satırında seçilir, `ATTENDANCE_REASON` listesi normal seans yoklamasıyla aynıdır; `planBulkSave` nedeni de taşır ve yalnız neden değişse bile düzeltme (`PATCH`) gönderir) |
 | Etkinlik katılımı | `registered`, `attended`, `absent`, `excused` |
 | Kamp eğitmen rolü | `lead`, `assistant`, `observer`, `supervisor` |
 
@@ -48,7 +48,7 @@ Geçişler (hepsi sunucuda denetlenir; geçersizse 409): `waitlist → enrolled`
 6. **Katılım:** `POST …/activities/{id}/participations` (tekil) ve `…/participations/bulk` (toplu → eklenen sayı), durum `PATCH …/participations/{id}` (`camp_participation:record`). Kurallar: kayıt etkinliğin dönemine ait ve `enrolled` (409 `EnrollmentActivityPeriodMismatch` / `EnrollmentNotActive`), aynı kayıt tekrar 409 `ParticipationAlreadyRecorded`, kontenjan (`registered`/`attended` sayılır) dolunca 409 `ActivityFull`. Toplu istek tümüyle doğrulanır; biri geçersizse hiçbiri yazılmaz. Düzeltme de `enrolled` ister.
 7. **Yoklama:** `POST /api/camps/attendance` (tekil) veya `periods/{id}/attendance/bulk` (toplu → eklenen sayı; aynı gün kaydı olan atlanır; kayıt başka döneme aitse 404 `EnrollmentsNotInPeriod`) (`camp_attendance:record`), `PATCH attendance/{id}` düzeltme; `GET attendance?campPeriodId=&dateFrom=&dateTo=` gün listesi; dönem özeti `attendance-summary`. **`enrolled` olmayan kayıt (tamamlanmış, iptal, bekleyen) için hepsinde 409 `EnrollmentNotActive`.**
 8. **Kapanış ve rapor:** tamamlanan kayıt `completed` ("Yalnızca aktif kayıtlı öğrenciler tamamlandı olarak işaretlenebilir."), toplu: `periods/{id}/bulk-complete` (tamamlanan sayıyı döner; dönem yoksa 404, başlamamışsa 409, bekleyenlere dokunmaz). Kayıt başına öğrenci raporu `POST enrollments/{id}/reports` (`camp_report:create`): **yalnızca `completed` kayıt için**, aksi 409 `CampReportNeedsCompleted`; özet ya da dosyadan en az biri ("… alanlarından en az biri verilmelidir"; ekran özet ister). Rapor değiştirilemez/silinemez. Sıra bu yüzden: **etkinlik → katılım → yoklama → tamamla → rapor**.
-9. **Pano ve performans:** `/camps`: toplam/aktif kamp, toplam dönem, aktif kamplar listesi; **Performans Raporu** düğmesi `/camps/performance`'a gider (`GET /api/camps/performance`: kamp bazında kayıt [iptal hariç, bekleme listesi dâhil], tamamlanan, ayrılan, tamamlama %, devam %).
+9. **Pano ve performans:** `/camps`: toplam/aktif kamp, toplam dönem, aktif kamplar listesi; **Performans Raporu** düğmesi `/camps/performance`'a gider (`GET /api/camps/performance`: kamp bazında kayıt [yalnız `enrolled`+`completed`; bekleme ve iptal hariç], tamamlanan, ayrılan, tamamlama %, devam %).
 
 ## Dikkat edilecek kurallar ve hata mesajları
 

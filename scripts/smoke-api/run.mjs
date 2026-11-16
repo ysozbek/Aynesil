@@ -911,8 +911,14 @@ async function campDailyFlows() {
   await conflict('campDaily.recordAttendance (iptal edilen kayıt → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ed, attendanceDate: day(-1), status: 'present', reasonId: null })
   await conflict('campDaily.recordAttendance (bekleme listesindeki → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ec, attendanceDate: day(-1), status: 'present', reasonId: null })
   await conflict('campDaily.recordAttendance (aynı gün tekrar → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: today, status: 'absent', reasonId: null })
-  const yest = idOf((await post('campDaily.recordAttendance (A, dün, tekil)', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: day(-1), status: 'absent', reasonId: null })).json?.data)
-  if (yest) await write('yazma', 'campDaily.updateAttendance (düzeltme)', 'PATCH', `/camps/attendance/${yest}`, { attendanceId: yest, status: 'excused', reasonId: null })
+  const reasons = (await http('GET', '/reference-data/ATTENDANCE_REASON?activeOnly=true')).json?.data ?? []
+  const reasonId = reasons[0]?.id ?? null
+  const yest = idOf((await post('campDaily.recordAttendance (A, dün, tekil, nedenli)', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: day(-1), status: 'absent', reasonId })).json?.data)
+  if (yest) {
+    await write('yazma', 'campDaily.updateAttendance (düzeltme)', 'PATCH', `/camps/attendance/${yest}`, { attendanceId: yest, status: 'excused', reasonId })
+    const ya = ((await http('GET', `/camps/attendance?campPeriodId=${period}&dateFrom=${day(-1)}&dateTo=${day(-1)}`)).json?.data?.items ?? []).find((x) => x.id === yest)
+    ok('campDaily.listAttendance (devamsızlık nedeni yansır)', 'GET', '/camps/attendance', !reasonId || (ya?.status === 'excused' && ya?.reasonId === reasonId), `durum=${ya?.status} neden=${ya?.reasonId}`)
+  }
   const dayList = (await http('GET', `/camps/attendance?campPeriodId=${period}&dateFrom=${today}&dateTo=${today}&pageSize=50`)).json?.data
   ok('campDaily.listAttendance (dönem + gün süzgeci: 2 kayıt)', 'GET', `/camps/attendance?campPeriodId=${period}`, dayList?.totalCount === 2, `adet=${dayList?.totalCount}`)
   const otherList = (await http('GET', `/camps/attendance?campPeriodId=${other}&dateFrom=${today}&dateTo=${today}`)).json?.data
@@ -937,9 +943,9 @@ async function campDailyFlows() {
   const reports = (await http('GET', `/camps/enrollments/${ea}/reports`)).json?.data
   ok('campDaily.listReports (1 rapor)', 'GET', `/camps/enrollments/${ea}/reports`, reports?.length === 1 && reports[0].summary?.startsWith('Kamp boyunca'), `adet=${reports?.length}`)
 
-  // performans raporu: iptal edilen (D) sayılmaz; bekleme listesi dâhildir → A, B, C, E = 4 kayıt, 1 tamamlanan, devam 2/3
+  // performans raporu: iptal (D) ve bekleme listesi (C) sayılmaz → A, B, E = 3 kayıt, 1 tamamlanan, devam 2/3
   const perf = ((await http('GET', '/camps/performance')).json?.data ?? []).find((r) => r.campId === camp)
-  ok('campDaily.performance (tamamlanan/kayıt/devam)', 'GET', '/camps/performance', perf?.totalCompleted === 1 && perf?.totalEnrolled === 4 && perf?.overallAttendanceRatePct === 66.7,
+  ok('campDaily.performance (tamamlanan/kayıt/devam)', 'GET', '/camps/performance', perf?.totalCompleted === 1 && perf?.totalEnrolled === 3 && perf?.overallAttendanceRatePct === 66.7,
     `kayıt=${perf?.totalEnrolled} tamamlanan=${perf?.totalCompleted} devam=${perf?.overallAttendanceRatePct}`)
 }
 

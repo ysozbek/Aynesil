@@ -42,10 +42,11 @@ export async function setupCamp(ctx) {
   }
   // 2) Günlük yoklama: ilk gün toplu; sonraki iki gün tekil; bir yoklama düzeltilir.
   if (p1 && en1.length) await step('kamp yoklaması (toplu)', () => c.post(`/camps/periods/${p1}/attendance/bulk`, { campPeriodId: p1, attendanceDate: dayStr(-119), records: en1.map((eid, k) => ({ enrollmentId: eid, status: k === 3 ? 'late' : 'present', reasonId: null })) }))
+  const absenceReason = Object.values((await c.get('/reference-data/ATTENDANCE_REASON?activeOnly=true')) ?? [])[0]?.id ?? null
   const att = []
   for (const [k, eid] of en1.entries())
-    for (let day = 1; day < 3; day++) att.push(idOf(await step('kamp yoklaması', () => c.post('/camps/attendance', { campEnrollmentId: eid, attendanceDate: dayStr(-119 + day), status: (k + day) % 5 === 4 ? 'absent' : 'present', reasonId: null }))))
-  if (att[0]) await step('kamp yoklaması düzeltme', () => c.patch(`/camps/attendance/${att[0]}`, { attendanceId: att[0], status: 'excused', reasonId: null }))
+    for (let day = 1; day < 3; day++) att.push(idOf(await step('kamp yoklaması', () => c.post('/camps/attendance', { campEnrollmentId: eid, attendanceDate: dayStr(-119 + day), status: (k + day) % 5 === 4 ? 'absent' : 'present', reasonId: (k + day) % 5 === 4 ? absenceReason : null }))))
+  if (att[0]) await step('kamp yoklaması düzeltme', () => c.patch(`/camps/attendance/${att[0]}`, { attendanceId: att[0], status: 'excused', reasonId: absenceReason }))
   // 3) Tamamlama, ardından kamp sonu raporu (yalnızca tamamlanmış kayıt için; biri bilerek raporsuz — "Rapor Yaz" örneği).
   for (const [k, eid] of en1.entries()) {
     await step('kamp kaydı tamamla', () => c.post(`/camps/enrollments/${eid}/complete`, {}))
