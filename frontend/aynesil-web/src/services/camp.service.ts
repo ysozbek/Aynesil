@@ -20,7 +20,7 @@ import type {
   CampListQuery, CampEnrollmentQuery,
   CampPerformanceQuery, CampActivityListQuery, CampParticipationListQuery,
   CreateCampPayload, UpdateCampPayload,
-  CreatePeriodPayload, EnrollStudentPayload,
+  CreatePeriodPayload, UpdatePeriodPayload, EnrollStudentPayload,
   RecordAttendancePayload,
 } from '@/types/camp.types'
 
@@ -47,7 +47,17 @@ export const campService = {
   update: (id: string, payload: UpdateCampPayload) =>
     apiService.put<void>(`/camps/${id}`, payload),
 
+  activate: (id: string) => apiService.post(`/camps/${id}/activate`),
+  deactivate: (id: string) => apiService.post(`/camps/${id}/deactivate`),
+  remove: (id: string) => apiService.delete(`/camps/${id}`),
+
   // ── Periods ────────────────────────────────────────────────────────────────
+  updatePeriod: (periodId: string, payload: UpdatePeriodPayload) =>
+    apiService.put<void>(`/camps/periods/${periodId}`, payload),
+
+  deletePeriod: (periodId: string) =>
+    apiService.delete(`/camps/periods/${periodId}`),
+
   createPeriod: (campId: string, payload: CreatePeriodPayload) =>
     apiService.post<CampPeriodDto>(`/camps/${campId}/periods`, payload),
 
@@ -68,6 +78,13 @@ export const campService = {
 
   promoteFromWaitlist: (enrollmentId: string) =>
     apiService.post(`/camps/enrollments/${enrollmentId}/promote`),
+
+  moveToWaitlist: (enrollmentId: string) =>
+    apiService.post(`/camps/enrollments/${enrollmentId}/waitlist`),
+
+  /** Dönem sonunda tüm 'kayıtlı' öğrencileri tamamlar; tamamlanan sayıyı döner. */
+  bulkComplete: (periodId: string) =>
+    apiService.post<number>(`/camps/periods/${periodId}/bulk-complete`),
 
   withdraw: (enrollmentId: string) =>
     apiService.post(`/camps/enrollments/${enrollmentId}/withdraw`),
@@ -111,6 +128,12 @@ export const campService = {
 
   assignEducator: (campId: string, payload: AssignCampEducatorPayload) =>
     apiService.post<CampEducatorDto>(`/camps/${campId}/educators`, payload),
+
+  updateEducatorRole: (assignmentId: string, role: string) =>
+    apiService.patch<void>(`/camps/educators/${assignmentId}/role`, { role }),
+
+  removeEducator: (assignmentId: string) =>
+    apiService.delete(`/camps/educators/${assignmentId}`),
 
   // ── Participations ─────────────────────────────────────────────────────────
   listParticipations: (activityId: string, query: CampParticipationListQuery = {}) =>

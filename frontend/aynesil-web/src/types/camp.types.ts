@@ -71,6 +71,7 @@ export interface CampEnrollmentListItemDto {
   studentPackageId?: string
   status: string
   enrolledAt: string
+  studentName?: string
 }
 
 export interface CampEnrollmentDto {
@@ -190,6 +191,7 @@ export interface CampEducatorDto {
   role: string
   assignedAt: string
   assignedBy?: string
+  educatorName?: string
 }
 
 // ── Participation DTOs ────────────────────────────────────────────────────────
@@ -247,8 +249,13 @@ export interface CreatePeriodPayload {
   capacity?: number
 }
 
+/** Mirrors UpdateCampPeriodCommand; `id` comes from the route. */
+export type UpdatePeriodPayload = CreatePeriodPayload
+
 export interface EnrollStudentPayload {
   studentId: string
+  /** 'enrolled' (varsayılan) | 'waitlist' */
+  status?: string
   studentPackageId?: string
 }
 

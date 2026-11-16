@@ -16,7 +16,7 @@ import type {
   CampEducatorDto,
   CampListQuery, CampEnrollmentQuery, CampPerformanceQuery,
   CreateCampPayload, UpdateCampPayload,
-  CreatePeriodPayload, EnrollStudentPayload,
+  CreatePeriodPayload, UpdatePeriodPayload, EnrollStudentPayload,
   RecordAttendancePayload,
 } from '@/types/camp.types'
 
@@ -91,6 +91,46 @@ export const useCampStore = defineStore('camp', () => {
     } finally { saving.value = false }
   }
 
+  async function activateCamp(id: string) {
+    saving.value = true
+    try { await campService.activate(id); await fetchCamp(id, true) } finally { saving.value = false }
+  }
+
+  async function deactivateCamp(id: string) {
+    saving.value = true
+    try { await campService.deactivate(id); await fetchCamp(id, true) } finally { saving.value = false }
+  }
+
+  async function deleteCamp(id: string) {
+    saving.value = true
+    try { await campService.remove(id) } finally { saving.value = false }
+  }
+
+  async function updatePeriod(campId: string, periodId: string, payload: UpdatePeriodPayload) {
+    saving.value = true
+    try { await campService.updatePeriod(periodId, payload); await fetchCamp(campId, true) } finally { saving.value = false }
+  }
+
+  async function deletePeriod(campId: string, periodId: string) {
+    saving.value = true
+    try { await campService.deletePeriod(periodId); await fetchCamp(campId, true) } finally { saving.value = false }
+  }
+
+  async function assignEducator(campId: string, educatorId: string, role: string) {
+    saving.value = true
+    try { await campService.assignEducator(campId, { educatorId, role }); await fetchEducators(campId) } finally { saving.value = false }
+  }
+
+  async function changeEducatorRole(campId: string, assignmentId: string, role: string) {
+    saving.value = true
+    try { await campService.updateEducatorRole(assignmentId, role); await fetchEducators(campId) } finally { saving.value = false }
+  }
+
+  async function removeEducator(campId: string, assignmentId: string) {
+    saving.value = true
+    try { await campService.removeEducator(assignmentId); await fetchEducators(campId) } finally { saving.value = false }
+  }
+
   async function fetchEnrollments(periodId: string, query?: CampEnrollmentQuery) {
     loading.value = true
     try {
@@ -113,7 +153,33 @@ export const useCampStore = defineStore('camp', () => {
     saving.value = true
     try {
       await campService.promoteFromWaitlist(enrollmentId)
-      await fetchEnrollments(periodId)
+      await Promise.all([fetchEnrollments(periodId), fetchEnrollmentSummary(periodId)])
+    } finally { saving.value = false }
+  }
+
+  async function moveToWaitlist(enrollmentId: string, periodId: string) {
+    saving.value = true
+    try {
+      await campService.moveToWaitlist(enrollmentId)
+      await Promise.all([fetchEnrollments(periodId), fetchEnrollmentSummary(periodId)])
+    } finally { saving.value = false }
+  }
+
+  async function completeEnrollment(enrollmentId: string, periodId: string) {
+    saving.value = true
+    try {
+      await campService.completeEnrollment(enrollmentId)
+      await Promise.all([fetchEnrollments(periodId), fetchEnrollmentSummary(periodId)])
+    } finally { saving.value = false }
+  }
+
+  /** Dönem sonunda tüm kayıtlı öğrencileri tamamlar; tamamlanan sayıyı döner. */
+  async function bulkComplete(periodId: string): Promise<number> {
+    saving.value = true
+    try {
+      const res = await campService.bulkComplete(periodId)
+      await Promise.all([fetchEnrollments(periodId), fetchEnrollmentSummary(periodId)])
+      return res.data ?? 0
     } finally { saving.value = false }
   }
 
@@ -121,7 +187,7 @@ export const useCampStore = defineStore('camp', () => {
     saving.value = true
     try {
       await campService.withdraw(enrollmentId)
-      await fetchEnrollments(periodId)
+      await Promise.all([fetchEnrollments(periodId), fetchEnrollmentSummary(periodId)])
     } finally { saving.value = false }
   }
 
@@ -192,8 +258,11 @@ export const useCampStore = defineStore('camp', () => {
     enrollmentSummary, attendanceSummary, performance, activities, educators,
     loading, saving, error,
     fetchCamps, fetchCamp, createCamp, updateCamp,
-    createPeriod,
+    createPeriod, updatePeriod, deletePeriod,
+    activateCamp, deactivateCamp, deleteCamp,
+    assignEducator, changeEducatorRole, removeEducator,
     fetchEnrollments, enrollStudent, promoteFromWaitlist, withdraw,
+    moveToWaitlist, completeEnrollment, bulkComplete,
     recordAttendance, fetchEnrollmentSummary, fetchAttendanceSummary, fetchPerformance,
     fetchActivities, fetchEducators, clearCurrent,
   }

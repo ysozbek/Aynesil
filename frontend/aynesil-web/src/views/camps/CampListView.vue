@@ -1,119 +1,171 @@
-<template>
-  <div class="container-xxl py-6">
-    <div class="d-flex align-items-center justify-content-between mb-6">
-      <div>
-        <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camp.list.title') }}</h1>
-        <p class="text-muted mb-0">{{ $t('camp.list.subtitle') }}</p>
-      </div>
-      <RouterLink v-if="visible(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
-      </RouterLink>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-6">
-      <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label fs-7">{{ $t('common.search') }}</label>
-            <input v-model="filters.search" type="text" class="form-control form-control-sm" @input="debouncedFetch" />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fs-7">{{ $t('common.status') }}</label>
-            <select v-model="filters.isActive" class="form-select form-select-sm" @change="doFetch">
-              <option :value="undefined">{{ $t('common.allStatuses') }}</option>
-              <option :value="true">{{ $t('common.active') }}</option>
-              <option :value="false">{{ $t('common.passive') }}</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-sm btn-light w-100" @click="resetFilters">{{ $t('common.cancel') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
-      <div class="card-body py-3">
-        <div v-if="campStore.loading" class="text-center py-15">
-          <div class="spinner-border text-primary"></div>
-        </div>
-        <div v-else-if="campStore.campList.items.length === 0" class="text-center py-15 text-muted">
-          <i class="ki-outline ki-flag fs-3x mb-4 d-block text-gray-300"></i>
-          {{ $t('camp.list.noData') }}
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed align-middle gs-0 gy-4">
-            <thead>
-              <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">{{ $t('camp.fields.code') }}</th>
-                <th>{{ $t('camp.fields.name') }}</th>
-                <th>{{ $t('camp.fields.type') }}</th>
-                <th>{{ $t('camp.fields.location') }}</th>
-                <th class="text-center">{{ $t('camp.fields.periods') }}</th>
-                <th>{{ $t('common.status') }}</th>
-                <th class="text-end pe-4">{{ $t('common.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="c in campStore.campList.items" :key="c.id">
-                <td class="ps-4 fw-semibold">{{ c.code }}</td>
-                <td>{{ c.name }}</td>
-                <td class="text-muted">{{ c.campTypeCode ?? '—' }}</td>
-                <td class="text-muted">{{ c.location ?? '—' }}</td>
-                <td class="text-center">{{ c.periodCount }}</td>
-                <td>
-                  <StatusBadge :value="c.isActive" />
-                </td>
-                <td class="text-end pe-4">
-                  <RouterLink :to="`/camps/${c.id}`" class="btn btn-sm btn-light-primary me-2">
-                    <i class="ki-outline ki-eye fs-4"></i>
-                  </RouterLink>
-                  <RouterLink v-if="visible(Permissions.Camps.Update)" :to="`/camps/${c.id}/edit`" class="btn btn-sm btn-light">
-                    <i class="ki-outline ki-pencil fs-4"></i>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="campStore.campList.totalPages > 1" class="d-flex justify-content-end pt-4">
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-light" :disabled="!campStore.campList.hasPreviousPage" @click="changePage(filters.page! - 1)">{{ $t('common.back') }}</button>
-            <span class="btn btn-sm btn-light-primary">{{ filters.page }} / {{ campStore.campList.totalPages }}</span>
-            <button class="btn btn-sm btn-light" :disabled="!campStore.campList.hasNextPage" @click="changePage(filters.page! + 1)">{{ $t('common.next') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useCampStore } from '@/stores/camp.store'
 import { useModule } from '@/composables/useModule'
 import { Modules } from '@/constants/modules'
-import type { CampListQuery } from '@/types/camp.types'
-import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import DataTable from '@/components/shared/DataTable.vue'
+import type { Column } from '@/components/shared/DataTable.vue'
+import Pagination from '@/components/shared/Pagination.vue'
+import ConfirmModal from '@/components/shared/ConfirmModal.vue'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import type { CampListItemDto, CampListQuery } from '@/types/camp.types'
 
+const { t } = useI18n()
+const router = useRouter()
 const campStore = useCampStore()
 const { visible } = useModule(Modules.Camps)
 
-const filters = reactive<CampListQuery>({
-  page: 1, pageSize: 20, search: '', isActive: undefined,
-})
+const filters = reactive<CampListQuery>({ page: 1, pageSize: 20, search: '', isActive: undefined })
+const actionError = ref('')
 
+const columns: Column<CampListItemDto>[] = [
+  { key: 'code', label: t('camp.fields.code'), width: '140px' },
+  { key: 'name', label: t('camp.fields.name') },
+  { key: 'campTypeCode', label: t('camp.fields.type'), width: '140px' },
+  { key: 'location', label: t('camp.fields.location') },
+  { key: 'periodCount', label: t('camp.fields.periods'), width: '90px' },
+  { key: 'isActive', label: t('common.status'), width: '100px' },
+]
+
+function fetch(resetPage = false) {
+  if (resetPage) filters.page = 1
+  return campStore.fetchCamps({ ...filters })
+}
 
 let debounceTimer: ReturnType<typeof setTimeout>
-function debouncedFetch() { clearTimeout(debounceTimer); debounceTimer = setTimeout(doFetch, 400) }
+function debouncedFetch() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => fetch(true), 400)
+}
 
-async function doFetch() { filters.page = 1; await campStore.fetchCamps(filters) }
-function resetFilters() { filters.search = ''; filters.isActive = undefined; filters.page = 1; doFetch() }
-function changePage(page: number) { filters.page = page; campStore.fetchCamps(filters) }
+watch(() => filters.page, () => fetch())
+onMounted(() => fetch())
 
-onMounted(doFetch)
+// ── Etkinleştir / pasifleştir / sil ───────────────────────────────────────────
+type Action = 'activate' | 'deactivate' | 'delete'
+const pending = ref<{ action: Action; camp: CampListItemDto } | null>(null)
+
+async function confirmAction() {
+  if (!pending.value) return
+  const { action, camp } = pending.value
+  actionError.value = ''
+  try {
+    if (action === 'activate') await campStore.activateCamp(camp.id)
+    else if (action === 'deactivate') await campStore.deactivateCamp(camp.id)
+    else await campStore.deleteCamp(camp.id)
+    await fetch()
+  } catch (e: unknown) {
+    // 409: bağlı kayıt varsa sunucunun anlamlı iletisi gösterilir.
+    actionError.value = (e as Error).message
+  } finally {
+    pending.value = null
+  }
+}
 </script>
+
+<template>
+  <div>
+    <PageHeader :title="t('camp.list.title')" :description="t('camp.list.subtitle')">
+      <button
+        v-if="visible(Permissions.Camps.Read)"
+        type="button"
+        class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent"
+        @click="router.push({ name: 'camp-dashboard' })"
+      >
+        {{ t('camp.dashboard.title') }}
+      </button>
+      <button
+        v-if="visible(Permissions.Camps.Create)"
+        type="button"
+        class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+        @click="router.push({ name: 'camp-new' })"
+      >
+        {{ t('camp.new') }}
+      </button>
+    </PageHeader>
+
+    <p v-if="actionError" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2" role="alert">{{ actionError }}</p>
+    <p v-if="campStore.error" class="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ campStore.error }}</p>
+
+    <div class="mb-4 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.search') }}</label>
+        <input
+          v-model="filters.search"
+          type="text"
+          class="w-full h-9 px-3 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+          @input="debouncedFetch"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('common.status') }}</label>
+        <select v-model="filters.isActive" class="h-9 px-3 text-sm rounded-lg border border-border bg-transparent" @change="fetch(true)">
+          <option :value="undefined">{{ t('common.allStatuses') }}</option>
+          <option :value="true">{{ t('common.active') }}</option>
+          <option :value="false">{{ t('common.passive') }}</option>
+        </select>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="campStore.campList.items"
+      :loading="campStore.loading"
+      :empty-text="t('camp.list.noData')"
+      @row-click="(row) => router.push({ name: 'camp-detail', params: { id: row.id } })"
+    >
+      <template #cell-campTypeCode="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-location="{ value }">{{ value ?? '—' }}</template>
+      <template #cell-isActive="{ value }">
+        <StatusBadge :value="Boolean(value)" :true-label="t('common.active')" :false-label="t('common.passive')" />
+      </template>
+      <template #actions="{ row }">
+        <div class="flex items-center justify-end gap-2">
+          <button
+            v-if="visible(Permissions.Camps.Update)"
+            type="button" class="text-xs text-primary hover:underline"
+            @click.stop="router.push({ name: 'camp-edit', params: { id: row.id } })"
+          >{{ t('common.edit') }}</button>
+          <button
+            v-if="visible(Permissions.Camps.Activate)"
+            type="button" class="text-xs text-primary hover:underline"
+            @click.stop="pending = { action: row.isActive ? 'deactivate' : 'activate', camp: row }"
+          >{{ row.isActive ? t('camp.actions.deactivate') : t('camp.actions.activate') }}</button>
+          <button
+            v-if="visible(Permissions.Camps.Delete)"
+            type="button" class="text-xs text-red-600 hover:underline"
+            @click.stop="pending = { action: 'delete', camp: row }"
+          >{{ t('common.delete') }}</button>
+        </div>
+      </template>
+    </DataTable>
+
+    <div class="mt-4">
+      <Pagination
+        :page="campStore.campList.page"
+        :page-size="campStore.campList.pageSize"
+        :total-count="campStore.campList.totalCount"
+        :total-pages="campStore.campList.totalPages"
+        :has-previous-page="campStore.campList.hasPreviousPage"
+        :has-next-page="campStore.campList.hasNextPage"
+        @update:page="(p) => { filters.page = p }"
+        @update:page-size="(s) => { filters.pageSize = s; fetch(true) }"
+      />
+    </div>
+
+    <ConfirmModal
+      :open="!!pending"
+      :title="pending ? t(`camp.actions.${pending.action}Title`) : ''"
+      :message="pending ? t(`camp.actions.${pending.action}Message`, { name: pending.camp.name }) : ''"
+      :confirm-label="pending ? (pending.action === 'delete' ? t('common.delete') : t(`camp.actions.${pending.action}`)) : ''"
+      :confirm-class="pending?.action === 'activate' ? 'bg-primary text-primary-foreground hover:opacity-90' : undefined"
+      :loading="campStore.saving"
+      @confirm="confirmAction"
+      @cancel="pending = null"
+    />
+  </div>
+</template>
