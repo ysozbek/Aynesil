@@ -46,7 +46,9 @@ public sealed class GetCampEducatorsQueryHandler
                 e.Id, e.CorporationId, e.CampId,
                 e.CampPeriodId, e.CampActivityId,
                 e.EducatorId, e.Role,
-                e.AssignedAt, e.AssignedBy))
+                e.AssignedAt, e.AssignedBy,
+                _db.Educators.Where(x => x.Id == e.EducatorId)
+                    .Select(x => x.FirstName + " " + x.LastName).FirstOrDefault()))
             .ToListAsync(ct);
     }
 }

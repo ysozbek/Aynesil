@@ -50,11 +50,14 @@ public sealed class EnrollStudentCommandHandler
     {
         var corporationId = _tenant.RequireCorporationId();
 
-        var periodExists = await _db.CampPeriods
-            .AnyAsync(p => p.Id == req.CampPeriodId
-                        && p.CorporationId == corporationId, ct);
-        if (!periodExists)
+        var campActive = await _db.CampPeriods
+            .Where(p => p.Id == req.CampPeriodId && p.CorporationId == corporationId)
+            .Select(p => (bool?)p.Camp.IsActive)
+            .FirstOrDefaultAsync(ct);
+        if (campActive is null)
             throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
+        if (campActive == false)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampInactive);
 
         var alreadyEnrolled = await _db.CampEnrollments
             .AnyAsync(e => e.CampPeriodId == req.CampPeriodId
@@ -203,6 +206,13 @@ public sealed class BulkCompleteEnrollmentsCommandHandler
 
     public async Task<int> Handle(BulkCompleteEnrollmentsCommand req, CancellationToken ct)
     {
+        var period = await _db.CampPeriods
+            .FirstOrDefaultAsync(p => p.Id == req.CampPeriodId, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
+
+        if (period.StartDate > DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodNotStarted);
+
         var enrollments = await _db.CampEnrollments
             .Where(e => e.CampPeriodId == req.CampPeriodId && e.Status == "enrolled")
             .ToListAsync(ct);

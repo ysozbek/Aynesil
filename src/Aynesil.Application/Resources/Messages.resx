@@ -74,7 +74,13 @@
   <data name="Rule.CameraNotInSession" xml:space="preserve"><value>{0} kamerası {1} seansına atanmamış.</value></data>
   <data name="Rule.CampAlreadyActive" xml:space="preserve"><value>Kamp zaten aktif.</value></data>
   <data name="Rule.CampAlreadyInactive" xml:space="preserve"><value>Kamp zaten pasif.</value></data>
-  <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Aktif kayıtları olan bir kamp silinemez.</value></data>
+  <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Kayıtlı veya bekleme listesinde öğrencisi olan bir kamp silinemez. Önce kayıtları tamamlayın veya iptal edin.</value></data>
+  <data name="Rule.CampHasOngoingEnrollments" xml:space="preserve"><value>Devam eden veya başlamamış dönemlerinde kayıtlı ya da bekleyen öğrencisi olan bir kamp pasifleştirilemez.</value></data>
+  <data name="Rule.CampInactive" xml:space="preserve"><value>Pasif bir kampa kayıt alınamaz. Önce kampı etkinleştirin.</value></data>
+  <data name="Rule.CampPeriodCapacityBelowEnrolled" xml:space="preserve"><value>Dönem kontenjanı, mevcut kayıtlı öğrenci sayısından ({0}) az olamaz.</value></data>
+  <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Etkinlikleri olan bir kamp dönemi silinemez. Önce etkinlikleri silin.</value></data>
+  <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Henüz başlamamış bir dönemde toplu tamamlama yapılamaz.</value></data>
+  <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Yalnızca kayıtlı öğrenciler bekleme listesine alınabilir.</value></data>
   <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Kamp dönemi kontenjanı dolu. 'Bekleme listesi' durumunu kullanın.</value></data>
   <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Kayıtları olan bir kamp dönemi silinemez.</value></data>
   <data name="Rule.CampPeriodNotInCamp" xml:space="preserve"><value>{0} kamp dönemi bu kamp için bulunamadı.</value></data>

@@ -61,7 +61,9 @@ public class CampEnrollment : BaseEntity
 
     public void MoveToWaitlist()
     {
-        EnsureNotTerminal();
+        if (Status != "enrolled")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.OnlyEnrolledToWaitlist);
+
         Status = "waitlist";
     }
 

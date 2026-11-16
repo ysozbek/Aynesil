@@ -74,7 +74,13 @@
   <data name="Rule.CameraNotInSession" xml:space="preserve"><value>Camera {0} is not assigned to session {1}.</value></data>
   <data name="Rule.CampAlreadyActive" xml:space="preserve"><value>Camp is already active.</value></data>
   <data name="Rule.CampAlreadyInactive" xml:space="preserve"><value>Camp is already inactive.</value></data>
-  <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Cannot delete a camp with active enrollments.</value></data>
+  <data name="Rule.CampHasActiveEnrollments" xml:space="preserve"><value>Cannot delete a camp that has enrolled or waitlisted students. Complete or withdraw the enrollments first.</value></data>
+  <data name="Rule.CampHasOngoingEnrollments" xml:space="preserve"><value>Cannot deactivate a camp that has enrolled or waitlisted students in ongoing or upcoming periods.</value></data>
+  <data name="Rule.CampInactive" xml:space="preserve"><value>Cannot enroll students in an inactive camp. Activate the camp first.</value></data>
+  <data name="Rule.CampPeriodCapacityBelowEnrolled" xml:space="preserve"><value>Period capacity cannot be lower than the current number of enrolled students ({0}).</value></data>
+  <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Cannot delete a camp period that has activities. Delete the activities first.</value></data>
+  <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Cannot bulk-complete a period that has not started yet.</value></data>
+  <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Only enrolled students can be moved to the waitlist.</value></data>
   <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Camp period is at full capacity. Use 'waitlist' status.</value></data>
   <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Cannot delete a camp period that has enrollments.</value></data>
   <data name="Rule.CampPeriodNotInCamp" xml:space="preserve"><value>Camp period {0} was not found for this camp.</value></data>

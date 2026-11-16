@@ -106,6 +106,15 @@ public sealed class UpdateCampPeriodCommandHandler : IRequestHandler<UpdateCampP
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
 
+        if (req.Capacity.HasValue)
+        {
+            var enrolled = await _db.CampEnrollments
+                .CountAsync(e => e.CampPeriodId == req.Id && e.Status == "enrolled", ct);
+            if (req.Capacity.Value < enrolled)
+                throw new BusinessRuleViolationException(
+                    MsgKeys.Rule.CampPeriodCapacityBelowEnrolled, enrolled);
+        }
+
         period.Update(req.Name, req.StartDate, req.EndDate, req.Capacity);
         await _db.SaveChangesAsync(ct);
     }
@@ -132,6 +141,11 @@ public sealed class DeleteCampPeriodCommandHandler : IRequestHandler<DeleteCampP
 
         if (hasEnrollments)
             throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodHasEnrollments);
+
+        var hasActivities = await _db.CampActivities
+            .AnyAsync(a => a.CampPeriodId == req.Id && a.DeletedAt == null, ct);
+        if (hasActivities)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodHasActivities);
 
         _db.CampPeriods.Remove(period);
         await _db.SaveChangesAsync(ct);

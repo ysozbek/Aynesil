@@ -143,8 +143,13 @@ public static class MsgKeys
         public static readonly MsgKey CampAlreadyActive = new("Rule.CampAlreadyActive");
         public static readonly MsgKey CampAlreadyInactive = new("Rule.CampAlreadyInactive");
         public static readonly MsgKey CampHasActiveEnrollments = new("Rule.CampHasActiveEnrollments");
+        public static readonly MsgKey CampHasOngoingEnrollments = new("Rule.CampHasOngoingEnrollments");
+        public static readonly MsgKey CampInactive = new("Rule.CampInactive");
         public static readonly MsgKey CampPeriodFullUseWaitlist = new("Rule.CampPeriodFullUseWaitlist");
+        public static readonly MsgKey CampPeriodCapacityBelowEnrolled = new("Rule.CampPeriodCapacityBelowEnrolled");
+        public static readonly MsgKey CampPeriodHasActivities = new("Rule.CampPeriodHasActivities");
         public static readonly MsgKey CampPeriodHasEnrollments = new("Rule.CampPeriodHasEnrollments");
+        public static readonly MsgKey CampPeriodNotStarted = new("Rule.CampPeriodNotStarted");
         public static readonly MsgKey CampPeriodStillFull = new("Rule.CampPeriodStillFull");
         public static readonly MsgKey CodeAlreadyExists = new("Rule.CodeAlreadyExists");
         public static readonly MsgKey ConsentNeedsCurrentVersion = new("Rule.ConsentNeedsCurrentVersion");
@@ -240,6 +245,7 @@ public static class MsgKeys
         public static readonly MsgKey OnlyDraftInvoiceIssue = new("Rule.OnlyDraftInvoiceIssue");
         public static readonly MsgKey OnlyDraftPlanDeleteCancel = new("Rule.OnlyDraftPlanDeleteCancel");
         public static readonly MsgKey OnlyDraftPlanDeleteClose = new("Rule.OnlyDraftPlanDeleteClose");
+        public static readonly MsgKey OnlyEnrolledToWaitlist = new("Rule.OnlyEnrolledToWaitlist");
         public static readonly MsgKey OnlyEnrolledCanComplete = new("Rule.OnlyEnrolledCanComplete");
         public static readonly MsgKey OnlyIssuedBecomeOverdue = new("Rule.OnlyIssuedBecomeOverdue");
         public static readonly MsgKey OnlyPendingLeaveUpdate = new("Rule.OnlyPendingLeaveUpdate");

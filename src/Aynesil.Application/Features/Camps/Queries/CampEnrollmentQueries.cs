@@ -51,7 +51,9 @@ public sealed class GetCampEnrollmentsQueryHandler
             e.StudentId,
             e.StudentPackageId,
             e.Status,
-            e.EnrolledAt));
+            e.EnrolledAt,
+            _db.Students.Where(s => s.Id == e.StudentId)
+                .Select(s => s.FirstName + " " + s.LastName).FirstOrDefault()));
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip(req.Skip).Take(req.PageSize).ToListAsync(ct);

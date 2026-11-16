@@ -64,7 +64,8 @@ public record CampEnrollmentListItemDto(
     Guid StudentId,
     Guid? StudentPackageId,
     string Status,
-    DateTimeOffset EnrolledAt);
+    DateTimeOffset EnrolledAt,
+    string? StudentName = null);
 
 public record CampEnrollmentDto(
     Guid Id,
@@ -176,7 +177,8 @@ public record CampEducatorDto(
     Guid EducatorId,
     string Role,
     DateTimeOffset AssignedAt,
-    Guid? AssignedBy);
+    Guid? AssignedBy,
+    string? EducatorName = null);
 
 // ── Participation DTOs ────────────────────────────────────────────────────────
 

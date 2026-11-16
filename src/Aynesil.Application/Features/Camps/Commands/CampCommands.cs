@@ -173,6 +173,20 @@ public sealed class DeactivateCampCommandHandler : IRequestHandler<DeactivateCam
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
 
+        // Devam eden / başlamamış dönemlerde kayıtlı ya da bekleyen öğrenci varsa pasifleştirme 409.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hasOngoing = await (
+            from e in _db.CampEnrollments
+            join p in _db.CampPeriods on e.CampPeriodId equals p.Id
+            where p.CampId == req.Id
+               && p.EndDate >= today
+               && (e.Status == "enrolled" || e.Status == "waitlist")
+            select e.Id
+        ).AnyAsync(ct);
+
+        if (hasOngoing && camp.IsActive)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampHasOngoingEnrollments);
+
         camp.Deactivate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
@@ -202,7 +216,7 @@ public sealed class DeleteCampCommandHandler : IRequestHandler<DeleteCampCommand
         var hasActiveEnrollments = await (
             from e in _db.CampEnrollments
             join p in _db.CampPeriods on e.CampPeriodId equals p.Id
-            where p.CampId == req.Id && e.Status == "enrolled"
+            where p.CampId == req.Id && (e.Status == "enrolled" || e.Status == "waitlist")
             select e.Id
         ).AnyAsync(ct);
 
