@@ -1,16 +1,14 @@
-/**
- * Bakım ekibi modülü bu kurumda açık mı? Arayüz modül bayrağını doğrudan bilmez; menü ağacı
- * (/menus/me) sunucuda bayrağa ve izne göre süzüldüğü için 'students-care-team' satırı varsa modül açıktır.
- */
+/** Bakım ekibi: modül açık (GET /modules/me) VE izin var. */
 import { computed } from 'vue'
-import { useMenuStore } from '@/stores/menu.store'
+import { useModulesStore } from '@/stores/modules.store'
 import { usePermission } from '@/composables/usePermission'
 import { Permissions } from '@/constants/permissions'
+import { Modules } from '@/constants/modules'
 
 export function useCareTeamModule() {
-  const menu = useMenuStore()
+  const modules = useModulesStore()
   const { can } = usePermission()
-  const enabled = computed(() => menu.items.some((i) => i.code === 'students-care-team'))
+  const enabled = computed(() => modules.isEnabled(Modules.CareTeam))
   const canRead = computed(() => enabled.value && can(Permissions.CareTeam.Read))
   const canAssign = computed(() => enabled.value && can(Permissions.CareTeam.Assign))
   return { enabled, canRead, canAssign }

@@ -70,7 +70,7 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 
 | Akış | Uç(lar) | Kural | Ekran |
 |---|---|---|---|
-| Bakım ekibi: listele, ekle, düzenle, ekipten çıkar | `GET/POST /api/students/{id}/care-team`, `GET/PUT/DELETE …/{assignmentId}` | Kaldırma kaydı silmez (bugün itibarıyla `ended`); öğrencide tek birincil atama; `rowVersion` → 409 (**liste yanıtına `rowVersion` ve `reason` eklendi**: önceden yoktu, ekrandan güncelle/kaldır yapılamazdı). Ekran yalnızca `care_team` modülü açıkken görünür (menü satırı). | Öğrenci detayı → Bakım Ekibi sekmesi (`care_team:read`; ekle/düzenle/çıkar `care_team:assign`) |
+| Bakım ekibi: listele, ekle, düzenle, ekipten çıkar | `GET/POST /api/students/{id}/care-team`, `GET/PUT/DELETE …/{assignmentId}` | Kaldırma kaydı silmez (bugün itibarıyla `ended`); öğrencide tek birincil atama; `rowVersion` → 409 (**liste yanıtına `rowVersion` ve `reason` eklendi**: önceden yoktu, ekrandan güncelle/kaldır yapılamazdı). Ekran yalnızca `care_team` modülü açıkken ve izin varken görünür (`GET /api/modules/me` → `enabledModules`). | Öğrenci detayı → Bakım Ekibi sekmesi (`care_team:read`; ekle/düzenle/çıkar `care_team:assign`) |
 | Benim öğrencilerim | `GET /api/care-team/my-students` | Hesabı bir eğitmen kaydına bağlı değilse liste boş. | `/care-team/my-students` (menü: "Benim Öğrencilerim", V59 ile yeniden açıldı) |
 | Pano: atanmış eğitmenler | `GET /api/students/{id}/session-educators` (**yeni**, `student:read`) | Önceki alan kaynaksız bir "Yakında" yer tutucusuydu (seans/plan/başka bir yerden türetilmiyordu). Şimdi bakım ekibini gösterir; ekip boşsa öğrencinin iptal/gelmedi olmayan seanslarındaki eğitmenleri "seanslardan" etiketiyle gösterir ve "Ekibe ekle" sunar (erişim vermez, yalnızca atama kısayolu). | Öğrenci panosu |
 | Tekrar eden plan: ekip önerisi | (yeni uç yok; `POST …/care-team`) | Sorumlu eğitimci öğrencinin ekibinde değilse "Ekibe ekle" önerilir; zorunlu değildir, plan yine kaydedilir. | Plan oluşturma formu |
@@ -301,6 +301,6 @@ B grubundaki modüller (kamp, okul danışmanlığı, kamera, anketler, bakım e
 | Demo | `demo-seed` demo kurumlarını `--enable-modules all` ile açar; mevcut `demo_a/b` açık kalır. |
 | Sonradan aç/kapat | `python3 devops/set_modules.py --code ornek --enable camps --disable surveys` · `--list` durum · `--check` deneme · `--dry-run` SQL. |
 
-Menüsü olmayan modül: `students-surveys` satırı pasif (ekran yok). `students-care-team` V59 ile yeniden açıldı ("Benim Öğrencilerim"); bakım ekibi kapalıyken menüde ve öğrenci detayındaki sekmede görünmez.
+Menüsü olmayan modül: `students-surveys` satırı pasif (ekran yok). `students-care-team` V59 ile yeniden açıldı ("Benim Öğrencilerim"); bakım ekibi kapalıyken menüde ve öğrenci detayındaki sekmede görünmez. Ön yüz açık modülleri menüden değil `GET /api/modules/me`'den okur (uç ekransız listesine girmez: `modules.store.ts` çağırır).
 
 Doğrulama: birim (`ModuleVisibilityTests`: ayrıştırma, `modules` koruma, filtre, menü), entegrasyon (`ModuleVisibilityTests`: yeni kurum kapalı + 403 + menü gizli; aç/kapat anında etkili; kurum yöneticisi açamaz), smoke-api (demo_a: kapat → 403 + menü gizli; aç → geri gelir; kurum ayarıyla açma denemesi korunur).

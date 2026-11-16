@@ -128,6 +128,25 @@ public sealed class CareTeamAccessTests : IDisposable
     }
 
     [Fact]
+    public async Task Modules_me_follows_the_corporation_module_switch()
+    {
+        var admin = $"admin-mod-{_suffix}@example.test";
+        var corp = await _h.NewTenantAsync($"mod_{_suffix}", admin);
+        var token = TenantApiHarness.Token(await _h.LoginAsync(admin, TenantApiHarness.AdminPassword));
+        static List<string> Codes(JsonElement b) =>
+            b.GetProperty("data").GetProperty("enabledModules").EnumerateArray().Select(x => x.GetString()!).ToList();
+
+        (await _h.SendAsync(HttpMethod.Get, "/api/modules/me")).Status.Should().Be(HttpStatusCode.Unauthorized);
+
+        var (s1, closed) = await _h.SendAsync(HttpMethod.Get, "/api/modules/me", token);
+        s1.Should().Be(HttpStatusCode.OK, closed.ToString());
+        Codes(closed).Should().BeEmpty("yeni kurumda altı modül kapalı başlar");
+
+        await _h.ExecAsync("update core.corporation set settings = jsonb_set(settings, '{modules,care_team}', 'true'::jsonb, true) where id = @c", ("c", corp));
+        Codes((await _h.SendAsync(HttpMethod.Get, "/api/modules/me", token)).Body).Should().Equal("care_team");
+    }
+
+    [Fact]
     public async Task Without_the_restriction_the_care_team_does_not_hide_anything()
     {
         var (corp, _, educator, _, studentA, studentB) = await ArrangeAsync();

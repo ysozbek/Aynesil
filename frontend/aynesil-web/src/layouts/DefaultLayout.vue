@@ -9,19 +9,21 @@ import { onMounted, ref } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuStore } from '@/stores/menu.store'
+import { useModulesStore } from '@/stores/modules.store'
 import { useSettingsStore } from '@/stores/settings.store'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
 const auth = useAuthStore()
 const menu = useMenuStore()
+const modules = useModulesStore()
 const settings = useSettingsStore()
 const sidebarCollapsed = ref(false)
 
 onMounted(async () => {
   // Parolasını değiştirmesi zorunlu hesapta menü/ayar uçları 403 döner; yalnızca şifre sayfası gösterilir.
   if (auth.mustChangePassword) return
-  await Promise.all([menu.load(), settings.load()])
+  await Promise.all([menu.load(), settings.load(), modules.load()])
 })
 </script>
 
