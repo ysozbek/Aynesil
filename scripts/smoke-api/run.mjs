@@ -656,6 +656,100 @@ async function dailyOpsFlows() {
 }
 
 // ── B→A kapanışı: seans notu/hedefi, akademik dönem, taslak sözleşme, modül görünürlüğü ──
+// ── Okul danışmanlığı: okul → plan → sözleşme → ziyaret → gözlem → rapor → takip, silme engelleri, raporlama uçları ──
+async function consultancyFlows() {
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+  const refId = async (type) => ((await http('GET', `/reference-data/${type}?activeOnly=true`)).json?.data ?? [])[0]?.id ?? null
+  const del = async (id, url) => {
+    const r = await http('DELETE', url)
+    record({ phase: 'yazma', id, verb: 'DELETE', url, status: r.status, outcome: r.status < 300 ? 'ok' : classify(r.status), note: r.status < 300 ? '' : errNote(r), mismatches: [] })
+    return r
+  }
+  const blocked = async (id, url) => expectStatus('yazma', id, 'DELETE', url, await http('DELETE', url), [400, 409, 422])
+
+  const inst = idOf((await write('yazma', 'consultancy.institution.create', 'POST', '/consultancy/institutions', { name: `Smoke Okul ${RUN}`, institutionTypeId: await refId('institution_type'), city: 'İstanbul', district: 'Merkez', contactName: null, contactPhone: null, contactEmail: null })).json?.data)
+  if (!inst) { skip('consultancy.*', 'POST', '/consultancy/institutions', 'okul oluşmadı (modül kapalı olabilir)'); return }
+  const planBody = (name) => ({ institutionId: inst, name, consultancyTypeId: null, periodStart: day(-10), periodEnd: day(60), scope: 'smoke', leadEducatorId: null })
+  const plan = idOf((await write('yazma', 'consultancy.plan.create', 'POST', '/consultancy/plans', planBody(`Smoke Plan ${RUN}`))).json?.data)
+  const draftPlan = idOf((await write('yazma', 'consultancy.plan.create (silinecek taslak)', 'POST', '/consultancy/plans', planBody(`Smoke Taslak ${RUN}`))).json?.data)
+  if (!plan) return
+
+  // sözleşme: taslak planda oluşur → plan silinemez (sözleşme FK'si); gönder → imzala
+  const agrType = await refId('agreement_type')
+  const agr = idOf((await write('yazma', 'consultancy.agreement.create', 'POST', '/consultancy/agreements', { consultancyPlanId: plan, title: `Smoke Sözleşme ${RUN}`, agreementTypeId: agrType, description: null, startDate: day(-10), endDate: day(60) })).json?.data)
+  if (draftPlan) {
+    const dAgr = idOf((await write('yazma', 'consultancy.agreement.create (taslak plan)', 'POST', '/consultancy/agreements', { consultancyPlanId: draftPlan, title: `Smoke Sözleşme2 ${RUN}`, agreementTypeId: agrType, description: null, startDate: null, endDate: null })).json?.data)
+    if (dAgr) await blocked('consultancy.plan.delete (sözleşmesi var → reddedilir)', `/consultancy/plans/${draftPlan}`)
+    if (dAgr) await del('consultancy.agreement.delete (taslak)', `/consultancy/agreements/${dAgr}`)
+    // soft-delete edilmiş sözleşme de FK'yi tuttuğu için plan yine silinemez (500 değil, anlamlı hata)
+    if (dAgr) await blocked('consultancy.plan.delete (silinmiş sözleşme de engeller)', `/consultancy/plans/${draftPlan}`)
+  }
+  await write('yazma', 'consultancy.plan.activate', 'POST', `/consultancy/plans/${plan}/activate`, {})
+  if (agr) {
+    await write('yazma', 'consultancy.agreement.send', 'POST', `/consultancy/agreements/${agr}/send`, {})
+    await write('yazma', 'consultancy.agreement.sign', 'POST', `/consultancy/agreements/${agr}/sign`, { signedDate: day(-1), signedByName: 'Smoke Müdür', fileId: null })
+  }
+
+  // ziyaret: oluştur → düzenle → ayrıntı → gözlem ekle/oku/düzenle → gözlemliyken silinemez → gözlem sil → ziyaret sil
+  const visitBody = (purpose) => ({ institutionId: inst, consultancyPlanId: plan, visitDate: day(1), visitorId: null, purpose })
+  const v1 = idOf((await write('yazma', 'consultancy.visit.create', 'POST', '/consultancy/visits', visitBody('smoke ziyaret'))).json?.data)
+  if (v1) {
+    await write('yazma', 'consultancy.visit.update', 'PUT', `/consultancy/visits/${v1}`, { visitDate: day(2), visitorId: null, purpose: 'smoke ziyaret (düzenlendi)', consultancyPlanId: plan })
+    const vd = (await http('GET', `/consultancy/visits/${v1}`)).json?.data
+    record({ phase: 'yazma', id: 'consultancy.visit.get (düzenleme yansır)', verb: 'GET', url: `/consultancy/visits/${v1}`, status: 200, outcome: vd?.purpose === 'smoke ziyaret (düzenlendi)' && vd?.visitDate === day(2) ? 'ok' : 'type', note: `purpose=${vd?.purpose} date=${vd?.visitDate}`, mismatches: [] })
+    const obsType = await refId('observation_type')
+    const ob = idOf((await write('yazma', 'consultancy.observation.create', 'POST', `/consultancy/visits/${v1}/observations`, { schoolVisitId: v1, observation: 'smoke gözlem', observationTypeId: obsType, subject: 'Konu', recommendations: null })).json?.data)
+    if (ob) {
+      await write('yazma', 'consultancy.observation.update', 'PUT', `/consultancy/observations/${ob}`, { observation: 'smoke gözlem (düzenlendi)', observationTypeId: obsType, subject: 'Konu', recommendations: 'Öneri' })
+      const g = (await http('GET', `/consultancy/observations/${ob}`)).json?.data
+      const l = (await http('GET', `/consultancy/visits/${v1}/observations`)).json?.data ?? []
+      record({ phase: 'yazma', id: 'consultancy.observation.get/list (düzenleme yansır)', verb: 'GET', url: `/consultancy/observations/${ob}`, status: 200, outcome: g?.observation === 'smoke gözlem (düzenlendi)' && l.some(x => x.id === ob) ? 'ok' : 'type', note: `${l.length} gözlem`, mismatches: [] })
+      await blocked('consultancy.visit.delete (gözlemi var → reddedilir)', `/consultancy/visits/${v1}`)
+      await del('consultancy.observation.delete', `/consultancy/observations/${ob}`)
+    }
+    await del('consultancy.visit.delete', `/consultancy/visits/${v1}`)
+    expectStatus('yazma', 'consultancy.visit.get (silinen ziyaret → 404)', 'GET', `/consultancy/visits/${v1}`, await http('GET', `/consultancy/visits/${v1}`), [404])
+  }
+
+  // ziyaret + rapor + takip: raporlu/takipli ziyaret silinemez; tamamlanan ziyaret düzenlenemez/silinemez
+  const v2 = idOf((await write('yazma', 'consultancy.visit.create (rapor/takip için)', 'POST', '/consultancy/visits', visitBody('smoke ziyaret 2'))).json?.data)
+  if (v2) {
+    const rep = idOf((await write('yazma', 'consultancy.report.create (ziyareti)', 'POST', '/consultancy/reports', { title: `Smoke Rapor ${RUN}`, consultancyPlanId: plan, schoolVisitId: v2, summary: 'smoke özet', fileId: null })).json?.data)
+    if (rep) {
+      const g = (await http('GET', `/consultancy/reports/${rep}`)).json?.data
+      record({ phase: 'yazma', id: 'consultancy.report.get', verb: 'GET', url: `/consultancy/reports/${rep}`, status: 200, outcome: g?.schoolVisitId === v2 && g?.summary === 'smoke özet' ? 'ok' : 'type', note: '', mismatches: [] })
+      await blocked('consultancy.visit.delete (raporu var → reddedilir)', `/consultancy/visits/${v2}`)
+      await blocked('consultancy.plan.delete (aktif plan → reddedilir)', `/consultancy/plans/${plan}`)
+    }
+    const fu = idOf((await write('yazma', 'consultancy.followUp.create', 'POST', '/consultancy/follow-ups', { title: `Smoke Takip ${RUN}`, consultancyPlanId: plan, schoolVisitId: v2, observationRecordId: null, description: null, dueDate: day(10), assignedTo: null })).json?.data)
+    if (fu) {
+      await write('yazma', 'consultancy.followUp.start', 'POST', `/consultancy/follow-ups/${fu}/start`, {})
+      await blocked('consultancy.visit.delete (takibi var → reddedilir)', `/consultancy/visits/${v2}`)
+    }
+    await write('yazma', 'consultancy.visit.complete', 'POST', `/consultancy/visits/${v2}/complete`, {})
+    expectStatus('yazma', 'consultancy.visit.update (tamamlanmış → reddedilir)', 'PUT', `/consultancy/visits/${v2}`, await http('PUT', `/consultancy/visits/${v2}`, { visitDate: day(3), visitorId: null, purpose: 'x', consultancyPlanId: plan }), [400, 409, 422])
+    if (fu) await del('consultancy.followUp.delete', `/consultancy/follow-ups/${fu}`)
+    if (rep) await del('consultancy.report.delete', `/consultancy/reports/${rep}`)
+    expectStatus('yazma', 'consultancy.report.get (silinen rapor → 404)', 'GET', `/consultancy/reports/${rep}`, await http('GET', `/consultancy/reports/${rep}`), [404])
+  }
+
+  // raporlama uçları: sözleşme özeti, okul raporu, sonuçlar, ziyaret geçmişi bu akışın kaydını yansıtır
+  const arr = async (url) => (await http('GET', url)).json?.data ?? []
+  const agSum = await arr(`/consultancy/reporting/agreements?institutionId=${inst}`)
+  record({ phase: 'yazma', id: 'consultancy.reporting.agreements', verb: 'GET', url: '/consultancy/reporting/agreements', status: 200, outcome: agSum.some(x => x.planId === plan && x.totalAgreements >= 1) ? 'ok' : 'type', note: `${agSum.length} plan`, mismatches: [] })
+  const instRep = await arr('/consultancy/reporting/institutions')
+  record({ phase: 'yazma', id: 'consultancy.reporting.institutions', verb: 'GET', url: '/consultancy/reporting/institutions', status: 200, outcome: instRep.some(x => x.institutionId === inst && x.totalPlans >= 2) ? 'ok' : 'type', note: `${instRep.length} kurum`, mismatches: [] })
+  const outc = await arr(`/consultancy/reporting/outcomes?institutionId=${inst}`)
+  record({ phase: 'yazma', id: 'consultancy.reporting.outcomes', verb: 'GET', url: '/consultancy/reporting/outcomes', status: 200, outcome: outc.some(x => x.planId === plan && x.visitCount >= 1 && x.completedVisitCount >= 1) ? 'ok' : 'type', note: `${outc.length} plan`, mismatches: [] })
+  const hist = await arr(`/consultancy/reporting/visit-history?institutionId=${inst}&dateFrom=${day(-1)}&dateTo=${day(30)}`)
+  record({ phase: 'yazma', id: 'consultancy.reporting.visitHistory', verb: 'GET', url: '/consultancy/reporting/visit-history', status: 200, outcome: hist.some(x => x.visitId === v2) ? 'ok' : 'type', note: `${hist.length} ziyaret`, mismatches: [] })
+
+  // kurum silme: planı olan kurum silinemez; taslak plan silinince bile aktif plan + ziyaret kaldığı için engel sürer
+  await blocked('consultancy.institution.delete (planı/ziyareti var → reddedilir)', `/consultancy/institutions/${inst}`)
+  const emptyInst = idOf((await write('yazma', 'consultancy.institution.create (boş)', 'POST', '/consultancy/institutions', { name: `Smoke Boş Okul ${RUN}`, institutionTypeId: null, city: null, district: null, contactName: null, contactPhone: null, contactEmail: null })).json?.data)
+  if (emptyInst) await del('consultancy.institution.delete (kayıtsız)', `/consultancy/institutions/${emptyInst}`)
+}
+
 async function closureFlows() {
   const tag = RUN.toLowerCase()
   const adminToken = token
@@ -1064,6 +1158,7 @@ await writeFlows()
 await newFlows()
 await closureFlows()
 await dailyOpsFlows()
+await consultancyFlows()
 await sweep()
 await isolation()
 await guardianRound()

@@ -9,7 +9,7 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); kalan **94** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); beşinci turda **18 uç daha kapatıldı** (§2, "Beşinci tur": okul danışmanlığı); kalan **76** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
@@ -79,6 +79,24 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 
 Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortasında biten haftanın günlerini üretmiyordu (ör. 1–14 Aralık penceresinde 14 Aralık Pazartesi atlanıyordu); indirim toplama iki kez yazılıyordu; portal BEP aktif planı gizliyordu; öneri güncellemede `rowVersion`/oturum denetimi yoktu.
 
+**Beşinci tur — B'den A'ya taşınıp ekranı yapılanlar: okul danışmanlığı (2026-11-16):**
+
+Ekranlar `consultancy` modülüne bağlıdır: rotalar `meta.module` ile korunur (kapalıysa `/403`; durum `GET /api/modules/me`), düğmeler `useModule(Modules.Consultancy).visible(izin)` ile görünür (modül açık **ve** izin var).
+
+| Akış | Uç(lar) | Kural | Ekran |
+|---|---|---|---|
+| Ziyaret ayrıntısı, düzenleme | `GET/PUT /api/consultancy/visits/{id}` | Yalnızca `planned` ziyaret düzenlenir. Plan değişirse aynı kurumun **aktif** planı olmalı (Schedule ile aynı kural; **eklendi**, önceden herhangi bir plan yazılabiliyordu). Başka kiracının ziyareti 404. | `/consultancy/visits/:id` (ziyaret listesi artık ayrıntıya gider; önceden aynı liste ekranı açılıyordu) |
+| Ziyaret tamamla / iptal | `POST …/visits/{id}/complete`, `/cancel` | `planned` dışında 422; tamamlanan/iptal edilen ziyaret düzenlenemez. İptal edilmiş ziyarete gözlem eklenemez. | Ziyaret ayrıntısı → üst düğmeler (onaylı) |
+| Ziyaret silme | `DELETE …/visits/{id}` | Yalnızca `planned`. Gözlemi (`Rule.VisitHasObservations`), raporu (`Rule.VisitHasReports`) ya da takibi (`Rule.VisitHasFollowUps`) varsa 422 — **rapor/takip için eklendi**: rapor FK'si ham hata verirdi, takipler sessizce cascade silinirdi. | Ziyaret ayrıntısı → "Ziyareti Sil"; sunucu mesajı sayfada gösterilir |
+| Gözlem: listele, oku, ekle, düzenle, sil | `GET …/visits/{visitId}/observations`, `GET/PUT/DELETE …/observations/{id}`, `POST …/visits/{visitId}/observations` | Gözlem metni zorunlu; tür `observation_type` referansından. Ayrıntı ve liste ziyaret yanıtındaki `observations` ile gelir; düzenleme/silme sonrası ziyaret yeniden okunur. | Ziyaret ayrıntısı → Gözlemler (her gözlemden "Takip Ekle" → `follow-ups/new?visitId&observationId`) |
+| Plan silme | `DELETE …/plans/{id}` | Yalnızca `draft`. Ziyaret (`PlanHasVisits`), sözleşme (`PlanHasAgreements` — FK RESTRICT; **soft-delete edilmiş sözleşme de sayılır**), rapor (`PlanHasReports`) ya da takip (`PlanHasFollowUps`) varsa 422. | Plan detayı → "Planı Sil" |
+| Kurum silme | `DELETE …/institutions/{id}` | Aktif plan varsa `InstitutionHasActivePlans`; **plan, ziyaret ya da sözleşme varsa `InstitutionHasRecords`** (soft-delete bağlı kayıtları yetim bırakırdı). | Kurumlar listesi → satır çöp kutusu |
+| Rapor silme (+ ayrıntı) | `DELETE …/reports/{id}` (+ ekranda `GET …/reports/{id}`) | Bağlı kayıt yok; doğrudan silinir. Rapor oluşturma ziyareti de alır (`schoolVisitId`); ziyaret ayrıntısından "Rapor Yaz" formu açık gelir. | Raporlar listesi (satıra tıkla → özet; sil) |
+| Takip silme | `DELETE …/follow-ups/{id}` | Tamamlanmış takip silinemez (`FollowUpDeleteCompleted`). | Takip ayrıntısı → "Görevi Sil" |
+| Raporlar sayfası | `GET …/reporting/agreements`, `…/institutions`, `…/outcomes`, `…/visit-history` | Dört sekme; her sekme kendi ucunun iznine bağlı (sözleşme özeti `consultancy_agreement:read`, okul raporu `institution:read`, sonuçlar `consultancy_plan:read`, ziyaret geçmişi `school_visit:read`). | `/consultancy/analytics` (menü: "Raporlar ve Özetler", V60; panodan da bağlantı) |
+
+Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → plan (taslak) → sözleşme → plan aktif → sözleşme gönder/imzala → ziyaret → gözlem → ziyaret tamamla → rapor → takip. Silme engelleri her biri için denenir.
+
 **Seans notu düzenlendi bilgisi (güncellendi, V55):** `scheduling.session_note`'a `edited_at timestamptz` + `edited_by uuid` eklendi; **yalnızca not metni değişince** dolar (salt görünürlük değişikliği düzenleme sayılmaz; o iz `core.audit_log`'ta). Personel ekranı ve **veli portalı** (çocuk detayı → Seanslar, seansın altında) "düzenlendi" gösterir. Portal yalnızca `parent_visible = true` ve silinmemiş notları döner, `CanViewSessions` kapalıysa seans listesiyle birlikte hiç göndermez (`PortalAccessHelper`); görünürlük sonradan kapatılan not portaldan kalkar. **V56 (grup seansı sızıntısı):** not `student_id`'ye bağlanır; portal yalnızca velinin kendi çocuğuna bağlı notları gösterir, `student_id` boş not (grup seansı dahil) hiçbir veliye gösterilmez; grup seansında veliye görünür not için öğrenci seçimi zorunludur (422 `Rule.SessionNoteStudentRequired`). Eski veri: tek katılımcılı seanslardaki görünür notlar bağlandı, grup/katılımcısız seanslardakiler kapatıldı (yerel veritabanında 12 bağlandı, 0 kapatıldı).
 
 **Kamera izleme ↔ rıza ilişkisi (doğrulandı):** veliye izleme yetkisi (`ViewingAuthorization`) verilirken öğrenci + **o veli** adına verilmiş, süresi geçmemiş `camera_viewing` rızası aranır (`ViewingCommands.cs`, kapı 2). İzleme başlatılırken **yetkinin bağlı olduğu velinin kendi** rızası yeniden kontrol edilir; geri alınmışsa/süresi dolmuşsa izleme başlamaz (`Rule.CameraConsentWithdrawn`). Rıza geri alınınca o veliye + öğrenciye ait açık izleme yetkileri iptal edilir (gerekçe "Rıza geri alındı", V52 `revoked_reason`); diğer velinin yetkisi etkilenmez. (Önceki turda öğrenci düzeyinde kontrol ediliyordu ve geri alma yetkiyi iptal etmiyordu; sıkılaştırıldı.)
@@ -136,29 +154,6 @@ Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortas
 | DELETE | `/api/camps/{id}` | Camps.Delete |
 | POST | `/api/camps/{id}/activate` | Camps.Activate |
 | POST | `/api/camps/{id}/deactivate` | Camps.Activate |
-
-**Consultancy** — 18 uç. Okul danışmanlığı modülü: kullanan kurumda ziyaret/gözlem/rapor ayrıntı ekranları gerekir.
-
-| Metot | Route | İzin |
-|---|---|---|
-| DELETE | `/api/consultancy/follow-ups/{id}` | FollowUps.Delete |
-| DELETE | `/api/consultancy/institutions/{id}` | Institutions.Delete |
-| DELETE | `/api/consultancy/observations/{id}` | Observations.Delete |
-| GET | `/api/consultancy/observations/{id}` | Observations.Read |
-| PUT | `/api/consultancy/observations/{id}` | Observations.Update |
-| DELETE | `/api/consultancy/plans/{id}` | ConsultancyPlans.Delete |
-| GET | `/api/consultancy/reporting/agreements` | ConsultancyAgreements.Read |
-| GET | `/api/consultancy/reporting/institutions` | Institutions.Read |
-| GET | `/api/consultancy/reporting/outcomes` | ConsultancyPlans.Read |
-| GET | `/api/consultancy/reporting/visit-history` | SchoolVisits.Read |
-| DELETE | `/api/consultancy/reports/{id}` | ConsultancyReports.Delete |
-| DELETE | `/api/consultancy/visits/{id}` | SchoolVisits.Delete |
-| GET | `/api/consultancy/visits/{id}` | SchoolVisits.Read |
-| PUT | `/api/consultancy/visits/{id}` | SchoolVisits.Update |
-| POST | `/api/consultancy/visits/{id}/cancel` | SchoolVisits.Cancel |
-| POST | `/api/consultancy/visits/{id}/complete` | SchoolVisits.Complete |
-| GET | `/api/consultancy/visits/{visitId}/observations` | Observations.Read |
-| POST | `/api/consultancy/visits/{visitId}/observations` | Observations.Create |
 
 **EducationPlans** — 1 uç. Veli görünür plan okuması; portal kendi ucunu kullanıyor.
 

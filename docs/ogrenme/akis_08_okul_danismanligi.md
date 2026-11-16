@@ -12,19 +12,21 @@ Kurum Yöneticisi ve danışmanlık izni verilen kişiler. Demo'daki Koordinatö
 1. **Okulu kaydet:** `Danışmanlık → Kurumlar → Yeni`; okulun adı ve iletişim bilgileri. Her şey bu okula bağlanır.
 2. **Anlaşma yap:** `Danışmanlık → Sözleşmeler → Yeni`; taslak oluşur. Sözleşme sayfasında **Gönder** ("Gönderildi") → **İmzala** ("İmzalandı"). Süresi dolunca **Süresi Doldu**, vazgeçilirse **İptal Et**; yalnızca taslak sözleşme düzenlenir ya da silinir.
 3. **Plan hazırla:** `Danışmanlık → Planlar → Yeni`; okul, dönem, amaçlar. Plan "Taslak" başlar; hazır olunca **Aktifleştir**, iş bitince **Tamamla**, vazgeçilirse **İptal Et**.
-4. **Ziyaret planla:** `Danışmanlık → Ziyaretler` sayfasından yeni ziyaret kaydı açın (okul, tarih). Ziyaret "Planlandı" durumunda başlar; yapılınca "Tamamlandı", yapılamazsa "İptal Edildi" olur. Planlanmamış ziyaret değiştirilemez.
-5. **Gözlem yaz:** `Danışmanlık → Gözlemler`; ziyarette gördüklerinizi kaydedin.
-6. **Rapor yaz:** `Danışmanlık → Raporlar → Yeni`; özet ve bulgular. En az birinin dolu olması gerekir.
+4. **Ziyaret planla:** `Danışmanlık → Ziyaretler` sayfasından yeni ziyaret kaydı açın (okul, isteğe bağlı aktif plan, tarih). Ziyaret "Planlandı" durumunda başlar. Ziyarete tıklayınca **ayrıntı sayfası** açılır: **Düzenle**, **Ziyareti Tamamla** ("Tamamlandı"), **Ziyareti İptal Et** ("İptal Edildi"), **Ziyareti Sil**. Yalnızca planlanmış ziyaret değiştirilir ya da silinir.
+5. **Gözlem yaz:** ziyaret sayfasında **Gözlem Ekle** (tür, konu, gözlem, öneri); her gözlem **Düzenle** / **Sil** / **Takip Ekle** ile yönetilir. `Danışmanlık → Gözlemler` sayfası gözlemi olan ziyaretleri listeler ve ziyaret sayfasına götürür. İptal edilmiş ziyaretlere gözlem eklenemez.
+6. **Rapor yaz:** ziyaret sayfasından **Rapor Yaz** ya da `Danışmanlık → Raporlar → Yeni`; özet ve bulgular. En az birinin dolu olması gerekir. Rapora tıklayınca özet açılır; rapor **Sil** ile kaldırılır.
 7. **Takibe bağla:** `Danışmanlık → Takipler → Yeni`; yapılacak işi açın. Takip "Bekliyor" doğar; başlayınca **Başlat** ("Devam Ediyor"), bitince **Tamamla** ("Tamamlandı"), gerekirse **İptal Et**. `Takipler → Açık Takipler` raporu hâlâ bekleyen işleri toplar.
-8. **Genel durum:** `Danışmanlık` ana sayfası özet verir.
+8. **Genel durum:** `Danışmanlık` ana sayfası özet verir; `Danışmanlık → Raporlar ve Özetler` dört sekmede sözleşme özeti, okul raporu, plan sonuçları ve ziyaret geçmişini gösterir.
+9. **Silme:** plan (yalnızca taslak), ziyaret, rapor, takip (tamamlanmamış) ve kurum silinebilir; bağlı kayıt varsa silinmez ve ekran nedenini yazar.
 
 ## Dikkat
 - Plan sırayla ilerler: önce taslak olan etkinleştirilir, yalnızca aktif olan tamamlanır. Kapanmış plan değiştirilemez.
 - Sözleşme yalnızca gönderilmişse imzalanır, yalnızca imzalıysa "Süresi Doldu" olur.
-- Ziyaret, gözlem ve takip için ekranlarda her adımın düğmesi yok: ziyareti tamamlama/iptal ekranda durum seçimiyle yapılıyor görünüyor, gözlem ekleme düğmesi ise listede bulunmuyor [doğrulanacak].
+- **Silme engelleri:** gözlemi, raporu ya da takibi olan ziyaret silinmez; ziyaret, sözleşme, rapor veya takibi olan plan silinmez (silinmiş sözleşme de sayılır); planı, ziyareti ya da sözleşmesi olan kurum silinmez. Önce bağlı kaydı silin ya da planı iptal edin.
+- Ziyaretin planı değiştirilecekse yeni plan aynı okulun **aktif** planı olmalıdır.
 - Tarih sırası hatalı girilirse (bitiş başlangıçtan önce) kayıt kabul edilmez.
 
 ## Kendin dene
-`demo_a`'da 1 okul, plan, 2 ziyaret, gözlem, takip görevi ve sözleşme var. `koordinator@demo-a.test` → `Danışmanlık → Kurumlar`'dan okulu açın; `Planlar`'da planı görün; `Takipler`'de takibi **Başlat** → **Tamamla**. Yeni bir okul, sonra plan ve sözleşme açıp sözleşmeyi **Gönder** → **İmzala** yapın.
+`demo_a`'da uçtan uca akış kurulu: 1 okul → imzalı sözleşme → aktif plan → 2 ziyaret (biri tamamlanmış, gözlemli ve raporlu) → gözlem → rapor → başlatılmış takip. `koordinator@demo-a.test` → `Danışmanlık → Ziyaretler` → tamamlanmış ziyareti açın (gözlemi düzenleyin, **Takip Ekle**); planlı ikinci ziyarette **Düzenle** / **Ziyareti Tamamla** deneyin; birinci ziyareti **Sil**meyi deneyip engel mesajını görün. `Raporlar ve Özetler`'de dört sekmeyi gezin. Yeni bir okul, sonra plan ve sözleşme açıp sözleşmeyi **Gönder** → **İmzala** yapın.
 
 Teknik ayrıntılar: [teknik/akis_08_okul_danismanligi.md](teknik/akis_08_okul_danismanligi.md)

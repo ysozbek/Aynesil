@@ -66,9 +66,16 @@ async function consultancy(ctx) {
     await step('ziyaret tamamla', () => c.post(`/consultancy/visits/${visit.id}/complete`, {}))
   }
   await step('ikinci ziyaret', () => c.post('/consultancy/visits', { institutionId: inst.id, visitDate: dayStr(9), consultancyPlanId: plan?.id ?? null, visitorId: ids.educators[3].id, purpose: 'Takip ziyareti' }))
-  await step('takip görevi', () => c.post('/consultancy/follow-ups', { title: 'Öğretmene görsel program kartı eğitimi ver', consultancyPlanId: plan?.id ?? null, schoolVisitId: visit?.id ?? null, observationRecordId: obs?.id ?? null, description: 'Demo takip görevi', dueDate: dayStr(12), assignedTo: ids.educators[3].id }))
-  if (plan?.id) await step('danışmanlık sözleşmesi', async () => c.post('/consultancy/agreements', { consultancyPlanId: plan.id, title: 'Danışmanlık Hizmet Sözleşmesi (Demo)', agreementTypeId: await ctx.ref('agreement_type', 'consultancy_contract'), description: 'Demo', startDate: dayStr(-30), endDate: dayStr(90) }))
-  info('danışmanlık: 1 okul, plan, 2 ziyaret, gözlem, takip görevi, sözleşme')
+  const followUp = await step('takip görevi', () => c.post('/consultancy/follow-ups', { title: 'Öğretmene görsel program kartı eğitimi ver', consultancyPlanId: plan?.id ?? null, schoolVisitId: visit?.id ?? null, observationRecordId: obs?.id ?? null, description: 'Demo takip görevi', dueDate: dayStr(12), assignedTo: ids.educators[3].id }))
+  if (followUp?.id) await step('takip başlat', () => c.post(`/consultancy/follow-ups/${followUp.id}/start`, {}))
+  const agreement = plan?.id ? await step('danışmanlık sözleşmesi', async () => c.post('/consultancy/agreements', { consultancyPlanId: plan.id, title: 'Danışmanlık Hizmet Sözleşmesi (Demo)', agreementTypeId: await ctx.ref('agreement_type', 'consultancy_contract'), description: 'Demo', startDate: dayStr(-30), endDate: dayStr(90) })) : undefined
+  if (agreement?.id) {
+    await step('sözleşme gönder', () => c.post(`/consultancy/agreements/${agreement.id}/send`, {}))
+    await step('sözleşme imzala', () => c.post(`/consultancy/agreements/${agreement.id}/sign`, { signedByName: 'Okul Müdürü', signedDate: dayStr(-28) }))
+  }
+  // Ziyarete bağlı rapor: akış okul → sözleşme → plan → ziyaret → gözlem → rapor → takip burada kapanır.
+  if (visit?.id) await step('ziyaret raporu', () => c.post('/consultancy/reports', { title: 'İlk Sınıf Gözlemi Raporu (Demo)', consultancyPlanId: plan?.id ?? null, schoolVisitId: visit.id, summary: 'Öğrenci grup etkinliklerine görsel destekle katıldı; öğretmene görsel program kartı önerildi.' }))
+  info('danışmanlık: 1 okul, plan, 2 ziyaret (1 tamamlanmış), gözlem, takip görevi (başlatılmış), imzalı sözleşme, ziyaret raporu')
 }
 
 async function cameras(ctx) {
