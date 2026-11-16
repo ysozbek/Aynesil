@@ -113,7 +113,7 @@ public sealed class GetCampPerformanceQueryHandler
             c.Code,
             c.Name,
             PeriodCount    = c.Periods.Count,
-            TotalEnrolled  = c.Periods.Sum(p => p.Enrollments.Count(e => e.Status != "withdrawn")),
+            TotalEnrolled  = c.Periods.Sum(p => p.Enrollments.Count(e => e.Status == "enrolled" || e.Status == "completed")),
             TotalCompleted = c.Periods.Sum(p => p.Enrollments.Count(e => e.Status == "completed")),
             TotalWithdrawn = c.Periods.Sum(p => p.Enrollments.Count(e => e.Status == "withdrawn")),
             TotalAttendanceDays = c.Periods.Sum(p =>

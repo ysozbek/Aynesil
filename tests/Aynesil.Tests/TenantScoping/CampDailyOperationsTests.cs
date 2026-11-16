@@ -359,4 +359,45 @@ public class CampDailyOperationsTests
             new CreateCampReportCommand(Guid.CreateVersion7(), "x"), default);
         await run.Should().ThrowAsync<NotFoundException>();
     }
+    [Fact]
+    public async Task Attendance_reason_is_saved_on_record_and_correction()
+    {
+        using var ctx = new TenantTestContext();
+        var (camp, a, _) = NewCamp();
+        var e = Enr(a.Id);
+        await ctx.SeedAsync(camp, a, e);
+        var reason1 = Guid.CreateVersion7();
+        var reason2 = Guid.CreateVersion7();
+
+        var dto = await ctx.Handler<RecordAttendanceCommandHandler>().Handle(
+            new RecordAttendanceCommand(e.Id, Today, "absent", reason1), default);
+        dto.ReasonId.Should().Be(reason1);
+
+        await ctx.Handler<UpdateAttendanceCommandHandler>().Handle(
+            new UpdateAttendanceCommand(dto.Id, "excused", reason2), default);
+        (await ctx.Db.CampAttendances.SingleAsync()).ReasonId.Should().Be(reason2);
+
+        await ctx.Handler<UpdateAttendanceCommandHandler>().Handle(
+            new UpdateAttendanceCommand(dto.Id, "present", null), default);
+        (await ctx.Db.CampAttendances.SingleAsync()).ReasonId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Performance_report_excludes_waitlist_and_withdrawn()
+    {
+        using var ctx = new TenantTestContext();
+        var (camp, a, _) = NewCamp();
+        var done = Enr(a.Id); var active = Enr(a.Id);
+        var waiting = Enr(a.Id, "waitlist"); var left = Enr(a.Id, "withdrawn");
+        await ctx.SeedAsync(camp, a, done, active, waiting, left);
+        await CompleteAsync(ctx, done.Id);
+
+        var rows = await ctx.Handler<GetCampPerformanceQueryHandler>().Handle(new GetCampPerformanceQuery(), default);
+
+        var row = rows.Should().ContainSingle(r => r.CampId == camp.Id).Subject;
+        row.TotalEnrolled.Should().Be(2);          // tamamlanan + kayıtlı; bekleme/iptal yok
+        row.TotalCompleted.Should().Be(1);
+        row.TotalWithdrawn.Should().Be(1);
+        row.CompletionRatePct.Should().Be(50);
+    }
 }
