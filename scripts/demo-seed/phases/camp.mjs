@@ -1,4 +1,5 @@
-// Kamp: 1 kamp, 2 dönem, kayıtlar (biri bekleme listesinde), etkinlikler, eğitmen ataması, yoklama.
+// Kamp: bir kampın başından sonuna akışı — kayıt → etkinlikler → katılım (toplu/tekil/düzeltme) → günlük yoklama (toplu/tekil/düzeltme)
+// → tamamlama → kamp sonu raporu; ayrıca bekleme listesi, toplu tamamlamaya hazır dönem, boş dönem.
 import { step, info, idOf, at, dayStr, count } from '../lib.mjs'
 import { POOLS } from '../data.mjs'
 
@@ -30,10 +31,30 @@ export async function setupCamp(ctx) {
     for (const s of ids.students.slice(4, 7)) await step(`kamp kaydı ${s.no}`, () => c.post(`/camps/periods/${p2}/enrollments`, { campPeriodId: p2, studentId: s.id, status: 'enrolled', studentPackageId: null }))
     await step('bekleme listesi', () => c.post(`/camps/periods/${p2}/enrollments`, { campPeriodId: p2, studentId: ids.students[7].id, status: 'waitlist', studentPackageId: null }))
   }
-  // dönem 1 yoklaması + tamamlama
-  for (const [k, eid] of en1.entries()) {
-    for (let day = 0; day < 3; day++) await step('kamp yoklaması', () => c.post('/camps/attendance', { campEnrollmentId: eid, attendanceDate: dayStr(-119 + day), status: (k + day) % 5 === 4 ? 'absent' : 'present', reasonId: null }))
-    await step('kamp kaydı tamamla', () => c.post(`/camps/enrollments/${eid}/complete`, {}))
+  // ── Dönem 1: tam akış ──
+  // 1) Etkinlik katılımı: ilk etkinlik toplu (4 öğrenci), ikinci etkinlik tekil kayıtlarla; bir katılım düzeltilir.
+  const [act1, act2] = acts.filter((a) => a.pid === p1)
+  if (act1 && en1.length) await step('kamp katılımı (toplu)', () => c.post(`/camps/activities/${act1.id}/participations/bulk`, { campActivityId: act1.id, records: en1.map((eid) => ({ enrollmentId: eid, status: 'attended', notes: null })) }))
+  if (act2) {
+    const parts = []
+    for (const [k, eid] of en1.slice(0, 3).entries()) parts.push(idOf(await step('kamp katılımı (tekil)', () => c.post(`/camps/activities/${act2.id}/participations`, { campActivityId: act2.id, campEnrollmentId: eid, status: k === 2 ? 'registered' : 'attended', notes: null }))))
+    if (parts[2]) await step('kamp katılımı düzeltme', () => c.patch(`/camps/participations/${parts[2]}`, { id: parts[2], status: 'absent', notes: 'Rahatsızlandı, katılamadı.' }))
   }
-  info('kamp: 1 kamp, 4 dönem (biri toplu tamamlanmaya hazır, biri boş), 4 etkinlik, 10 kayıt (1 bekleme listesi), 2 eğitmen')
+  // 2) Günlük yoklama: ilk gün toplu; sonraki iki gün tekil; bir yoklama düzeltilir.
+  if (p1 && en1.length) await step('kamp yoklaması (toplu)', () => c.post(`/camps/periods/${p1}/attendance/bulk`, { campPeriodId: p1, attendanceDate: dayStr(-119), records: en1.map((eid, k) => ({ enrollmentId: eid, status: k === 3 ? 'late' : 'present', reasonId: null })) }))
+  const att = []
+  for (const [k, eid] of en1.entries())
+    for (let day = 1; day < 3; day++) att.push(idOf(await step('kamp yoklaması', () => c.post('/camps/attendance', { campEnrollmentId: eid, attendanceDate: dayStr(-119 + day), status: (k + day) % 5 === 4 ? 'absent' : 'present', reasonId: null }))))
+  if (att[0]) await step('kamp yoklaması düzeltme', () => c.patch(`/camps/attendance/${att[0]}`, { attendanceId: att[0], status: 'excused', reasonId: null }))
+  // 3) Tamamlama, ardından kamp sonu raporu (yalnızca tamamlanmış kayıt için; biri bilerek raporsuz — "Rapor Yaz" örneği).
+  for (const [k, eid] of en1.entries()) {
+    await step('kamp kaydı tamamla', () => c.post(`/camps/enrollments/${eid}/complete`, {}))
+    if (k < 3) await step('kamp sonu raporu', () => c.post(`/camps/enrollments/${eid}/reports`, { campEnrollmentId: eid, summary: ['Kamp boyunca grup etkinliklerine istekle katıldı; havuz gününde su korkusunu aştı.', 'Sosyal beceri çalışmalarında sıra bekleme ve paylaşma davranışlarında belirgin ilerleme gösterdi.', 'İlk günlerde uyum güçlüğü yaşadı, son hafta bağımsız katılım sağladı. Evde duyusal oyunlara devam önerilir.'][k], fileId: null }))
+  }
+  // Dönem 3 (bitmiş, tamamlanmamış): ilk iki gün toplu yoklama; kayıtlar "Dönemi Tamamla" ile kapatılmaya hazır kalır.
+  if (p3) {
+    const en3 = (await c.get(`/camps/enrollments?campPeriodId=${p3}&pageSize=50`))?.items ?? []
+    for (let day = 0; day < 2; day++) await step('kamp yoklaması (dönem 3, toplu)', () => c.post(`/camps/periods/${p3}/attendance/bulk`, { campPeriodId: p3, attendanceDate: dayStr(-20 + day), records: en3.map((e, k) => ({ enrollmentId: e.id, status: (k + day) % 2 ? 'absent' : 'present', reasonId: null })) }))
+  }
+  info('kamp: 1 kamp, 4 dönem (dönem 1 tam akış: katılım+yoklama+tamamlama+3 rapor; dönem 3 toplu tamamlanmaya hazır, yoklamalı; dönem 4 boş), 4 etkinlik, 10 kayıt (1 bekleme listesi), 2 eğitmen')
 }
