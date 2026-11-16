@@ -837,6 +837,112 @@ async function campFlows() {
   expectStatus('yazma', 'camps.get (silinen kamp → 404)', 'GET', `/camps/${camp}`, await http('GET', `/camps/${camp}`), [404])
 }
 
+// ── Kamp günlük işleri: etkinlik → katılım (tekil/toplu/düzeltme) → yoklama (toplu/tekil/düzeltme) → tamamlama → rapor; 409 kuralları ──
+async function campDailyFlows() {
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+  const ok = (id, verb, url, cond, note = '') => record({ phase: 'yazma', id, verb, url, status: 200, outcome: cond ? 'ok' : 'type', note, mismatches: [] })
+  const post = (id, url, body = {}) => write('yazma', id, 'POST', url, body)
+  const conflict = async (id, verb, url, body) => expectStatus('yazma', id, verb, url, await http(verb, url, body), [409])
+  const mkStudent = async (n) => idOf((await write('yazma', `campDaily.student (${n})`, 'POST', '/students', { firstName: 'Smoke', lastName: `Gunluk${n}${RUN}`, studentNo: `SG${n}-${RUN}`, nationalId: null,
+    birthDate: '2016-05-01', gender: null, primaryCampusId: ctx.campusId ?? null, statusId: null, leadId: null, notes: 'smoke-api' })).json?.data)
+
+  const camp = idOf((await write('yazma', 'camps.create (günlük işler)', 'POST', '/camps', { campusId: ctx.campusId, code: `SG-${RUN}`, name: `Smoke Günlük Kamp ${RUN}`, description: 'smoke', location: 'Test', capacity: 10 })).json?.data)
+  if (!camp) { skip('campDaily.*', 'POST', '/camps', 'kamp oluşmadı (modül kapalı olabilir)'); return }
+  const period = idOf((await post('campDaily.createPeriod', `/camps/${camp}/periods`, { name: 'Gün Dönemi', startDate: day(-3), endDate: day(10), capacity: 4 })).json?.data)
+  const other = idOf((await post('campDaily.createPeriod (başka dönem)', `/camps/${camp}/periods`, { name: 'Diğer Dönem', startDate: day(-3), endDate: day(10), capacity: 4 })).json?.data)
+  if (!period || !other) { skip('campDaily.*', 'POST', `/camps/${camp}/periods`, 'dönem oluşmadı'); return }
+
+  // öğrenciler: A, B, D kayıtlı (D sonra iptal), C bekleme listesi, E başka dönemde
+  const [sa, sb, sc, sd, se] = [await mkStudent(1), await mkStudent(2), await mkStudent(3), await mkStudent(4), await mkStudent(5)]
+  const enroll = async (id, periodId, sid, status = 'enrolled') => idOf((await post(id, `/camps/periods/${periodId}/enrollments`, { studentId: sid, status })).json?.data)
+  const [ea, eb, ed] = [await enroll('campDaily.enroll (A)', period, sa), await enroll('campDaily.enroll (B)', period, sb), await enroll('campDaily.enroll (D)', period, sd)]
+  const ec = await enroll('campDaily.enroll (C, bekleme listesi)', period, sc, 'waitlist')
+  const ee = await enroll('campDaily.enroll (E, başka dönem)', other, se)
+  if (!ea || !eb || !ec || !ed || !ee) { skip('campDaily.*', 'POST', `/camps/periods/${period}/enrollments`, 'kayıtlar oluşmadı'); return }
+  await post('campDaily.withdraw (D)', `/camps/enrollments/${ed}/withdraw`)
+
+  // etkinlik: oluştur / düzenle (yansır) / listele / sil
+  const mkAct = async (id, name, capacity) => idOf((await post(id, `/camps/periods/${period}/activities`, { campPeriodId: period, name, activityTypeId: null, description: 'smoke', startsAt: null, endsAt: null, location: 'Havuz', capacity, sessionId: null })).json?.data)
+  const act1 = await mkAct('campDaily.createActivity (kontenjan 1)', 'Yüzme', 1)
+  const act2 = await mkAct('campDaily.createActivity (kontenjan 5)', 'Resim', 5)
+  const act3 = await mkAct('campDaily.createActivity (silinecek)', 'Silinecek', 5)
+  if (!act1 || !act2 || !act3) { skip('campDaily.*', 'POST', `/camps/periods/${period}/activities`, 'etkinlik oluşmadı'); return }
+  const a3 = (await http('GET', `/camps/activities/${act3}`)).json?.data
+  await write('yazma', 'campDaily.updateActivity', 'PUT', `/camps/activities/${act3}`, { id: act3, name: 'Silinecek (düzenlendi)', activityTypeId: null, description: 'smoke', startsAt: null, endsAt: null, location: 'Bahçe', capacity: 6, sessionId: null, rowVersion: a3?.rowVersion ?? 1 })
+  const a3b = (await http('GET', `/camps/activities/${act3}`)).json?.data
+  ok('campDaily.getActivity (düzenleme yansır)', 'GET', `/camps/activities/${act3}`, a3b?.name === 'Silinecek (düzenlendi)' && a3b?.capacity === 6, `ad=${a3b?.name} kontenjan=${a3b?.capacity}`)
+  const acts = (await http('GET', `/camps/activities?campPeriodId=${period}`)).json?.data
+  ok('campDaily.listActivities (3 etkinlik)', 'GET', `/camps/activities?campPeriodId=${period}`, acts?.totalCount === 3, `adet=${acts?.totalCount}`)
+  await write('yazma', 'campDaily.deleteActivity', 'DELETE', `/camps/activities/${act3}`)
+  const acts2 = (await http('GET', `/camps/activities?campPeriodId=${period}`)).json?.data
+  ok('campDaily.listActivities (silinen düşer)', 'GET', `/camps/activities?campPeriodId=${period}`, acts2?.totalCount === 2, `adet=${acts2?.totalCount}`)
+
+  // katılım: yalnızca o dönemin kayıtlı öğrencileri
+  const reg = (activity, enrollment, status = 'registered') => ({ campActivityId: activity, campEnrollmentId: enrollment, status, notes: null })
+  const pa = idOf((await post('campDaily.registerParticipation (A, tekil)', `/camps/activities/${act1}/participations`, reg(act1, ea))).json?.data)
+  await conflict('campDaily.registerParticipation (aynı öğrenci tekrar → 409)', 'POST', `/camps/activities/${act1}/participations`, reg(act1, ea))
+  await conflict('campDaily.registerParticipation (kontenjan dolu → 409)', 'POST', `/camps/activities/${act1}/participations`, reg(act1, eb))
+  await conflict('campDaily.registerParticipation (bekleme listesindeki → 409)', 'POST', `/camps/activities/${act2}/participations`, reg(act2, ec))
+  await conflict('campDaily.registerParticipation (iptal edilen kayıt → 409)', 'POST', `/camps/activities/${act2}/participations`, reg(act2, ed))
+  await conflict('campDaily.registerParticipation (başka dönemin kaydı → 409)', 'POST', `/camps/activities/${act2}/participations`, reg(act2, ee))
+  const bulkBody = (ids) => ({ campActivityId: act2, records: ids.map((id) => ({ enrollmentId: id, status: 'attended', notes: null })) })
+  await conflict('campDaily.bulkParticipation (bekleme listesindeki → 409)', 'POST', `/camps/activities/${act2}/participations/bulk`, bulkBody([ea, ec]))
+  await conflict('campDaily.bulkParticipation (başka dönemin kaydı → 409)', 'POST', `/camps/activities/${act2}/participations/bulk`, bulkBody([ea, ee]))
+  const bp = await post('campDaily.bulkParticipation (A, B)', `/camps/activities/${act2}/participations/bulk`, bulkBody([ea, eb]))
+  ok('campDaily.bulkParticipation (2 kayıt eklendi)', 'POST', `/camps/activities/${act2}/participations/bulk`, bp.json?.data === 2, `eklenen=${bp.json?.data}`)
+  const bp2 = await post('campDaily.bulkParticipation (tekrar → atlanır)', `/camps/activities/${act2}/participations/bulk`, bulkBody([ea, eb]))
+  ok('campDaily.bulkParticipation (tekrar 0 ekler)', 'POST', `/camps/activities/${act2}/participations/bulk`, bp2.json?.data === 0, `eklenen=${bp2.json?.data}`)
+  if (pa) {
+    await write('yazma', 'campDaily.updateParticipation (düzeltme)', 'PATCH', `/camps/participations/${pa}`, { id: pa, status: 'attended', notes: 'düzeltildi' })
+    const ps = (await http('GET', `/camps/participations?campActivityId=${act1}`)).json?.data
+    ok('campDaily.listParticipations (düzeltme yansır)', 'GET', `/camps/participations?campActivityId=${act1}`, ps?.items?.[0]?.status === 'attended', `durum=${ps?.items?.[0]?.status}`)
+  }
+
+  // yoklama: toplu, tekil, düzeltme
+  const today = day(0)
+  const bulkAtt = (date, ids) => ({ campPeriodId: period, attendanceDate: date, records: ids.map((id) => ({ enrollmentId: id, status: 'present', reasonId: null })) })
+  await conflict('campDaily.bulkAttendance (bekleme listesindeki → 409)', 'POST', `/camps/periods/${period}/attendance/bulk`, bulkAtt(today, [ea, ec]))
+  await conflict('campDaily.bulkAttendance (iptal edilen kayıt → 409)', 'POST', `/camps/periods/${period}/attendance/bulk`, bulkAtt(today, [ea, ed]))
+  expectStatus('yazma', 'campDaily.bulkAttendance (başka dönemin kaydı → 404)', 'POST', `/camps/periods/${period}/attendance/bulk`, await http('POST', `/camps/periods/${period}/attendance/bulk`, bulkAtt(today, [ea, ee])), [404])
+  const ba = await post('campDaily.bulkAttendance (A, B)', `/camps/periods/${period}/attendance/bulk`, bulkAtt(today, [ea, eb]))
+  ok('campDaily.bulkAttendance (2 yoklama girildi)', 'POST', `/camps/periods/${period}/attendance/bulk`, ba.json?.data === 2, `eklenen=${ba.json?.data}`)
+  const ba2 = await post('campDaily.bulkAttendance (tekrar → atlanır)', `/camps/periods/${period}/attendance/bulk`, bulkAtt(today, [ea, eb]))
+  ok('campDaily.bulkAttendance (tekrar 0 ekler)', 'POST', `/camps/periods/${period}/attendance/bulk`, ba2.json?.data === 0, `eklenen=${ba2.json?.data}`)
+  await conflict('campDaily.recordAttendance (iptal edilen kayıt → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ed, attendanceDate: day(-1), status: 'present', reasonId: null })
+  await conflict('campDaily.recordAttendance (bekleme listesindeki → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ec, attendanceDate: day(-1), status: 'present', reasonId: null })
+  await conflict('campDaily.recordAttendance (aynı gün tekrar → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: today, status: 'absent', reasonId: null })
+  const yest = idOf((await post('campDaily.recordAttendance (A, dün, tekil)', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: day(-1), status: 'absent', reasonId: null })).json?.data)
+  if (yest) await write('yazma', 'campDaily.updateAttendance (düzeltme)', 'PATCH', `/camps/attendance/${yest}`, { attendanceId: yest, status: 'excused', reasonId: null })
+  const dayList = (await http('GET', `/camps/attendance?campPeriodId=${period}&dateFrom=${today}&dateTo=${today}&pageSize=50`)).json?.data
+  ok('campDaily.listAttendance (dönem + gün süzgeci: 2 kayıt)', 'GET', `/camps/attendance?campPeriodId=${period}`, dayList?.totalCount === 2, `adet=${dayList?.totalCount}`)
+  const otherList = (await http('GET', `/camps/attendance?campPeriodId=${other}&dateFrom=${today}&dateTo=${today}`)).json?.data
+  ok('campDaily.listAttendance (başka dönemde kayıt yok)', 'GET', `/camps/attendance?campPeriodId=${other}`, otherList?.totalCount === 0, `adet=${otherList?.totalCount}`)
+  const sum = (await http('GET', `/camps/periods/${period}/attendance-summary`)).json?.data ?? []
+  const sa1 = sum.find((r) => r.enrollmentId === ea)
+  ok('campDaily.attendanceSummary (A: 2 gün, 1 geldi, 1 mazeretli)', 'GET', `/camps/periods/${period}/attendance-summary`, sa1?.totalDays === 2 && sa1?.present === 1 && sa1?.excused === 1, `gün=${sa1?.totalDays} geldi=${sa1?.present} mazeretli=${sa1?.excused}`)
+
+  // rapor: tamamlanmamış kayıt için 409 → tamamla → yoklama/katılım/düzeltme 409 → rapor yaz/listele
+  const rep = (id, text) => ({ campEnrollmentId: id, summary: text, fileId: null })
+  await conflict('campDaily.createReport (kayıtlı, tamamlanmamış → 409)', 'POST', `/camps/enrollments/${ea}/reports`, rep(ea, 'erken'))
+  await conflict('campDaily.createReport (bekleme listesindeki → 409)', 'POST', `/camps/enrollments/${ec}/reports`, rep(ec, 'x'))
+  await conflict('campDaily.createReport (iptal edilen → 409)', 'POST', `/camps/enrollments/${ed}/reports`, rep(ed, 'x'))
+  expectStatus('yazma', 'campDaily.createReport (bilinmeyen kayıt → 404)', 'POST', '/camps/enrollments/00000000-0000-7000-8000-000000000001/reports', await http('POST', '/camps/enrollments/00000000-0000-7000-8000-000000000001/reports', rep('00000000-0000-7000-8000-000000000001', 'x')), [404])
+  await post('campDaily.complete (A)', `/camps/enrollments/${ea}/complete`)
+  await conflict('campDaily.recordAttendance (tamamlanmış kayıt → 409)', 'POST', '/camps/attendance', { campEnrollmentId: ea, attendanceDate: day(-2), status: 'present', reasonId: null })
+  await conflict('campDaily.bulkAttendance (tamamlanmış kayıt → 409)', 'POST', `/camps/periods/${period}/attendance/bulk`, bulkAtt(day(-2), [ea, eb]))
+  if (yest) await conflict('campDaily.updateAttendance (tamamlanmış kayıt → 409)', 'PATCH', `/camps/attendance/${yest}`, { attendanceId: yest, status: 'present', reasonId: null })
+  if (pa) await conflict('campDaily.updateParticipation (tamamlanmış kayıt → 409)', 'PATCH', `/camps/participations/${pa}`, { id: pa, status: 'absent', notes: null })
+  await conflict('campDaily.registerParticipation (tamamlanmış kayıt → 409)', 'POST', `/camps/activities/${act2}/participations`, reg(act2, ea))
+  await post('campDaily.createReport (tamamlanmış kayıt)', `/camps/enrollments/${ea}/reports`, rep(ea, 'Kamp boyunca uyumlu ve istekliydi.'))
+  const reports = (await http('GET', `/camps/enrollments/${ea}/reports`)).json?.data
+  ok('campDaily.listReports (1 rapor)', 'GET', `/camps/enrollments/${ea}/reports`, reports?.length === 1 && reports[0].summary?.startsWith('Kamp boyunca'), `adet=${reports?.length}`)
+
+  // performans raporu: iptal edilen (D) sayılmaz; bekleme listesi dâhildir → A, B, C, E = 4 kayıt, 1 tamamlanan, devam 2/3
+  const perf = ((await http('GET', '/camps/performance')).json?.data ?? []).find((r) => r.campId === camp)
+  ok('campDaily.performance (tamamlanan/kayıt/devam)', 'GET', '/camps/performance', perf?.totalCompleted === 1 && perf?.totalEnrolled === 4 && perf?.overallAttendanceRatePct === 66.7,
+    `kayıt=${perf?.totalEnrolled} tamamlanan=${perf?.totalCompleted} devam=${perf?.overallAttendanceRatePct}`)
+}
+
 // ── Anketler: tanım → soru düzenleme → veli portalı (bekleyen, yanıt, tekrar, yabancı çocuk) → sonuçlar → kilit → silme; geri bildirim → KPI ──
 async function surveyFlows() {
   const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
@@ -1371,6 +1477,7 @@ await dailyOpsFlows()
 await consultancyFlows()
 await surveyFlows()
 await campFlows()
+await campDailyFlows()
 await sweep()
 await isolation()
 await guardianRound()
