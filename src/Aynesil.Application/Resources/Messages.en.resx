@@ -81,6 +81,7 @@
   <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Cannot delete a camp period that has activities. Delete the activities first.</value></data>
   <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Cannot bulk-complete a period that has not started yet.</value></data>
   <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Only enrolled students can be moved to the waitlist.</value></data>
+  <data name="Rule.CampReportNeedsCompleted" xml:space="preserve"><value>An end-of-camp report can only be written for a completed enrollment.</value></data>
   <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Camp period is at full capacity. Use 'waitlist' status.</value></data>
   <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Cannot delete a camp period that has enrollments.</value></data>
   <data name="Rule.CampPeriodNotInCamp" xml:space="preserve"><value>Camp period {0} was not found for this camp.</value></data>

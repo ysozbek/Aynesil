@@ -81,6 +81,7 @@
   <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Etkinlikleri olan bir kamp dönemi silinemez. Önce etkinlikleri silin.</value></data>
   <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Henüz başlamamış bir dönemde toplu tamamlama yapılamaz.</value></data>
   <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Yalnızca kayıtlı öğrenciler bekleme listesine alınabilir.</value></data>
+  <data name="Rule.CampReportNeedsCompleted" xml:space="preserve"><value>Kamp sonu raporu yalnızca tamamlanmış kayıt için yazılabilir.</value></data>
   <data name="Rule.CampPeriodFullUseWaitlist" xml:space="preserve"><value>Kamp dönemi kontenjanı dolu. 'Bekleme listesi' durumunu kullanın.</value></data>
   <data name="Rule.CampPeriodHasEnrollments" xml:space="preserve"><value>Kayıtları olan bir kamp dönemi silinemez.</value></data>
   <data name="Rule.CampPeriodNotInCamp" xml:space="preserve"><value>{0} kamp dönemi bu kamp için bulunamadı.</value></data>

@@ -150,6 +150,7 @@ public static class MsgKeys
         public static readonly MsgKey CampPeriodHasActivities = new("Rule.CampPeriodHasActivities");
         public static readonly MsgKey CampPeriodHasEnrollments = new("Rule.CampPeriodHasEnrollments");
         public static readonly MsgKey CampPeriodNotStarted = new("Rule.CampPeriodNotStarted");
+        public static readonly MsgKey CampReportNeedsCompleted = new("Rule.CampReportNeedsCompleted");
         public static readonly MsgKey CampPeriodStillFull = new("Rule.CampPeriodStillFull");
         public static readonly MsgKey CodeAlreadyExists = new("Rule.CodeAlreadyExists");
         public static readonly MsgKey ConsentNeedsCurrentVersion = new("Rule.ConsentNeedsCurrentVersion");

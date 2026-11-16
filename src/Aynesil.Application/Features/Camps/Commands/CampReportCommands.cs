@@ -47,12 +47,15 @@ public sealed class CreateCampReportCommandHandler
     {
         var corporationId = _tenant.RequireCorporationId();
 
-        var enrollmentExists = await _db.CampEnrollments
-            .AnyAsync(e => e.Id == req.CampEnrollmentId
-                        && e.CorporationId == corporationId, ct);
+        var enrollmentStatus = await _db.CampEnrollments
+            .Where(e => e.Id == req.CampEnrollmentId && e.CorporationId == corporationId)
+            .Select(e => e.Status)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
-        if (!enrollmentExists)
-            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
+        // Kamp sonu raporu yalnızca tamamlanmış kayıt için yazılır.
+        if (enrollmentStatus != "completed")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampReportNeedsCompleted);
 
         var report = CampReport.Create(
             corporationId, req.CampEnrollmentId,

@@ -74,7 +74,7 @@ public sealed class RegisterParticipationCommandHandler
         if (duplicate)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ParticipationAlreadyRecorded);
 
-        if (activity.Capacity.HasValue && req.Status is "registered" or "attended")
+        if (activity.Capacity.HasValue && (req.Status is "registered" or "attended"))
         {
             var count = await _db.CampActivityParticipations
                 .CountAsync(p => p.CorporationId == corporationId && (p.CampActivityId == req.CampActivityId
@@ -136,6 +136,12 @@ public sealed class UpdateParticipationCommandHandler : IRequestHandler<UpdatePa
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Participation"));
 
+        // Tamamlanmış ya da iptal (withdrawn) kaydın katılımı düzeltilemez.
+        var enrolled = await _db.CampEnrollments
+            .AnyAsync(e => e.Id == participation.CampEnrollmentId && e.Status == "enrolled", ct);
+        if (!enrolled)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, participation.CampEnrollmentId);
+
         participation.UpdateStatus(req.Status, req.Notes, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
@@ -187,24 +193,52 @@ public sealed class BulkRegisterParticipationCommandHandler
     {
         var corporationId = _tenant.RequireCorporationId();
 
-        var activityExists = await _db.CampActivities
-            .AnyAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId && a.DeletedAt == null, ct);
-        if (!activityExists)
-            throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
+        var activity = await _db.CampActivities
+            .FirstOrDefaultAsync(a => a.CorporationId == corporationId && a.Id == req.CampActivityId
+                                   && a.DeletedAt == null && a.IsActive, ct)
+            ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
 
-        var enrollmentIds = req.Records.Select(r => r.EnrollmentId).ToList();
+        var enrollmentIds = req.Records.Select(r => r.EnrollmentId).Distinct().ToList();
+
+        // Her kayıt etkinliğin dönemine ait ve 'enrolled' olmalı (tekil uçtaki kuralların aynısı).
+        var enrollments = await _db.CampEnrollments.AsNoTracking()
+            .Where(e => e.CorporationId == corporationId && enrollmentIds.Contains(e.Id))
+            .Select(e => new { e.Id, e.CampPeriodId, e.Status })
+            .ToListAsync(ct);
+        foreach (var id in enrollmentIds)
+        {
+            var e = enrollments.FirstOrDefault(x => x.Id == id)
+                ?? throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, id);
+            if (e.Status != "enrolled")
+                throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, id);
+            if (e.CampPeriodId != activity.CampPeriodId)
+                throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentActivityPeriodMismatch);
+        }
+
         var existing = await _db.CampActivityParticipations
             .Where(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
                      && enrollmentIds.Contains(p.CampEnrollmentId))
             .Select(p => p.CampEnrollmentId)
             .ToHashSetAsync(ct);
 
-        var added = 0;
-        foreach (var record in req.Records)
-        {
-            if (existing.Contains(record.EnrollmentId))
-                continue;
+        var toAdd = req.Records
+            .GroupBy(r => r.EnrollmentId).Select(g => g.First())
+            .Where(r => !existing.Contains(r.EnrollmentId))
+            .ToList();
 
+        if (activity.Capacity.HasValue)
+        {
+            var taken = await _db.CampActivityParticipations
+                .CountAsync(p => p.CorporationId == corporationId && p.CampActivityId == req.CampActivityId
+                              && (p.Status == "registered" || p.Status == "attended"), ct);
+            var incoming = toAdd.Count(r => r.Status is "registered" or "attended");
+            if (taken + incoming > activity.Capacity.Value)
+                throw new BusinessRuleViolationException(MsgKeys.Rule.ActivityFull);
+        }
+
+        var added = 0;
+        foreach (var record in toAdd)
+        {
             _db.CampActivityParticipations.Add(CampActivityParticipation.Register(
                 corporationId, req.CampActivityId, record.EnrollmentId,
                 record.Status, record.Notes, _currentUser.UserId));

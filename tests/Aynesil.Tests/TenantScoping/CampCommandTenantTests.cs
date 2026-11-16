@@ -223,6 +223,7 @@ public class CampCommandTenantTests
         using var ctx = new TenantTestContext();
         var period = Period(TenantA);
         var enrollment = Enrollment(TenantA, period.Id);
+        enrollment.Complete(); // rapor yalnızca tamamlanmış kayıt için yazılır
         await ctx.SeedAsync(period, enrollment);
 
         await ctx.Handler<CreateCampReportCommandHandler>().Handle(

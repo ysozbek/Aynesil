@@ -115,6 +115,12 @@ public sealed class UpdateAttendanceCommandHandler : IRequestHandler<UpdateAtten
             .FirstOrDefaultAsync(a => a.Id == req.AttendanceId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AttendanceRecord"));
 
+        // Tamamlanmış ya da iptal (withdrawn) kaydın yoklaması düzeltilemez.
+        var enrolled = await _db.CampEnrollments
+            .AnyAsync(e => e.Id == attendance.CampEnrollmentId && e.Status == "enrolled", ct);
+        if (!enrolled)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, attendance.CampEnrollmentId);
+
         attendance.Update(req.Status, req.ReasonId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
     }
@@ -178,12 +184,19 @@ public sealed class BulkRecordAttendanceCommandHandler
         var enrollmentIds = req.Records.Select(r => r.EnrollmentId).Distinct().ToList();
 
         // Every enrollment must belong to this period (and therefore to this tenant).
-        var validCount = await _db.CampEnrollments
-            .CountAsync(e => enrollmentIds.Contains(e.Id)
-                          && e.CampPeriodId == req.CampPeriodId
-                          && e.CorporationId == corporationId, ct);
-        if (validCount != enrollmentIds.Count)
+        var periodEnrollments = await _db.CampEnrollments.AsNoTracking()
+            .Where(e => enrollmentIds.Contains(e.Id)
+                     && e.CampPeriodId == req.CampPeriodId
+                     && e.CorporationId == corporationId)
+            .Select(e => new { e.Id, e.Status })
+            .ToListAsync(ct);
+        if (periodEnrollments.Count != enrollmentIds.Count)
             throw new NotFoundException(MsgKeys.Rule.EnrollmentsNotInPeriod);
+
+        // Yoklama yalnızca kayıtlı (enrolled) öğrenciler için girilir; tamamlanmış/iptal/bekleyen kayıt 409.
+        var notEnrolled = periodEnrollments.FirstOrDefault(e => e.Status != "enrolled");
+        if (notEnrolled != null)
+            throw new BusinessRuleViolationException(MsgKeys.Rule.EnrollmentNotActive, notEnrolled.Id);
 
         var existingDates = await _db.CampAttendances
             .Where(a => enrollmentIds.Contains(a.CampEnrollmentId)
