@@ -48,6 +48,9 @@ const expected = [
   ['consultancy', 'Consultancy'],
   ['kpi', 'Kpi'],
   ['care-team', 'CareTeam'],
+  ['surveys', 'Surveys'],
+  ['portal/surveys', 'Surveys'],
+  ['portal/feedback', 'Surveys'],
 ]
 
 for (const [prefix, mod] of expected) {

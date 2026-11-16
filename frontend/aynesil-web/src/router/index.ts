@@ -1034,6 +1034,51 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: Permissions.FollowUps.Update, module: Modules.Consultancy },
       },
 
+      // ── Surveys & Parent Feedback ──────────────────────────────────────────────
+      {
+        path: 'surveys',
+        name: 'surveys',
+        component: () => import('@/views/surveys/SurveyListView.vue'),
+        meta: { permission: Permissions.Surveys.Read, module: Modules.Surveys },
+      },
+      {
+        path: 'surveys/new',
+        name: 'survey-new',
+        component: () => import('@/views/surveys/SurveyFormView.vue'),
+        meta: { permission: Permissions.Surveys.Create, module: Modules.Surveys },
+      },
+      {
+        path: 'surveys/feedback',
+        name: 'survey-feedback',
+        component: () => import('@/views/surveys/ParentFeedbackListView.vue'),
+        meta: { permission: Permissions.ParentFeedback.Read, module: Modules.Surveys },
+      },
+      {
+        path: 'surveys/:id/edit',
+        name: 'survey-edit',
+        component: () => import('@/views/surveys/SurveyFormView.vue'),
+        meta: { permission: Permissions.Surveys.Update, module: Modules.Surveys },
+      },
+      {
+        path: 'surveys/:id/results',
+        name: 'survey-results',
+        component: () => import('@/views/surveys/SurveyResultsView.vue'),
+        meta: { permission: Permissions.Surveys.Read, module: Modules.Surveys },
+      },
+      // Parent portal: pending surveys and own feedback
+      {
+        path: 'portal/surveys',
+        name: 'portal-surveys',
+        component: () => import('@/views/portal/PortalSurveysView.vue'),
+        meta: { permission: Permissions.Surveys.Respond, module: Modules.Surveys },
+      },
+      {
+        path: 'portal/feedback',
+        name: 'portal-feedback',
+        component: () => import('@/views/portal/PortalFeedbackView.vue'),
+        meta: { permission: Permissions.ParentFeedback.Create, module: Modules.Surveys },
+      },
+
       // ── KPI & Performance Management ───────────────────────────────────────────
       {
         path: 'kpi',
