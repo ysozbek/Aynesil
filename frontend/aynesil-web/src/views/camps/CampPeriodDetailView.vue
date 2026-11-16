@@ -7,9 +7,10 @@ import { useModule } from '@/composables/useModule'
 import { Modules } from '@/constants/modules'
 import { Permissions } from '@/constants/permissions'
 import { campService } from '@/services/camp.service'
+import { useRefDataStore } from '@/stores/refdata.store'
 import { toLocalDateString, localInputToIso, isoToLocalInput } from '@/utils/datetime'
 import {
-  CampAttendanceStatuses, CampParticipationStatuses, canRecordForEnrollment, planBulkSave,
+  CampAttendanceStatuses, CampParticipationStatuses, canRecordForEnrollment, planBulkSave, attendanceNeedsReason,
   periodPhase,
 } from '@/utils/campRules'
 import PageHeader from '@/components/shared/PageHeader.vue'
@@ -26,6 +27,8 @@ const route = useRoute()
 const router = useRouter()
 const campStore = useCampStore()
 const { visible } = useModule(Modules.Camps)
+const refData = useRefDataStore()
+const attendanceReasons = ref<{ id: string; label: string }[]>([])
 const periodId = route.params.periodId as string
 const today = toLocalDateString()
 
@@ -178,7 +181,8 @@ async function saveParticipation(onlyId?: string) {
 // ── Günlük yoklama: toplu + düzeltme ──────────────────────────────────────────
 const attendanceDate = ref(today)
 const attendanceDraft = reactive<Record<string, string>>({})
-const attendanceExisting = ref(new Map<string, { id: string; status: string }>())
+const attendanceReasonDraft = reactive<Record<string, string>>({})
+const attendanceExisting = ref(new Map<string, { id: string; status: string; reasonId?: string }>())
 const attendanceLoading = ref(false)
 
 function clampDate(d: string, p: CampPeriodDto) {
@@ -191,11 +195,18 @@ async function loadAttendance() {
     const res = await campService.listAttendance({
       campPeriodId: periodId, dateFrom: attendanceDate.value, dateTo: attendanceDate.value, pageSize: 200,
     })
-    const map = new Map<string, { id: string; status: string }>()
-    for (const a of (res.data?.items ?? []) as CampAttendanceDto[]) map.set(a.campEnrollmentId, { id: a.id, status: a.status })
+    const map = new Map<string, { id: string; status: string; reasonId?: string }>()
+    for (const a of (res.data?.items ?? []) as CampAttendanceDto[])
+      map.set(a.campEnrollmentId, { id: a.id, status: a.status, reasonId: a.reasonId ?? undefined })
     attendanceExisting.value = map
     for (const k of Object.keys(attendanceDraft)) delete attendanceDraft[k]
-    for (const e of rosterRows.value) attendanceDraft[e.id] = map.get(e.id)?.status ?? ''
+    for (const k of Object.keys(attendanceReasonDraft)) delete attendanceReasonDraft[k]
+    for (const e of rosterRows.value) {
+      attendanceDraft[e.id] = map.get(e.id)?.status ?? ''
+      attendanceReasonDraft[e.id] = map.get(e.id)?.reasonId ?? ''
+    }
+    if (attendanceReasons.value.length === 0)
+      attendanceReasons.value = await refData.getValues('ATTENDANCE_REASON')
   } catch (e: unknown) { actionError.value = (e as Error).message }
   finally { attendanceLoading.value = false }
 }
@@ -208,7 +219,7 @@ function markAllPresent() {
 const attendancePlan = computed(() => planBulkSave(
   rosterRows.value
     .filter((e) => canRecordForEnrollment(e.status))
-    .map((e) => ({ enrollmentId: e.id, status: attendanceDraft[e.id] ?? '' })),
+    .map((e) => ({ enrollmentId: e.id, status: attendanceDraft[e.id] ?? '', reasonId: attendanceReasonDraft[e.id] })),
   attendanceExisting.value,
 ))
 const attendanceDirty = computed(() => attendancePlan.value.create.length + attendancePlan.value.update.length > 0)
@@ -221,10 +232,10 @@ async function saveAttendance() {
     if (plan.create.length > 0) {
       added = await campStore.bulkRecordAttendance(
         periodId, attendanceDate.value,
-        plan.create.map((r) => ({ enrollmentId: r.enrollmentId, status: r.status })),
+        plan.create.map((r) => ({ enrollmentId: r.enrollmentId, status: r.status, reasonId: r.reasonId })),
       )
     }
-    for (const u of plan.update) await campStore.updateAttendance(u.id, u.status)
+    for (const u of plan.update) await campStore.updateAttendance(u.id, u.status, u.reasonId)
     notice.value = t('camp.attendance.saved', { added, corrected: plan.update.length })
   })
   await loadAttendance()
@@ -373,6 +384,15 @@ onMounted(async () => {
                 >
                   <option value="">{{ t('camp.attendance.notRecorded') }}</option>
                   <option v-for="s in CampAttendanceStatuses" :key="s" :value="s">{{ t(`camp.attendance.status.${s}`) }}</option>
+                </select>
+                <select
+                  v-if="attendanceNeedsReason(attendanceDraft[e.id] ?? '')"
+                  v-model="attendanceReasonDraft[e.id]"
+                  :disabled="!canRecordForEnrollment(e.status) || !visible(Permissions.CampAttendance.Record)"
+                  class="h-8 px-2 ml-2 text-sm rounded-lg border border-border bg-transparent disabled:opacity-60"
+                >
+                  <option value="">{{ t('camp.attendance.reasonNone') }}</option>
+                  <option v-for="r in attendanceReasons" :key="r.id" :value="r.id">{{ r.label }}</option>
                 </select>
               </td>
             </tr>

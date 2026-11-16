@@ -44,8 +44,13 @@ export function canWriteReport(status: string): boolean {
   return status === 'completed'
 }
 
-export interface DraftRow { enrollmentId: string; status: string }
-export interface ExistingRecord { id: string; status: string }
+export interface DraftRow { enrollmentId: string; status: string; reasonId?: string }
+export interface ExistingRecord { id: string; status: string; reasonId?: string }
+
+/** Devamsızlık nedeni yalnızca `absent`/`excused` yoklamasında anlamlıdır. */
+export function attendanceNeedsReason(status: string): boolean {
+  return status === 'absent' || status === 'excused'
+}
 
 /**
  * Toplu kayıt planı: satır taslağını mevcut kayıtlarla karşılaştırır.
@@ -55,12 +60,13 @@ export interface ExistingRecord { id: string; status: string }
  */
 export function planBulkSave(rows: DraftRow[], existing: Map<string, ExistingRecord>) {
   const create: DraftRow[] = []
-  const update: { id: string; status: string }[] = []
+  const update: { id: string; status: string; reasonId?: string }[] = []
   for (const r of rows) {
     if (!r.status) continue
     const e = existing.get(r.enrollmentId)
-    if (!e) create.push(r)
-    else if (e.status !== r.status) update.push({ id: e.id, status: r.status })
+    const reason = attendanceNeedsReason(r.status) ? (r.reasonId || undefined) : undefined
+    if (!e) create.push({ ...r, reasonId: reason })
+    else if (e.status !== r.status || (e.reasonId ?? undefined) !== reason) update.push({ id: e.id, status: r.status, reasonId: reason })
   }
   return { create, update }
 }

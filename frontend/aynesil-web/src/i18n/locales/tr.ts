@@ -2328,6 +2328,7 @@ const tr = {
     attendance: {
       date: 'Yoklama Günü',
       notRecorded: 'Kaydedilmedi',
+      reasonNone: 'Neden seçilmedi',
       markAllPresent: 'Kaydı olmayanları "Geldi" yap',
       save: 'Yoklamayı Kaydet',
       saved: '{added} yeni yoklama girildi, {corrected} yoklama düzeltildi.',

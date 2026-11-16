@@ -259,8 +259,8 @@ export const useCampStore = defineStore('camp', () => {
   const bulkRecordAttendance = (periodId: string, date: string, records: BulkAttendanceInput[]) =>
     withSaving(async () => (await campService.bulkRecordAttendance(periodId, date, records)).data ?? 0)
 
-  const updateAttendance = (attendanceId: string, status: string) =>
-    withSaving(() => campService.updateAttendance(attendanceId, status))
+  const updateAttendance = (attendanceId: string, status: string, reasonId?: string) =>
+    withSaving(() => campService.updateAttendance(attendanceId, status, reasonId))
 
   const registerParticipation = (activityId: string, input: ParticipationInput) =>
     withSaving(() => campService.registerParticipation(activityId, input))

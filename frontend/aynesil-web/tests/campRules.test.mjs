@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   periodPhase, canBulkComplete, periodHasStudents, blocksDeactivation, CampEducatorRoles,
-  canRecordForEnrollment, canWriteReport, planBulkSave, attendanceRate,
+  canRecordForEnrollment, canWriteReport, planBulkSave, attendanceRate, attendanceNeedsReason,
 } from '../src/utils/campRules.ts'
 
 const today = '2026-07-10'
@@ -73,8 +73,34 @@ test('toplu kayıt planı: yeni → create, durumu değişen → update, aynı/b
     { enrollmentId: 'c', status: 'late' },    // yeni
     { enrollmentId: 'd', status: '' },        // boş
   ], existing)
-  assert.deepEqual(plan.create, [{ enrollmentId: 'c', status: 'late' }])
-  assert.deepEqual(plan.update, [{ id: 'pb', status: 'excused' }])
+  assert.deepEqual(plan.create, [{ enrollmentId: 'c', status: 'late', reasonId: undefined }])
+  assert.deepEqual(plan.update, [{ id: 'pb', status: 'excused', reasonId: undefined }])
+})
+
+test('yoklama nedeni: yalnızca absent/excused için taşınır, değişince düzeltme olur, durum değişince temizlenir', () => {
+  assert.equal(attendanceNeedsReason('absent'), true)
+  assert.equal(attendanceNeedsReason('excused'), true)
+  assert.equal(attendanceNeedsReason('present'), false)
+  const existing = new Map([
+    ['a', { id: 'pa', status: 'absent', reasonId: 'r1' }],
+    ['b', { id: 'pb', status: 'absent', reasonId: 'r1' }],
+    ['c', { id: 'pc', status: 'absent', reasonId: 'r1' }],
+  ])
+  const plan = planBulkSave([
+    { enrollmentId: 'a', status: 'absent', reasonId: 'r1' }, // değişmedi
+    { enrollmentId: 'b', status: 'absent', reasonId: 'r2' }, // yalnız neden değişti
+    { enrollmentId: 'c', status: 'present', reasonId: 'r1' }, // devam → neden temizlenir
+    { enrollmentId: 'd', status: 'excused', reasonId: 'r1' }, // yeni, nedenli
+    { enrollmentId: 'e', status: 'late', reasonId: 'r1' },    // yeni, neden anlamsız
+  ], existing)
+  assert.deepEqual(plan.update, [
+    { id: 'pb', status: 'absent', reasonId: 'r2' },
+    { id: 'pc', status: 'present', reasonId: undefined },
+  ])
+  assert.deepEqual(plan.create, [
+    { enrollmentId: 'd', status: 'excused', reasonId: 'r1' },
+    { enrollmentId: 'e', status: 'late', reasonId: undefined },
+  ])
 })
 
 test('devam oranı 1 ondalığa yuvarlanır, gün yoksa 0', () => {
