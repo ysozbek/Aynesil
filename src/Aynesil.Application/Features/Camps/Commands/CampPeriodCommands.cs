@@ -111,8 +111,7 @@ public sealed class UpdateCampPeriodCommandHandler : IRequestHandler<UpdateCampP
             var enrolled = await _db.CampEnrollments
                 .CountAsync(e => e.CampPeriodId == req.Id && e.Status == "enrolled", ct);
             if (req.Capacity.Value < enrolled)
-                throw new BusinessRuleViolationException(
-                    MsgKeys.Rule.CampPeriodCapacityBelowEnrolled, enrolled);
+                throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodCapacityBelowEnrolled, enrolled);
         }
 
         period.Update(req.Name, req.StartDate, req.EndDate, req.Capacity);

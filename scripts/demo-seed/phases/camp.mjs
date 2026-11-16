@@ -10,6 +10,10 @@ export async function setupCamp(ctx) {
   const campId = idOf(camp); if (!campId) return
   const p1 = idOf(await step('dönem 1', () => c.post(`/camps/${campId}/periods`, { name: 'Temmuz Dönemi', startDate: dayStr(-120), endDate: dayStr(-106), capacity: 6 })))
   const p2 = idOf(await step('dönem 2', () => c.post(`/camps/${campId}/periods`, { name: 'Aralık Ara Tatil Dönemi', startDate: dayStr(40), endDate: dayStr(54), capacity: 3 })))
+  // dönem 3: bitmiş ama kayıtlıları tamamlanmamış → "dönemi tamamla" (toplu tamamlama) örneği; dönem 4: boş → düzenle/sil örneği
+  const p3 = idOf(await step('dönem 3', () => c.post(`/camps/${campId}/periods`, { name: 'Haziran Dönemi (tamamlanacak)', startDate: dayStr(-20), endDate: dayStr(-6), capacity: 4 })))
+  await step('dönem 4', () => c.post(`/camps/${campId}/periods`, { name: 'Eylül Hafta Sonu (taslak)', startDate: dayStr(100), endDate: dayStr(102), capacity: 6 }))
+  if (p3) for (const s of ids.students.slice(0, 2)) await step(`kamp kaydı (dönem 3) ${s.no}`, () => c.post(`/camps/periods/${p3}/enrollments`, { campPeriodId: p3, studentId: s.id, status: 'enrolled', studentPackageId: null }))
   for (const e of ids.educators.slice(0, 2)) await step('kamp eğitmeni', () => c.post(`/camps/${campId}/educators`, { campId, educatorId: e.id, role: e === ids.educators[0] ? 'lead' : 'assistant', campPeriodId: null, campActivityId: null }))
   const acts = []
   for (const [pid, d, list] of [[p1, -119, ['Duyusal Oyun Atölyesi', 'Hidroterapi Havuz Günü']], [p2, 41, ['Sanat ve Müzik Atölyesi', 'Doğa Yürüyüşü']]]) {
@@ -31,5 +35,5 @@ export async function setupCamp(ctx) {
     for (let day = 0; day < 3; day++) await step('kamp yoklaması', () => c.post('/camps/attendance', { campEnrollmentId: eid, attendanceDate: dayStr(-119 + day), status: (k + day) % 5 === 4 ? 'absent' : 'present', reasonId: null }))
     await step('kamp kaydı tamamla', () => c.post(`/camps/enrollments/${eid}/complete`, {}))
   }
-  info('kamp: 1 kamp, 2 dönem, 4 etkinlik, 8 kayıt (1 bekleme listesi), 2 eğitmen')
+  info('kamp: 1 kamp, 4 dönem (biri toplu tamamlanmaya hazır, biri boş), 4 etkinlik, 10 kayıt (1 bekleme listesi), 2 eğitmen')
 }

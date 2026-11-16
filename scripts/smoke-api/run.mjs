@@ -763,6 +763,80 @@ async function consultancyFlows() {
   if (emptyInst) await del('consultancy.institution.delete (kayıtsız)', `/consultancy/institutions/${emptyInst}`)
 }
 
+// ── Kamp yönetimi: etkinleştir/pasifleştir/sil, dönem düzenle/sil, bekleme listesi, toplu tamamlama, eğitmen atama (409 kuralları dahil) ──
+async function campFlows() {
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+  const ok = (id, verb, url, cond, note = '') => record({ phase: 'yazma', id, verb, url, status: 200, outcome: cond ? 'ok' : 'type', note, mismatches: [] })
+  const post = (id, url, body = {}) => write('yazma', id, 'POST', url, body)
+  const conflict = async (id, verb, url, body) => expectStatus('yazma', id, verb, url, await http(verb, url, body), [409])
+  const mkStudent = async (n) => idOf((await write('yazma', `camp.student (${n})`, 'POST', '/students', { firstName: 'Smoke', lastName: `Kamp${n}${RUN}`, studentNo: `SK${n}-${RUN}`, nationalId: null,
+    birthDate: '2016-05-01', gender: null, primaryCampusId: ctx.campusId ?? null, statusId: null, leadId: null, notes: 'smoke-api' })).json?.data)
+
+  const camp = idOf((await write('yazma', 'camps.create (yönetim)', 'POST', '/camps', { campusId: ctx.campusId, code: `SY-${RUN}`, name: `Smoke Yönetim Kampı ${RUN}`, description: 'smoke', location: 'Test', capacity: 10 })).json?.data)
+  if (!camp) { skip('camps.*', 'POST', '/camps', 'kamp oluşmadı (modül kapalı olabilir)'); return }
+
+  // dönem: düzenle / kontenjan kuralı / sil
+  const spare = idOf((await post('camps.createPeriod (silinecek)', `/camps/${camp}/periods`, { name: 'Silinecek', startDate: day(60), endDate: day(70), capacity: 2 })).json?.data)
+  if (spare) {
+    await write('yazma', 'camps.updatePeriod', 'PUT', `/camps/periods/${spare}`, { name: 'Silinecek (düzenlendi)', startDate: day(61), endDate: day(71), capacity: 3 })
+    const sp = (await http('GET', `/camps/periods/${spare}`)).json?.data
+    ok('camps.getPeriod (düzenleme yansır)', 'GET', `/camps/periods/${spare}`, sp?.name === 'Silinecek (düzenlendi)' && sp?.capacity === 3, `ad=${sp?.name} kontenjan=${sp?.capacity}`)
+  }
+
+  // başlamış dönem (kontenjan 2): kayıt, kontenjan, bekleme listesi, tamamlama
+  const live = idOf((await post('camps.createPeriod (başlamış)', `/camps/${camp}/periods`, { name: 'Devam Eden', startDate: day(-3), endDate: day(10), capacity: 2 })).json?.data)
+  if (!live) { skip('camps.enrollment.*', 'POST', `/camps/${camp}/periods`, 'dönem oluşmadı'); return }
+  const [s1, s2, s3] = [ctx.studentId ?? await mkStudent(1), await mkStudent(2), await mkStudent(3)]
+  const enroll = (id, sid, status) => post(id, `/camps/periods/${live}/enrollments`, { studentId: sid, status })
+  const en1 = idOf((await enroll('camps.enroll (kayıtlı 1)', s1, 'enrolled')).json?.data)
+  const en2 = idOf((await enroll('camps.enroll (kayıtlı 2)', s2, 'enrolled')).json?.data)
+  if (!en1 || !en2) { skip('camps.enrollment.*', 'POST', `/camps/periods/${live}/enrollments`, 'kayıt oluşmadı'); return }
+  await conflict('camps.enroll (aynı öğrenci tekrar → 409)', 'POST', `/camps/periods/${live}/enrollments`, { studentId: s1, status: 'enrolled' })
+  await conflict('camps.enroll (kontenjan dolu → 409)', 'POST', `/camps/periods/${live}/enrollments`, { studentId: s3, status: 'enrolled' })
+  const en3 = idOf((await enroll('camps.enroll (bekleme listesi)', s3, 'waitlist')).json?.data)
+  await conflict('camps.updatePeriod (kontenjan < kayıtlı → 409)', 'PUT', `/camps/periods/${live}`, { name: 'Devam Eden', startDate: day(-3), endDate: day(10), capacity: 1 })
+  await conflict('camps.deletePeriod (kayıtlı öğrenci var → 409)', 'DELETE', `/camps/periods/${live}`)
+  await conflict('camps.deactivate (dönemde kayıtlı öğrenci var → 409)', 'POST', `/camps/${camp}/deactivate`, {})
+  await conflict('camps.delete (kayıtlı öğrenci var → 409)', 'DELETE', `/camps/${camp}`)
+  await conflict('camps.activate (zaten aktif → 409)', 'POST', `/camps/${camp}/activate`, {})
+  await conflict('camps.promote (kayıtlı olan → 409)', 'POST', `/camps/enrollments/${en2}/promote`, {})
+  await post('camps.moveToWaitlist', `/camps/enrollments/${en1}/waitlist`)
+  await conflict('camps.moveToWaitlist (zaten bekleme listesinde → 409)', 'POST', `/camps/enrollments/${en1}/waitlist`, {})
+  await conflict('camps.complete (bekleme listesinde → 409)', 'POST', `/camps/enrollments/${en1}/complete`, {})
+  await post('camps.promote (bekleme listesinden kayıtlıya)', `/camps/enrollments/${en1}/promote`)
+  if (en3) await conflict('camps.promote (kontenjan hâlâ dolu → 409)', 'POST', `/camps/enrollments/${en3}/promote`, {})
+  // toplu tamamlama: yalnızca 'kayıtlı' olanlar; başlamamış dönemde 409; bilinmeyen dönem 404
+  if (spare) await conflict('camps.bulkComplete (dönem başlamadı → 409)', 'POST', `/camps/periods/${spare}/bulk-complete`, {})
+  const bulk = await post('camps.bulkComplete', `/camps/periods/${live}/bulk-complete`)
+  ok('camps.bulkComplete (2 kayıtlı öğrenci tamamlandı)', 'POST', `/camps/periods/${live}/bulk-complete`, bulk.json?.data === 2, `tamamlanan=${bulk.json?.data}`)
+  const done = (await http('GET', `/camps/enrollments?campPeriodId=${live}&status=completed`)).json?.data
+  ok('camps.listEnrollments (tamamlananlar, öğrenci adıyla)', 'GET', `/camps/enrollments?campPeriodId=${live}`, done?.totalCount === 2 && !!done?.items?.[0]?.studentName, `adet=${done?.totalCount} ad=${done?.items?.[0]?.studentName}`)
+  expectStatus('yazma', 'camps.bulkComplete (bilinmeyen dönem → 404)', 'POST', '/camps/periods/00000000-0000-7000-8000-000000000001/bulk-complete', await http('POST', '/camps/periods/00000000-0000-7000-8000-000000000001/bulk-complete', {}), [404])
+  if (en3) await post('camps.withdraw (bekleyen öğrenci)', `/camps/enrollments/${en3}/withdraw`)
+
+  // eğitmen: ata / aynı kapsamda tekrar 409 / rol değiştir / kaldır
+  if (ctx.educatorId) {
+    const asg = idOf((await post('camps.assignEducator', `/camps/${camp}/educators`, { campId: camp, educatorId: ctx.educatorId, role: 'assistant', campPeriodId: null, campActivityId: null })).json?.data)
+    await conflict('camps.assignEducator (aynı kapsamda tekrar → 409)', 'POST', `/camps/${camp}/educators`, { campId: camp, educatorId: ctx.educatorId, role: 'lead', campPeriodId: null, campActivityId: null })
+    if (asg) {
+      await write('yazma', 'camps.updateEducatorRole', 'PATCH', `/camps/educators/${asg}/role`, { role: 'lead' })
+      const list = (await http('GET', `/camps/educators?campId=${camp}`)).json?.data
+      ok('camps.listEducators (rol + ad)', 'GET', `/camps/educators?campId=${camp}`, list?.[0]?.role === 'lead' && !!list?.[0]?.educatorName, `rol=${list?.[0]?.role} ad=${list?.[0]?.educatorName}`)
+      expectStatus('yazma', 'camps.updateEducatorRole (geçersiz rol → 400/422)', 'PATCH', `/camps/educators/${asg}/role`, await http('PATCH', `/camps/educators/${asg}/role`, { role: 'boss' }), [400, 422])
+      await write('yazma', 'camps.removeEducator', 'DELETE', `/camps/educators/${asg}`)
+    }
+  } else skip('camps.educators', 'POST', `/camps/${camp}/educators`, 'eğitmen yok')
+
+  // pasifleştir (bitmemiş dönemde kayıt kalmadı → olur) → pasif kampa kayıt 409 → etkinleştir → silme
+  await write('yazma', 'camps.deactivate', 'POST', `/camps/${camp}/deactivate`, {})
+  await conflict('camps.enroll (pasif kamp → 409)', 'POST', `/camps/periods/${live}/enrollments`, { studentId: await mkStudent(4), status: 'enrolled' })
+  await write('yazma', 'camps.activate', 'POST', `/camps/${camp}/activate`, {})
+  if (spare) await write('yazma', 'camps.deletePeriod (boş dönem)', 'DELETE', `/camps/periods/${spare}`)
+  const delRes = await http('DELETE', `/camps/${camp}`)
+  record({ phase: 'yazma', id: 'camps.delete (yalnızca tamamlanmış kayıt → silinir)', verb: 'DELETE', url: `/camps/${camp}`, status: delRes.status, outcome: delRes.status < 300 ? 'ok' : classify(delRes.status), note: delRes.status < 300 ? '' : errNote(delRes), mismatches: [] })
+  expectStatus('yazma', 'camps.get (silinen kamp → 404)', 'GET', `/camps/${camp}`, await http('GET', `/camps/${camp}`), [404])
+}
+
 // ── Anketler: tanım → soru düzenleme → veli portalı (bekleyen, yanıt, tekrar, yabancı çocuk) → sonuçlar → kilit → silme; geri bildirim → KPI ──
 async function surveyFlows() {
   const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
@@ -1296,6 +1370,7 @@ await closureFlows()
 await dailyOpsFlows()
 await consultancyFlows()
 await surveyFlows()
+await campFlows()
 await sweep()
 await isolation()
 await guardianRound()

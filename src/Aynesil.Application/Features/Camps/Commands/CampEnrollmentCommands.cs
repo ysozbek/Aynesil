@@ -50,13 +50,14 @@ public sealed class EnrollStudentCommandHandler
     {
         var corporationId = _tenant.RequireCorporationId();
 
-        var campActive = await _db.CampPeriods
+        var campId = await _db.CampPeriods
             .Where(p => p.Id == req.CampPeriodId && p.CorporationId == corporationId)
-            .Select(p => (bool?)p.Camp.IsActive)
+            .Select(p => (Guid?)p.CampId)
             .FirstOrDefaultAsync(ct);
-        if (campActive is null)
+        if (campId is null)
             throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampPeriod"));
-        if (campActive == false)
+
+        if (await _db.Camps.AnyAsync(c => c.Id == campId && !c.IsActive, ct))
             throw new BusinessRuleViolationException(MsgKeys.Rule.CampInactive);
 
         var alreadyEnrolled = await _db.CampEnrollments
