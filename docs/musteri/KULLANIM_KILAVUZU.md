@@ -162,7 +162,13 @@ Menü: `Sözleşme ve Rıza Yönetimi`.
 4. **Dönem sonu:** dönem bitince **Dönemi Tamamla** tüm kayıtlı öğrencileri tek seferde "Tamamlandı" yapar (bekleme listesindekiler etkilenmez). Henüz başlamamış dönemde kullanılamaz.
 5. **Eğitmen:** kamp sayfasında **Görevli Eğitmenler → Eğitmen Ata**; rolü (sorumlu, yardımcı, gözlemci, süpervizör) satırdaki listeden değiştirir, **Atamayı Kaldır** ile çıkarırsınız.
 6. **Kampı pasifleştirme / silme:** kamp listesinde ya da kamp sayfasında **Pasifleştir** / **Etkinleştir** / **Sil**. Devam eden veya başlamamış dönemlerinde kayıtlı ya da bekleyen öğrencisi olan kamp pasifleştirilemez; kayıtlı/bekleyen öğrencisi olan kamp silinemez. Pasif kampa yeni kayıt alınamaz. Engel varsa sebep kırmızı uyarıda gösterilir; önce ilgili kayıtları tamamlayın veya iptal edin.
-Not: Kampın etkinlik, yoklama ve rapor işlemleri henüz ekrandan yapılamıyor.
+7. **Etkinlik:** dönem satırındaki **Etkinlik ve Yoklama** → **Etkinlikler** → **Etkinlik Ekle** (ad, tarih-saat, yer, kontenjan); satırdan **Düzenle** / **Sil**.
+8. **Katılım:** etkinlik satırında **Katılım**. Her öğrencinin durumunu (kayıtlı, katıldı, katılmadı, mazeretli) seçip satırdaki **Kaydet** ile tek tek ya da **Değişiklikleri Kaydet** ile toplu kaydedin; **Kaydı olmayanları "Katıldı" yap** hepsini doldurur. Kaydı olan öğrencinin durumunu değiştirip kaydetmek düzeltmedir. Etkinlik kontenjanı dolunca yeni katılım alınmaz.
+9. **Günlük yoklama:** aynı sayfada **Günlük Yoklama** sekmesinden günü seçin; her öğrenci için geldi / gelmedi / geç geldi / mazeretli seçip **Yoklamayı Kaydet**. O gün daha önce girilmiş yoklamayı değiştirirseniz düzeltme olarak kaydedilir. **Devam Özeti** sekmesi öğrenci başına gün sayısını ve devam yüzdesini gösterir.
+10. **Kamp sonu raporu:** dönemin **Kayıtlar** ekranında, **tamamlanmış** öğrencinin satırındaki **Rapor** düğmesiyle önceki raporlar okunur, yenisi yazılır (özet metni). Yazılan rapor sonradan değiştirilemez.
+11. **Performans:** `Kamp Yönetimi` ana sayfasındaki **Performans Raporu**: her kamp için dönem, kayıt, tamamlanan, ayrılan sayıları ile tamamlama ve devam yüzdesi.
+
+**Dikkat — sıra önemlidir:** yoklama ve katılım yalnızca dönemin **kayıtlı** öğrencileri için girilebilir; öğrenci tamamlandıktan, kaydı iptal edildikten ya da bekleme listesindeyken girilemez ve düzeltilemez. Bu yüzden yoklama ve katılımı dönemi tamamlamadan önce girin. Kamp sonu raporu ise tersine yalnızca **tamamlanmış** öğrenci için yazılır. Kural ihlalinde sebep ekranda kırmızı uyarıyla yazar.
 
 ### 3.10 Okul Danışmanlığı (modül açıksa)
 Kurumunuzun dışarıdaki okullara verdiği danışmanlık hizmetini yönetir.
