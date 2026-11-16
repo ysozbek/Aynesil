@@ -270,6 +270,14 @@ export const EducationPlanDecision = {
 } as const
 export type EducationPlanDecision = (typeof EducationPlanDecision)[keyof typeof EducationPlanDecision]
 
+/** students.student_care_assignment.status (14_care_team.sql) */
+export const CareAssignmentStatus = {
+  Active: 'active',
+  Suspended: 'suspended',
+  Ended: 'ended',
+} as const
+export type CareAssignmentStatus = (typeof CareAssignmentStatus)[keyof typeof CareAssignmentStatus]
+
 /**
  * StatusBadge gibi genel bileşenlerin varlık adından durum kümesine ulaşması için kayıt.
  * Anahtar = `entity` prop değeri; değer = o varlığın durum sabitleri.
@@ -279,6 +287,7 @@ export const StatusEntities = {
   corporation: CorporationStatus,
   contract: ContractStatus,
   consent: ConsentState,
+  careAssignment: CareAssignmentStatus,
   campEnrollment: CampEnrollmentStatus,
   meeting: MeetingStatus,
   meetingFollowUp: MeetingFollowUpStatus,

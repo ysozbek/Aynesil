@@ -9,6 +9,9 @@ import { campusService } from '@/services/campus.service'
 import { schedulingService } from '@/services/scheduling.service'
 import { programService, studentProgramService } from '@/services/program.service'
 import { educatorService } from '@/services/educator.service'
+import { careTeamService } from '@/services/careTeam.service'
+import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { toLocalDateString } from '@/utils/datetime'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
 import type { CampusListItemDto } from '@/types/campus.types'
@@ -27,6 +30,7 @@ const router = useRouter()
 const store = useSchedulingStore()
 const studentStore = useStudentStore()
 const refData = useRefDataStore()
+const careTeamModule = useCareTeamModule()
 
 const sessionTypes = ref<RefValueItem[]>([])
 const campuses = ref<CampusListItemDto[]>([])
@@ -119,6 +123,44 @@ watch(() => form.programServiceId, (serviceId) => {
   const service = programServices.value.find((s) => s.id === serviceId)
   if (service?.defaultDurationMinutes) form.durationMinutes = service.defaultDurationMinutes
 })
+
+// Bakım ekibi önerisi (zorunlu değil): sorumlu eğitimci öğrencinin ekibinde değilse eklemeyi öner.
+const teamEducatorIds = ref<string[] | null>(null)
+const suggestAdding = ref(false)
+const suggestDone = ref(false)
+
+watch(() => [form.studentId, careTeamModule.canRead.value], async ([studentId, canRead]) => {
+  teamEducatorIds.value = null
+  suggestDone.value = false
+  if (!studentId || !canRead) return
+  try {
+    const res = await careTeamService.list(studentId as string)
+    teamEducatorIds.value = res.success && res.data ? res.data.map((a) => a.educatorId) : null
+  } catch { /* öneri isteğe bağlıdır; ekip okunamazsa gösterilmez */ }
+})
+
+const leadEducatorName = computed(() => educators.value.find((e) => e.id === form.leadEducatorId)?.fullName ?? '')
+const showCareTeamSuggest = computed(() =>
+  careTeamModule.canAssign.value && !!form.studentId && !!form.leadEducatorId
+  && teamEducatorIds.value !== null && !teamEducatorIds.value.includes(form.leadEducatorId))
+
+async function addLeadToCareTeam() {
+  suggestAdding.value = true
+  try {
+    const roles = await refData.getValues('care_team_role')
+    const roleId = roles.find((r) => r.isDefault)?.id ?? roles[0]?.id
+    if (!roleId) return
+    await careTeamService.assign(form.studentId, {
+      educatorId: form.leadEducatorId, roleId, isPrimary: false, activeFrom: toLocalDateString(),
+    })
+    teamEducatorIds.value = [...(teamEducatorIds.value ?? []), form.leadEducatorId]
+    suggestDone.value = true
+  } catch (e: unknown) {
+    errors.submit = (e as Error).message
+  } finally {
+    suggestAdding.value = false
+  }
+}
 
 function addSupportEducator() {
   form.supportEducators.push({ educatorId: '', role: 'assistant' })
@@ -277,6 +319,23 @@ const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border bg-transparent fo
             <option value="">{{ t('common.none') }}</option>
             <option v-for="e in educators" :key="e.id" :value="e.id">{{ e.fullName }}</option>
           </select>
+          <div
+            v-if="showCareTeamSuggest"
+            class="mt-2 flex items-center justify-between gap-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800"
+          >
+            <span>{{ t('scheduling.recurring.careTeamSuggest', { name: leadEducatorName }) }}</span>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-md border border-amber-300 bg-white hover:bg-amber-100 shrink-0 disabled:opacity-50"
+              :disabled="suggestAdding"
+              @click="addLeadToCareTeam"
+            >
+              {{ t('scheduling.recurring.careTeamSuggestAdd') }}
+            </button>
+          </div>
+          <p v-else-if="suggestDone" class="mt-2 text-xs text-emerald-700">
+            {{ t('scheduling.recurring.careTeamSuggestDone', { name: leadEducatorName }) }}
+          </p>
         </div>
 
         <div v-for="(support, idx) in form.supportEducators" :key="idx" class="flex items-end gap-3">

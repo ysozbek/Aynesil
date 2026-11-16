@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useStudentStore } from '@/stores/student.store'
 import { useGoalStore } from '@/stores/goal.store'
 import { useProgramStore } from '@/stores/program.store'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
+import { careTeamService } from '@/services/careTeam.service'
+import { useRefDataStore } from '@/stores/refdata.store'
+import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { toLocalDateString } from '@/utils/datetime'
+import type { CareTeamAssignmentListItemDto, StudentSessionEducatorDto } from '@/types/careTeam.types'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -13,6 +18,15 @@ const router = useRouter()
 const store = useStudentStore()
 const goalStore = useGoalStore()
 const programStore = useProgramStore()
+const refData = useRefDataStore()
+const careTeamModule = useCareTeamModule()
+
+// "Atanmış eğitmenler": bakım ekibi varsa o; boşsa seanslardan türetilen eğitmenler (etiketli) + "Ekibe ekle".
+const team = ref<CareTeamAssignmentListItemDto[]>([])
+const sessionEducators = ref<StudentSessionEducatorDto[]>([])
+const educatorsError = ref('')
+const addingEducatorId = ref('')
+const roleLabels = ref<Record<string, string>>({})
 
 const id = computed(() => route.params.id as string)
 const summary = computed(() => store.summary)
@@ -21,8 +35,51 @@ const activeGoals = computed(() =>
   goalStore.studentGoalList.items.filter(g => g.status === 'active'),
 )
 
+async function loadEducators() {
+  educatorsError.value = ''
+  team.value = []
+  if (careTeamModule.canRead.value) {
+    try {
+      const res = await careTeamService.list(id.value)
+      team.value = res.success && res.data ? res.data : []
+      const roles = await refData.getValues('care_team_role')
+      roleLabels.value = Object.fromEntries(roles.map((r) => [r.id, r.label]))
+    } catch (e: unknown) {
+      educatorsError.value = (e as Error).message
+    }
+  }
+  sessionEducators.value = []
+  if (team.value.length === 0) {
+    try {
+      const res = await careTeamService.sessionEducators(id.value)
+      sessionEducators.value = res.success && res.data ? res.data : []
+    } catch (e: unknown) {
+      educatorsError.value = (e as Error).message
+    }
+  }
+}
+
+async function addToTeam(educatorId: string) {
+  addingEducatorId.value = educatorId
+  educatorsError.value = ''
+  try {
+    const roles = await refData.getValues('care_team_role')
+    const roleId = roles.find((r) => r.isDefault)?.id ?? roles[0]?.id
+    if (!roleId) return
+    await careTeamService.assign(id.value, {
+      educatorId, roleId, isPrimary: false, activeFrom: toLocalDateString(),
+    })
+    await loadEducators()
+  } catch (e: unknown) {
+    educatorsError.value = (e as Error).message
+  } finally {
+    addingEducatorId.value = ''
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
+    loadEducators(),
     store.fetchSummary(id.value),
     goalStore.fetchStudentGoals({ studentId: id.value, status: 'active', pageSize: 10 }),
     programStore.fetchStudentPrograms({ studentId: id.value, pageSize: 10 }),
@@ -194,13 +251,56 @@ function formatDate(val: string | null): string {
           </div>
         </div>
 
-        <!-- Assigned Educators (placeholder) -->
+        <!-- Assigned Educators: care team, or session-derived fallback -->
         <div class="rounded-xl border border-border bg-card shadow-sm">
           <div class="px-5 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">{{ t('common.assignedEducators') }}</h3>
           </div>
-          <div class="p-4 text-center py-8 text-muted-foreground text-sm">
-            {{ t('common.comingSoon') }}
+          <div class="p-4">
+            <p v-if="educatorsError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ educatorsError }}</p>
+            <ul v-if="team.length" class="space-y-2">
+              <li
+                v-for="m in team"
+                :key="m.id"
+                class="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0"
+              >
+                <div>
+                  <p class="text-sm font-medium text-foreground">{{ m.educatorName }}</p>
+                  <p class="text-xs text-muted-foreground">{{ roleLabels[m.roleId] ?? m.roleCode ?? '—' }}</p>
+                </div>
+                <span
+                  v-if="m.isPrimary"
+                  class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 shrink-0"
+                >{{ t('careTeam.primary') }}</span>
+              </li>
+            </ul>
+            <template v-else-if="sessionEducators.length">
+              <p class="mb-2 text-xs text-muted-foreground">{{ t('careTeam.dashboard.fromSessionsHint') }}</p>
+              <ul class="space-y-2">
+                <li
+                  v-for="e in sessionEducators"
+                  :key="e.educatorId"
+                  class="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0"
+                >
+                  <div>
+                    <p class="text-sm font-medium text-foreground">
+                      {{ e.educatorName }}
+                      <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ t('common.fromSessions') }}</span>
+                    </p>
+                    <p class="text-xs text-muted-foreground">{{ t('careTeam.dashboard.sessionCount', { n: e.sessionCount }) }}</p>
+                  </div>
+                  <button
+                    v-if="careTeamModule.canAssign.value"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent shrink-0 disabled:opacity-50"
+                    :disabled="addingEducatorId === e.educatorId"
+                    @click="addToTeam(e.educatorId)"
+                  >
+                    {{ t('careTeam.dashboard.addToTeam') }}
+                  </button>
+                </li>
+              </ul>
+            </template>
+            <div v-else class="text-center py-8 text-muted-foreground text-sm">{{ t('common.noData') }}</div>
           </div>
         </div>
 

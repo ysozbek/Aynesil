@@ -26,6 +26,8 @@ import type {
 } from '@/types/student.types'
 import { Permissions } from '@/constants/permissions'
 import StudentConsentsPanel from '@/components/students/StudentConsentsPanel.vue'
+import StudentCareTeamPanel from '@/components/students/StudentCareTeamPanel.vue'
+import { useCareTeamModule } from '@/composables/useCareTeamModule'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -36,17 +38,19 @@ const programStore = useProgramStore()
 const refData = useRefDataStore()
 const branchStore = useBranchStore()
 const { can } = usePermission()
+const careTeamModule = useCareTeamModule()
 
 const id = computed(() => route.params.id as string)
 const student = computed(() => store.current)
 
-type MainTab = 'overview' | 'guardians' | 'consents' | 'programs' | 'case-management' | 'history'
+type MainTab = 'overview' | 'guardians' | 'consents' | 'programs' | 'case-management' | 'care-team' | 'history'
 type CaseTab = 'case-notes' | 'medical-reports' | 'development-reports' | 'external-reports'
 
 const activeTab = ref<MainTab>('overview')
 const visibleTabs = computed<MainTab[]>(() =>
-  (['overview', 'guardians', 'consents', 'programs', 'case-management', 'history'] as MainTab[])
-    .filter((tab) => tab !== 'consents' || can(Permissions.StudentConsents.Read)))
+  (['overview', 'guardians', 'consents', 'programs', 'case-management', 'care-team', 'history'] as MainTab[])
+    .filter((tab) => tab !== 'consents' || can(Permissions.StudentConsents.Read))
+    .filter((tab) => tab !== 'care-team' || careTeamModule.canRead.value))
 const caseTab = ref<CaseTab>('case-notes')
 const caseManagementLoaded = ref(false)
 const programsLoaded = ref(false)
@@ -765,7 +769,7 @@ function formatDateTime(val: string | null): string {
             @click="activeTab = tab"
             :class="['pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors', activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground']"
           >
-            {{ t(`student.tab.${tab === 'case-management' ? 'caseManagement' : tab}`) }}
+            {{ t(`student.tab.${tab === 'case-management' ? 'caseManagement' : tab === 'care-team' ? 'careTeam' : tab}`) }}
           </button>
         </nav>
       </div>
@@ -1388,6 +1392,11 @@ function formatDateTime(val: string | null): string {
       </div>
 
       <!-- ── History Tab ── -->
+      <StudentCareTeamPanel
+        v-else-if="activeTab === 'care-team'"
+        :student-id="id"
+      />
+
       <div v-else-if="activeTab === 'history'">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-foreground">{{ t('student.statusHistory') }}</h3>

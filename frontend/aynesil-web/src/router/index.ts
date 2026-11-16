@@ -288,6 +288,12 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: Permissions.Students.Read },
       },
       {
+        path: 'care-team/my-students',
+        name: 'care-team-my-students',
+        component: () => import('@/views/care-team/MyStudentsView.vue'),
+        meta: { permission: Permissions.CareTeam.Read },
+      },
+      {
         path: 'students/:id/timeline',
         name: 'student-timeline',
         component: () => import('@/views/students/StudentTimelineView.vue'),
