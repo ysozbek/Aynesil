@@ -44,7 +44,7 @@ hukuk (2 sözleşme + 3 rıza şablonu, 8 sözleşme [taslak/gönderilmiş/imzal
 4 toplantı + takip görevleri (tamamlanmış/gecikmiş/açık) · izin (8 bakiye, 4 talep: bekleyen/onaylı/reddedilmiş/iptal) ·
 danışmanlık (1 okul, plan, 2 ziyaret, gözlem, takip görevi, sözleşme) · 2 kamera + derslik ataması + veli1 izleme yetkisi ·
 1 kamp (2 dönem, 4 etkinlik, 8 kayıt [1 bekleme listesi], 2 eğitmen, yoklama) · KPI (önceki 2 ay, API'nin `compute/bulk` ucu) · bildirim şablonları + 7 örnek bildirim · 2 anket + yanıt + veli geri bildirimi ·
-takvim kayıtları (Yılbaşı resmi tatili, 30 Aralık kapalı gün — demo planı Çarşamba çalıştığı için seans üretiminde atlanır —, bir etkinlik) · tekrar eden plana tek tarih istisnası · eğitmen hiyerarşisi (1 sürüyor, 1 sona ermiş) · 1 taslak faturada %10 kardeş indirimi · veli1'in ilk çocuğu için onaylı ve veliye açık BEP (portal "BEP Özeti" sekmesi).
+takvim kayıtları (Yılbaşı resmi tatili, 30 Aralık kapalı gün — demo planı Çarşamba çalıştığı için seans üretiminde atlanır —, bir etkinlik) · tekrar eden plana tek tarih istisnası · eğitmen hiyerarşisi (1 sürüyor, 1 sona ermiş) · 1 taslak faturada %10 kardeş indirimi · veli1'in ilk çocuğu için onaylı ve veliye açık BEP (portal "BEP Özeti" sekmesi) · bakım ekibi: ilk 3 öğrencide ekip (`egitmen@…` hepsinde birincil terapist; ilk öğrencide ayrıca ikincil terapist + psikolog), kalan öğrencilerde boş (pano "seanslardan" + "Ekibe ekle" gösterir). Öğrenci bazlı erişim kısıtı demoda **kapalıdır**; eğitmen rolü `care_team:read` içerir.
 
 ## Bugünün seansları (demo günü)
 Demo senaryosu bugünkü seansı kullanır. Seed hangi gün çalışırsa çalışsın (hafta sonu dahil) **bugün ve yarın** için şu seansları açar. Böylece demodan bir gün önce çalıştırılan seed de demo gününe seans bırakır:

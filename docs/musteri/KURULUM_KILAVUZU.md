@@ -561,7 +561,7 @@ Ayrıntı: `docs/ekransiz-endpointler.md`. Özet:
 | Okul danışmanlığı (`consultancy`) | Liste/oluşturma var. Ziyaret ayrıntısı, tamamlama/iptal, gözlem ayrıntısı, raporlama ve silme işlemleri (18 uç) ekransız |
 | Kamera (`camera`) | Kamera, oda ataması, izleme yetkisi ve izleme geçmişi ekranları var. **Canlı izleme (yayın) yok**; "Canlı İzle" düğmesi bu yüzden gizli |
 | Anketler (`surveys`) | **Hiç ekranı yok** (yalnızca API) |
-| Bakım ekibi (`care_team`) | **Ekranı yok**; altyapı kısmen kurulu |
+| Bakım ekibi (`care_team`) | Ekranlar var: öğrenci detayında **Bakım Ekibi** sekmesi (listele, ekle, düzenle, çıkar) ve eğitmen için **Benim Öğrencilerim**. Yok: acil/devredilmiş yetki türü ve kampüs kapsamı ekranı. **Öğrenci bazlı erişim kısıtı arayüzden açılmaz** (B.1.3 sonundaki "Öğrenci bazlı erişim kısıtı") |
 | KPI (`kpi`) | Tanımlar, pano ve anlık görüntüler var. Otomatik hesaplama yok (yalnızca "Dönem Hesapla"); kuruma özel KPI tanımının formülü hesaplamada kullanılmıyor [doğrulanacak]; rapor/trend ekranları yok |
 
 **Diğer ekransız işler (B grubu; modül kullanılırsa gerekir):** değerlendirme önerisini güncelleme; e-posta doğrulama (sağlayıcı yok); hedef özet raporu; eğitmen hiyerarşisini bitirme; toplantı çıktısını güncelleme; bildirim tetikleyicileri; elle kredi tüketme/iade (kredi düzeltme ekranı var); taslak faturaya indirim; burs ayrıntı/güncelleme; ödeme başarısız işaretleme (ödeme sağlayıcısı yok); KPI rapor ve trendleri; portalda BEP özeti sayfası; takvim kayıtları (tatil/etkinlik); oda takvimi; toplu iptal/oda değiştirme/yoklama ve tekrar istisnası; rıza kanıt dosyası yükleme.
@@ -668,7 +668,37 @@ python3 devops/set_modules.py --code ornek --disable kpi           # kapatır
   - **KPI:** açılabilir; ama değerler yalnızca "Dönem Hesapla" ile hesaplanır.
   - **Kamera:** kamera, oda ataması, izleme yetkisi tanımlanabilir; **canlı izleme yok**. Müşteri canlı izleme bekliyorsa açmayın.
   - **Kamp, okul danışmanlığı:** yalnızca liste/kayıt düzeyinde; günlük işletim (yoklama, etkinlik, ziyaret tamamlama) ekrandan yapılamaz.
-  - **Anketler, bakım ekibi:** ekranı yok; **açmayın**.
+  - **Anketler:** ekranı yok; **açmayın**.
+  - **Bakım ekibi:** ekranlar hazır; açılabilir. Modülü açmak yalnızca ekip yönetimini getirir; öğrencilerin klinik kayıtlarını ekiple sınırlayan **erişim kısıtı ayrı bir ayardır ve varsayılan kapalıdır** (aşağıda).
+
+#### Öğrenci bazlı erişim kısıtı (bakım ekibi) — nasıl açılır
+
+Modülü açmak (`--enable care_team`) yalnızca ekranları getirir. **Kısıtı** ayrıca açarsınız: açıkken bakım ekibinde olmayan ve `care_team:bypass` izni bulunmayan kullanıcı (ör. eğitmen) o öğrencinin **klinik kayıtlarını** (hedef, ilerleme, vaka notu, tıbbi/gelişim/kurum raporu, BEP ve değerlendirme kayıtları, öğrenci–veli bağı) göremez; veli portalı da bu kurala tabidir. Kapalıyken (varsayılan) yalnızca rol izinleri geçerlidir. Öğrenci kartlarının listesi kısıttan etkilenmez. Arayüzü ve API'si yoktur; **platform sahip rolüyle** (RLS'yi atlar) ayar satırı yazılır:
+
+```bash
+# Açma (idempotent) — <kod> kurum kodu
+docker exec -i aynesil-db psql -U aynesil_owner -d aynesil <<'SQL'
+insert into core.setting_value (setting_key, scope_level, corporation_id, value)
+select 'care_team_abac_enabled', 'corporation', c.id, 'true'::jsonb
+  from core.corporation c where c.code = '<kod>'
+on conflict (setting_key, scope_level, corporation_id, scope_id) do update set value = 'true'::jsonb, updated_at = now();
+SQL
+
+# Durum
+docker exec aynesil-db psql -U aynesil_owner -d aynesil -c "select c.code, sv.value from core.setting_value sv join core.corporation c on c.id = sv.corporation_id where sv.setting_key = 'care_team_abac_enabled'"
+
+# Kapatma (anında etkili; geri dönüş güvenli)
+docker exec aynesil-db psql -U aynesil_owner -d aynesil -c "update core.setting_value set value = 'false'::jsonb, updated_at = now() where setting_key = 'care_team_abac_enabled' and corporation_id = (select id from core.corporation where code = '<kod>')"
+```
+
+**Açmadan önce kontrol listesi** (yoksa eğitmenler kayıtları aniden göremez):
+1. `care_team` modülü açık (`set_modules.py --list`).
+2. Her ders veren eğitmenin kaydı bir kullanıcı hesabına bağlı (Eğitmenler → eğitmen → Kullanıcı hesabı).
+3. Her aktif öğrencinin bakım ekibi kurulu (Öğrenci → Bakım Ekibi). Eğitmen rolünde `care_team:read` olsun (B.4) ki "Benim Öğrencilerim" çalışsın.
+4. Yönetici ve koordinatör rollerinde `care_team:bypass` olsun (ekibe girmeden tüm öğrencileri görmeleri gerekiyorsa). Kurum yöneticisi rolü `admin`'e V15 üç izni de verir.
+5. Veli portalı ekranlarını (özellikle öğrenci–veli ve rapor görünümleri) kısıt açıkken bir veli hesabıyla deneyin (`docs/ABAC_CARE_TEAM_DESIGN.md` §9).
+
+Doğrulama: entegrasyon testi `CareTeamAccessTests` (kısıt açıkken yalnızca ekipteki öğrencinin hedefleri görünür; ekibe ekleyince görünür, çıkarınca kaybolur; kapalıyken hiçbir şey gizlenmez).
 
 ### B.1.4 Kurumu pasifleştirme (platform işi)
 
@@ -773,6 +803,7 @@ Günlük operasyonu yürütür: aday, öğrenci, veli, değerlendirme, BEP (onay
 | Telafi | `makeup_request:read`, `makeup_request:request` |
 | İzin | `leave_request:submit`, `leave_request:read`, `leave_request:cancel`, `leave_balance:read` |
 | Diğer | `meeting:read`, `assessment_session:read`, `notification:read`, `kpi_dashboard:read` (KPI açıksa), `parent_feedback:read` |
+| Bakım ekibi (modül açıksa) | `care_team:read` ("Benim Öğrencilerim" sayfası ve ekip sekmesini görme; ekip düzenleme `care_team:assign` koordinatör/yöneticidedir) |
 | Kamp (modül açıksa) | `camp:read`, `camp_attendance:read/record`, `camp_participation:read/record` |
 
 ### Muhasebe

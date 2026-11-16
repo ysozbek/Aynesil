@@ -12,7 +12,7 @@ AyNesil, özel eğitim ve terapi merkezlerinin günlük işlerini tek yerde topl
 6. Gerekirse **kampa** katılır (Akış 6), velisiyle **toplantı** yapılır (Akış 7), kameradan izlenebilir (Akış 9).
 7. **Veli** tüm bunları portaldan takip eder (Akış 14).
 
-Arkada çalışan destek işleri: personel izinleri (7), okul danışmanlığı (8), eğitmen kayıtları (15), performans ölçümü (10), bildirimler (13), kullanıcı/rol/liste yönetimi (16). Anketler (11) ve bakım ekibi (12) yalnızca altyapı olarak var, ekranı yok.
+Arkada çalışan destek işleri: personel izinleri (7), okul danışmanlığı (8), eğitmen kayıtları (15), performans ölçümü (10), bildirimler (13), kullanıcı/rol/liste yönetimi (16). Anketler (11) yalnızca altyapı olarak var, ekranı yok; bakım ekibinin (12) ekranı var (öğrenci detayında sekme, "Benim öğrencilerim" sayfası).
 
 ## Modüller birbirine nasıl bağlı?
 - **Öğrenci** her şeyin merkezidir; plan, seans, paket, sözleşme, kamera izni öğrenciye bağlanır.

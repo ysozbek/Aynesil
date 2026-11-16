@@ -9,7 +9,7 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); kalan **100** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); kalan **94** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
@@ -65,6 +65,17 @@ Kapanışla birlikte düzeltilen backend boşlukları: telafi seansı atanırken
 | Veli portalı BEP özeti | `GET /api/portal/students/{studentId}/bep` | `CanViewPlan` bayrağına bağlı; **`approved` ve `active`** + veliye açık plan (önceden yalnızca `approved`: plan aktifleşince veliden kayboluyordu). | Portal → çocuk → BEP Özeti |
 | Oda takvimi görünümü | `GET /api/scheduling/calendar/room/{roomId}` | `room:read`; açık kurum süzgeci eklendi; kapalı gün kayıtları da gösterilir. | Takvim → "Oda" |
 | Eğitmen hiyerarşisinde ilişkiyi sonlandırma | `PATCH /api/educators/{id}/hierarchy/{edgeId}/end` | Kayıt silinmez (`active_to`); `{id}` ilişkinin alt eğitmeni olmalı (404); bitiş ≥ başlangıç; zaten sona ermiş ilişki tekrar sonlandırılamaz. | Eğitmen detayı → Hiyerarşi → Sonlandır |
+
+**Dördüncü tur — B'den A'ya taşınıp ekranı yapılanlar: bakım ekibi (2026-11-16):**
+
+| Akış | Uç(lar) | Kural | Ekran |
+|---|---|---|---|
+| Bakım ekibi: listele, ekle, düzenle, ekipten çıkar | `GET/POST /api/students/{id}/care-team`, `GET/PUT/DELETE …/{assignmentId}` | Kaldırma kaydı silmez (bugün itibarıyla `ended`); öğrencide tek birincil atama; `rowVersion` → 409 (**liste yanıtına `rowVersion` ve `reason` eklendi**: önceden yoktu, ekrandan güncelle/kaldır yapılamazdı). Ekran yalnızca `care_team` modülü açıkken görünür (menü satırı). | Öğrenci detayı → Bakım Ekibi sekmesi (`care_team:read`; ekle/düzenle/çıkar `care_team:assign`) |
+| Benim öğrencilerim | `GET /api/care-team/my-students` | Hesabı bir eğitmen kaydına bağlı değilse liste boş. | `/care-team/my-students` (menü: "Benim Öğrencilerim", V59 ile yeniden açıldı) |
+| Pano: atanmış eğitmenler | `GET /api/students/{id}/session-educators` (**yeni**, `student:read`) | Önceki alan kaynaksız bir "Yakında" yer tutucusuydu (seans/plan/başka bir yerden türetilmiyordu). Şimdi bakım ekibini gösterir; ekip boşsa öğrencinin iptal/gelmedi olmayan seanslarındaki eğitmenleri "seanslardan" etiketiyle gösterir ve "Ekibe ekle" sunar (erişim vermez, yalnızca atama kısayolu). | Öğrenci panosu |
+| Tekrar eden plan: ekip önerisi | (yeni uç yok; `POST …/care-team`) | Sorumlu eğitimci öğrencinin ekibinde değilse "Ekibe ekle" önerilir; zorunlu değildir, plan yine kaydedilir. | Plan oluşturma formu |
+
+Öğrenci bazlı erişim kısıtı (ABAC) **arayüzden açılmaz**; platform ekibi `care_team_abac_enabled` ayarını SQL ile açar (KURULUM_KILAVUZU B.1.3). Entegrasyon testi (`CareTeamAccessTests`): kısıt açıkken ekipte olmayan eğitmen öğrencinin hedeflerini göremez, ekibe eklenince görür, çıkarılınca kaybeder.
 
 Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortasında biten haftanın günlerini üretmiyordu (ör. 1–14 Aralık penceresinde 14 Aralık Pazartesi atlanıyordu); indirim toplama iki kez yazılıyordu; portal BEP aktif planı gizliyordu; öneri güncellemede `rowVersion`/oturum denetimi yoktu.
 
@@ -125,17 +136,6 @@ Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortas
 | DELETE | `/api/camps/{id}` | Camps.Delete |
 | POST | `/api/camps/{id}/activate` | Camps.Activate |
 | POST | `/api/camps/{id}/deactivate` | Camps.Activate |
-
-**CareTeam** — 6 uç. Bakım ekibi (ABAC) yönetimi ekranı yok; CLAUDE.md: kısmen devreye alınmış, genişletilmeyecek. Bakım ekibi kullanılacaksa gerekir.
-
-| Metot | Route | İzin |
-|---|---|---|
-| GET | `/api/care-team/my-students` | CareTeam.Read |
-| GET | `/api/students/{studentId}/care-team` | CareTeam.Read |
-| POST | `/api/students/{studentId}/care-team` | CareTeam.Assign |
-| DELETE | `/api/students/{studentId}/care-team/{assignmentId}` | CareTeam.Assign |
-| GET | `/api/students/{studentId}/care-team/{assignmentId}` | CareTeam.Read |
-| PUT | `/api/students/{studentId}/care-team/{assignmentId}` | CareTeam.Assign |
 
 **Consultancy** — 18 uç. Okul danışmanlığı modülü: kullanan kurumda ziyaret/gözlem/rapor ayrıntı ekranları gerekir.
 
@@ -301,6 +301,6 @@ B grubundaki modüller (kamp, okul danışmanlığı, kamera, anketler, bakım e
 | Demo | `demo-seed` demo kurumlarını `--enable-modules all` ile açar; mevcut `demo_a/b` açık kalır. |
 | Sonradan aç/kapat | `python3 devops/set_modules.py --code ornek --enable camps --disable surveys` · `--list` durum · `--check` deneme · `--dry-run` SQL. |
 
-Menüsü olmayan modüller: `students-surveys` ve `students-care-team` menü satırları pasif (ekran yok); bayrak yine de konmuştur, ekran gelince modül kapalıyken görünmez.
+Menüsü olmayan modül: `students-surveys` satırı pasif (ekran yok). `students-care-team` V59 ile yeniden açıldı ("Benim Öğrencilerim"); bakım ekibi kapalıyken menüde ve öğrenci detayındaki sekmede görünmez.
 
 Doğrulama: birim (`ModuleVisibilityTests`: ayrıştırma, `modules` koruma, filtre, menü), entegrasyon (`ModuleVisibilityTests`: yeni kurum kapalı + 403 + menü gizli; aç/kapat anında etkili; kurum yöneticisi açamaz), smoke-api (demo_a: kapat → 403 + menü gizli; aç → geri gelir; kurum ayarıyla açma denemesi korunur).

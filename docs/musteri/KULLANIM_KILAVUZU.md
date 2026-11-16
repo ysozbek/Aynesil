@@ -19,7 +19,7 @@ AyNesil, özel eğitim kurumları için geliştirilmiş bir yönetim platformudu
 > **Not:** Hiçbir veri kurumlar arasında görünmez. Her kullanıcı yalnızca kendi kurumunun verisini görür.
 
 ### Ek modüller
-Şu bölümler **ek modüldür** ve kurumunuz için ayrıca açılır: **Kamp**, **Okul Danışmanlığı**, **Kamera**, **KPI & Performans** (ayrıca altyapı olarak anketler ve bakım ekibi). Yeni kurumda kapalı gelirler. Açıp kapatmayı yalnızca AyNesil teknik ekibi yapar; kurum yöneticisi `Platform Yönetimi → Kurumlar → kurum → Ayarlar` sayfasındaki **Modüller** listesinde hangisinin açık olduğunu görür ama değiştiremez. Kapalı bir modülün menüsü görünmez, rolünüzde izni olsa bile.
+Şu bölümler **ek modüldür** ve kurumunuz için ayrıca açılır: **Kamp**, **Okul Danışmanlığı**, **Kamera**, **KPI & Performans** **Bakım Ekibi** (ayrıca altyapı olarak anketler). Yeni kurumda kapalı gelirler. Açıp kapatmayı yalnızca AyNesil teknik ekibi yapar; kurum yöneticisi `Platform Yönetimi → Kurumlar → kurum → Ayarlar` sayfasındaki **Modüller** listesinde hangisinin açık olduğunu görür ama değiştiremez. Kapalı bir modülün menüsü görünmez, rolünüzde izni olsa bile.
 
 ---
 
@@ -178,6 +178,14 @@ Not: Canlı izleme ekranı henüz yoktur.
 1. `KPI & Performans → KPI Tanımları` → takip edilen ölçütler. Sistemle gelen ölçütler değiştirilemez; **Yeni KPI tanımı** ile kurumunuza özel ölçüt ekleyip **Düzenle** ile değiştirebilirsiniz.
 2. `Performans Anlık Görüntüleri → Dönem Hesapla` → içinde bulunulan ayın değerlerini hesaplar. **Değerler kendiliğinden hesaplanmaz**; panoda sayı yoksa önce bunu yapın. Aynı ay tekrar hesaplanırsa eski sonucun üzerine yazılır.
 3. `KPI & Performans` → Yönetici, Üst Yönetim ve Sıralama sekmeleri; dönem seçiciyle önceki aylar.
+
+### 3.12b Bakım Ekibi (modül açıksa)
+Bakım ekibi, bir öğrenciye bakan eğitmenleri belirler. Kurum öğrenci bazlı erişim kısıtını açtırdıysa (teknik ekip yapar), yalnızca ekipteki eğitmenler (ve özel geçiş izni olanlar) öğrencinin hedef, vaka notu, rapor ve BEP gibi **klinik kayıtlarını** görür.
+- **Yönetici/koordinatör:** Öğrenciler → öğrenci → **Bakım Ekibi** sekmesi. **Eğitmen ekle** ile eğitmeni, ekip rolünü ve başlangıç tarihini seçin; öğrenci başına tek **birincil** üye olabilir. Satırdaki **Düzenle** ile rol/tarih değiştirilir; **Ekipten çıkar** atamayı bugün itibarıyla bitirir (kayıt silinmez; "Sona erenleri de göster" ile geçmiş görünür).
+- **Eğitmen:** menüde **Benim Öğrencilerim** ekibinde olduğunuz öğrencileri listeler. Hesabınız bir eğitmen kaydına bağlı değilse liste boştur (bkz. 3.14).
+- **Öğrenci panosu:** "Atanmış eğitmenler" ekibi gösterir. Ekip boşsa seanslarda görev almış eğitmenler **"seanslardan"** etiketiyle çıkar ve **Ekibe ekle** düğmesi ekibe tek tıkla eklemenizi sağlar.
+- **Tekrar eden plan:** sorumlu eğitimci öğrencinin ekibinde değilse plan formu "Ekibe ekle" önerir; kabul etmek zorunlu değildir.
+- **Dikkat:** kısıt açılmadan önce her eğitmen hesabının eğitmen kaydına bağlı olduğundan ve her öğrencinin ekibinin kurulduğundan emin olun; aksi halde eğitmenler kayıtları aniden göremez.
 
 ### 3.13 İzin Yönetimi
 1. `İzin Yönetimi → İzin Talepleri → Yeni` → izin alacak eğitmen, izin türü, tarihler, neden.
