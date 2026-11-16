@@ -19,7 +19,7 @@ AyNesil, özel eğitim kurumları için geliştirilmiş bir yönetim platformudu
 > **Not:** Hiçbir veri kurumlar arasında görünmez. Her kullanıcı yalnızca kendi kurumunun verisini görür.
 
 ### Ek modüller
-Şu bölümler **ek modüldür** ve kurumunuz için ayrıca açılır: **Kamp**, **Okul Danışmanlığı**, **Kamera**, **KPI & Performans** **Bakım Ekibi** (ayrıca altyapı olarak anketler). Yeni kurumda kapalı gelirler. Açıp kapatmayı yalnızca AyNesil teknik ekibi yapar; kurum yöneticisi `Platform Yönetimi → Kurumlar → kurum → Ayarlar` sayfasındaki **Modüller** listesinde hangisinin açık olduğunu görür ama değiştiremez. Kapalı bir modülün menüsü görünmez, rolünüzde izni olsa bile.
+Şu bölümler **ek modüldür** ve kurumunuz için ayrıca açılır: **Kamp**, **Okul Danışmanlığı**, **Kamera**, **Anketler**, **KPI & Performans** ve **Bakım Ekibi**. Yeni kurumda kapalı gelirler. Açıp kapatmayı yalnızca AyNesil teknik ekibi yapar; kurum yöneticisi `Platform Yönetimi → Kurumlar → kurum → Ayarlar` sayfasındaki **Modüller** listesinde hangisinin açık olduğunu görür ama değiştiremez. Kapalı bir modülün menüsü görünmez, rolünüzde izni olsa bile.
 
 ---
 
@@ -190,6 +190,14 @@ Bakım ekibi, bir öğrenciye bakan eğitmenleri belirler. Kurum öğrenci bazl�
 - **Tekrar eden plan:** sorumlu eğitimci öğrencinin ekibinde değilse plan formu "Ekibe ekle" önerir; kabul etmek zorunlu değildir.
 - **Dikkat:** kısıt açılmadan önce her eğitmen hesabının eğitmen kaydına bağlı olduğundan ve her öğrencinin ekibinin kurulduğundan emin olun; aksi halde eğitmenler kayıtları aniden göremez.
 
+### 3.12c Anketler ve Veli Geri Bildirimi (modül açıksa)
+Velilere anket gönderir, yanıtları soru bazında görürsünüz; velilerin eğitmen/seans puanlarını izlersiniz. Menü: **Öğrenciler → Anketler** ve **Öğrenciler → Veli Geri Bildirimi**.
+- **Anket hazırlama:** **Yeni Anket** → başlık, tür, kime yönelik (velinin portalında yalnızca **Veli** hedefli anketler görünür), sorular. Soru türleri: puan (1–5), evet/hayır, çoktan seçmeli (en az iki seçenek), ölçek, serbest metin; **Zorunlu** işaretlenen soru boş bırakılamaz; ↑/↓ ile sıra değişir. Anket **Aktif** olduğu sürece velilere görünür.
+- **Düzenleme ve silme:** listede **Düzenle** / **Sil**. **Yanıt gelen anketin soruları değiştirilemez** (başlık, açıklama, aktif/pasif düzenlenir); soruları değiştirmek için yeni anket açın. Yanıtlı anketi silmek onu **pasife alır** (yanıtlar korunur), yanıtsız anket silinir.
+- **Sonuçlar:** satıra tıklayın. Yanıt sayısı, her soru için ortalama ve dağılım (kaç kişi hangi puanı/seçeneği işaretledi), yazılı öneriler ve yanıtlayan veli/öğrenci listesi.
+- **Veli geri bildirimi:** velilerin bıraktığı yıldız puanı ve yorumlar (veli, eğitmen, tarih). Bir seans seçilerek verilen puan o seansın eğitmenine yazılır ve eğitmenin **KPI veli memnuniyeti** değerini besler; anket yanıtlarındaki puanlar KPI'a girmez.
+- **Veli tarafı:** `Veli Portalı → Anketler`'de bekleyen anketleri doldurur (her çocuk için ayrı; aynı anket aynı çocuk için bir kez), `Veli Portalı → Geri Bildirim`'de seans/eğitmen için puan ve yorum bırakır. Veli yalnızca kendi çocuğuyla ilgili anketi yanıtlar ve yalnızca kendi çocuğunun seansını puanlar.
+
 ### 3.13 İzin Yönetimi
 1. `İzin Yönetimi → İzin Talepleri → Yeni` → izin alacak eğitmen, izin türü, tarihler, neden.
 2. Yönetici ya da koordinatör talep sayfasında etkilenen seansları görür, **Onayla** ya da **Reddet** (red için neden yazılır). **Onaylayan kişi o an giriş yapmış olan kişidir**; formda seçilmez.
@@ -213,10 +221,11 @@ Kurallar:
 - Veli hesabına verilen rol portal iznini içermiyorsa sistem hesabı açmaz.
 
 ### 3.15 Veli Portalı
-Veliler ayrı bir arayüz görür: `Veli Portalı` menüsü (Özet, Çocuklarım, Bildirimler).
+Veliler ayrı bir arayüz görür: `Veli Portalı` menüsü (Özet, Çocuklarım, Bildirimler; anket modülü açıksa Anketler ve Geri Bildirim).
 1. `Özet` → yaklaşan seans, okunmamış bildirimler, paket bakiyesi, aktif hedef sayısı.
 2. `Çocuklarım` → çocuğa tıklayın → **Seanslar, BEP Özeti, Hedefler, Paketler, Belgeler, Toplantılar** sekmeleri. **BEP Özeti** yalnızca kurumun onayladığı ve veliye açtığı planı gösterir (sürüm, onay tarihi, geçerlilik).
 3. `Bildirimler` → veliye iletilenler.
+   `Anketler` → kurumun gönderdiği, henüz yanıtlanmamış anketler (çocuk seçilerek doldurulur); `Geri Bildirim` → bir seans/eğitmen için puan ve yorum, gönderilenlerin listesi (bkz. 3.12c).
 4. Veli yalnızca kendi çocuklarının verisini ve yalnızca kurumun açtığı bölümleri görür. Kurum her çocuk için ayrı ayrı şu kutuları açar: **Oturumlar** (seanslar ve veliye görünür notlar), **Devam**, **Raporlar** (yalnızca kesinleşmiş gelişim raporları), **BEP/IEP** (yalnızca onaylı ve veliye açılmış plan), **Finans** (paketler), **Kamera**.
 5. Grup seansında veli yalnızca kendi çocuğuna bağlanmış notları görür; diğer çocuklar için yazılanlar ve iç notlar görünmez.
 

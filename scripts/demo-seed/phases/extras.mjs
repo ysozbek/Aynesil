@@ -28,21 +28,40 @@ export async function setupExtras(ctx) {
                   { questionText: 'Eğitmenle iletişimden memnun musunuz?', questionType: 'multiple_choice', isRequired: true, sortOrder: 2, answerOptions: [{ optionText: 'Evet', optionValue: 'yes', sortOrder: 1 }, { optionText: 'Kısmen', optionValue: 'partial', sortOrder: 2 }, { optionText: 'Hayır', optionValue: 'no', sortOrder: 3 }] },
                   { questionText: 'Önerileriniz', questionType: 'text', isRequired: false, sortOrder: 3, answerOptions: [] }] }))
     await step('anket 2', async () => c.post('/surveys', { title: 'Seans Geri Bildirimi (Demo)', target: 'guardian', typeId: await ctx.ref('survey_type', 'session_feedback'), description: null, questions: [{ questionText: 'Seans süresi yeterli miydi?', questionType: 'multiple_choice', isRequired: true, sortOrder: 1, answerOptions: [{ optionText: 'Evet', optionValue: 'yes', sortOrder: 1 }, { optionText: 'Hayır', optionValue: 'no', sortOrder: 2 }] }] }))
-    // yanıtlar: veli portalı kullanıcısıyla
-    const p1 = ids.portal?.guardian1
-    if (sv?.id && p1) await step('anket yanıtı', async () => {
-      const gc = new Client('veli1'); await gc.login(`${fx.users.guardian1.local}@${t.domain}`, fx.password)
-      const full = await gc.get(`/surveys/${sv.id}`).catch(() => c.get(`/surveys/${sv.id}`))
-      const qs = full.questions ?? []
-      await gc.post('/surveys/responses', { surveyId: sv.id, guardianId: p1.guardianId, studentId: p1.studentIds[0], sessionId: null,
-        answers: qs.map((q) => q.questionType === 'rating' ? { questionId: q.id, answerText: null, answerOptionId: null, numericValue: 5 } : q.questionType === 'multiple_choice' ? { questionId: q.id, answerText: null, answerOptionId: q.answerOptions?.[0]?.id ?? null, numericValue: null } : { questionId: q.id, answerText: 'Çok memnunuz, teşekkürler. (demo)', answerOptionId: null, numericValue: null }) })
-    })
-    await step('veli geri bildirimi', async () => {
-      const gc = new Client('veli1'); await gc.login(`${fx.users.guardian1.local}@${t.domain}`, fx.password)
-      await gc.post('/surveys/parent-feedback', { guardianId: p1.guardianId, educatorId: ids.educators[0].id, sessionId: null, rating: 5, comment: 'Eğitmenimiz çok ilgili, teşekkür ederiz. (demo)' })
-    })
+    // yanıtlar: veli portalı kullanıcılarıyla. Bekleyen anketleri velinin kendi ucundan (/surveys/pending) alır;
+    // veli1 iki çocuğu için, veli2 tek çocuğu için yanıtlar. "Seans Geri Bildirimi" anketi bilerek bekleyen kalır
+    // (portalda "Anketler" sayfası dolu açılır). Sonuçlar sayfası için puanlar/seçimler farklı.
+    const answerAs = async (key, gk, ratings) => {
+      const g = ids.portal?.[gk]
+      if (!sv?.id || !g) return
+      const gc = new Client(key); await gc.login(`${fx.users[gk].local}@${t.domain}`, fx.password)
+      const pending = (await gc.get('/surveys/pending')).find((p) => p.surveyId === sv.id)
+      if (!pending) return
+      for (const [i, studentId] of g.studentIds.entries()) await step(`anket yanıtı ${gk} #${i + 1}`, async () => gc.post('/surveys/responses', { surveyId: sv.id, guardianId: null, studentId, sessionId: null,
+        answers: pending.questions.map((q) => q.questionType === 'rating' ? { questionId: q.id, answerText: null, answerOptionId: null, numericValue: ratings[i] ?? 4 }
+          : q.questionType === 'multiple_choice' ? { questionId: q.id, answerText: null, answerOptionId: q.answerOptions[(i + (gk === 'guardian2' ? 1 : 0)) % q.answerOptions.length].id, numericValue: null }
+          : { questionId: q.id, answerText: gk === 'guardian1' && i === 0 ? 'Çok memnunuz, teşekkürler. (demo)' : null, answerOptionId: null, numericValue: null }) }))
+    }
+    await answerAs('veli1', 'guardian1', [5, 4])
+    await answerAs('veli2', 'guardian2', [3])
+    // veli geri bildirimi: çocuğunun tamamlanmış seansı varsa o seansı puanlar (puan seansın eğitmenine yazılır → KPI veli memnuniyeti);
+    // yoksa genel yorum. Çocuğuyla ilgisiz eğitmen/seans için geri bildirim reddedilir (Rule.GuardianNoActiveAccess).
+    const feedbackAs = async (key, gk, rating, comment) => {
+      const g = ids.portal?.[gk]
+      if (!g) return
+      const gc = new Client(key); await gc.login(`${fx.users[gk].local}@${t.domain}`, fx.password)
+      let sessionId = null
+      for (const studentId of g.studentIds) {
+        const list = await gc.get(`/portal/students/${studentId}/sessions?page=1&pageSize=50`).catch(() => [])
+        sessionId = (list ?? []).find((x) => x.status === 'completed')?.id ?? null
+        if (sessionId) break
+      }
+      await step(`veli geri bildirimi ${gk}`, async () => gc.post('/surveys/parent-feedback', { guardianId: null, educatorId: null, sessionId, rating, comment }))
+    }
+    await feedbackAs('veli1', 'guardian1', 5, 'Eğitmenimiz çok ilgili, teşekkür ederiz. (demo)')
+    await feedbackAs('veli2', 'guardian2', 4, 'Seanslar verimli geçiyor. (demo)')
   } else info('anketler zaten var — atlandı')
-  info('bildirim şablonu/tetikleyici, 7 örnek bildirim, 2 anket, yanıt ve geri bildirim')
+  info('bildirim şablonu/tetikleyici, 7 örnek bildirim, 2 anket (biri velide bekliyor), 3 yanıt ve 2 veli geri bildirimi')
   await newFlowExamples(ctx)
 }
 

@@ -9,7 +9,7 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); beşinci turda **18 uç daha kapatıldı** (§2, "Beşinci tur": okul danışmanlığı); kalan **76** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); beşinci turda **18 uç daha kapatıldı** (§2, "Beşinci tur": okul danışmanlığı); altıncı turda **9 uç daha kapatıldı** (§2, "Altıncı tur": anketler; ek olarak sonuç özeti, bekleyen anketler ve "benim geri bildirimlerim" uçları ekran dahil yazıldı); kalan **67** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
@@ -81,7 +81,7 @@ Aynı turda bulunup düzeltilen koddaki hatalar: `ExpandWeekly` pencerenin ortas
 
 **Beşinci tur — B'den A'ya taşınıp ekranı yapılanlar: okul danışmanlığı (2026-11-16):**
 
-Tüm modül rotaları (kamp, kamera, KPI, bakım ekibi, danışmanlık) `meta.module` taşır; kural `router/moduleGuard.ts` içinde, testi `npm test` (`tests/moduleGuard.test.mjs`: kapalı modül → `forbidden`/`/403`, kaynakta her modül rotasının bayrağı). Anket modülünün henüz rotası yok; ekranı eklendiğinde `meta.module: Modules.Surveys` konur (test, bayraklı rotanın tanımlı modül öneki dışında olmasını yakalar: yeni önek `expected` listesine eklenmeli). Ekranlar `useModule(Modules.X).visible(izin)` kullanır. Danışmanlık ekranları `consultancy` modülüne bağlıdır: rotalar `meta.module` ile korunur (kapalıysa `/403`; durum `GET /api/modules/me`), düğmeler `useModule(Modules.Consultancy).visible(izin)` ile görünür (modül açık **ve** izin var).
+Tüm modül rotaları (kamp, kamera, KPI, bakım ekibi, danışmanlık) `meta.module` taşır; kural `router/moduleGuard.ts` içinde, testi `npm test` (`tests/moduleGuard.test.mjs`: kapalı modül → `forbidden`/`/403`, kaynakta her modül rotasının bayrağı). Anket rotaları (`surveys`, `portal/surveys`, `portal/feedback`) da `meta.module: Modules.Surveys` taşır; test, bayraklı rotanın tanımlı modül öneki dışında olmasını yakalar: yeni önek `expected` listesine eklenmeli. Ekranlar `useModule(Modules.X).visible(izin)` kullanır. Danışmanlık ekranları `consultancy` modülüne bağlıdır: rotalar `meta.module` ile korunur (kapalıysa `/403`; durum `GET /api/modules/me`), düğmeler `useModule(Modules.Consultancy).visible(izin)` ile görünür (modül açık **ve** izin var).
 
 | Akış | Uç(lar) | Kural | Ekran |
 |---|---|---|---|
@@ -96,6 +96,20 @@ Tüm modül rotaları (kamp, kamera, KPI, bakım ekibi, danışmanlık) `meta.mo
 | Raporlar sayfası | `GET …/reporting/agreements`, `…/institutions`, `…/outcomes`, `…/visit-history` | Dört sekme; her sekme kendi ucunun iznine bağlı (sözleşme özeti `consultancy_agreement:read`, okul raporu `institution:read`, sonuçlar `consultancy_plan:read`, ziyaret geçmişi `school_visit:read`). | `/consultancy/analytics` (menü: "Raporlar ve Özetler", V60; panodan da bağlantı) |
 
 Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → plan (taslak) → sözleşme → plan aktif → sözleşme gönder/imzala → ziyaret → gözlem → ziyaret tamamla → rapor → takip. Silme engelleri her biri için denenir.
+
+**Altıncı tur — B'den A'ya taşınıp ekranı yapılanlar: anketler ve veli geri bildirimi (2026-11-16):**
+
+`surveys` modülüne bağlı (rotalar `meta.module`, düğmeler `useModule(Modules.Surveys).visible(izin)`; menü V61).
+
+| Akış | Uç(lar) | Kural | Ekran |
+|---|---|---|---|
+| Anket listesi, oluşturma, düzenleme, silme | `GET/POST /api/surveys`, `GET/PUT/DELETE /api/surveys/{id}` | Başlık ≤500, hedef `guardian/educator/student`, en az bir soru; çoktan seçmeli soruda en az iki seçenek (**eklendi**, `Validation.ChoiceNeedsOptions`). **Düzenleme artık soru/seçenek de kapsar** (`PUT` gövdesinde `questions`; kimlikli olan güncellenir, kimliksiz eklenir, listede olmayan silinir); **yanıt alınmış anketin soruları kilitli** (409 `Rule.SurveyQuestionsLocked`; yalnızca başlık/açıklama/durum değişir). Başka ankete ait soru/seçenek kimliği 422 `NotPartOfSurvey`. Silme: yanıt yoksa soft-delete, yanıt varsa pasife alır (yanıtlar korunur). Tüm işlemler açık kurum süzgecinden geçer. Liste ve ayrıntı `responseCount` döner. | `/surveys`, `/surveys/new`, `/surveys/:id/edit` (menü: Öğrenciler → Anketler) |
+| Sonuçlar (soru bazında özet) | `GET /api/surveys/{id}/results` (**yeni**, `survey:read`) + `GET /api/surveys/responses` (veli/öğrenci adı **eklendi**) | Yalnızca gönderilmiş yanıtlar sayılır. Puan/ölçek: ortalama + dağılım; çoktan seçmeli: seçenek başına sayı (seçenek değerleri sayısalsa ortalama); evet/hayır: dağılım; metin: son 50 yazılı yanıt. | `/surveys/:id/results` |
+| Velide bekleyen anketler | `GET /api/surveys/pending` (**yeni**, `survey:respond`) | Velinin kendi (erişimi açık) çocukları için, aktif ve hedefi `guardian` olan, henüz yanıtlanmamış anketler; sorular/seçeneklerle birlikte gelir (veli `survey:read` iznine sahip değildir). Veli olmayan kullanıcıya boş liste. | `/portal/surveys` (menü: Veli Portalı → Anketler) |
+| Veli anketi yanıtlar | `POST /api/surveys/responses` | Veli kimliği oturumdan türetilir; başkasının çocuğu 403 `GuardianNoActiveAccess`; seans verilirse çocuklarından birinin seansı olmalı. **Eklendi:** aynı anket × veli × çocuk × seans için ikinci gönderim 409 `Rule.SurveyAlreadySubmitted` (kural dokümanda vardı ama yalnızca "iki kez Submit" olarak kodlanmıştı, fiilen hiç tetiklenmiyordu); zorunlu soru boşsa 422; puan 1–5; aynı soruya iki yanıt 422; veliye yönelik olmayan anket 409 `Rule.SurveyTargetMismatch`. | `/portal/surveys` |
+| Veli geri bildirimi: oluştur, listele | `POST/GET /api/surveys/parent-feedback`, `GET …/parent-feedback/mine` (**yeni**, `parent_feedback:create`) | Puan 1–5 ve/veya yorum (≤2000). **Eklendi:** veli yalnızca **kendi çocuğunun** seansını/eğitmenini puanlayabilir (aksi 403); yalnızca seans verilirse puan **seansın baş eğitmenine** yazılır (KPI veli memnuniyeti eğitmen bazlıdır); eğitmen/seans kurum içinde var olmalı (404). `GET parent-feedback` bir veli tarafından çağrılırsa gönderilen süzgeç ne olursa olsun yalnızca kendi kayıtlarını döner; liste veli ve eğitmen adı içerir. | Yönetici: `/surveys/feedback` (`parent_feedback:read`); veli: `/portal/feedback` |
+
+**KPI veli memnuniyeti bağı (doğrulandı):** `educator.parent_satisfaction` yalnızca `ops.parent_feedback.rating` değerlerinin eğitmen + dönem ortalamasıdır (`ComputePerformanceSnapshot`). Veli geri bildirimi (seans ya da eğitmen ile) bu ölçüte yansır; birim testi (`SurveyModuleTests`) ve smoke-api (`performance-kpi.compute`) bunu kanıtlar. **Anket yanıtları (`survey_response`) bu ölçüte girmez:** anket yanıtında eğitmen bağı yok; ölçüt şu an yalnızca `parent_feedback` kaynaklıdır. (Anket puanlarını eğitmen KPI'ına katmak ayrı bir karar: seans bağlı yanıt → seansın eğitmeni kuralı gerekir.)
 
 **Seans notu düzenlendi bilgisi (güncellendi, V55):** `scheduling.session_note`'a `edited_at timestamptz` + `edited_by uuid` eklendi; **yalnızca not metni değişince** dolar (salt görünürlük değişikliği düzenleme sayılmaz; o iz `core.audit_log`'ta). Personel ekranı ve **veli portalı** (çocuk detayı → Seanslar, seansın altında) "düzenlendi" gösterir. Portal yalnızca `parent_visible = true` ve silinmemiş notları döner, `CanViewSessions` kapalıysa seans listesiyle birlikte hiç göndermez (`PortalAccessHelper`); görünürlük sonradan kapatılan not portaldan kalkar. **V56 (grup seansı sızıntısı):** not `student_id`'ye bağlanır; portal yalnızca velinin kendi çocuğuna bağlı notları gösterir, `student_id` boş not (grup seansı dahil) hiçbir veliye gösterilmez; grup seansında veliye görünür not için öğrenci seçimi zorunludur (422 `Rule.SessionNoteStudentRequired`). Eski veri: tek katılımcılı seanslardaki görünür notlar bağlandı, grup/katılımcısız seanslardakiler kapatıldı (yerel veritabanında 12 bağlandı, 0 kapatıldı).
 
@@ -251,21 +265,6 @@ Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → pl
 |---|---|---|
 | POST | `/api/performance-kpi/parent-feedback` | ParentFeedback.Submit |
 
-**Surveys** — 9 uç. Anket modülünün frontend servisi/ekranı hiç yok (yalnızca API). Anket kullanılacaksa tümü birlikte yapılmalı.
-
-| Metot | Route | İzin |
-|---|---|---|
-| GET | `/api/surveys` | Surveys.Read |
-| POST | `/api/surveys` | Surveys.Create |
-| GET | `/api/surveys/parent-feedback` | ParentFeedback.Read |
-| POST | `/api/surveys/parent-feedback` | ParentFeedback.Create |
-| GET | `/api/surveys/responses` | Surveys.Read |
-| POST | `/api/surveys/responses` | Surveys.Respond |
-| DELETE | `/api/surveys/{id}` | Surveys.Delete |
-| GET | `/api/surveys/{id}` | Surveys.Read |
-| PUT | `/api/surveys/{id}` | Surveys.Update |
-
-
 ## 4. (C) Kullanılmayan / ölü / ekranı açılmaması gereken
 
 | Modül | Metot | Route | İzin | Neden |
@@ -296,6 +295,6 @@ B grubundaki modüller (kamp, okul danışmanlığı, kamera, anketler, bakım e
 | Demo | `demo-seed` demo kurumlarını `--enable-modules all` ile açar; mevcut `demo_a/b` açık kalır. |
 | Sonradan aç/kapat | `python3 devops/set_modules.py --code ornek --enable camps --disable surveys` · `--list` durum · `--check` deneme · `--dry-run` SQL. |
 
-Menüsü olmayan modül: `students-surveys` satırı pasif (ekran yok). `students-care-team` V59 ile yeniden açıldı ("Benim Öğrencilerim"); bakım ekibi kapalıyken menüde ve öğrenci detayındaki sekmede görünmez. Ön yüz açık modülleri menüden değil `GET /api/modules/me`'den okur (uç ekransız listesine girmez: `modules.store.ts` çağırır).
+Anket menüsü V61 ile açıldı (`students-surveys` → `/surveys`, `students-feedback` → `/surveys/feedback`, portalda `portal-surveys`, `portal-feedback`; hepsi `feature_flag = surveys`). `students-care-team` V59 ile yeniden açıldı ("Benim Öğrencilerim"); bakım ekibi kapalıyken menüde ve öğrenci detayındaki sekmede görünmez. Ön yüz açık modülleri menüden değil `GET /api/modules/me`'den okur (uç ekransız listesine girmez: `modules.store.ts` çağırır).
 
 Doğrulama: birim (`ModuleVisibilityTests`: ayrıştırma, `modules` koruma, filtre, menü), entegrasyon (`ModuleVisibilityTests`: yeni kurum kapalı + 403 + menü gizli; aç/kapat anında etkili; kurum yöneticisi açamaz), smoke-api (demo_a: kapat → 403 + menü gizli; aç → geri gelir; kurum ayarıyla açma denemesi korunur).

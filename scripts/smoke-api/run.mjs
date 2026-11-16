@@ -763,6 +763,129 @@ async function consultancyFlows() {
   if (emptyInst) await del('consultancy.institution.delete (kayıtsız)', `/consultancy/institutions/${emptyInst}`)
 }
 
+// ── Anketler: tanım → soru düzenleme → veli portalı (bekleyen, yanıt, tekrar, yabancı çocuk) → sonuçlar → kilit → silme; geri bildirim → KPI ──
+async function surveyFlows() {
+  const skip = (id, verb, url, note) => record({ phase: 'yazma', id, verb, url, status: null, outcome: 'skip', note, mismatches: [] })
+  const adminToken = token
+  const ok = (id, verb, url, cond, note = '') => record({ phase: 'yazma', id, verb, url, status: 200, outcome: cond ? 'ok' : 'type', note, mismatches: [] })
+  const typeId = ((await http('GET', '/reference-data/survey_type?activeOnly=true')).json?.data ?? [])[0]?.id ?? null
+  const q = (text, type, required, order, opts = []) => ({ questionText: text, questionType: type, isRequired: required, sortOrder: order, answerOptions: opts })
+  const body = (title) => ({ title, target: 'guardian', typeId, description: 'smoke', questions: [
+    q('Genel memnuniyet', 'rating', true, 1),
+    q('İletişim', 'multiple_choice', true, 2, [{ optionText: 'Evet', optionValue: '10', sortOrder: 1 }, { optionText: 'Hayır', optionValue: '0', sortOrder: 2 }]),
+    q('Öneri', 'text', false, 3)] })
+
+  const created = await write('yazma', 'surveys.create', 'POST', '/surveys', body(`Smoke Anket ${RUN}`))
+  const sid = idOf(created.json?.data)
+  if (!sid) { skip('surveys.*', 'POST', '/surveys', 'anket oluşmadı (modül kapalı olabilir)'); return }
+  expectStatus('yazma', 'surveys.create (çoktan seçmeli tek seçenek → reddedilir)', 'POST', '/surveys',
+    await http('POST', '/surveys', { ...body('x'), questions: [q('Tek', 'multiple_choice', false, 1, [{ optionText: 'A', optionValue: null, sortOrder: 1 }])] }), [400, 422])
+
+  // soru düzenleme: yanıt yokken soru/seçenek değişir
+  let sv = (await http('GET', `/surveys/${sid}`)).json?.data
+  ok('surveys.get (responseCount=0, 3 soru)', 'GET', `/surveys/${sid}`, sv?.responseCount === 0 && sv?.questions?.length === 3, `soru=${sv?.questions?.length} yanıt=${sv?.responseCount}`)
+  const [qr, qc] = sv.questions
+  await write('yazma', 'surveys.update (soru/seçenek düzenle)', 'PUT', `/surveys/${sid}`, {
+    title: `Smoke Anket ${RUN}`, description: 'smoke (düzenlendi)', target: 'guardian', typeId, isActive: true, rowVersion: sv.rowVersion,
+    questions: [
+      q('Genel memnuniyet (düzenlendi)', 'rating', true, 1), 
+      q('İletişim', 'multiple_choice', true, 2, [{ optionText: 'Evet', optionValue: '10', sortOrder: 1 }, { optionText: 'Kısmen', optionValue: '5', sortOrder: 2 }, { optionText: 'Hayır', optionValue: '0', sortOrder: 3 }]),
+      q('Öneri', 'text', false, 3)].map((x, i) => ({ ...x, id: [qr.id, qc.id, sv.questions[2].id][i], answerOptions: x.answerOptions.map((o, j) => ({ ...o, id: i === 1 && j !== 1 ? qc.answerOptions[j === 0 ? 0 : 1]?.id : undefined })) })) })
+  sv = (await http('GET', `/surveys/${sid}`)).json?.data
+  ok('surveys.get (düzenleme yansır)', 'GET', `/surveys/${sid}`, sv?.questions?.[0]?.questionText === 'Genel memnuniyet (düzenlendi)' && sv?.questions?.[1]?.answerOptions?.length === 3,
+    `q1=${sv?.questions?.[0]?.questionText} seçenek=${sv?.questions?.[1]?.answerOptions?.length}`)
+  expectStatus('yazma', 'surveys.update (başka anketin soru kimliği → reddedilir)', 'PUT', `/surveys/${sid}`, await http('PUT', `/surveys/${sid}`, {
+    title: 'x', target: 'guardian', isActive: true, rowVersion: sv.rowVersion, questions: [{ ...q('x', 'text', false, 1), id: '00000000-0000-7000-8000-000000000001' }] }), [400, 422])
+
+  // veli portalı
+  const guardianMe = await login(fx.guardian.username, fx.guardian.password, 'giriş (veli, anket)')
+  const pend = (await http('GET', '/surveys/pending')).json?.data ?? []
+  const mine = pend.find(p => p.surveyId === sid)
+  ok('surveys.pending (veli: yeni anket bekliyor)', 'GET', '/surveys/pending', !!mine && mine.students.length >= 1 && mine.questions.length === 3, `${pend.length} bekleyen`)
+  const child = mine?.students?.[0]?.studentId
+  if (!mine || !child) { skip('surveys.responses', 'POST', '/surveys/responses', 'veli1 için bekleyen anket/çocuk yok'); token = adminToken; return }
+  const ans = (rating = 5, text = 'smoke yanıt') => [
+    { questionId: mine.questions[0].id, answerText: null, answerOptionId: null, numericValue: rating },
+    { questionId: mine.questions[1].id, answerText: null, answerOptionId: mine.questions[1].answerOptions[0].id, numericValue: null },
+    { questionId: mine.questions[2].id, answerText: text, answerOptionId: null, numericValue: null }]
+  expectStatus('yazma', 'surveys.responses (zorunlu soru boş → reddedilir)', 'POST', '/surveys/responses',
+    await http('POST', '/surveys/responses', { surveyId: sid, studentId: child, answers: [ans()[2]] }), [400, 422])
+  expectStatus('yazma', 'surveys.responses (puan 9 → reddedilir)', 'POST', '/surveys/responses',
+    await http('POST', '/surveys/responses', { surveyId: sid, studentId: child, answers: ans(9) }), [400, 422])
+  await write('yazma', 'surveys.responses (veli yanıtlar)', 'POST', '/surveys/responses', { surveyId: sid, studentId: child, answers: ans() })
+  expectStatus('yazma', 'surveys.responses (aynı çocuk için ikinci yanıt → reddedilir)', 'POST', '/surveys/responses',
+    await http('POST', '/surveys/responses', { surveyId: sid, studentId: child, answers: ans() }), [400, 409, 422], 'Rule.SurveyAlreadySubmitted')
+  // yabancı çocuk (aynı kurumda başka velinin çocuğu) → 403
+  token = adminToken
+  const foreign = ((await http('GET', '/students?page=1&pageSize=100')).json?.data?.items ?? []).find(x => x.studentNo === fx.isolation.foreignChildStudentNo)?.id
+  token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+  if (foreign) expectStatus('izolasyon', 'surveys.responses (veli1 → başkasının çocuğu → 403)', 'POST', '/surveys/responses',
+    await http('POST', '/surveys/responses', { surveyId: sid, studentId: foreign, answers: ans() }), [403], 'Rule.GuardianNoActiveAccess')
+  const after = (await http('GET', '/surveys/pending')).json?.data ?? []
+  const left = after.find(p => p.surveyId === sid)
+  ok('surveys.pending (yanıtlanan çocuk listeden düşer)', 'GET', '/surveys/pending', !left || !left.students.some(x => x.studentId === child), `kalan=${left?.students?.length ?? 0}`)
+  expectStatus('izolasyon', 'surveys.list (veli survey:read yok → 403)', 'GET', '/surveys', await http('GET', '/surveys?page=1&pageSize=5'), [403])
+  expectStatus('izolasyon', 'surveys.results (veli → 403)', 'GET', `/surveys/${sid}/results`, await http('GET', `/surveys/${sid}/results`), [403])
+  expectStatus('izolasyon', 'surveys.parentFeedback.list (veli survey listesi yetkisi yok → 403)', 'GET', '/surveys/parent-feedback', await http('GET', '/surveys/parent-feedback?page=1&pageSize=5'), [403])
+
+  // geri bildirim: kendi çocuğunun seansı → eğitmene yazılır; yabancı eğitmen/seans reddedilir
+  const sessions = ((await http('GET', `/portal/students/${child}/sessions?page=1&pageSize=50`)).json?.data ?? []).filter(x => x.status === 'completed')
+  let credited = null
+  if (sessions.length) {
+    const fb = await write('yazma', 'surveys.parentFeedback.create (kendi çocuğunun seansı)', 'POST', '/surveys/parent-feedback', { guardianId: null, educatorId: null, sessionId: sessions[0].id, rating: 4, comment: `smoke ${RUN}` })
+    credited = fb.json?.data?.educatorId ?? null
+    ok('surveys.parentFeedback.create (seansın eğitmenine yazıldı)', 'POST', '/surveys/parent-feedback', fb.status < 300 && !!credited, `educatorId=${credited}`)
+  } else skip('surveys.parentFeedback.create (seans)', 'POST', '/surveys/parent-feedback', 'veli1 çocuğunun tamamlanmış seansı yok')
+  await write('yazma', 'surveys.parentFeedback.create (genel yorum)', 'POST', '/surveys/parent-feedback', { guardianId: null, educatorId: null, sessionId: null, rating: 5, comment: `smoke genel ${RUN}` })
+  expectStatus('yazma', 'surveys.parentFeedback.create (puan 7 → reddedilir)', 'POST', '/surveys/parent-feedback', await http('POST', '/surveys/parent-feedback', { rating: 7 }), [400, 422])
+  expectStatus('yazma', 'surveys.parentFeedback.create (puan/yorum yok → reddedilir)', 'POST', '/surveys/parent-feedback', await http('POST', '/surveys/parent-feedback', {}), [400, 422])
+  token = adminToken
+  if (ctx.educatorId) expectStatus('izolasyon', 'surveys.parentFeedback.create (veli → çocuğuyla ilgisiz eğitmen → 403)', 'POST', '/surveys/parent-feedback', await (async () => {
+    token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+    const r = await http('POST', '/surveys/parent-feedback', { educatorId: ctx.educatorId, rating: 1, comment: 'smoke ilgisiz' })
+    token = adminToken
+    return r
+  })(), [403], 'Rule.GuardianNoActiveAccess')
+  token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+  const myFb = (await http('GET', '/surveys/parent-feedback/mine?page=1&pageSize=50&sortDirection=desc')).json?.data
+  ok('surveys.parentFeedback.mine (yalnızca kendi kayıtları, ad dolu)', 'GET', '/surveys/parent-feedback/mine',
+    (myFb?.items ?? []).some(f => f.comment === `smoke genel ${RUN}`) && (myFb?.items ?? []).every(f => f.guardianName), `${myFb?.totalCount} kayıt`)
+  token = adminToken
+
+  // yönetici: sonuçlar, kilit, KPI, silme
+  const res = (await http('GET', `/surveys/${sid}/results`)).json?.data
+  const rq = res?.questions?.find(x => x.questionType === 'rating')
+  const cq = res?.questions?.find(x => x.questionType === 'multiple_choice')
+  ok('surveys.results (soru bazında özet)', 'GET', `/surveys/${sid}/results`, res?.responseCount === 1 && rq?.average === 5 && cq?.distribution?.find(b => b.label === 'Evet')?.count === 1
+    && res.questions.find(x => x.questionType === 'text')?.textAnswers?.includes('smoke yanıt'), `yanıt=${res?.responseCount} ort=${rq?.average}`)
+  const resp = (await http('GET', `/surveys/responses?surveyId=${sid}&isSubmitted=true&page=1&pageSize=5`)).json?.data
+  ok('surveys.responses.list (veli ve öğrenci adı dolu)', 'GET', '/surveys/responses', resp?.items?.length === 1 && !!resp.items[0].guardianName && !!resp.items[0].studentName, JSON.stringify(resp?.items?.[0] ?? null))
+  const locked = (await http('GET', `/surveys/${sid}`)).json?.data
+  ok('surveys.get (yanıt sonrası responseCount=1)', 'GET', `/surveys/${sid}`, locked?.responseCount === 1, `yanıt=${locked?.responseCount}`)
+  expectStatus('yazma', 'surveys.update (yanıt alınmış anketin soruları → 409)', 'PUT', `/surveys/${sid}`, await http('PUT', `/surveys/${sid}`, {
+    title: locked.title, target: 'guardian', isActive: true, rowVersion: locked.rowVersion, questions: [q('Yeni', 'text', false, 1)] }), [409], 'Rule.SurveyQuestionsLocked')
+  await write('yazma', 'surveys.update (yanıt alınmış anket: yalnızca başlık)', 'PUT', `/surveys/${sid}`, { title: `Smoke Anket ${RUN} (kapalı)`, description: null, target: 'guardian', typeId, isActive: false, rowVersion: locked.rowVersion })
+
+  if (credited) {
+    const t0 = day(-60), t1 = day(1)
+    const snap = await write('yazma', 'performance-kpi.compute (geri bildirim puanı KPI veli memnuniyetine yansır)', 'POST', `/performance-kpi/educators/${credited}/compute`, { educatorId: credited, periodStart: t0, periodEnd: t1 })
+    const avg = snap.json?.data?.parentFeedbackAvg
+    ok('kpi.parentFeedbackAvg (veli puanı yansıdı)', 'POST', `/performance-kpi/educators/${credited}/compute`, typeof avg === 'number' && avg >= 1 && avg <= 5, `parentFeedbackAvg=${avg}`)
+  }
+
+  const del = async (id, url) => { const r = await http('DELETE', url); record({ phase: 'yazma', id, verb: 'DELETE', url, status: r.status, outcome: r.status < 300 ? 'ok' : classify(r.status), note: r.status < 300 ? '' : errNote(r), mismatches: [] }) }
+  await del('surveys.delete (yanıtlı anket → pasife alınır)', `/surveys/${sid}`)
+  const kept = (await http('GET', `/surveys/${sid}`)).json?.data
+  ok('surveys.get (yanıtlı anket silinmedi, pasif)', 'GET', `/surveys/${sid}`, kept?.isActive === false && kept?.responseCount === 1, `aktif=${kept?.isActive}`)
+  const empty = idOf((await write('yazma', 'surveys.create (silinecek)', 'POST', '/surveys', body(`Smoke Boş Anket ${RUN}`))).json?.data)
+  if (empty) {
+    await del('surveys.delete (yanıtsız anket → silinir)', `/surveys/${empty}`)
+    expectStatus('yazma', 'surveys.get (silinen anket → 404)', 'GET', `/surveys/${empty}`, await http('GET', `/surveys/${empty}`), [404])
+  }
+  void guardianMe
+  token = adminToken
+}
+
 async function closureFlows() {
   const tag = RUN.toLowerCase()
   const adminToken = token
@@ -1172,6 +1295,7 @@ await newFlows()
 await closureFlows()
 await dailyOpsFlows()
 await consultancyFlows()
+await surveyFlows()
 await sweep()
 await isolation()
 await guardianRound()

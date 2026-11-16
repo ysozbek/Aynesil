@@ -560,7 +560,7 @@ Ayrıntı: `docs/ekransiz-endpointler.md`. Özet:
 | Kamp (`camps`) | Liste, oluşturma ve kayıt ekranları var. Dönem, etkinlik, katılım, yoklama, eğitmen atama, rapor ve kampı aktif etme/silme işlemleri (26 uç) **ekransız** |
 | Okul danışmanlığı (`consultancy`) | Liste/oluşturma var. Ziyaret ayrıntısı, tamamlama/iptal, gözlem ayrıntısı, raporlama ve silme işlemleri (18 uç) ekransız |
 | Kamera (`camera`) | Kamera, oda ataması, izleme yetkisi ve izleme geçmişi ekranları var. **Canlı izleme (yayın) yok**; "Canlı İzle" düğmesi bu yüzden gizli |
-| Anketler (`surveys`) | **Hiç ekranı yok** (yalnızca API) |
+| Anketler (`surveys`) | Ekranlar var: anket listesi/oluşturma/düzenleme (sorular ve seçenekler; yanıt gelen anketin soruları kilitlenir), sonuçlar (soru bazında özet), veli geri bildirimi listesi; veli portalında bekleyen anketleri doldurma ve geri bildirim gönderme. Yok: eğitmen/öğrenci hedefli anketleri dolduracak ekran (yalnızca veli hedefli anketler portalda görünür); anket puanları KPI'a girmez (yalnızca veli geri bildirim puanları girer) |
 | Bakım ekibi (`care_team`) | Ekranlar var: öğrenci detayında **Bakım Ekibi** sekmesi (listele, ekle, düzenle, çıkar) ve eğitmen için **Benim Öğrencilerim**. Yok: acil/devredilmiş yetki türü ve kampüs kapsamı ekranı. **Öğrenci bazlı erişim kısıtı arayüzden açılmaz** (B.1.3 sonundaki "Öğrenci bazlı erişim kısıtı") |
 | KPI (`kpi`) | Tanımlar, pano ve anlık görüntüler var. Otomatik hesaplama yok (yalnızca "Dönem Hesapla"); kuruma özel KPI tanımının formülü hesaplamada kullanılmıyor [doğrulanacak]; rapor/trend ekranları yok |
 
@@ -668,7 +668,7 @@ python3 devops/set_modules.py --code ornek --disable kpi           # kapatır
   - **KPI:** açılabilir; ama değerler yalnızca "Dönem Hesapla" ile hesaplanır.
   - **Kamera:** kamera, oda ataması, izleme yetkisi tanımlanabilir; **canlı izleme yok**. Müşteri canlı izleme bekliyorsa açmayın.
   - **Kamp, okul danışmanlığı:** yalnızca liste/kayıt düzeyinde; günlük işletim (yoklama, etkinlik, ziyaret tamamlama) ekrandan yapılamaz.
-  - **Anketler:** ekranı yok; **açmayın**.
+  - **Anketler:** ekranlar hazır; açılabilir. Velilere anket göndermek isteyen müşteri için açın (veli rolünde `survey:respond` ve `parent_feedback:create` izinleri hazır gelir).
   - **Bakım ekibi:** ekranlar hazır; açılabilir. Modülü açmak yalnızca ekip yönetimini getirir; öğrencilerin klinik kayıtlarını ekiple sınırlayan **erişim kısıtı ayrı bir ayardır ve varsayılan kapalıdır** (aşağıda).
 
 #### Öğrenci bazlı erişim kısıtı (bakım ekibi) — nasıl açılır
