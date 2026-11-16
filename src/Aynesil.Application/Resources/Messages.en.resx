@@ -396,4 +396,9 @@
   <data name="Rule.ObservationVisitHasReport" xml:space="preserve"><value>The visit has a report, so its observations can no longer be changed or deleted.</value></data>
   <data name="Rule.ObservationVisitCancelled" xml:space="preserve"><value>Observations of a cancelled visit cannot be changed.</value></data>
   <data name="Rule.ObservationDeleteNeedsPlannedVisit" xml:space="preserve"><value>An observation can only be deleted while the visit is planned; observations of a completed or cancelled visit can be edited but not deleted.</value></data>
+  <data name="Validation.RequiredQuestionUnanswered" xml:space="preserve"><value>A required question was not answered.</value></data>
+  <data name="Validation.DuplicateAnswer" xml:space="preserve"><value>Only one answer per question can be submitted.</value></data>
+  <data name="Validation.ChoiceNeedsOptions" xml:space="preserve"><value>A multiple-choice question needs at least two options.</value></data>
+  <data name="Rule.SurveyQuestionsLocked" xml:space="preserve"><value>Questions of a survey that has responses cannot be changed; create a new survey.</value></data>
+  <data name="Rule.SurveyTargetMismatch" xml:space="preserve"><value>This survey is not addressed to guardians.</value></data>
 </root>

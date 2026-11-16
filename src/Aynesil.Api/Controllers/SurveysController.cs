@@ -34,6 +34,21 @@ public sealed class SurveysController : BaseController
     public async Task<IActionResult> GetSurvey(Guid id, CancellationToken ct)
         => OkResult(await Sender.Send(new GetSurveyQuery(id), ct));
 
+    /// <summary>Per-question summary (counts, averages, text answers) of a survey's submitted responses.</summary>
+    [HttpGet("{id:guid}/results")]
+    [HasPermission(Permissions.Surveys.Read)]
+    [ProducesResponseType(typeof(ApiResponse<SurveyResultsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSurveyResults(Guid id, CancellationToken ct)
+        => OkResult(await Sender.Send(new GetSurveyResultsQuery(id), ct));
+
+    /// <summary>Surveys the signed-in guardian still has to fill in, per child (parent portal).</summary>
+    [HttpGet("pending")]
+    [HasPermission(Permissions.Surveys.Respond)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<PendingSurveyDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPendingSurveys(CancellationToken ct)
+        => OkResult(await Sender.Send(new GetPendingSurveysQuery(), ct));
+
     /// <summary>Create a new survey definition with questions and answer options.</summary>
     [HttpPost]
     [HasPermission(Permissions.Surveys.Create)]
@@ -46,7 +61,7 @@ public sealed class SurveysController : BaseController
         return CreatedResult(id, $"/api/surveys/{id}");
     }
 
-    /// <summary>Update survey header fields (title, description, target, type, active).</summary>
+    /// <summary>Update a survey: header fields, and (when it has no responses yet) its questions and options.</summary>
     [HttpPut("{id:guid}")]
     [HasPermission(Permissions.Surveys.Update)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
@@ -100,6 +115,14 @@ public sealed class SurveysController : BaseController
     [ProducesResponseType(typeof(ApiResponse<PaginatedResult<ParentFeedbackListItemDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetParentFeedback(
         [FromQuery] GetParentFeedbackQuery query, CancellationToken ct)
+        => OkResult(await Sender.Send(query, ct));
+
+    /// <summary>The signed-in guardian's own feedback (parent portal).</summary>
+    [HttpGet("parent-feedback/mine")]
+    [HasPermission(Permissions.ParentFeedback.Create)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedResult<ParentFeedbackListItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyParentFeedback(
+        [FromQuery] GetMyParentFeedbackQuery query, CancellationToken ct)
         => OkResult(await Sender.Send(query, ct));
 
     /// <summary>Submit a parent feedback (star-rating + optional comment).</summary>

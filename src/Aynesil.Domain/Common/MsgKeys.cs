@@ -64,6 +64,9 @@ public static class MsgKeys
         public static readonly MsgKey ScholarshipPercentOrAmount = new("Validation.ScholarshipPercentOrAmount");
         public static readonly MsgKey InvalidQuestionType = new("Validation.InvalidQuestionType");
         public static readonly MsgKey DuplicateLocales = new("Validation.DuplicateLocales");
+        public static readonly MsgKey RequiredQuestionUnanswered = new("Validation.RequiredQuestionUnanswered");
+        public static readonly MsgKey DuplicateAnswer = new("Validation.DuplicateAnswer");
+        public static readonly MsgKey ChoiceNeedsOptions = new("Validation.ChoiceNeedsOptions");
     }
 
     /// <summary>İş kuralı ihlalleri (BusinessRuleViolation/Conflict/Forbidden).</summary>
@@ -307,6 +310,8 @@ public static class MsgKeys
         public static readonly MsgKey StudentNumberInUse = new("Rule.StudentNumberInUse");
         public static readonly MsgKey StudentProgramInactive = new("Rule.StudentProgramInactive");
         public static readonly MsgKey SurveyAlreadySubmitted = new("Rule.SurveyAlreadySubmitted");
+        public static readonly MsgKey SurveyQuestionsLocked = new("Rule.SurveyQuestionsLocked");
+        public static readonly MsgKey SurveyTargetMismatch = new("Rule.SurveyTargetMismatch");
         public static readonly MsgKey SystemRefValueNoEdit = new("Rule.SystemRefValueNoEdit");
         public static readonly MsgKey SystemRoleNoDelete = new("Rule.SystemRoleNoDelete");
         public static readonly MsgKey ViewingAuthAlreadyRevoked = new("Rule.ViewingAuthAlreadyRevoked");

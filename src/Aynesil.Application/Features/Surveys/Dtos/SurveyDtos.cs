@@ -14,6 +14,7 @@ public record SurveyDefinitionDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     int RowVersion,
+    int ResponseCount,
     IReadOnlyList<SurveyQuestionDto> Questions);
 
 public record SurveyDefinitionListItemDto(
@@ -24,6 +25,7 @@ public record SurveyDefinitionListItemDto(
     string Target,
     bool IsActive,
     int QuestionCount,
+    int ResponseCount,
     DateTimeOffset UpdatedAt);
 
 public record SurveyQuestionDto(
@@ -59,7 +61,9 @@ public record SurveyResponseListItemDto(
     Guid SurveyId,
     string SurveyTitle,
     Guid? GuardianId,
+    string? GuardianName,
     Guid? StudentId,
+    string? StudentName,
     DateTimeOffset? SubmittedAt,
     bool IsComplete);
 
@@ -87,8 +91,45 @@ public record ParentFeedbackDto(
 public record ParentFeedbackListItemDto(
     Guid Id,
     Guid? GuardianId,
+    string? GuardianName,
     Guid? EducatorId,
+    string? EducatorName,
     Guid? SessionId,
     short? Rating,
     string? Comment,
     DateTimeOffset CreatedAt);
+
+// ── Results (per-question summary) ────────────────────────────────────────────
+
+public record SurveyResultsDto(
+    Guid SurveyId,
+    string Title,
+    string Target,
+    int ResponseCount,
+    DateTimeOffset? LastSubmittedAt,
+    IReadOnlyList<SurveyQuestionResultDto> Questions);
+
+public record SurveyQuestionResultDto(
+    Guid QuestionId,
+    string QuestionText,
+    string QuestionType,
+    bool IsRequired,
+    int AnsweredCount,
+    decimal? Average,
+    IReadOnlyList<SurveyResultBucketDto> Distribution,
+    IReadOnlyList<string> TextAnswers);
+
+/// <summary>One answer bucket: option text / "Evet"-"Hayır" code / rating value, with its count.</summary>
+public record SurveyResultBucketDto(string Label, string? Value, int Count);
+
+// ── Pending surveys (parent portal) ───────────────────────────────────────────
+
+public record PendingSurveyDto(
+    Guid SurveyId,
+    string Title,
+    string? Description,
+    string? TypeCode,
+    IReadOnlyList<SurveyQuestionDto> Questions,
+    IReadOnlyList<PendingSurveyStudentDto> Students);
+
+public record PendingSurveyStudentDto(Guid StudentId, string StudentName);

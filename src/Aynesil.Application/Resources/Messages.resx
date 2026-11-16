@@ -396,4 +396,9 @@
   <data name="Rule.ObservationVisitHasReport" xml:space="preserve"><value>Ziyarete rapor yazıldığı için gözlem değiştirilemez veya silinemez.</value></data>
   <data name="Rule.ObservationVisitCancelled" xml:space="preserve"><value>İptal edilmiş ziyaretin gözlemi değiştirilemez.</value></data>
   <data name="Rule.ObservationDeleteNeedsPlannedVisit" xml:space="preserve"><value>Gözlem yalnızca planlanmış ziyarette silinebilir; tamamlanmış ya da iptal edilmiş ziyaretin gözlemi düzenlenebilir ama silinemez.</value></data>
+  <data name="Validation.RequiredQuestionUnanswered" xml:space="preserve"><value>Zorunlu soru yanıtlanmadı.</value></data>
+  <data name="Validation.DuplicateAnswer" xml:space="preserve"><value>Aynı soru için birden fazla yanıt gönderilemez.</value></data>
+  <data name="Validation.ChoiceNeedsOptions" xml:space="preserve"><value>Çoktan seçmeli soru için en az iki seçenek gerekir.</value></data>
+  <data name="Rule.SurveyQuestionsLocked" xml:space="preserve"><value>Yanıt alınmış anketin soruları değiştirilemez; yeni bir anket oluşturun.</value></data>
+  <data name="Rule.SurveyTargetMismatch" xml:space="preserve"><value>Bu anket veliye yönelik değil.</value></data>
 </root>
