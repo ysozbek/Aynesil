@@ -10,7 +10,9 @@ import { schedulingService } from '@/services/scheduling.service'
 import { programService, studentProgramService } from '@/services/program.service'
 import { educatorService } from '@/services/educator.service'
 import { careTeamService } from '@/services/careTeam.service'
-import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
+import { Permissions } from '@/constants/permissions'
 import { toLocalDateString } from '@/utils/datetime'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import type { RefValueItem } from '@/stores/refdata.store'
@@ -30,7 +32,7 @@ const router = useRouter()
 const store = useSchedulingStore()
 const studentStore = useStudentStore()
 const refData = useRefDataStore()
-const careTeamModule = useCareTeamModule()
+const careTeamModule = useModule(Modules.CareTeam)
 
 const sessionTypes = ref<RefValueItem[]>([])
 const campuses = ref<CampusListItemDto[]>([])
@@ -129,7 +131,7 @@ const teamEducatorIds = ref<string[] | null>(null)
 const suggestAdding = ref(false)
 const suggestDone = ref(false)
 
-watch(() => [form.studentId, careTeamModule.canRead.value], async ([studentId, canRead]) => {
+watch(() => [form.studentId, careTeamModule.visible(Permissions.CareTeam.Read)], async ([studentId, canRead]) => {
   teamEducatorIds.value = null
   suggestDone.value = false
   if (!studentId || !canRead) return
@@ -141,7 +143,7 @@ watch(() => [form.studentId, careTeamModule.canRead.value], async ([studentId, c
 
 const leadEducatorName = computed(() => educators.value.find((e) => e.id === form.leadEducatorId)?.fullName ?? '')
 const showCareTeamSuggest = computed(() =>
-  careTeamModule.canAssign.value && !!form.studentId && !!form.leadEducatorId
+  careTeamModule.visible(Permissions.CareTeam.Assign) && !!form.studentId && !!form.leadEducatorId
   && teamEducatorIds.value !== null && !teamEducatorIds.value.includes(form.leadEducatorId))
 
 async function addLeadToCareTeam() {

@@ -30,6 +30,18 @@ const canAddObservation = computed(
   () => !!visit.value && visit.value.status !== SchoolVisitStatus.Cancelled && visible(Permissions.Observations.Create),
 )
 
+// Gözlem kuralı (sunucuyla aynı): iptal edilmiş ya da raporlanmış ziyarette düzenleme kapalı;
+// silme yalnızca planlanmış ziyarette (tamamlanmışta düzenlenir ama silinmez).
+const obsLocked = computed(() => !!visit.value && visit.value.hasReports)
+const canEditObservation = computed(
+  () => !!visit.value && !obsLocked.value && visit.value.status !== SchoolVisitStatus.Cancelled
+    && visible(Permissions.Observations.Update),
+)
+const canDeleteObservation = computed(
+  () => !!visit.value && !obsLocked.value && visit.value.status === SchoolVisitStatus.Planned
+    && visible(Permissions.Observations.Delete),
+)
+
 const observationTypes = ref<RefValueItem[]>([])
 const pageError = ref('')
 
@@ -318,6 +330,12 @@ async function deleteObs() {
         <p v-if="visit.status === SchoolVisitStatus.Cancelled" class="mb-3 text-xs text-muted-foreground">
           {{ t('consultancy.observation.cannotAdd') }}
         </p>
+        <p v-if="obsLocked" class="mb-3 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+          {{ t('consultancy.observation.lockedByReport') }}
+        </p>
+        <p v-else-if="visit.status === SchoolVisitStatus.Completed" class="mb-3 text-xs text-muted-foreground">
+          {{ t('consultancy.observation.completedNoDelete') }}
+        </p>
 
         <p v-if="!visit.observations.length" class="py-8 text-center text-sm text-muted-foreground">
           {{ t('consultancy.observation.empty') }}
@@ -344,7 +362,7 @@ async function deleteObs() {
                   {{ t('consultancy.visit.actions.addFollowUp') }}
                 </button>
                 <button
-                  v-if="visible(Permissions.Observations.Update)"
+                  v-if="canEditObservation"
                   type="button"
                   class="px-2 py-1 text-xs rounded border border-border hover:bg-accent"
                   @click="openObs(o)"
@@ -352,7 +370,7 @@ async function deleteObs() {
                   {{ t('common.edit') }}
                 </button>
                 <button
-                  v-if="visible(Permissions.Observations.Delete)"
+                  v-if="canDeleteObservation"
                   type="button"
                   class="px-2 py-1 text-xs rounded border border-red-200 text-red-700 hover:bg-red-50"
                   @click="obsDeleteError = ''; obsToDelete = o"

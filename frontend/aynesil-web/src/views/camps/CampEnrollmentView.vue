@@ -12,7 +12,7 @@
         <p class="text-muted mb-0">{{ $t('camp.enrollment.subtitle') }}</p>
       </div>
       <button
-        v-if="hasPermission(Permissions.CampEnrollments.Enroll)"
+        v-if="visible(Permissions.CampEnrollments.Enroll)"
         class="btn btn-primary"
         @click="showEnrollModal = true"
       >
@@ -84,12 +84,12 @@
                 <td class="text-muted fs-7">{{ formatDate(e.enrolledAt) }}</td>
                 <td class="text-end pe-4">
                   <button
-                    v-if="e.status === CampEnrollmentStatus.Waitlist && hasPermission(Permissions.CampEnrollments.Manage)"
+                    v-if="e.status === CampEnrollmentStatus.Waitlist && visible(Permissions.CampEnrollments.Manage)"
                     class="btn btn-sm btn-light-success me-2"
                     @click="campStore.promoteFromWaitlist(e.id, periodId)"
                   >{{ $t('camp.enrollment.promote') }}</button>
                   <button
-                    v-if="e.status === CampEnrollmentStatus.Enrolled && hasPermission(Permissions.CampEnrollments.Withdraw)"
+                    v-if="e.status === CampEnrollmentStatus.Enrolled && visible(Permissions.CampEnrollments.Withdraw)"
                     class="btn btn-sm btn-light-danger"
                     @click="campStore.withdraw(e.id, periodId)"
                   >{{ $t('camp.enrollment.withdraw') }}</button>
@@ -132,18 +132,18 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
-import { useAuthStore } from '@/stores/auth.store'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
 const campStore = useCampStore()
-const authStore = useAuthStore()
+const { visible } = useModule(Modules.Camps)
 const periodId = route.params.periodId as string
 const showEnrollModal = ref(false)
 const enrollStudentId = ref('')
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
 function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
 
 async function doEnroll() {

@@ -91,7 +91,9 @@ public record SchoolVisitDto(
     string? Purpose,
     string Status,
     DateTimeOffset CreatedAt,
-    IReadOnlyList<ObservationRecordDto> Observations);
+    IReadOnlyList<ObservationRecordDto> Observations,
+    /// <summary>Ziyarete rapor yazılmışsa gözlemler kilitlenir (düzenleme ve silme kapanır).</summary>
+    bool HasReports = false);
 
 // ── ObservationRecord DTOs ────────────────────────────────────────────────────
 

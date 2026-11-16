@@ -2,7 +2,8 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import { ViewingAuthorizationState } from '@/constants/statuses'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
@@ -17,7 +18,7 @@ import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const cameraStore = useCameraStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Camera)
 
 const showCreateModal = ref(false)
 const showRevokeConfirm = ref(false)
@@ -88,7 +89,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('camera.auth.title')" :description="t('camera.auth.subtitle')">
       <button
-        v-if="can(Permissions.ViewingAuthorization.Grant)"
+        v-if="visible(Permissions.ViewingAuthorization.Grant)"
         @click="showCreateModal = true"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -140,7 +141,7 @@ onMounted(doFetch)
       <template #actions="{ row }">
         <div class="flex items-center justify-end gap-1" @click.stop>
           <button
-            v-if="!row.isRevoked && row.isCurrentlyValid && can(Permissions.ViewingAuthorization.Revoke)"
+            v-if="!row.isRevoked && row.isCurrentlyValid && visible(Permissions.ViewingAuthorization.Revoke)"
             @click="promptRevoke(row.id)"
             class="px-2.5 py-1 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
           >

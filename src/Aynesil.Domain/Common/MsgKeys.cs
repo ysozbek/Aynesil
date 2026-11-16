@@ -317,6 +317,9 @@ public static class MsgKeys
         public static readonly MsgKey VisitActionStatus = new("Rule.VisitActionStatus");
         public static readonly MsgKey VisitHasObservations = new("Rule.VisitHasObservations");
         public static readonly MsgKey VisitHasReports = new("Rule.VisitHasReports");
+        public static readonly MsgKey ObservationVisitHasReport = new("Rule.ObservationVisitHasReport");
+        public static readonly MsgKey ObservationVisitCancelled = new("Rule.ObservationVisitCancelled");
+        public static readonly MsgKey ObservationDeleteNeedsPlannedVisit = new("Rule.ObservationDeleteNeedsPlannedVisit");
         public static readonly MsgKey VisitHasFollowUps = new("Rule.VisitHasFollowUps");
         public static readonly MsgKey DevelopmentReportFinalized = new("Rule.DevelopmentReportFinalized");
         public static readonly MsgKey DevelopmentReportAlreadyFinalized = new("Rule.DevelopmentReportAlreadyFinalized");

@@ -2285,7 +2285,9 @@ const tr = {
         recordedAt: 'Kayıt Zamanı',
       },
       deleteConfirm: 'Gözlem kaydı kalıcı olarak silinecek.',
-      cannotAdd: 'İptal edilmiş ziyarete gözlem eklenemez.',
+      cannotAdd: 'İptal edilmiş ziyarete gözlem eklenemez; mevcut gözlemler değiştirilemez.',
+      lockedByReport: 'Bu ziyarete rapor yazıldığı için gözlemler değiştirilemez ve silinemez.',
+      completedNoDelete: 'Ziyaret tamamlandı: gözlemler düzenlenebilir ama silinemez.',
       list: {
         title: 'Gözlemler',
         subtitle: 'Ziyaretlere bağlı gözlem kayıtları',

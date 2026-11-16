@@ -138,6 +138,7 @@ public sealed class GetSchoolVisitQueryHandler
             visit.ConsultancyPlanId, planName,
             visit.InstitutionId, institutionName,
             visit.VisitDate, visit.VisitorId, visit.Purpose, visit.Status,
-            visit.CreatedAt, observations);
+            visit.CreatedAt, observations,
+            await _db.ConsultancyReports.AnyAsync(r => r.SchoolVisitId == visit.Id, ct));
     }
 }

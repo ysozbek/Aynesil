@@ -114,6 +114,8 @@ export interface SchoolVisitDto {
   status: string
   createdAt: string
   observations: ObservationRecordDto[]
+  /** Ziyarete rapor yazılmışsa gözlemler kilitlidir. */
+  hasReports: boolean
 }
 
 // ── Report DTOs ───────────────────────────────────────────────────────────────

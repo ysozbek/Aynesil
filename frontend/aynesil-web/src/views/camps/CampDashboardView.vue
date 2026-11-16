@@ -5,7 +5,7 @@
         <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camp.dashboard.title') }}</h1>
         <p class="text-muted mb-0">{{ $t('camp.dashboard.subtitle') }}</p>
       </div>
-      <RouterLink v-if="hasPermission(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
+      <RouterLink v-if="visible(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
         <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
       </RouterLink>
     </div>
@@ -125,13 +125,13 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useCampStore } from '@/stores/camp.store'
-import { useAuthStore } from '@/stores/auth.store'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import { Permissions } from '@/constants/permissions'
 
 const campStore = useCampStore()
-const authStore = useAuthStore()
+const { visible } = useModule(Modules.Camps)
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
 
 const activeCamps = computed(() => campStore.campList.items.filter(c => c.isActive).length)
 const totalEnrolled = computed(() => campStore.campList.items.reduce((acc, c) => {

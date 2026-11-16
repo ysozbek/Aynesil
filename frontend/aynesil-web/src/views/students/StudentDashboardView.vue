@@ -8,7 +8,9 @@ import { useProgramStore } from '@/stores/program.store'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { careTeamService } from '@/services/careTeam.service'
 import { useRefDataStore } from '@/stores/refdata.store'
-import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
+import { Permissions } from '@/constants/permissions'
 import { toLocalDateString } from '@/utils/datetime'
 import type { CareTeamAssignmentListItemDto, StudentSessionEducatorDto } from '@/types/careTeam.types'
 
@@ -19,7 +21,7 @@ const store = useStudentStore()
 const goalStore = useGoalStore()
 const programStore = useProgramStore()
 const refData = useRefDataStore()
-const careTeamModule = useCareTeamModule()
+const careTeamModule = useModule(Modules.CareTeam)
 
 // "Atanmış eğitmenler": bakım ekibi varsa o; boşsa seanslardan türetilen eğitmenler (etiketli) + "Ekibe ekle".
 const team = ref<CareTeamAssignmentListItemDto[]>([])
@@ -38,7 +40,7 @@ const activeGoals = computed(() =>
 async function loadEducators() {
   educatorsError.value = ''
   team.value = []
-  if (careTeamModule.canRead.value) {
+  if (careTeamModule.visible(Permissions.CareTeam.Read)) {
     try {
       const res = await careTeamService.list(id.value)
       team.value = res.success && res.data ? res.data : []
@@ -290,7 +292,7 @@ function formatDate(val: string | null): string {
                     <p class="text-xs text-muted-foreground">{{ t('careTeam.dashboard.sessionCount', { n: e.sessionCount }) }}</p>
                   </div>
                   <button
-                    v-if="careTeamModule.canAssign.value"
+                    v-if="careTeamModule.visible(Permissions.CareTeam.Assign)"
                     class="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-accent shrink-0 disabled:opacity-50"
                     :disabled="addingEducatorId === e.educatorId"
                     @click="addToTeam(e.educatorId)"

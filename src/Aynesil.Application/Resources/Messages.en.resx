@@ -393,4 +393,7 @@
   <data name="Rule.PlanHasFollowUps" xml:space="preserve"><value>Cannot delete a plan that has follow-up activities.</value></data>
   <data name="Rule.VisitHasReports" xml:space="preserve"><value>Cannot delete a visit that has reports.</value></data>
   <data name="Rule.VisitHasFollowUps" xml:space="preserve"><value>Cannot delete a visit that has follow-up activities.</value></data>
+  <data name="Rule.ObservationVisitHasReport" xml:space="preserve"><value>The visit has a report, so its observations can no longer be changed or deleted.</value></data>
+  <data name="Rule.ObservationVisitCancelled" xml:space="preserve"><value>Observations of a cancelled visit cannot be changed.</value></data>
+  <data name="Rule.ObservationDeleteNeedsPlannedVisit" xml:space="preserve"><value>An observation can only be deleted while the visit is planned; observations of a completed or cancelled visit can be edited but not deleted.</value></data>
 </root>

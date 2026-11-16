@@ -119,6 +119,11 @@ public sealed class UpdateObservationCommandHandler : IRequestHandler<UpdateObse
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Observation"));
 
+        // Tamamlanmış ziyarette düzenlenebilir; iptal edilmiş ya da rapor yazılmış ziyarette kapalı.
+        var visitStatus = await ObservationRules.EnsureNotLockedAsync(_db, record.SchoolVisitId, ct);
+        if (visitStatus == "cancelled")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ObservationVisitCancelled);
+
         record.Update(req.Observation, req.ObservationTypeId, req.Subject, req.Recommendations);
         await _db.SaveChangesAsync(ct);
     }
@@ -140,7 +145,28 @@ public sealed class DeleteObservationCommandHandler : IRequestHandler<DeleteObse
             .FirstOrDefaultAsync(o => o.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Observation"));
 
+        // Silme yalnızca planlanmış ziyarette; tamamlanmış/iptal edilmiş ziyarette 409.
+        var visitStatus = await ObservationRules.EnsureNotLockedAsync(_db, record.SchoolVisitId, ct);
+        if (visitStatus != "planned")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ObservationDeleteNeedsPlannedVisit);
+
         _db.ObservationRecords.Remove(record);
         await _db.SaveChangesAsync(ct);
+    }
+}
+
+/// <summary>Gözlem değiştirme/silme için ziyaret düzeyi kuralları.</summary>
+internal static class ObservationRules
+{
+    /// <summary>Ziyarete rapor yazılmışsa 409 atar; aksi halde ziyaretin durumunu döner.</summary>
+    public static async Task<string?> EnsureNotLockedAsync(IAppDbContext db, Guid visitId, CancellationToken ct)
+    {
+        if (await db.ConsultancyReports.AnyAsync(r => r.SchoolVisitId == visitId, ct))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.ObservationVisitHasReport);
+
+        return await db.SchoolVisits.AsNoTracking()
+            .Where(v => v.Id == visitId)
+            .Select(v => v.Status)
+            .FirstOrDefaultAsync(ct);
     }
 }

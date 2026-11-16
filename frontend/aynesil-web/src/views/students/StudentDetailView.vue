@@ -27,7 +27,8 @@ import type {
 import { Permissions } from '@/constants/permissions'
 import StudentConsentsPanel from '@/components/students/StudentConsentsPanel.vue'
 import StudentCareTeamPanel from '@/components/students/StudentCareTeamPanel.vue'
-import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -38,7 +39,7 @@ const programStore = useProgramStore()
 const refData = useRefDataStore()
 const branchStore = useBranchStore()
 const { can } = usePermission()
-const careTeamModule = useCareTeamModule()
+const careTeamModule = useModule(Modules.CareTeam)
 
 const id = computed(() => route.params.id as string)
 const student = computed(() => store.current)
@@ -50,7 +51,7 @@ const activeTab = ref<MainTab>('overview')
 const visibleTabs = computed<MainTab[]>(() =>
   (['overview', 'guardians', 'consents', 'programs', 'case-management', 'care-team', 'history'] as MainTab[])
     .filter((tab) => tab !== 'consents' || can(Permissions.StudentConsents.Read))
-    .filter((tab) => tab !== 'care-team' || careTeamModule.canRead.value))
+    .filter((tab) => tab !== 'care-team' || careTeamModule.visible(Permissions.CareTeam.Read)))
 const caseTab = ref<CaseTab>('case-notes')
 const caseManagementLoaded = ref(false)
 const programsLoaded = ref(false)

@@ -3,7 +3,8 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import FormModal from '@/components/shared/FormModal.vue'
 import { kpiService } from '@/services/kpi.service'
@@ -17,7 +18,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const kpiStore = useKpiStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Kpi)
 
 const filters = reactive<KpiDefinitionListQuery>({
   page: 1,
@@ -123,7 +124,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('kpi.definitions.title')" :description="t('kpi.definitions.subtitle')">
       <button
-        v-if="can(Permissions.Kpi.Manage)"
+        v-if="visible(Permissions.Kpi.Manage)"
         class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
         @click="openCreate"
       >
@@ -202,14 +203,14 @@ onMounted(async () => {
             </svg>
           </button>
           <button
-            v-if="can(Permissions.Kpi.Manage) && row.corporationId"
+            v-if="visible(Permissions.Kpi.Manage) && row.corporationId"
             @click="openEdit(row)"
             class="px-2.5 py-1 text-xs rounded-lg border border-border hover:bg-accent"
           >
             {{ t('common.edit') }}
           </button>
           <button
-            v-if="can(Permissions.Kpi.Manage)"
+            v-if="visible(Permissions.Kpi.Manage)"
             @click="kpiStore.toggleDefinition(row.id, !row.isActive)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="row.isActive ? t('common.passive') : t('common.active')"

@@ -3,7 +3,8 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
@@ -11,7 +12,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const cameraStore = useCameraStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Camera)
 
 function formatDatetime(dt: string) {
   return new Date(dt).toLocaleString('tr-TR')
@@ -35,7 +36,7 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('camera.dashboard.title')" :description="t('camera.dashboard.subtitle')">
       <button
-        v-if="can(Permissions.Camera.Create)"
+        v-if="visible(Permissions.Camera.Create)"
         @click="router.push({ name: 'camera-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >

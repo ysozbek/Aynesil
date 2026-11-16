@@ -714,6 +714,15 @@ async function consultancyFlows() {
   // ziyaret + rapor + takip: raporlu/takipli ziyaret silinemez; tamamlanan ziyaret düzenlenemez/silinemez
   const v2 = idOf((await write('yazma', 'consultancy.visit.create (rapor/takip için)', 'POST', '/consultancy/visits', visitBody('smoke ziyaret 2'))).json?.data)
   if (v2) {
+    // gözlem kilidi: tamamlanmış ziyarette düzenlenir, silinmez (409); rapor yazılınca düzenleme de kapanır
+    const ob2 = idOf((await write('yazma', 'consultancy.observation.create (kilit için)', 'POST', `/consultancy/visits/${v2}/observations`, { schoolVisitId: v2, observation: 'kilit gözlemi', observationTypeId: null, subject: null, recommendations: null })).json?.data)
+    await write('yazma', 'consultancy.visit.complete', 'POST', `/consultancy/visits/${v2}/complete`, {})
+    if (ob2) {
+      await write('yazma', 'consultancy.observation.update (tamamlanmış ziyarette düzenlenir)', 'PUT', `/consultancy/observations/${ob2}`, { observation: 'kilit gözlemi (düzenlendi)', observationTypeId: null, subject: null, recommendations: null })
+      expectStatus('yazma', 'consultancy.observation.delete (tamamlanmış ziyarette → 409)', 'DELETE', `/consultancy/observations/${ob2}`, await http('DELETE', `/consultancy/observations/${ob2}`), [409])
+      const vd = (await http('GET', `/consultancy/visits/${v2}`)).json?.data
+      record({ phase: 'yazma', id: 'consultancy.visit.get (hasReports=false)', verb: 'GET', url: `/consultancy/visits/${v2}`, status: 200, outcome: vd?.hasReports === false ? 'ok' : 'type', note: `hasReports=${vd?.hasReports}`, mismatches: [] })
+    }
     const rep = idOf((await write('yazma', 'consultancy.report.create (ziyareti)', 'POST', '/consultancy/reports', { title: `Smoke Rapor ${RUN}`, consultancyPlanId: plan, schoolVisitId: v2, summary: 'smoke özet', fileId: null })).json?.data)
     if (rep) {
       const g = (await http('GET', `/consultancy/reports/${rep}`)).json?.data
@@ -726,7 +735,11 @@ async function consultancyFlows() {
       await write('yazma', 'consultancy.followUp.start', 'POST', `/consultancy/follow-ups/${fu}/start`, {})
       await blocked('consultancy.visit.delete (takibi var → reddedilir)', `/consultancy/visits/${v2}`)
     }
-    await write('yazma', 'consultancy.visit.complete', 'POST', `/consultancy/visits/${v2}/complete`, {})
+    if (rep && ob2) {
+      expectStatus('yazma', 'consultancy.observation.update (raporlu ziyarette → 409)', 'PUT', `/consultancy/observations/${ob2}`, await http('PUT', `/consultancy/observations/${ob2}`, { observation: 'x', observationTypeId: null, subject: null, recommendations: null }), [409])
+      const vd = (await http('GET', `/consultancy/visits/${v2}`)).json?.data
+      record({ phase: 'yazma', id: 'consultancy.visit.get (hasReports=true)', verb: 'GET', url: `/consultancy/visits/${v2}`, status: 200, outcome: vd?.hasReports === true ? 'ok' : 'type', note: `hasReports=${vd?.hasReports}`, mismatches: [] })
+    }
     expectStatus('yazma', 'consultancy.visit.update (tamamlanmış → reddedilir)', 'PUT', `/consultancy/visits/${v2}`, await http('PUT', `/consultancy/visits/${v2}`, { visitDate: day(3), visitorId: null, purpose: 'x', consultancyPlanId: plan }), [400, 409, 422])
     if (fu) await del('consultancy.followUp.delete', `/consultancy/follow-ups/${fu}`)
     if (rep) await del('consultancy.report.delete', `/consultancy/reports/${rep}`)

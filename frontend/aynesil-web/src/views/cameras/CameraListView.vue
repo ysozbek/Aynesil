@@ -3,7 +3,8 @@ import { reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCameraStore } from '@/stores/camera.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import DataTable from '@/components/shared/DataTable.vue'
@@ -15,7 +16,7 @@ import { Permissions } from '@/constants/permissions'
 const { t } = useI18n()
 const router = useRouter()
 const cameraStore = useCameraStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Camera)
 
 const filters = reactive<CameraListQuery>({
   page: 1,
@@ -65,7 +66,7 @@ onMounted(() => cameraStore.fetchCameras(filters))
   <div>
     <PageHeader :title="t('camera.list.title')" :description="t('camera.list.subtitle')">
       <button
-        v-if="can(Permissions.Camera.Create)"
+        v-if="visible(Permissions.Camera.Create)"
         @click="router.push({ name: 'camera-new' })"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
       >
@@ -138,7 +139,7 @@ onMounted(() => cameraStore.fetchCameras(filters))
             </svg>
           </button>
           <button
-            v-if="can(Permissions.Camera.Update)"
+            v-if="visible(Permissions.Camera.Update)"
             @click="router.push({ name: 'camera-edit', params: { id: row.id } })"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="t('common.edit')"
@@ -148,7 +149,7 @@ onMounted(() => cameraStore.fetchCameras(filters))
             </svg>
           </button>
           <button
-            v-if="can(Permissions.Camera.Update)"
+            v-if="visible(Permissions.Camera.Update)"
             @click="cameraStore.toggleActive(row.id, !row.isActive)"
             class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             :title="row.isActive ? t('common.passive') : t('common.active')"

@@ -4,12 +4,14 @@
  * ekipten çıkarma (atama sona erer, silinmez). Uçlar: CareTeamController (care_team:read / care_team:assign).
  * Kural: öğrenci başına aynı anda yalnızca bir birincil atama (sunucu reddederse mesaj gösterilir).
  */
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { careTeamService } from '@/services/careTeam.service'
 import { useRefDataStore } from '@/stores/refdata.store'
 import type { RefValueItem } from '@/stores/refdata.store'
-import { useCareTeamModule } from '@/composables/useCareTeamModule'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
+import { Permissions } from '@/constants/permissions'
 import { toLocalDateString } from '@/utils/datetime'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import FormModal from '@/components/shared/FormModal.vue'
@@ -21,7 +23,8 @@ const props = defineProps<{ studentId: string }>()
 
 const { t } = useI18n()
 const refData = useRefDataStore()
-const { canAssign } = useCareTeamModule()
+const { visible } = useModule(Modules.CareTeam)
+const canAssign = computed(() => visible(Permissions.CareTeam.Assign))
 
 const rows = ref<CareTeamAssignmentListItemDto[]>([])
 const roles = ref<RefValueItem[]>([])

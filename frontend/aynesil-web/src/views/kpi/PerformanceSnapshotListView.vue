@@ -2,7 +2,8 @@
 import { reactive, ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKpiStore } from '@/stores/kpi.store'
-import { usePermission } from '@/composables/usePermission'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import DataTable from '@/components/shared/DataTable.vue'
 import Pagination from '@/components/shared/Pagination.vue'
@@ -13,7 +14,7 @@ import { Permissions } from '@/constants/permissions'
 
 const { t } = useI18n()
 const kpiStore = useKpiStore()
-const { can } = usePermission()
+const { visible } = useModule(Modules.Kpi)
 
 const filters = reactive<SnapshotListQuery>({
   page: 1,
@@ -72,7 +73,7 @@ onMounted(doFetch)
   <div>
     <PageHeader :title="t('kpi.snapshots.title')" :description="t('kpi.snapshots.subtitle')">
       <button
-        v-if="can(Permissions.Kpi.Manage)"
+        v-if="visible(Permissions.Kpi.Manage)"
         :disabled="kpiStore.saving"
         @click="doBulkCompute"
         class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"

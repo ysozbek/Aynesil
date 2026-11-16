@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { Permissions } from '@/constants/permissions'
 import { Modules, type ModuleCode } from '@/constants/modules'
 import { useModulesStore } from '@/stores/modules.store'
+import { moduleRedirect } from './moduleGuard'
 
 const routes: RouteRecordRaw[] = [
   // ── Public routes ─────────────────────────────────────────────────────────
@@ -293,7 +294,7 @@ const routes: RouteRecordRaw[] = [
         path: 'care-team/my-students',
         name: 'care-team-my-students',
         component: () => import('@/views/care-team/MyStudentsView.vue'),
-        meta: { permission: Permissions.CareTeam.Read },
+        meta: { permission: Permissions.CareTeam.Read, module: Modules.CareTeam },
       },
       {
         path: 'students/:id/timeline',
@@ -828,43 +829,43 @@ const routes: RouteRecordRaw[] = [
         path: 'cameras',
         name: 'camera-dashboard',
         component: () => import('@/views/cameras/CameraDashboardView.vue'),
-        meta: { permission: Permissions.Camera.Read },
+        meta: { permission: Permissions.Camera.Read, module: Modules.Camera },
       },
       {
         path: 'cameras/list',
         name: 'cameras',
         component: () => import('@/views/cameras/CameraListView.vue'),
-        meta: { permission: Permissions.Camera.Read },
+        meta: { permission: Permissions.Camera.Read, module: Modules.Camera },
       },
       {
         path: 'cameras/new',
         name: 'camera-new',
         component: () => import('@/views/cameras/CameraFormView.vue'),
-        meta: { permission: Permissions.Camera.Create },
+        meta: { permission: Permissions.Camera.Create, module: Modules.Camera },
       },
       {
         path: 'cameras/authorizations',
         name: 'camera-authorizations',
         component: () => import('@/views/cameras/ViewingAuthorizationsView.vue'),
-        meta: { permission: Permissions.ViewingAuthorization.Read },
+        meta: { permission: Permissions.ViewingAuthorization.Read, module: Modules.Camera },
       },
       {
         path: 'cameras/viewing-history',
         name: 'camera-viewing-history',
         component: () => import('@/views/cameras/ViewingHistoryView.vue'),
-        meta: { permission: Permissions.ViewingLog.Read },
+        meta: { permission: Permissions.ViewingLog.Read, module: Modules.Camera },
       },
       {
         path: 'cameras/:id',
         name: 'camera-detail',
         component: () => import('@/views/cameras/CameraDetailView.vue'),
-        meta: { permission: Permissions.Camera.Read },
+        meta: { permission: Permissions.Camera.Read, module: Modules.Camera },
       },
       {
         path: 'cameras/:id/edit',
         name: 'camera-edit',
         component: () => import('@/views/cameras/CameraFormView.vue'),
-        meta: { permission: Permissions.Camera.Update },
+        meta: { permission: Permissions.Camera.Update, module: Modules.Camera },
       },
 
       // ── Camp Management ────────────────────────────────────────────────────────
@@ -872,37 +873,37 @@ const routes: RouteRecordRaw[] = [
         path: 'camps',
         name: 'camp-dashboard',
         component: () => import('@/views/camps/CampDashboardView.vue'),
-        meta: { permission: Permissions.Camps.Read },
+        meta: { permission: Permissions.Camps.Read, module: Modules.Camps },
       },
       {
         path: 'camps/list',
         name: 'camps',
         component: () => import('@/views/camps/CampListView.vue'),
-        meta: { permission: Permissions.Camps.Read },
+        meta: { permission: Permissions.Camps.Read, module: Modules.Camps },
       },
       {
         path: 'camps/new',
         name: 'camp-new',
         component: () => import('@/views/camps/CampFormView.vue'),
-        meta: { permission: Permissions.Camps.Create },
+        meta: { permission: Permissions.Camps.Create, module: Modules.Camps },
       },
       {
         path: 'camps/:id',
         name: 'camp-detail',
         component: () => import('@/views/camps/CampDetailView.vue'),
-        meta: { permission: Permissions.Camps.Read },
+        meta: { permission: Permissions.Camps.Read, module: Modules.Camps },
       },
       {
         path: 'camps/:id/edit',
         name: 'camp-edit',
         component: () => import('@/views/camps/CampFormView.vue'),
-        meta: { permission: Permissions.Camps.Update },
+        meta: { permission: Permissions.Camps.Update, module: Modules.Camps },
       },
       {
         path: 'camps/periods/:periodId/enrollments',
         name: 'camp-enrollment',
         component: () => import('@/views/camps/CampEnrollmentView.vue'),
-        meta: { permission: Permissions.CampEnrollments.Read },
+        meta: { permission: Permissions.CampEnrollments.Read, module: Modules.Camps },
       },
 
       // ── School Consultancy Management ──────────────────────────────────────────
@@ -1038,25 +1039,25 @@ const routes: RouteRecordRaw[] = [
         path: 'kpi',
         name: 'kpi-dashboard',
         component: () => import('@/views/kpi/KpiDashboardView.vue'),
-        meta: { permission: Permissions.KpiDashboard.Read },
+        meta: { permission: Permissions.KpiDashboard.Read, module: Modules.Kpi },
       },
       {
         path: 'kpi/definitions',
         name: 'kpi-definitions',
         component: () => import('@/views/kpi/KpiDefinitionListView.vue'),
-        meta: { permission: Permissions.Kpi.Read },
+        meta: { permission: Permissions.Kpi.Read, module: Modules.Kpi },
       },
       {
         path: 'kpi/definitions/:id',
         name: 'kpi-definition-detail',
         component: () => import('@/views/kpi/KpiDefinitionListView.vue'),
-        meta: { permission: Permissions.Kpi.Read },
+        meta: { permission: Permissions.Kpi.Read, module: Modules.Kpi },
       },
       {
         path: 'kpi/snapshots',
         name: 'kpi-snapshots',
         component: () => import('@/views/kpi/PerformanceSnapshotListView.vue'),
-        meta: { permission: Permissions.KpiSnapshots.Read },
+        meta: { permission: Permissions.KpiSnapshots.Read, module: Modules.Kpi },
       },
 
       // ── Legal (Contract & Consent) Management ──────────────────────────────────
@@ -1217,11 +1218,12 @@ router.beforeEach(async (to) => {
 
   // Kurumda kapalı modülün ekranları açılmaz (uçlar zaten 403 Error.ModuleDisabled verir).
   // Durum /modules/me'den gelir; ilk girişte yüklenmemişse burada beklenir (önbellekli).
-  if (to.meta.module && auth.isAuthenticated) {
-    const modules = useModulesStore()
-    await modules.load()
-    if (!modules.isEnabled(to.meta.module as ModuleCode)) return { name: 'forbidden' }
-  }
+  const modules = useModulesStore()
+  return moduleRedirect(to.meta, {
+    isAuthenticated: auth.isAuthenticated,
+    load: () => modules.load(),
+    isEnabled: (code) => modules.isEnabled(code as ModuleCode),
+  })
 })
 
 export default router

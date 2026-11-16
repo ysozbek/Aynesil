@@ -20,7 +20,7 @@
         </div>
         <div class="d-flex gap-2">
           <StatusBadge :value="camp.isActive" />
-          <RouterLink v-if="hasPermission(Permissions.Camps.Update)" :to="`/camps/${camp.id}/edit`" class="btn btn-sm btn-light">
+          <RouterLink v-if="visible(Permissions.Camps.Update)" :to="`/camps/${camp.id}/edit`" class="btn btn-sm btn-light">
             <i class="ki-outline ki-pencil fs-4 me-1"></i>{{ $t('common.edit') }}
           </RouterLink>
         </div>
@@ -50,7 +50,7 @@
               <h3 class="card-title fw-bold">{{ $t('camp.detail.periods') }}</h3>
               <div class="card-toolbar">
                 <button
-                  v-if="hasPermission(Permissions.Camps.Update)"
+                  v-if="visible(Permissions.Camps.Update)"
                   class="btn btn-sm btn-light-primary"
                   @click="showPeriodModal = true"
                 >
@@ -162,19 +162,19 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCampStore } from '@/stores/camp.store'
-import { useAuthStore } from '@/stores/auth.store'
+import { useModule } from '@/composables/useModule'
+import { Modules } from '@/constants/modules'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import { Permissions } from '@/constants/permissions'
 
 const route = useRoute()
 const campStore = useCampStore()
-const authStore = useAuthStore()
+const { visible } = useModule(Modules.Camps)
 const id = route.params.id as string
 const camp = computed(() => campStore.currentCamp)
 const showPeriodModal = ref(false)
 const periodForm = reactive({ name: '', startDate: '', endDate: '', capacity: undefined as number | undefined })
 
-function hasPermission(p: string) { return authStore.hasPermission(p) }
 
 async function doCreatePeriod() {
   if (!camp.value) return

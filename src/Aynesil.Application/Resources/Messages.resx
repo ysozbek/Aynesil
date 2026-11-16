@@ -393,4 +393,7 @@
   <data name="Rule.PlanHasFollowUps" xml:space="preserve"><value>Takip faaliyeti olan bir plan silinemez.</value></data>
   <data name="Rule.VisitHasReports" xml:space="preserve"><value>Raporu olan bir ziyaret silinemez.</value></data>
   <data name="Rule.VisitHasFollowUps" xml:space="preserve"><value>Takip faaliyeti olan bir ziyaret silinemez.</value></data>
+  <data name="Rule.ObservationVisitHasReport" xml:space="preserve"><value>Ziyarete rapor yazıldığı için gözlem değiştirilemez veya silinemez.</value></data>
+  <data name="Rule.ObservationVisitCancelled" xml:space="preserve"><value>İptal edilmiş ziyaretin gözlemi değiştirilemez.</value></data>
+  <data name="Rule.ObservationDeleteNeedsPlannedVisit" xml:space="preserve"><value>Gözlem yalnızca planlanmış ziyarette silinebilir; tamamlanmış ya da iptal edilmiş ziyaretin gözlemi düzenlenebilir ama silinemez.</value></data>
 </root>
