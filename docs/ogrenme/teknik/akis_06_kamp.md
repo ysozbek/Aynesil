@@ -4,20 +4,19 @@
 
 **Kim yapar:** Koordinatör/yönetici. Demo eğitmen rolü kamp izinlerinden `camp:read`, `camp_attendance:*`, `camp_participation:*` alır (kamp yoklaması ve etkinlik katılımı). Menü seed'inde kamp izni `camp:read` (hangi rolün göreceği bu izne bağlı).
 
-**Menü:** `Kamp Yönetimi` (`camps`, rota `/camps`). V21 seed'i alt öğeleri `camps.definitions/enrollments/attendance/reports` olarak koymuştu; **router'daki gerçek ekranlar** `/camps` (pano), `/camps/list`, `/camps/new`, `/camps/:id`, `/camps/:id/edit`, `/camps/periods/:periodId/enrollments` — alt menü rotaları ile router tam örtüşmüyor [doğrulanacak: güncel menüde alt öğeler çalışıyor mu].
+**Menü:** `Kamp Yönetimi` (`camps`, rota `/camps`). V21 seed'i alt öğeleri `camps.definitions/enrollments/attendance/reports` olarak koymuştu; **router'daki gerçek ekranlar** `/camps` (pano), `/camps/list`, `/camps/new`, `/camps/:id`, `/camps/:id/edit`, `/camps/periods/:periodId/enrollments` (V49'da menü/router uyumu giderildi).
 
 ## Frontend durumu — bu akışın yarısı yalnızca API'de
 
 | Adım | Ekran | API |
 |---|---|---|
-| Kamp CRUD, dönem ekle | **Var** (`CampListView`, `CampFormView`, `CampDetailView`) | var |
-| Kayıt yap / bekleme listesinden al / kaydı iptal | **Var** (`CampEnrollmentView`) | var |
-| Dönem düzenle/sil, kamp aktif/pasif, kamp silme | Yok (API'de) | var |
-| Bekleme listesine alma (`waitlist`), tamamlama (`complete`, `bulk-complete`) | **Yok — yalnızca API'de** | var |
+| Kamp CRUD, dönem ekle/düzenle/sil | **Var** (`CampListView`, `CampFormView`, `CampDetailView`) | var |
+| Kayıt yap (öğrenci seçerek) / bekleme listesinden al / bekleme listesine al / tamamla / dönemi toplu tamamla / kaydı iptal | **Var** (`CampEnrollmentView`) | var |
+| Kamp aktif/pasif, kamp silme | **Var** (`CampListView`, `CampDetailView`; onay penceresi) | var |
 | **Etkinlik** (oluştur/güncelle/sil) ve **etkinlik katılımı** | **Yok — yalnızca API'de** | var |
 | **Kamp yoklaması** (tekli, toplu, düzeltme, özet) | **Yok — yalnızca API'de** | var |
 | **Kamp öğrenci raporu** | **Yok — yalnızca API'de** | var |
-| Eğitmen atama / rol değiştirme | Yok (detayda "Görevli Eğitmenler" **listelenir**); atama API'de | var |
+| Eğitmen atama / rol değiştirme / kaldırma | **Var** (`CampDetailView` → Görevli Eğitmenler; ad ile listelenir) | var |
 | Kamp performansı (`GET /api/camps/performance`) | Yok | var |
 
 (Menü seed'indeki `camps.attendance` ve `camps.reports` satırları için ekran yok.)
@@ -32,7 +31,7 @@
 | Etkinlik katılımı | `registered`, `attended`, `absent`, `excused` |
 | Kamp eğitmen rolü | `lead`, `assistant`, `observer`, `supervisor` |
 
-Geçişler: `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API adı *promote from waitlist*) · `enrolled → waitlist` (MoveToWaitlist) · `enrolled → completed` · `enrolled/waitlist → withdrawn`. Etkinlik de aktif/pasif yapılabilir ("Etkinlik zaten aktif/pasif.").
+Geçişler (hepsi sunucuda denetlenir; geçersizse 409): `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API adı *promote from waitlist*) · `enrolled → waitlist` (MoveToWaitlist; **yalnızca `enrolled`**) · `enrolled → completed` · `enrolled/waitlist → withdrawn`. Etkinlik de aktif/pasif yapılabilir ("Etkinlik zaten aktif/pasif.").
 
 ## Adım adım
 
@@ -44,7 +43,7 @@ Geçişler: `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API a
 4. **Bekleme listesi:** yer açılınca satırda **Listeye Al** (`camp_enrollment:manage`) → `enrolled`. Hâlâ doluysa: "Kamp dönemi kontenjanı hâlâ dolu." **Kaydı İptal Et** (`withdraw`) yer açar.
 5. **Etkinlik** (`POST /api/camps/periods/{periodId}/activities`; `camp_activity:create`): başlangıç/bitiş (bitiş sonra olmalı), kapasite pozitif; öğrenciyi etkinliğe katılımcı yazma `…/participations` (tekli/toplu), durum `PATCH`. [Ekran yok.]
 6. **Yoklama:** `POST /api/camps/attendance` veya `periods/{id}/attendance/bulk` (`camp_attendance:record`), `PATCH attendance/{id}` ile düzeltme; dönem özeti `attendance-summary`. [Ekran yok.]
-7. **Kapanış:** tamamlanan kayıt `completed` ("Yalnızca aktif kayıtlı öğrenciler tamamlandı olarak işaretlenebilir."), toplu: `periods/{id}/bulk-complete`. Kayıt başına öğrenci raporu (`camp_report:create`; "… alanlarından en az biri verilmelidir").
+7. **Kapanış:** tamamlanan kayıt `completed` ("Yalnızca aktif kayıtlı öğrenciler tamamlandı olarak işaretlenebilir."), toplu: `periods/{id}/bulk-complete` (tamamlanan sayıyı döner; dönem yoksa 404, başlamamışsa 409, bekleyenlere dokunmaz). [Ekran: Dönemi Tamamla.] Kayıt başına öğrenci raporu (`camp_report:create`; "… alanlarından en az biri verilmelidir").
 8. **Pano:** `/camps`: toplam/aktif kamp, toplam kayıt, toplam dönem, aktif kamplar listesi.
 
 ## Dikkat edilecek kurallar ve hata mesajları
@@ -55,6 +54,7 @@ Geçişler: `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API a
 | Terfi yeri yok | "Kamp dönemi kontenjanı hâlâ dolu." |
 | Çift kayıt | "Öğrenci bu kamp döneminde zaten kayıtlı veya bekleme listesinde." |
 | Yanlış durumdan işlem | "Yalnızca bekleme listesindeki kayıtlar 'kayıtlı' durumuna alınabilir." / "Yalnızca aktif kayıtlı öğrenciler tamamlandı olarak işaretlenebilir." / "'{0}' durumundaki bir kayıt değiştirilemez." |
+| Yönetim engelleri (409) | "Kayıtlı veya bekleme listesinde öğrencisi olan bir kamp silinemez…" (`CampHasActiveEnrollments`) · "Devam eden veya başlamamış dönemlerinde kayıtlı ya da bekleyen öğrencisi olan bir kamp pasifleştirilemez." (`CampHasOngoingEnrollments`) · "Pasif bir kampa kayıt alınamaz…" (`CampInactive`) · "Kayıtları olan bir kamp dönemi silinemez." · "Etkinlikleri olan bir kamp dönemi silinemez…" (`CampPeriodHasActivities`) · "Dönem kontenjanı, mevcut kayıtlı öğrenci sayısından ({0}) az olamaz." · "Henüz başlamamış bir dönemde toplu tamamlama yapılamaz." · "Yalnızca kayıtlı öğrenciler bekleme listesine alınabilir." |
 | Tarih / sayı | "{0}, {1} alanından önce/sonra olmalıdır." / "{0} pozitif olmalıdır." |
 | Geçersiz değer | "{0} şu değerlerden biri olmalıdır: {1}." (yoklama durumu, rol, katılım) |
 
@@ -64,7 +64,8 @@ Geçişler: `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API a
 ## Koddaki yeri
 
 - Vue: `views/camps/*`
-- Store/servis: `stores/camp.store.ts`, `campEnrollment.store.ts`; `services/camp.service.ts`
+- Store/servis: `stores/camp.store.ts`, `campEnrollment.store.ts`; `services/camp.service.ts`; kural yardımcısı `utils/campRules.ts` (testi `tests/campRules.test.mjs`)
+- Testler: `tests/Aynesil.Tests/TenantScoping/CampManagementTests.cs` (22 test), smoke-api `campFlows`
 - Controller: `CampsController.cs` (rota `api/camps`)
 - Command/Query: `Application/Features/Camps/Commands/` (`CampCommands`, `CampPeriodCommands`, `CampEnrollmentCommands`, `CampActivityCommands`, `CampParticipationCommands`, `CampAttendanceCommands`, `CampReportCommands`, `CampEducatorCommands`)
 - Domain: `Domain/Modules/Camps/Entities/`
@@ -72,8 +73,9 @@ Geçişler: `waitlist → enrolled` (**Listeye Al** düğmesi = `promote`; API a
 
 ## Kendin dene (demo)
 
-`demo_a`'da 1 kamp (2 dönem, 4 etkinlik, 8 kayıt [1 bekleme listesi], 2 eğitmen, yoklama) var.
+`demo_a`'da 1 kamp (4 dönem [biri toplu tamamlanmaya hazır, biri boş], 4 etkinlik, 10 kayıt [1 bekleme listesi], 2 eğitmen, yoklama) var.
 1. `koordinator@demo-a.test` → `Kamp Yönetimi → Kamplar` → kamp detayı: dönemler ve görevli eğitmenler.
 2. Dönem kayıt ekranında bekleme listesindeki kayıtta **Listeye Al**: kapasite doluysa "hâlâ dolu" mesajını, yer açtıktan (başka kaydı iptal edince) sonra başarıyı görün.
 3. Aynı öğrenciyi aynı döneme tekrar kaydetmeyi deneyin.
-4. Etkinlik/yoklama verisi demo'da var ama ekranı yok: görmek için API (`GET /api/camps/activities`, `/api/camps/attendance`) [doğrulanacak: Swagger/Postman ile].
+4. "Haziran Dönemi (tamamlanacak)" döneminde **Dönemi Tamamla**; boş "Eylül Hafta Sonu (taslak)" dönemini düzenleyin/silin; bekleyen kayıt varken kampı pasifleştirmeyi deneyip 409 iletisini görün.
+5. Etkinlik/yoklama verisi demo'da var ama ekranı yok: görmek için API (`GET /api/camps/activities`, `/api/camps/attendance`) [doğrulanacak: Swagger/Postman ile].

@@ -9,7 +9,7 @@ Tarih: 2026-11-14 · Kaynak: `docs/uyusmazlik-raporu.md` §3 (79 endpoint, eski)
 1. **Frontend çağrısı yok:** `src/Aynesil.Api/Controllers/*` yönlendirmeleri (HttpGet/Post/…, sınıf `[Route]`'u, `[HasPermission]`) çıkarıldı; `frontend/aynesil-web/src` altında `apiService`/`api` ile çağrılan tüm yollarla eşlendi (şablonlu yollar normalize edildi).
 2. **Servis var, ekran yok:** her servis metodunun (`services/*.ts`) adı; `views/`, `components/`, `composables/`, `router/`, `layouts/` içinde, ya da bir store fonksiyonu üzerinden bunlardan birinde kullanılıp kullanılmadığına bakıldı (store → ekran zinciri bir seviye).
 
-Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); beşinci turda **18 uç daha kapatıldı** (§2, "Beşinci tur": okul danışmanlığı); altıncı turda **9 uç daha kapatıldı** (§2, "Altıncı tur": anketler; ek olarak sonuç özeti, bekleyen anketler ve "benim geri bildirimlerim" uçları ekran dahil yazıldı); kalan **67** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
+Sonuç: **başlangıçta 150**, ilk turda **27 uç kapatıldı** (123 kaldı), ikinci turda **8 uç daha kapatıldı** (§2, "İkinci tur"), üçüncü turda **15 uç daha kapatıldı** (§2, "Üçüncü tur"; ek olarak bu turun karar kapanışıyla `DELETE /api/payments/discounts/{id}` ve `GET …/calendar-entries/impact` ekran dahil yazıldı, B listesinde olmadıkları için sayıya girmez); dördüncü turda **6 uç daha kapatıldı** (§2, "Dördüncü tur": bakım ekibi); beşinci turda **18 uç daha kapatıldı** (§2, "Beşinci tur": okul danışmanlığı); altıncı turda **9 uç daha kapatıldı** (§2, "Altıncı tur": anketler; ek olarak sonuç özeti, bekleyen anketler ve "benim geri bildirimlerim" uçları ekran dahil yazıldı); yedinci turda **11 uç daha kapatıldı** (§2, "Yedinci tur": kamp yönetimi); kalan **56** (bu belge). Tarama ad tabanlıdır; yanlış pozitif/negatif olabilir (ör. bir çeviri anahtarındaki aynı ad bir ucu "kullanılıyor" gösterebilir; kamera `POST /api/cameras/{id}/sessions` böyle elle düzeltildi). Eski "79" sayısı yalnızca 1. seviyeyi kapsıyordu; fark buradan.
 
 Gruplar: **(A)** yarım kalmış iş akışı — canlıdan önce ekran gerekli · **(B)** belirli bir modül kullanılırsa gerekli · **(C)** kullanılmayan/ölü/ekranı açılmaması gereken.
 
@@ -109,6 +109,23 @@ Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → pl
 | Veli anketi yanıtlar | `POST /api/surveys/responses` | Veli kimliği oturumdan türetilir; başkasının çocuğu 403 `GuardianNoActiveAccess`; seans verilirse çocuklarından birinin seansı olmalı. **Eklendi:** aynı anket × veli × çocuk × seans için ikinci gönderim 409 `Rule.SurveyAlreadySubmitted` (kural dokümanda vardı ama yalnızca "iki kez Submit" olarak kodlanmıştı, fiilen hiç tetiklenmiyordu); zorunlu soru boşsa 422; puan 1–5; aynı soruya iki yanıt 422; veliye yönelik olmayan anket 409 `Rule.SurveyTargetMismatch`. | `/portal/surveys` |
 | Veli geri bildirimi: oluştur, listele | `POST/GET /api/surveys/parent-feedback`, `GET …/parent-feedback/mine` (**yeni**, `parent_feedback:create`) | Puan 1–5 ve/veya yorum (≤2000). **Eklendi:** veli yalnızca **kendi çocuğunun** seansını/eğitmenini puanlayabilir (aksi 403); yalnızca seans verilirse puan **seansın baş eğitmenine** yazılır (KPI veli memnuniyeti eğitmen bazlıdır); eğitmen/seans kurum içinde var olmalı (404). `GET parent-feedback` bir veli tarafından çağrılırsa gönderilen süzgeç ne olursa olsun yalnızca kendi kayıtlarını döner; liste veli ve eğitmen adı içerir. | Yönetici: `/surveys/feedback` (`parent_feedback:read`); veli: `/portal/feedback` |
 
+**Yedinci tur — B'den A'ya taşınıp ekranı yapılanlar: kamp yönetimi (2026-11-16):**
+
+`camps` modülüne bağlı (rotalar `meta.module: Modules.Camps`, düğmeler `useModule(Modules.Camps).visible(izin)`; kural yardımcıları `utils/campRules.ts`, testi `npm test`). Bağlı kayıt varsa sunucu 409 `Error.BusinessRule` + anlamlı ileti döner; ekran iletiyi kırmızı uyarıda gösterir.
+
+| Akış | Uç(lar) | Kural (409 = `BusinessRuleViolationException`) | Ekran |
+|---|---|---|---|
+| Kamp etkinleştir / pasifleştir | `POST /api/camps/{id}/activate`, `/deactivate` (`camp:activate`) | Zaten aktif/pasifse 409. **Pasifleştirme:** bitmemiş (bitiş ≥ bugün) dönemlerinde `enrolled`/`waitlist` kayıt varsa 409 `CampHasOngoingEnrollments`; bitmiş dönemlerin geçmişi engellemez. Pasif kampa kayıt alınamaz (409 `CampInactive`). | `/camps/list` satır işlemi, `/camps/:id` başlık düğmesi (onay penceresi) |
+| Kamp silme | `DELETE /api/camps/{id}` (`camp:delete`) | `enrolled` **veya** `waitlist` kaydı varsa 409 `CampHasActiveEnrollments` (eskiden yalnızca `enrolled`); tamamlanmış/ayrılmış kayıtlar engellemez (soft delete). | aynı |
+| Dönem düzenle | `PUT /api/camps/periods/{periodId}` (`camp:manage_periods`) | Kontenjan, kayıtlı öğrenci sayısından az olamaz: 409 `CampPeriodCapacityBelowEnrolled`. | `/camps/:id` → Dönemler → Düzenle |
+| Dönem sil | `DELETE /api/camps/periods/{periodId}` | Herhangi bir kaydı varsa 409 `CampPeriodHasEnrollments`; etkinliği varsa 409 `CampPeriodHasActivities` (eskiden etkinlikleri sessizce cascade siliyordu). | aynı (kayıtlı/bekleyen varken düğme kapalı) |
+| Bekleme listesine alma | `POST /api/camps/enrollments/{id}/waitlist` (`camp_enrollment:manage`) | Yalnızca `enrolled` → 409 `OnlyEnrolledToWaitlist` (eskiden `waitlist`/herhangi aktif durum sessizce geçiyordu). | `/camps/periods/:periodId/enrollments` satırı |
+| Kaydı tamamla | `POST /api/camps/enrollments/{id}/complete` (`camp_enrollment:complete`) | Yalnızca `enrolled` (mevcut kural). | aynı |
+| Dönem sonu toplu tamamla | `POST /api/camps/periods/{periodId}/bulk-complete` → tamamlanan sayı | Dönem yoksa 404 (eskiden 0 dönerdi); henüz başlamamış dönemde 409 `CampPeriodNotStarted`; yalnızca `enrolled` olanlar tamamlanır, bekleyenler etkilenmez. | aynı ("Dönemi Tamamla", başlamamış dönemde/kayıtlı yokken kapalı) |
+| Kamp eğitmeni: ata / rol değiştir / kaldır | `POST /api/camps/{campId}/educators`, `PATCH /api/camps/educators/{id}/role`, `DELETE …/{id}` (`camp_educator:manage`) | Aynı kapsamda (kamp/dönem/etkinlik) aynı eğitmen ikinci kez 409 `EducatorAlreadyAtScope`; rol `lead/assistant/observer/supervisor`. Liste yanıtına `educatorName` eklendi. | `/camps/:id` → Görevli Eğitmenler |
+
+Ek: kayıt listesi yanıtına `studentName` eklendi (ekranda artık kimlik yerine ad). Kamp detayındaki dönem bağlantısı hatalıydı (`/camps/periods/:id` rotası yok); `/camps/periods/:periodId/enrollments`'a düzeltildi.
+
 **KPI veli memnuniyeti bağı (doğrulandı):** `educator.parent_satisfaction` yalnızca `ops.parent_feedback.rating` değerlerinin eğitmen + dönem ortalamasıdır (`ComputePerformanceSnapshot`). Veli geri bildirimi (seans ya da eğitmen ile) bu ölçüte yansır; birim testi (`SurveyModuleTests`) ve smoke-api (`performance-kpi.compute`) bunu kanıtlar. **Anket yanıtları (`survey_response`) bu ölçüte girmez:** anket yanıtında eğitmen bağı yok; ölçüt şu an yalnızca `parent_feedback` kaynaklıdır. (Anket puanlarını eğitmen KPI'ına katmak ayrı bir karar: seans bağlı yanıt → seansın eğitmeni kuralı gerekir.)
 
 **Seans notu düzenlendi bilgisi (güncellendi, V55):** `scheduling.session_note`'a `edited_at timestamptz` + `edited_by uuid` eklendi; **yalnızca not metni değişince** dolar (salt görünürlük değişikliği düzenleme sayılmaz; o iz `core.audit_log`'ta). Personel ekranı ve **veli portalı** (çocuk detayı → Seanslar, seansın altında) "düzenlendi" gösterir. Portal yalnızca `parent_visible = true` ve silinmemiş notları döner, `CanViewSessions` kapalıysa seans listesiyle birlikte hiç göndermez (`PortalAccessHelper`); görünürlük sonradan kapatılan not portaldan kalkar. **V56 (grup seansı sızıntısı):** not `student_id`'ye bağlanır; portal yalnızca velinin kendi çocuğuna bağlı notları gösterir, `student_id` boş not (grup seansı dahil) hiçbir veliye gösterilmez; grup seansında veliye görünür not için öğrenci seçimi zorunludur (422 `Rule.SessionNoteStudentRequired`). Eski veri: tek katılımcılı seanslardaki görünür notlar bağlandı, grup/katılımcısız seanslardakiler kapatıldı (yerel veritabanında 12 bağlandı, 0 kapatıldı).
@@ -138,7 +155,7 @@ Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → pl
 | POST | `/api/cameras/viewing/start` | ViewingSession.Start |
 | POST | `/api/cameras/viewing/{logId}/end` | ViewingSession.End |
 
-**Camps** — 26 uç. Kamp modülü: ekranlar liste/oluşturma/kayıt düzeyinde; bu ayrıntı işlemleri (dönem/etkinlik/katılım/yoklama/rapor) kamp kullanan kurumda gerekir.
+**Camps** — 15 uç. Kamp modülü: yönetim tarafı (etkinleştir/pasifleştir/sil, dönem düzenle/sil, bekleme listesi/tamamla/toplu tamamla, eğitmen atama) ekranlı (yedinci tur); kalan ayrıntı işlemler (etkinlik/katılım/yoklama/rapor) kamp kullanan kurumda gerekir.
 
 | Metot | Route | İzin |
 |---|---|---|
@@ -149,25 +166,14 @@ Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → pl
 | POST | `/api/camps/activities/{activityId}/participations/bulk` | CampParticipation.Record |
 | GET | `/api/camps/attendance` | CampAttendance.Read |
 | PATCH | `/api/camps/attendance/{attendanceId}` | CampAttendance.Record |
-| DELETE | `/api/camps/educators/{assignmentId}` | CampEducators.Manage |
-| PATCH | `/api/camps/educators/{assignmentId}/role` | CampEducators.Manage |
-| POST | `/api/camps/enrollments/{enrollmentId}/complete` | CampEnrollments.Complete |
 | GET | `/api/camps/enrollments/{enrollmentId}/reports` | CampReports.Read |
 | POST | `/api/camps/enrollments/{enrollmentId}/reports` | CampReports.Create |
-| POST | `/api/camps/enrollments/{enrollmentId}/waitlist` | CampEnrollments.Manage |
 | GET | `/api/camps/participations` | CampParticipation.Read |
 | PATCH | `/api/camps/participations/{participationId}` | CampParticipation.Record |
 | GET | `/api/camps/performance` | Camps.Read |
-| DELETE | `/api/camps/periods/{periodId}` | Camps.ManagePeriods |
-| PUT | `/api/camps/periods/{periodId}` | Camps.ManagePeriods |
 | POST | `/api/camps/periods/{periodId}/activities` | CampActivities.Create |
 | POST | `/api/camps/periods/{periodId}/attendance/bulk` | CampAttendance.Record |
-| POST | `/api/camps/periods/{periodId}/bulk-complete` | CampEnrollments.Complete |
-| POST | `/api/camps/{campId}/educators` | CampEducators.Manage |
 | GET | `/api/camps/{campId}/periods` | Camps.Read |
-| DELETE | `/api/camps/{id}` | Camps.Delete |
-| POST | `/api/camps/{id}/activate` | Camps.Activate |
-| POST | `/api/camps/{id}/deactivate` | Camps.Activate |
 
 **EducationPlans** — 1 uç. Veli görünür plan okuması; portal kendi ucunu kullanıyor.
 

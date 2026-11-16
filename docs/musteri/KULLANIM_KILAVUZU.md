@@ -156,9 +156,13 @@ Menü: `Sözleşme ve Rıza Yönetimi`.
 6. **Gelişim raporu:** öğrenci kartı → **Gelişim Raporları** → rapor ekleyin; hazır olunca **Kesinleştir**. **Veli yalnızca kesinleşmiş raporları görür.** Kesinleşen rapor bir daha düzenlenemez; kesinleştirmeden önce kontrol edin.
 
 ### 3.9 Kamp Yönetimi (modül açıksa)
-1. `Kamp Yönetimi → Kamp Tanımları` → tarih, kapasite, konu.
-2. Kamp dönemine öğrenci kaydı.
-Not: Kampın dönem, etkinlik, yoklama ve rapor işlemlerinin bir kısmı henüz ekrandan yapılamıyor.
+1. `Kamp Yönetimi → Kamplar → Yeni Kamp` → kod, ad, tür, konum, kapasite.
+2. **Dönem:** kamp sayfasında **Dönem Ekle**; dönem satırından **Düzenle** (ad, tarih, kontenjan) ve **Sil**. Kontenjanı kayıtlı öğrenci sayısının altına indiremezsiniz; kayıtlı, bekleyen ya da etkinliği olan dönem silinemez (sebep ekranda yazar).
+3. **Kayıt:** dönemin **Kayıtlar** ekranında **Kayıt Yap** (öğrenciyi listeden seçin; yer yoksa "Bekleme listesinde" olarak yazın). Satırdan: **Listeye Al** (bekleyeni kayıtlı yapar), **Bekleme Listesine Al** (kayıtlıyı bekletir), **Tamamla**, **Kaydı İptal Et**.
+4. **Dönem sonu:** dönem bitince **Dönemi Tamamla** tüm kayıtlı öğrencileri tek seferde "Tamamlandı" yapar (bekleme listesindekiler etkilenmez). Henüz başlamamış dönemde kullanılamaz.
+5. **Eğitmen:** kamp sayfasında **Görevli Eğitmenler → Eğitmen Ata**; rolü (sorumlu, yardımcı, gözlemci, süpervizör) satırdaki listeden değiştirir, **Atamayı Kaldır** ile çıkarırsınız.
+6. **Kampı pasifleştirme / silme:** kamp listesinde ya da kamp sayfasında **Pasifleştir** / **Etkinleştir** / **Sil**. Devam eden veya başlamamış dönemlerinde kayıtlı ya da bekleyen öğrencisi olan kamp pasifleştirilemez; kayıtlı/bekleyen öğrencisi olan kamp silinemez. Pasif kampa yeni kayıt alınamaz. Engel varsa sebep kırmızı uyarıda gösterilir; önce ilgili kayıtları tamamlayın veya iptal edin.
+Not: Kampın etkinlik, yoklama ve rapor işlemleri henüz ekrandan yapılamıyor.
 
 ### 3.10 Okul Danışmanlığı (modül açıksa)
 Kurumunuzun dışarıdaki okullara verdiği danışmanlık hizmetini yönetir.
