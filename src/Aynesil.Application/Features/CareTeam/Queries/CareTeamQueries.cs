@@ -53,7 +53,7 @@ public sealed class GetStudentCareTeamQueryHandler
                 x.edu.FirstName + " " + x.edu.LastName,
                 x.a.RoleId, x.role != null ? x.role.Code : null,
                 x.a.IsPrimary, x.a.Status, x.a.ActiveFrom, x.a.ActiveTo,
-                x.a.CreatedAt))
+                x.a.CreatedAt, x.a.RowVersion, x.a.Reason))
             .ToListAsync(ct);
 
         return items;
@@ -146,4 +146,42 @@ public sealed class GetCareTeamAssignmentQueryHandler
         => await AssignCareTeamMemberCommandHandler
                 .LoadAssignmentDtoAsync(_db, req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CareTeamAssignment"));
+}
+
+
+// ── GetStudentSessionEducatorsQuery ───────────────────────────────────────────
+
+/// <summary>
+/// Educators that appear on the student's sessions (scheduling.session_participant → session_educator), most
+/// recent first. A fallback view for the student dashboard when the care team is empty; it grants no access.
+/// Requires student:read.
+/// </summary>
+public record GetStudentSessionEducatorsQuery(Guid StudentId) : IRequest<IReadOnlyList<StudentSessionEducatorDto>>;
+
+public sealed class GetStudentSessionEducatorsQueryHandler
+    : IRequestHandler<GetStudentSessionEducatorsQuery, IReadOnlyList<StudentSessionEducatorDto>>
+{
+    private readonly IAppDbContext _db;
+
+    public GetStudentSessionEducatorsQueryHandler(IAppDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<StudentSessionEducatorDto>> Handle(
+        GetStudentSessionEducatorsQuery req, CancellationToken ct)
+    {
+        var rows = await (
+            from p in _db.SessionParticipants.AsNoTracking()
+            join s in _db.Sessions.AsNoTracking() on p.SessionId equals s.Id
+            join se in _db.SessionEducators.AsNoTracking() on s.Id equals se.SessionId
+            join e in _db.Educators.AsNoTracking() on se.EducatorId equals e.Id
+            where p.StudentId == req.StudentId
+               && s.Status != "cancelled" && s.Status != "no_show"
+            group s by new { e.Id, e.FirstName, e.LastName } into g
+            select new { g.Key.Id, g.Key.FirstName, g.Key.LastName, Count = g.Count(), Last = g.Max(x => x.StartsAt) }
+        ).ToListAsync(ct);
+
+        return rows
+            .OrderByDescending(r => r.Last)
+            .Select(r => new StudentSessionEducatorDto(r.Id, r.FirstName + " " + r.LastName, r.Count, r.Last))
+            .ToList();
+    }
 }

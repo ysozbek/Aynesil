@@ -36,7 +36,10 @@ public record CareTeamAssignmentListItemDto(
     string Status,
     DateOnly ActiveFrom,
     DateOnly? ActiveTo,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    /// <summary>Required by PUT/DELETE (optimistic concurrency).</summary>
+    int RowVersion = 0,
+    string? Reason = null);
 
 /// <summary>Compact student summary used in "my-students" response.</summary>
 public record CareTeamStudentListItemDto(
@@ -49,3 +52,14 @@ public record CareTeamStudentListItemDto(
     string Status,
     DateOnly ActiveFrom,
     DateOnly? ActiveTo);
+
+
+/// <summary>
+/// Educator derived from a student's sessions (not a care-team assignment). Used by the student dashboard while the
+/// care team is still empty. Cancelled and no-show sessions are ignored.
+/// </summary>
+public record StudentSessionEducatorDto(
+    Guid   EducatorId,
+    string EducatorName,
+    int    SessionCount,
+    DateTimeOffset LastSessionAt);

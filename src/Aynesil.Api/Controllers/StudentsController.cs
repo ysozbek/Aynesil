@@ -1,5 +1,7 @@
 using Aynesil.Api.Authorization;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Features.CareTeam.Dtos;
+using Aynesil.Application.Features.CareTeam.Queries;
 using Aynesil.Application.Features.Students.Commands;
 using Aynesil.Application.Features.Students.Dtos;
 using Aynesil.Application.Features.Students.Queries;
@@ -79,6 +81,16 @@ public sealed class StudentsController : BaseController
     }
 
     // ── Student Sub-resource Queries ──────────────────────────────────────────
+
+    /// <summary>Educators derived from the student's sessions (fallback while the care team is empty).</summary>
+    [HttpGet("{id:guid}/session-educators")]
+    [HasPermission(Permissions.Students.Read)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<StudentSessionEducatorDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSessionEducators(Guid id, CancellationToken ct)
+    {
+        var result = await Sender.Send(new GetStudentSessionEducatorsQuery(id), ct);
+        return OkResult(result);
+    }
 
     [HttpGet("{id:guid}/guardians")]
     [HasPermission(Permissions.Students.Read)]
