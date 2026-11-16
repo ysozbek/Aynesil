@@ -298,6 +298,23 @@ public class CampDailyOperationsTests
         (await ctx.Db.CampAttendances.SingleAsync()).Status.Should().Be("excused");
     }
 
+    [Fact]
+    public async Task Attendance_list_can_be_filtered_by_period_and_day()
+    {
+        using var ctx = new TenantTestContext();
+        var (camp, a, b) = NewCamp();
+        var ea = Enr(a.Id); var eb = Enr(b.Id);
+        await ctx.SeedAsync(camp, a, b, ea, eb,
+            CampAttendance.Record(TenantA, ea.Id, Today, "present"),
+            CampAttendance.Record(TenantA, ea.Id, Today.AddDays(-1), "absent"),
+            CampAttendance.Record(TenantA, eb.Id, Today, "present"));
+
+        var res = await ctx.Handler<GetCampAttendanceQueryHandler>().Handle(
+            new GetCampAttendanceQuery { CampPeriodId = a.Id, DateFrom = Today, DateTo = Today, PageSize = 50 }, default);
+
+        res.Items.Should().ContainSingle().Which.CampEnrollmentId.Should().Be(ea.Id);
+    }
+
     // ── Kamp sonu raporu ──────────────────────────────────────────────────────
 
     [Theory]

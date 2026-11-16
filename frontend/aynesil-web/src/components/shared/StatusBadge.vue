@@ -37,6 +37,8 @@ const tones: { [E in StatusEntity]: Record<StatusOf<E>, Tone> } = {
   consent: { granted: 'success', withdrawn: 'danger', expired: 'neutral' },
   careAssignment: { active: 'success', suspended: 'warning', ended: 'neutral' },
   campEnrollment: { enrolled: 'success', waitlist: 'warning', withdrawn: 'danger', completed: 'info' },
+  campParticipation: { registered: 'info', attended: 'success', absent: 'danger', excused: 'neutral' },
+  campAttendance: { present: 'success', absent: 'danger', late: 'warning', excused: 'info' },
   meeting: { scheduled: 'info', completed: 'success', cancelled: 'danger' },
   meetingFollowUp: { open: 'warning', in_progress: 'info', done: 'success', cancelled: 'neutral' },
   consultancyFollowUp: { pending: 'warning', in_progress: 'info', completed: 'success', cancelled: 'neutral' },

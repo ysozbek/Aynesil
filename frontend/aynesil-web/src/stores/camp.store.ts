@@ -17,7 +17,8 @@ import type {
   CampListQuery, CampEnrollmentQuery, CampPerformanceQuery,
   CreateCampPayload, UpdateCampPayload,
   CreatePeriodPayload, UpdatePeriodPayload, EnrollStudentPayload,
-  RecordAttendancePayload,
+  RecordAttendancePayload, CreateCampActivityPayload, UpdateCampActivityPayload,
+  ParticipationInput, BulkAttendanceInput, CreateCampReportPayload,
 } from '@/types/camp.types'
 
 const emptyPage = <T>(): PaginatedResult<T> => ({
@@ -233,11 +234,45 @@ export const useCampStore = defineStore('camp', () => {
   async function fetchActivities(periodId: string) {
     loading.value = true
     try {
-      const res = await campService.listActivities(periodId)
+      const res = await campService.listActivities(periodId, { pageSize: 100 })
       if (res.success && res.data) activities.value = res.data.items
     } catch (e: unknown) { error.value = (e as Error).message }
     finally { loading.value = false }
   }
+
+  /** Yazma işlemleri hata fırlatır (ekran iletiyi gösterir); `saving` her durumda kapanır. */
+  async function withSaving<T>(fn: () => Promise<T>): Promise<T> {
+    saving.value = true
+    try { return await fn() } finally { saving.value = false }
+  }
+
+  const createActivity = (periodId: string, payload: CreateCampActivityPayload) =>
+    withSaving(async () => { await campService.createActivity(periodId, payload); await fetchActivities(periodId) })
+
+  const updateActivity = (periodId: string, activityId: string, payload: UpdateCampActivityPayload) =>
+    withSaving(async () => { await campService.updateActivity(activityId, payload); await fetchActivities(periodId) })
+
+  const deleteActivity = (periodId: string, activityId: string) =>
+    withSaving(async () => { await campService.deleteActivity(activityId); await fetchActivities(periodId) })
+
+  /** Toplu yoklama; eklenen sayıyı döner. */
+  const bulkRecordAttendance = (periodId: string, date: string, records: BulkAttendanceInput[]) =>
+    withSaving(async () => (await campService.bulkRecordAttendance(periodId, date, records)).data ?? 0)
+
+  const updateAttendance = (attendanceId: string, status: string) =>
+    withSaving(() => campService.updateAttendance(attendanceId, status))
+
+  const registerParticipation = (activityId: string, input: ParticipationInput) =>
+    withSaving(() => campService.registerParticipation(activityId, input))
+
+  const bulkRegisterParticipation = (activityId: string, records: ParticipationInput[]) =>
+    withSaving(async () => (await campService.bulkRegisterParticipation(activityId, records)).data ?? 0)
+
+  const updateParticipation = (participationId: string, status: string) =>
+    withSaving(() => campService.updateParticipation(participationId, status))
+
+  const createReport = (enrollmentId: string, payload: CreateCampReportPayload) =>
+    withSaving(() => campService.createCampReport(enrollmentId, payload))
 
   async function fetchEducators(campId: string) {
     loading.value = true
@@ -265,5 +300,8 @@ export const useCampStore = defineStore('camp', () => {
     moveToWaitlist, completeEnrollment, bulkComplete,
     recordAttendance, fetchEnrollmentSummary, fetchAttendanceSummary, fetchPerformance,
     fetchActivities, fetchEducators, clearCurrent,
+    createActivity, updateActivity, deleteActivity,
+    bulkRecordAttendance, updateAttendance,
+    registerParticipation, bulkRegisterParticipation, updateParticipation, createReport,
   }
 })

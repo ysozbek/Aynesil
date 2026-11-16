@@ -274,6 +274,14 @@ export interface CampParticipationListQuery extends SortedPageQuery {
   status?: string
 }
 
+export interface CampAttendanceQuery extends SortedPageQuery {
+  campEnrollmentId?: string
+  campPeriodId?: string
+  dateFrom?: string
+  dateTo?: string
+  status?: string
+}
+
 /** Enrollment id is supplied by the service (CampEnrollmentId in the POST body). */
 export interface RecordAttendancePayload {
   attendanceDate: string
@@ -301,4 +309,25 @@ export interface AssignCampEducatorPayload {
   role?: string
   campPeriodId?: string
   campActivityId?: string
+}
+
+/** Mirrors UpdateCampActivityCommand; `id` comes from the route. `rowVersion` = etkinlik DTO'sundaki sürüm. */
+export interface UpdateCampActivityPayload extends CreateCampActivityPayload {
+  rowVersion: number
+}
+
+export interface ParticipationInput {
+  enrollmentId: string
+  status: string
+  notes?: string
+}
+
+export interface BulkAttendanceInput {
+  enrollmentId: string
+  status: string
+  reasonId?: string
+}
+
+export interface CreateCampReportPayload {
+  summary: string
 }

@@ -900,6 +900,18 @@ const routes: RouteRecordRaw[] = [
         meta: { permission: Permissions.Camps.Update, module: Modules.Camps },
       },
       {
+        path: 'camps/performance',
+        name: 'camp-performance',
+        component: () => import('@/views/camps/CampPerformanceView.vue'),
+        meta: { permission: Permissions.Camps.Read, module: Modules.Camps },
+      },
+      {
+        path: 'camps/periods/:periodId',
+        name: 'camp-period',
+        component: () => import('@/views/camps/CampPeriodDetailView.vue'),
+        meta: { permission: Permissions.CampActivities.Read, module: Modules.Camps },
+      },
+      {
         path: 'camps/periods/:periodId/enrollments',
         name: 'camp-enrollment',
         component: () => import('@/views/camps/CampEnrollmentView.vue'),

@@ -5,9 +5,14 @@
         <h1 class="text-gray-900 fw-bold fs-2">{{ $t('camp.dashboard.title') }}</h1>
         <p class="text-muted mb-0">{{ $t('camp.dashboard.subtitle') }}</p>
       </div>
-      <RouterLink v-if="visible(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
-        <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
-      </RouterLink>
+      <div class="d-flex gap-3">
+        <RouterLink v-if="visible(Permissions.Camps.Read)" to="/camps/performance" class="btn btn-light-primary">
+          <i class="ki-outline ki-chart-simple fs-2 me-1"></i>{{ $t('camp.performance.link') }}
+        </RouterLink>
+        <RouterLink v-if="visible(Permissions.Camps.Create)" to="/camps/new" class="btn btn-primary">
+          <i class="ki-outline ki-plus fs-2 me-1"></i>{{ $t('camp.new') }}
+        </RouterLink>
+      </div>
     </div>
 
     <!-- Stats -->

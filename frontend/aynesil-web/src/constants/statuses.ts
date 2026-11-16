@@ -49,6 +49,24 @@ export const CampEnrollmentStatus = {
 } as const
 export type CampEnrollmentStatus = (typeof CampEnrollmentStatus)[keyof typeof CampEnrollmentStatus]
 
+/** camps.camp_activity_participation.status (11_camps.sql) */
+export const CampParticipationStatus = {
+  Registered: 'registered',
+  Attended: 'attended',
+  Absent: 'absent',
+  Excused: 'excused',
+} as const
+export type CampParticipationStatus = (typeof CampParticipationStatus)[keyof typeof CampParticipationStatus]
+
+/** camps.camp_attendance.status (11_camps.sql) */
+export const CampAttendanceStatus = {
+  Present: 'present',
+  Absent: 'absent',
+  Late: 'late',
+  Excused: 'excused',
+} as const
+export type CampAttendanceStatus = (typeof CampAttendanceStatus)[keyof typeof CampAttendanceStatus]
+
 /** ops.meeting.status (10_ops.sql) */
 export const MeetingStatus = {
   Scheduled: 'scheduled',
@@ -289,6 +307,8 @@ export const StatusEntities = {
   consent: ConsentState,
   careAssignment: CareAssignmentStatus,
   campEnrollment: CampEnrollmentStatus,
+  campParticipation: CampParticipationStatus,
+  campAttendance: CampAttendanceStatus,
   meeting: MeetingStatus,
   meetingFollowUp: MeetingFollowUpStatus,
   consultancyFollowUp: ConsultancyFollowUpStatus,

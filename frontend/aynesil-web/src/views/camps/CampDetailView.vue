@@ -223,6 +223,10 @@ onMounted(async () => {
                         @click="router.push({ name: 'camp-enrollment', params: { periodId: p.id } })"
                       >{{ t('camp.detail.enrollments') }}</button>
                       <button
+                        v-if="visible(Permissions.CampActivities.Read) || visible(Permissions.CampAttendance.Read)" type="button" class="text-xs text-primary hover:underline"
+                        @click="router.push({ name: 'camp-period', params: { periodId: p.id } })"
+                      >{{ t('camp.detail.periodDetail') }}</button>
+                      <button
                         v-if="visible(Permissions.Camps.ManagePeriods)" type="button" class="text-xs text-primary hover:underline"
                         @click="openPeriod(p)"
                       >{{ t('common.edit') }}</button>

@@ -10,12 +10,12 @@ import { CampEnrollmentStatus } from '@/constants/statuses'
 import { campService } from '@/services/camp.service'
 import { studentService } from '@/services/student.service'
 import { toLocalDateString } from '@/utils/datetime'
-import { canBulkComplete } from '@/utils/campRules'
+import { canBulkComplete, canWriteReport } from '@/utils/campRules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
 import FormModal from '@/components/shared/FormModal.vue'
-import type { CampPeriodDto } from '@/types/camp.types'
+import type { CampPeriodDto, CampReportDto, CampEnrollmentListItemDto } from '@/types/camp.types'
 import type { StudentListItemDto } from '@/types/student.types'
 
 const { t } = useI18n()
@@ -101,6 +101,42 @@ async function doEnroll() {
   } catch (e: unknown) { enrollError.value = (e as Error).message }
 }
 
+// ── Kamp sonu raporu (yalnızca tamamlanmış kayıt) ─────────────────────────────
+const reportFor = ref<CampEnrollmentListItemDto | null>(null)
+const reports = ref<CampReportDto[]>([])
+const reportsLoading = ref(false)
+const reportError = ref('')
+const reportSummary = ref('')
+
+async function openReports(e: CampEnrollmentListItemDto) {
+  reportFor.value = e
+  reportError.value = ''; reportSummary.value = ''; reports.value = []
+  reportsLoading.value = true
+  try {
+    const res = await campService.listCampReports(e.id)
+    reports.value = res.data ?? []
+  } catch (err: unknown) { reportError.value = (err as Error).message }
+  finally { reportsLoading.value = false }
+}
+
+async function saveReport() {
+  const e = reportFor.value
+  if (!e) return
+  reportError.value = ''
+  if (!reportSummary.value.trim()) {
+    reportError.value = t('validation.required', { field: t('camp.report.summary') })
+    return
+  }
+  try {
+    await campStore.createReport(e.id, { summary: reportSummary.value.trim() })
+    reportSummary.value = ''
+    notice.value = t('camp.report.saved')
+    reports.value = (await campService.listCampReports(e.id)).data ?? []
+  } catch (err: unknown) { reportError.value = (err as Error).message }
+}
+
+function formatDateTime(dt: string) { return new Date(dt).toLocaleString('tr-TR') }
+
 onMounted(async () => {
   await Promise.all([
     campStore.fetchEnrollments(periodId),
@@ -176,6 +212,11 @@ const btn = 'text-xs hover:underline'
             <td class="px-4">
               <div class="flex items-center justify-end gap-3">
                 <button
+                  v-if="canWriteReport(e.status) && visible(Permissions.CampReports.Read)"
+                  type="button" :class="[btn, 'text-primary']"
+                  @click="openReports(e)"
+                >{{ t('camp.enrollment.report') }}</button>
+                <button
                   v-if="e.status === CampEnrollmentStatus.Waitlist && visible(Permissions.CampEnrollments.Manage)"
                   type="button" :class="[btn, 'text-emerald-700']"
                   @click="run(() => campStore.promoteFromWaitlist(e.id, periodId))"
@@ -225,6 +266,33 @@ const btn = 'text-xs hover:underline'
             <option value="waitlist">{{ t('camp.enrollment.status.waitlist') }}</option>
           </select>
         </div>
+      </div>
+    </FormModal>
+
+    <FormModal
+      :open="!!reportFor"
+      :title="t('camp.report.title')"
+      :subtitle="reportFor ? t('camp.report.forStudent', { name: reportFor.studentName ?? '' }) : ''"
+      :saving="campStore.saving"
+      wide
+      @submit="saveReport"
+      @close="reportFor = null"
+    >
+      <p v-if="reportError" class="mb-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2" role="alert">{{ reportError }}</p>
+      <div v-if="reportsLoading" class="py-6 text-center text-muted-foreground">{{ t('common.loading') }}</div>
+      <p v-else-if="reports.length === 0" class="py-4 text-center text-sm text-muted-foreground">{{ t('camp.report.noData') }}</p>
+      <ul v-else class="space-y-3 mb-4">
+        <li v-for="r in reports" :key="r.id" class="rounded-lg border border-border p-3">
+          <div class="text-xs text-muted-foreground mb-1">{{ t('camp.report.authoredAt') }}: {{ formatDateTime(r.createdAt) }}</div>
+          <p class="text-sm whitespace-pre-line">{{ r.summary ?? '—' }}</p>
+        </li>
+      </ul>
+      <div v-if="reportFor && canWriteReport(reportFor.status) && visible(Permissions.CampReports.Create)">
+        <label class="block text-xs font-medium text-muted-foreground mb-1">{{ t('camp.report.summary') }} *</label>
+        <textarea
+          v-model="reportSummary" rows="5" :placeholder="t('camp.report.summaryHint')"
+          class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-transparent focus:outline-none focus:ring-1 focus:ring-primary"
+        />
       </div>
     </FormModal>
 

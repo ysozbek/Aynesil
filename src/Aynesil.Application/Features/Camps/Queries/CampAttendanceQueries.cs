@@ -10,6 +10,8 @@ namespace Aynesil.Application.Features.Camps.Queries;
 public class GetCampAttendanceQuery : PagedQuery, IRequest<PaginatedResult<CampAttendanceDto>>
 {
     public Guid? CampEnrollmentId { get; set; }
+    /// <summary>Yalnızca bu dönemin kayıtlarının yoklamaları (günlük yoklama ekranı).</summary>
+    public Guid? CampPeriodId { get; set; }
     public DateOnly? DateFrom { get; set; }
     public DateOnly? DateTo { get; set; }
     public string? Status { get; set; }
@@ -29,6 +31,9 @@ public sealed class GetCampAttendanceQueryHandler
 
         if (req.CampEnrollmentId.HasValue)
             q = q.Where(a => a.CampEnrollmentId == req.CampEnrollmentId.Value);
+
+        if (req.CampPeriodId.HasValue)
+            q = q.Where(a => a.Enrollment.CampPeriodId == req.CampPeriodId.Value);
 
         if (req.DateFrom.HasValue)
             q = q.Where(a => a.AttendanceDate >= req.DateFrom.Value);

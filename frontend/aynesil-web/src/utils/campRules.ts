@@ -30,3 +30,42 @@ export function periodHasStudents(p: Pick<CampPeriodListItemDto, 'enrolledCount'
 export function blocksDeactivation(periods: CampPeriodListItemDto[], today: string): boolean {
   return periods.some((p) => p.endDate >= today && periodHasStudents(p))
 }
+
+export const CampAttendanceStatuses = ['present', 'absent', 'late', 'excused'] as const
+export const CampParticipationStatuses = ['registered', 'attended', 'absent', 'excused'] as const
+
+/** Yoklama ve katılım yalnızca dönemin `enrolled` öğrencileri için girilir (tamamlanmış/iptal/bekleyen 409). */
+export function canRecordForEnrollment(status: string): boolean {
+  return status === 'enrolled'
+}
+
+/** Kamp sonu raporu yalnızca tamamlanmış kayıt için yazılır (aksi halde 409). */
+export function canWriteReport(status: string): boolean {
+  return status === 'completed'
+}
+
+export interface DraftRow { enrollmentId: string; status: string }
+export interface ExistingRecord { id: string; status: string }
+
+/**
+ * Toplu kayıt planı: satır taslağını mevcut kayıtlarla karşılaştırır.
+ * `create` → henüz kaydı olmayıp taslağı dolu olanlar (toplu uca gider),
+ * `update` → kaydı olup durumu değişenler (tekil düzeltme ucuna gider).
+ * Boş taslak "kaydedilmedi" demektir ve atlanır.
+ */
+export function planBulkSave(rows: DraftRow[], existing: Map<string, ExistingRecord>) {
+  const create: DraftRow[] = []
+  const update: { id: string; status: string }[] = []
+  for (const r of rows) {
+    if (!r.status) continue
+    const e = existing.get(r.enrollmentId)
+    if (!e) create.push(r)
+    else if (e.status !== r.status) update.push({ id: e.id, status: r.status })
+  }
+  return { create, update }
+}
+
+/** Devam oranı (yüzde, 1 ondalık); gün yoksa 0. */
+export function attendanceRate(present: number, total: number): number {
+  return total > 0 ? Math.round((present / total) * 1000) / 10 : 0
+}

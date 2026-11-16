@@ -17,7 +17,8 @@ import type {
   CampActivityListItemDto, CampActivityDto,
   CampEducatorDto,
   CampActivityParticipationDto,
-  CampListQuery, CampEnrollmentQuery,
+  CampListQuery, CampEnrollmentQuery, CampAttendanceQuery,
+  UpdateCampActivityPayload, ParticipationInput, BulkAttendanceInput, CreateCampReportPayload,
   CampPerformanceQuery, CampActivityListQuery, CampParticipationListQuery,
   CreateCampPayload, UpdateCampPayload,
   CreatePeriodPayload, UpdatePeriodPayload, EnrollStudentPayload,
@@ -97,6 +98,18 @@ export const campService = {
   recordAttendance: (enrollmentId: string, payload: RecordAttendancePayload) =>
     apiService.post<CampAttendanceDto>('/camps/attendance', { campEnrollmentId: enrollmentId, ...payload }),
 
+  /** Günlük yoklama listesi; `campPeriodId` + gün aralığı ile dönemin o günkü kayıtları. */
+  listAttendance: (query: CampAttendanceQuery) =>
+    apiService.get<PaginatedResult<CampAttendanceDto>>(`/camps/attendance${qs(query)}`),
+
+  /** Toplu yoklama: yalnızca dönemin `enrolled` öğrencileri; aynı gün kaydı olanlar atlanır. Eklenen sayıyı döner. */
+  bulkRecordAttendance: (periodId: string, attendanceDate: string, records: BulkAttendanceInput[]) =>
+    apiService.post<number>(`/camps/periods/${periodId}/attendance/bulk`, { attendanceDate, records }),
+
+  /** Yoklama düzeltme (durum / gerekçe). */
+  updateAttendance: (attendanceId: string, status: string, reasonId?: string) =>
+    apiService.patch<void>(`/camps/attendance/${attendanceId}`, { status, reasonId: reasonId ?? null }),
+
   /** Backend returns one attendance summary row per enrolled student of the period. */
   getAttendanceSummary: (periodId: string) =>
     apiService.get<CampAttendanceSummaryDto[]>(`/camps/periods/${periodId}/attendance-summary`),
@@ -114,6 +127,10 @@ export const campService = {
   listCampReports: (enrollmentId: string) =>
     apiService.get<CampReportDto[]>(`/camps/enrollments/${enrollmentId}/reports`),
 
+  /** Kamp sonu raporu yazar; yalnızca tamamlanmış kayıt için (aksi halde 409). */
+  createCampReport: (enrollmentId: string, payload: CreateCampReportPayload) =>
+    apiService.post<CampReportDto>(`/camps/enrollments/${enrollmentId}/reports`, payload),
+
   // ── Activities ─────────────────────────────────────────────────────────────
   listActivities: (periodId: string, query: CampActivityListQuery = {}) =>
     apiService.get<PaginatedResult<CampActivityListItemDto>>(
@@ -121,6 +138,15 @@ export const campService = {
 
   createActivity: (periodId: string, payload: CreateCampActivityPayload) =>
     apiService.post<CampActivityDto>(`/camps/periods/${periodId}/activities`, payload),
+
+  getActivity: (activityId: string) =>
+    apiService.get<CampActivityDto>(`/camps/activities/${activityId}`),
+
+  updateActivity: (activityId: string, payload: UpdateCampActivityPayload) =>
+    apiService.put<void>(`/camps/activities/${activityId}`, { id: activityId, ...payload }),
+
+  deleteActivity: (activityId: string) =>
+    apiService.delete(`/camps/activities/${activityId}`),
 
   // ── Educators ─────────────────────────────────────────────────────────────
   listEducators: (campId: string) =>
@@ -139,4 +165,21 @@ export const campService = {
   listParticipations: (activityId: string, query: CampParticipationListQuery = {}) =>
     apiService.get<PaginatedResult<CampActivityParticipationDto>>(
       `/camps/participations${qs({ ...query, campActivityId: activityId })}`),
+
+  /** Tekil katılım kaydı (etkinlik kontenjanı ve dönem kuralları sunucuda denetlenir). */
+  registerParticipation: (activityId: string, input: ParticipationInput) =>
+    apiService.post<CampActivityParticipationDto>(`/camps/activities/${activityId}/participations`, {
+      campActivityId: activityId, campEnrollmentId: input.enrollmentId, status: input.status, notes: input.notes ?? null,
+    }),
+
+  /** Toplu katılım: aynı etkinlikte kaydı olanlar atlanır; eklenen sayıyı döner. */
+  bulkRegisterParticipation: (activityId: string, records: ParticipationInput[]) =>
+    apiService.post<number>(`/camps/activities/${activityId}/participations/bulk`, {
+      campActivityId: activityId,
+      records: records.map((r) => ({ enrollmentId: r.enrollmentId, status: r.status, notes: r.notes ?? null })),
+    }),
+
+  /** Katılım düzeltme (durum / not). */
+  updateParticipation: (participationId: string, status: string, notes?: string) =>
+    apiService.patch<void>(`/camps/participations/${participationId}`, { id: participationId, status, notes: notes ?? null }),
 }
