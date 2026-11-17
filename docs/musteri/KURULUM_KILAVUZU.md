@@ -691,6 +691,8 @@ docker exec aynesil-db psql -U aynesil_owner -d aynesil -c "select c.code, sv.va
 docker exec aynesil-db psql -U aynesil_owner -d aynesil -c "update core.setting_value set value = 'false'::jsonb, updated_at = now() where setting_key = 'care_team_abac_enabled' and corporation_id = (select id from core.corporation where code = '<kod>')"
 ```
 
+**Kısıt açıkken modülü kapatma:** `set_modules.py --disable care_team`, kurumda kısıt açıksa durur ve uyarır (kapatılırsa eğitmenler klinik kayıtları göremez, bakım ekibi de ekrandan kurulamaz). Önce kısıtı kapatın; bilerek kapatmak için `--force` verin. `--list` kısıtın durumunu da gösterir.
+
 **Açmadan önce kontrol listesi** (yoksa eğitmenler kayıtları aniden göremez):
 1. `care_team` modülü açık (`set_modules.py --list`).
 2. Her ders veren eğitmenin kaydı bir kullanıcı hesabına bağlı (Eğitmenler → eğitmen → Kullanıcı hesabı).

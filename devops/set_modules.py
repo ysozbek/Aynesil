@@ -23,11 +23,18 @@ Kullanım:
   python3 devops/set_modules.py --code ornek --enable camps,kamera_yok --check     # hata: bilinmeyen modül
   python3 devops/set_modules.py --code demo_a --enable all                         # hepsini aç
   python3 devops/set_modules.py --code ornek --disable all --dry-run               # SQL'i yazdır
+  python3 devops/set_modules.py --code ornek --disable care_team --force           # erişim kısıtı açıkken bile kapat
 
   --list      Mevcut durumu yazar, değişiklik yapmaz
   --check     Çalıştırır ama sonunda ROLLBACK yapar (deneme)
   --dry-run   Üretilen SQL'i yazdırır, veritabanına bağlanmaz
   --local     Docker yerine yerel psql kullanır (PGHOST/PGUSER/PGDATABASE/PGPASSWORD)
+  --force     care_team'i, kurumda öğrenci bazlı erişim kısıtı (care_team_abac_enabled) açıkken de kapatır
+
+Bakım ekibi erişim kısıtı (docs/raporlar/2026-11-17_dogrulama.md D9): `care_team_abac_enabled` açık bir kurumda
+care_team modülü kapatılırsa eğitmenler klinik kayıtları göremez ve bakım ekibi ekranları/uçları 403 verdiği için
+kurum bunu kendisi düzeltemez. Bu yüzden --disable care_team, kısıt açıkken --force olmadan durur. --list kısıtın
+durumunu da gösterir.
 
 Bağlantı new_tenant.py ile aynıdır (docker exec → aynesil-db, .env'deki POSTGRES_USER/POSTGRES_DB; owner rolü).
 Not: Modül durumu her istekte okunur; API'yi yeniden başlatmak gerekmez.
@@ -113,8 +120,10 @@ def psql_command(local: bool) -> list[str]:
             "-v", "ON_ERROR_STOP=1", "-f", "-"]
 
 
-def build_sql(code: str, enable: list[str], disable: list[str], *, commit: bool, read_only: bool) -> str:
-    """Tek transaction; sonunda güncel durumu NOTICE olarak basar (anahtar yoksa 'açık')."""
+def build_sql(code: str, enable: list[str], disable: list[str], *, commit: bool, read_only: bool,
+              force: bool = False) -> str:
+    """Tek transaction; sonunda güncel durumu NOTICE olarak basar (anahtar yoksa 'açık').
+    care_team kapatılırken kurumda erişim kısıtı (care_team_abac_enabled) açıksa --force olmadan hata verir."""
     patch = {}
     patch.update({n: True for n in enable})
     patch.update({n: False for n in disable})
@@ -127,6 +136,11 @@ def build_sql(code: str, enable: list[str], disable: list[str], *, commit: bool,
          updated_at = now()
    where id = v_id;
 """
+    guard = "" if (read_only or force or "care_team" not in disable) else """
+  if v_abac then
+    raise exception 'CARE_TEAM_ABAC: kurumda öğrenci bazlı erişim kısıtı (care_team_abac_enabled) açık; care_team kapatılırsa eğitmenler klinik kayıtları göremez ve bakım ekibi ekrandan kurulamaz. Önce kısıtı kapatın (docs/musteri/KURULUM_KILAVUZU.md) ya da bilerek kapatmak için --force verin.';
+  end if;
+"""
     end = "rollback;  -- --list/--check: nothing is written" if (read_only or not commit) else "commit;"
     return f"""
 begin;
@@ -134,19 +148,29 @@ do $mod$
 declare
   v_id uuid;
   v_mods jsonb;
+  v_abac boolean;
   m text;
 begin
   select id into v_id from core.corporation where code = {lit(code)} and deleted_at is null;
   if v_id is null then
     raise exception 'Kurum bulunamadı: %', {lit(code)};
   end if;
-{update}
+  select coalesce(bool_or(coalesce((sv.value #>> '{{}}')::boolean, false)), false) into v_abac
+    from core.setting_value sv
+   where sv.setting_key = 'care_team_abac_enabled' and sv.corporation_id = v_id;
+{guard}{update}
   select coalesce(settings -> 'modules', '{{}}'::jsonb) into v_mods from core.corporation where id = v_id;
   foreach m in array array[{keys}] loop
     raise notice 'MODULE % = %', rpad(m, 12),
       case when coalesce((v_mods ->> m)::boolean, true) then 'açık' else 'kapalı' end
       || case when v_mods ? m then '' else ' (anahtar yok → varsayılan açık)' end;
   end loop;
+  raise notice 'MODULE erişim kısıtı (bakım ekibi) = %',
+    case when v_abac then 'AÇIK — care_team_abac_enabled: klinik kayıtlar bakım ekibiyle sınırlı'
+         else 'kapalı — care_team_abac_enabled yok/false: yalnızca rol izinleri' end;
+  if v_abac and not coalesce((v_mods ->> 'care_team')::boolean, true) then
+    raise notice 'MODULE UYARI: erişim kısıtı açık ama care_team modülü kapalı — eğitmenler klinik kayıtları göremez, bakım ekibi ekrandan kurulamaz.';
+  end if;
 end
 $mod$;
 {end}
@@ -161,6 +185,8 @@ def main() -> int:
     parser.add_argument("--disable", action="append", metavar="MODÜL[,MODÜL]", help="Kapatılacak modül(ler) veya all")
     parser.add_argument("--list", action="store_true", help="Mevcut durumu yaz, değiştirme")
     parser.add_argument("--local", action="store_true", help="Docker yerine yerel psql kullan")
+    parser.add_argument("--force", action="store_true",
+                        help="care_team'i erişim kısıtı (care_team_abac_enabled) açıkken de kapat")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="Çalıştır ama ROLLBACK yap (deneme)")
     mode.add_argument("--dry-run", action="store_true", help="SQL'i yazdır, bağlanma")
@@ -174,7 +200,7 @@ def main() -> int:
     if not args.list and not enable and not disable:
         sys.exit("❌  --enable, --disable veya --list verin.")
 
-    sql = build_sql(args.code, enable, disable, commit=not args.check, read_only=args.list)
+    sql = build_sql(args.code, enable, disable, commit=not args.check, read_only=args.list, force=args.force)
     if args.dry_run:
         print(sql)
         return 0
@@ -185,6 +211,7 @@ def main() -> int:
         if any(tag in line for tag in ("NOTICE", "ERROR", "HATA", "FATAL", "DETAIL")):
             line = re.sub(r"^(psql:<stdin>:)?\d+:\s*", "", line.strip())
             line = line.replace("NOTICE:  MODULE ", "    ")
+            line = line.replace("ERROR:  CARE_TEAM_ABAC: ", "❌  ").replace("HATA:  CARE_TEAM_ABAC: ", "❌  ")
             print(line if line.startswith("    ") else "    " + line)
 
     if result.returncode != 0:
