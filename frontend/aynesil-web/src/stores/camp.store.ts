@@ -147,6 +147,7 @@ export const useCampStore = defineStore('camp', () => {
       const res = await campService.enroll(periodId, payload)
       if (!res.success || !res.data) throw new Error(res.message ?? 'Kayıt yapılamadı.')
       await fetchEnrollments(periodId)
+      return res.data
     } finally { saving.value = false }
   }
 

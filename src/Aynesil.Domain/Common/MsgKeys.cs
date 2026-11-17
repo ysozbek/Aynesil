@@ -150,6 +150,10 @@ public static class MsgKeys
         public static readonly MsgKey CampPeriodHasActivities = new("Rule.CampPeriodHasActivities");
         public static readonly MsgKey CampPeriodHasEnrollments = new("Rule.CampPeriodHasEnrollments");
         public static readonly MsgKey CampPeriodNotStarted = new("Rule.CampPeriodNotStarted");
+        /// <summary>Tekil kayıt tamamlama: dönem henüz başlamadı (409; D4).</summary>
+        public static readonly MsgKey CampEnrollmentCompleteNotStarted = new("Rule.CampEnrollmentCompleteNotStarted");
+        /// <summary>Kamp kaydına bağlanan paket kaydın öğrencisine ait değil (422; D5).</summary>
+        public static readonly MsgKey CampPackageNotStudents = new("Rule.CampPackageNotStudents");
         public static readonly MsgKey CampReportNeedsCompleted = new("Rule.CampReportNeedsCompleted");
         public static readonly MsgKey CampPeriodStillFull = new("Rule.CampPeriodStillFull");
         public static readonly MsgKey CodeAlreadyExists = new("Rule.CodeAlreadyExists");

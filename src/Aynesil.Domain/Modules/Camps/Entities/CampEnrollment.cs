@@ -77,6 +77,24 @@ public class CampEnrollment : BaseEntity
             Id, CampPeriodId, StudentId, CorporationId, Status));
     }
 
+    /// <summary>
+    /// Çekilmiş kaydı aynı döneme geri açar (D3): yeni satır yerine mevcut satır kullanılır, çünkü
+    /// (camp_period_id, student_id) tekildir. Hedef durum 'enrolled' ya da 'waitlist'; kontenjan kararı çağıranındır.
+    /// Yalnızca 'withdrawn' kayıt geri açılır; tamamlanmış kayıt geri açılmaz.
+    /// </summary>
+    public void Reopen(string status, Guid? studentPackageId)
+    {
+        if (Status != "withdrawn")
+            throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyInCampPeriod);
+        if (status is not ("enrolled" or "waitlist"))
+            throw new InvalidArgumentException(MsgKeys.Validation.MustBeOneOf, MsgArg.Field("Status"), MsgArg.Values("Status", ["enrolled", "waitlist"]));
+
+        Status = status;
+        StudentPackageId = studentPackageId;
+        EnrolledAt = DateTimeOffset.UtcNow;
+        AddDomainEvent(new CampEnrolledEvent(Id, CampPeriodId, StudentId, CorporationId, Status));
+    }
+
     public void Withdraw()
     {
         EnsureNotTerminal();

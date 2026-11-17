@@ -21,6 +21,19 @@ export function canBulkComplete(p: Pick<CampPeriodListItemDto, 'startDate' | 'en
   return p.startDate <= today && p.enrolledCount > 0
 }
 
+/** Tekil kayıt tamamlama yalnızca başlamış dönemde (sunucu başlamamış dönemde 409 CampEnrollmentCompleteNotStarted). */
+export function canCompleteEnrollment(p: Pick<CampPeriodListItemDto, 'startDate'> | null | undefined, today: string): boolean {
+  return !!p && p.startDate <= today
+}
+
+/**
+ * Kayıt sonucu: çekilmiş öğrenci dolu döneme yeniden kaydedilince sunucu kaydı bekleme listesine düşürür.
+ * İstenen 'enrolled' ama dönen 'waitlist' ise kullanıcıya bildirilir.
+ */
+export function fellToWaitlist(requested: string, result: { status: string } | null | undefined): boolean {
+  return requested === 'enrolled' && result?.status === 'waitlist'
+}
+
 /** Kayıtlı/bekleyen öğrencisi olan dönem silinemez (sunucu da 409 döner). */
 export function periodHasStudents(p: Pick<CampPeriodListItemDto, 'enrolledCount' | 'waitlistCount'>): boolean {
   return p.enrolledCount > 0 || p.waitlistCount > 0

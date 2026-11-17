@@ -864,6 +864,23 @@ async function campFlows() {
   ok('camps.listEnrollments (tamamlananlar, öğrenci adıyla)', 'GET', `/camps/enrollments?campPeriodId=${live}`, done?.totalCount === 2 && !!done?.items?.[0]?.studentName, `adet=${done?.totalCount} ad=${done?.items?.[0]?.studentName}`)
   expectStatus('yazma', 'camps.bulkComplete (bilinmeyen dönem → 404)', 'POST', '/camps/periods/00000000-0000-7000-8000-000000000001/bulk-complete', await http('POST', '/camps/periods/00000000-0000-7000-8000-000000000001/bulk-complete', {}), [404])
   if (en3) await post('camps.withdraw (bekleyen öğrenci)', `/camps/enrollments/${en3}/withdraw`)
+  // D3: çekilmiş öğrenci aynı döneme yeniden kaydedilir (aynı satır geri açılır; kontenjan boş → kayıtlı)
+  if (en3) {
+    const re = await http('POST', `/camps/periods/${live}/enrollments`, { studentId: s3, status: 'enrolled' })
+    ok('camps.enroll (çekilmiş öğrenci yeniden kaydedilir, aynı satır)', 'POST', `/camps/periods/${live}/enrollments`,
+      re.status === 201 && idOf(re.json?.data) === en3 && re.json?.data?.status === 'enrolled', `HTTP ${re.status} aynı satır=${idOf(re.json?.data) === en3} durum=${re.json?.data?.status}`)
+    if (re.status === 201) await post('camps.withdraw (yeniden kaydedilen öğrenci)', `/camps/enrollments/${en3}/withdraw`)
+  }
+  // D4: başlamamış dönemde tekil tamamlama 409
+  const upcoming = idOf((await post('camps.createPeriod (başlamamış, tamamlama kuralı)', `/camps/${camp}/periods`, { name: 'Başlamamış', startDate: day(30), endDate: day(40), capacity: 2 })).json?.data)
+  if (upcoming) {
+    const ue = idOf((await post('camps.enroll (başlamamış dönem)', `/camps/periods/${upcoming}/enrollments`, { studentId: s2, status: 'enrolled' })).json?.data)
+    if (ue) {
+      expectStatus('yazma', 'camps.complete (dönem başlamadı → 409)', 'POST', `/camps/enrollments/${ue}/complete`,
+        await http('POST', `/camps/enrollments/${ue}/complete`, {}), [409], 'Rule.CampEnrollmentCompleteNotStarted')
+      await post('camps.withdraw (başlamamış dönem kaydı)', `/camps/enrollments/${ue}/withdraw`)
+    }
+  }
 
   // eğitmen: ata / aynı kapsamda tekrar 409 / rol değiştir / kaldır
   if (ctx.educatorId) {

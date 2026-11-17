@@ -120,9 +120,15 @@ Uçtan uca demo akışı (demo-seed + smoke-api `consultancyFlows`): okul → pl
 | Dönem düzenle | `PUT /api/camps/periods/{periodId}` (`camp:manage_periods`) | Kontenjan, kayıtlı öğrenci sayısından az olamaz: 409 `CampPeriodCapacityBelowEnrolled`. | `/camps/:id` → Dönemler → Düzenle |
 | Dönem sil | `DELETE /api/camps/periods/{periodId}` | Herhangi bir kaydı varsa 409 `CampPeriodHasEnrollments`; etkinliği varsa 409 `CampPeriodHasActivities` (eskiden etkinlikleri sessizce cascade siliyordu). | aynı (kayıtlı/bekleyen varken düğme kapalı) |
 | Bekleme listesine alma | `POST /api/camps/enrollments/{id}/waitlist` (`camp_enrollment:manage`) | Yalnızca `enrolled` → 409 `OnlyEnrolledToWaitlist` (eskiden `waitlist`/herhangi aktif durum sessizce geçiyordu). | `/camps/periods/:periodId/enrollments` satırı |
-| Kaydı tamamla | `POST /api/camps/enrollments/{id}/complete` (`camp_enrollment:complete`) | Yalnızca `enrolled` (mevcut kural). | aynı |
+| Kaydı tamamla | `POST /api/camps/enrollments/{id}/complete` (`camp_enrollment:complete`) | Yalnızca `enrolled` (mevcut kural); başlamamış dönemde 409 `CampEnrollmentCompleteNotStarted` (2026-11-17). | aynı (başlamamış dönemde düğme gizli) |
 | Dönem sonu toplu tamamla | `POST /api/camps/periods/{periodId}/bulk-complete` → tamamlanan sayı | Dönem yoksa 404 (eskiden 0 dönerdi); henüz başlamamış dönemde 409 `CampPeriodNotStarted`; yalnızca `enrolled` olanlar tamamlanır, bekleyenler etkilenmez. | aynı ("Dönemi Tamamla", başlamamış dönemde/kayıtlı yokken kapalı) |
 | Kamp eğitmeni: ata / rol değiştir / kaldır | `POST /api/camps/{campId}/educators`, `PATCH /api/camps/educators/{id}/role`, `DELETE …/{id}` (`camp_educator:manage`) | Aynı kapsamda (kamp/dönem/etkinlik) aynı eğitmen ikinci kez 409 `EducatorAlreadyAtScope`; rol `lead/assistant/observer/supervisor`. Liste yanıtına `educatorName` eklendi. | `/camps/:id` → Görevli Eğitmenler |
+
+Ek (2026-11-17 doğrulaması D3–D6):
+- **Yeniden kayıt:** `POST /api/camps/periods/{periodId}/enrollments` çekilmiş (`withdrawn`) öğrenci için yeni satır açmaz, mevcut satırı geri açar (aynı kayıt kimliği). `enrolled` istenip dönem doluysa kayıt `waitlist`'e düşer. Yeni kayıtta dolu dönem hâlâ 409 `CampPeriodFullUseWaitlist`. Kayıtlı/bekleyen/tamamlanmış öğrenci için 409 `StudentAlreadyInCampPeriod` (önceden genel 409 `Error.DuplicateKey`). Ekran: çekilmiş satırda "Yeniden Kaydet".
+- **Tekil tamamlama** (`POST /api/camps/enrollments/{id}/complete`): başlamamış dönemde 409 `CampEnrollmentCompleteNotStarted` (toplu tamamlamadaki kural). "Tamamla" düğmesi başlamamış dönemde gizli.
+- **Paket:** kayıt oluştururken (ve uç verilmemiş `UpdateEnrollmentPackage` komutunda) `studentPackageId` kaydın öğrencisine ait olmalı, aksi 422 `CampPackageNotStudents`.
+- **Kontenjan yarışı:** kayıt ve bekleme listesinden alma dönem satırını `SELECT … FOR UPDATE` ile kilitler; eşzamanlı kayıtlar kontenjanı aşamaz.
 
 Ek: kayıt listesi yanıtına `studentName` eklendi (ekranda artık kimlik yerine ad). Kamp detayındaki dönem bağlantısı hatalıydı (`/camps/periods/:id` rotası yok); `/camps/periods/:periodId/enrollments`'a düzeltildi.
 

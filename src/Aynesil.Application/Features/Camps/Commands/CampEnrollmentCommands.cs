@@ -3,10 +3,12 @@ using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Localization;
 using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
+using Aynesil.Application.Common.Persistence;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
 using FluentValidation;
 using MediatR;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aynesil.Application.Features.Camps.Commands;
@@ -60,42 +62,69 @@ public sealed class EnrollStudentCommandHandler
         if (await _db.Camps.AnyAsync(c => c.Id == campId && !c.IsActive, ct))
             throw new BusinessRuleViolationException(MsgKeys.Rule.CampInactive);
 
-        var alreadyEnrolled = await _db.CampEnrollments
-            .AnyAsync(e => e.CampPeriodId == req.CampPeriodId
-                        && e.StudentId == req.StudentId
-                        && e.Status != "withdrawn", ct);
-        if (alreadyEnrolled)
-            throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyInCampPeriod);
+        await CampPackages.EnsureBelongsToStudentAsync(_db, req.StudentPackageId, req.StudentId, ct);
 
-        if (req.Status == "enrolled")
+        // D6: dönem satırı kilitlenir; eşzamanlı iki kayıt kontenjanı aşamaz.
+        return await RowLock.CampPeriodAsync(_db, req.CampPeriodId, async () =>
         {
-            var capacity = await _db.CampPeriods
-                .Where(p => p.Id == req.CampPeriodId)
-                .Select(p => p.Capacity)
-                .FirstOrDefaultAsync(ct);
+            // (camp_period_id, student_id) tekildir: aynı döneme ikinci satır açılmaz.
+            var existing = await _db.CampEnrollments
+                .FirstOrDefaultAsync(e => e.CampPeriodId == req.CampPeriodId && e.StudentId == req.StudentId, ct);
+            if (existing is not null && existing.Status != "withdrawn")
+                throw new BusinessRuleViolationException(MsgKeys.Rule.StudentAlreadyInCampPeriod);
 
-            if (capacity.HasValue)
+            var status = req.Status;
+            if (status == "enrolled" && await IsFullAsync(req.CampPeriodId, ct))
             {
-                var activeCount = await _db.CampEnrollments
-                    .CountAsync(e => e.CampPeriodId == req.CampPeriodId
-                                  && e.Status == "enrolled", ct);
-                if (activeCount >= capacity.Value)
+                // Yeni kayıt: dolu dönemde 'enrolled' istenirse 409 (kullanıcı bekleme listesini seçer).
+                // Çekilmiş kaydın geri açılması (D3): dolu dönemde bekleme listesine düşer.
+                if (existing is null)
                     throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodFullUseWaitlist);
+                status = "waitlist";
             }
-        }
 
-        var enrollment = CampEnrollment.Create(
-            corporationId, req.CampPeriodId, req.StudentId,
-            req.Status, req.StudentPackageId);
+            CampEnrollment enrollment;
+            if (existing is not null)
+            {
+                existing.Reopen(status, req.StudentPackageId);
+                enrollment = existing;
+            }
+            else
+            {
+                enrollment = CampEnrollment.Create(corporationId, req.CampPeriodId, req.StudentId, status, req.StudentPackageId);
+                _db.CampEnrollments.Add(enrollment);
+            }
+            await _db.SaveChangesAsync(ct);
 
-        _db.CampEnrollments.Add(enrollment);
-        await _db.SaveChangesAsync(ct);
+            return new CampEnrollmentDto(
+                enrollment.Id, enrollment.CorporationId,
+                enrollment.CampPeriodId, enrollment.StudentId,
+                enrollment.StudentPackageId, enrollment.Status,
+                enrollment.EnrolledAt, 0, 0, 0);
+        }, ct);
+    }
 
-        return new CampEnrollmentDto(
-            enrollment.Id, enrollment.CorporationId,
-            enrollment.CampPeriodId, enrollment.StudentId,
-            enrollment.StudentPackageId, enrollment.Status,
-            enrollment.EnrolledAt, 0, 0, 0);
+    private async Task<bool> IsFullAsync(Guid campPeriodId, CancellationToken ct)
+    {
+        var capacity = await _db.CampPeriods
+            .Where(p => p.Id == campPeriodId)
+            .Select(p => p.Capacity)
+            .FirstOrDefaultAsync(ct);
+        if (!capacity.HasValue) return false;
+        var enrolled = await _db.CampEnrollments
+            .CountAsync(e => e.CampPeriodId == campPeriodId && e.Status == "enrolled", ct);
+        return enrolled >= capacity.Value;
+    }
+}
+
+/// <summary>D5: kamp kaydına bağlanan paket kaydın öğrencisine ait olmalı (bileşik FK yalnızca aynı kurumu garanti eder).</summary>
+internal static class CampPackages
+{
+    public static async Task EnsureBelongsToStudentAsync(IAppDbContext db, Guid? studentPackageId, Guid studentId, CancellationToken ct)
+    {
+        if (studentPackageId is not Guid packageId) return;
+        if (!await db.StudentPackages.AnyAsync(p => p.Id == packageId && p.StudentId == studentId, ct))
+            throw new ValidationException([ValidationFailures.For("studentPackageId", MsgKeys.Rule.CampPackageNotStudents)]);
     }
 }
 
@@ -137,17 +166,22 @@ public sealed class PromoteFromWaitlistCommandHandler : IRequestHandler<PromoteF
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
-        if (enrollment.Period.Capacity.HasValue)
+        // D6: dönem satırı kilitlenir; eşzamanlı alma/kayıt kontenjanı aşamaz.
+        await RowLock.CampPeriodAsync(_db, enrollment.CampPeriodId, async () =>
         {
-            var activeCount = await _db.CampEnrollments
-                .CountAsync(e => e.CampPeriodId == enrollment.CampPeriodId
-                              && e.Status == "enrolled", ct);
-            if (activeCount >= enrollment.Period.Capacity.Value)
-                throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodStillFull);
-        }
+            if (enrollment.Period.Capacity.HasValue)
+            {
+                var activeCount = await _db.CampEnrollments
+                    .CountAsync(e => e.CampPeriodId == enrollment.CampPeriodId
+                                  && e.Status == "enrolled", ct);
+                if (activeCount >= enrollment.Period.Capacity.Value)
+                    throw new BusinessRuleViolationException(MsgKeys.Rule.CampPeriodStillFull);
+            }
 
-        enrollment.Enroll();
-        await _db.SaveChangesAsync(ct);
+            enrollment.Enroll();
+            await _db.SaveChangesAsync(ct);
+            return true;
+        }, ct);
     }
 }
 
@@ -185,8 +219,13 @@ public sealed class CompleteEnrollmentCommandHandler : IRequestHandler<CompleteE
     public async Task Handle(CompleteEnrollmentCommand req, CancellationToken ct)
     {
         var enrollment = await _db.CampEnrollments
+            .Include(e => e.Period)
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
+
+        // D4: toplu tamamlamadaki kural tekil tamamlamada da geçerli.
+        if (enrollment.Period.StartDate > DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new BusinessRuleViolationException(MsgKeys.Rule.CampEnrollmentCompleteNotStarted);
 
         enrollment.Complete();
         await _db.SaveChangesAsync(ct);
@@ -245,6 +284,7 @@ public sealed class UpdateEnrollmentPackageCommandHandler
             .FirstOrDefaultAsync(e => e.Id == req.EnrollmentId, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Enrollment"));
 
+        await CampPackages.EnsureBelongsToStudentAsync(_db, req.StudentPackageId, enrollment.StudentId, ct);
         enrollment.UpdatePackage(req.StudentPackageId);
         await _db.SaveChangesAsync(ct);
     }

@@ -108,3 +108,25 @@ test('devam oranı 1 ondalığa yuvarlanır, gün yoksa 0', () => {
   assert.equal(attendanceRate(0, 0), 0)
   assert.equal(attendanceRate(5, 5), 100)
 })
+
+test('tekil tamamlama yalnızca başlamış dönemde (D4); dönem bilgisi yoksa kapalı', async () => {
+  const { canCompleteEnrollment } = await import('../src/utils/campRules.ts')
+  assert.equal(canCompleteEnrollment({ startDate: '2026-07-11' }, today), false)
+  assert.equal(canCompleteEnrollment({ startDate: '2026-07-10' }, today), true)
+  assert.equal(canCompleteEnrollment({ startDate: '2026-07-01' }, today), true)
+  assert.equal(canCompleteEnrollment(null, today), false)
+})
+
+test('yeniden kayıt: istenen enrolled, dönen waitlist ise kullanıcıya bildirilir (D3)', async () => {
+  const { fellToWaitlist } = await import('../src/utils/campRules.ts')
+  assert.equal(fellToWaitlist('enrolled', { status: 'waitlist' }), true)
+  assert.equal(fellToWaitlist('enrolled', { status: 'enrolled' }), false)
+  assert.equal(fellToWaitlist('waitlist', { status: 'waitlist' }), false)
+  assert.equal(fellToWaitlist('enrolled', undefined), false)
+})
+
+test('kayıt ekranı: tamamla düğmesi dönem başlamadan gizli, çekilmiş satırda yeniden kaydet', () => {
+  const view = readFileSync(new URL('../src/views/camps/CampEnrollmentView.vue', import.meta.url), 'utf8')
+  assert.match(view, /CampEnrollmentStatus\.Enrolled && completeEnabled && visible\(Permissions\.CampEnrollments\.Complete\)/)
+  assert.match(view, /CampEnrollmentStatus\.Withdrawn && visible\(Permissions\.CampEnrollments\.Enroll\)/)
+})

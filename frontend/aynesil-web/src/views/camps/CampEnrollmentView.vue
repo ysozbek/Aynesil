@@ -10,7 +10,7 @@ import { CampEnrollmentStatus } from '@/constants/statuses'
 import { campService } from '@/services/camp.service'
 import { studentService } from '@/services/student.service'
 import { toLocalDateString } from '@/utils/datetime'
-import { canBulkComplete, canWriteReport } from '@/utils/campRules'
+import { canBulkComplete, canCompleteEnrollment, canWriteReport, fellToWaitlist } from '@/utils/campRules'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import ConfirmModal from '@/components/shared/ConfirmModal.vue'
@@ -37,6 +37,9 @@ const bulkEnabled = computed(() => {
   const enrolled = summary.value?.totalEnrolled ?? p?.enrolledCount ?? 0
   return !!p && canBulkComplete({ startDate: p.startDate, enrolledCount: enrolled }, today)
 })
+
+// Tekil tamamlama yalnızca başlamış dönemde (D4).
+const completeEnabled = computed(() => canCompleteEnrollment(period.value, today))
 
 function formatDate(dt: string) { return new Date(dt).toLocaleDateString('tr-TR') }
 
@@ -95,10 +98,20 @@ async function doEnroll() {
   if (!enrollForm.studentId) return
   enrollError.value = ''
   try {
-    await campStore.enrollStudent(periodId, { studentId: enrollForm.studentId, status: enrollForm.status })
+    const res = await campStore.enrollStudent(periodId, { studentId: enrollForm.studentId, status: enrollForm.status })
     await Promise.all([campStore.fetchEnrollmentSummary(periodId), refreshPeriod()])
     enrollOpen.value = false
+    notice.value = fellToWaitlist(enrollForm.status, res) ? t('camp.enrollment.reEnrolledToWaitlist') : ''
   } catch (e: unknown) { enrollError.value = (e as Error).message }
+}
+
+// Çekilmiş öğrenciyi aynı döneme yeniden kaydet (D3): sunucu aynı satırı geri açar, dönem doluysa bekleme listesine.
+async function reEnroll(e: CampEnrollmentListItemDto) {
+  await run(async () => {
+    const res = await campStore.enrollStudent(periodId, { studentId: e.studentId, status: 'enrolled' })
+    await Promise.all([campStore.fetchEnrollmentSummary(periodId), refreshPeriod()])
+    notice.value = fellToWaitlist('enrolled', res) ? t('camp.enrollment.reEnrolledToWaitlist') : t('camp.enrollment.reEnrolled')
+  })
 }
 
 // ── Kamp sonu raporu (yalnızca tamamlanmış kayıt) ─────────────────────────────
@@ -227,7 +240,7 @@ const btn = 'text-xs hover:underline'
                   @click="rowAction = { action: 'waitlist', id: e.id, name: e.studentName ?? '' }"
                 >{{ t('camp.enrollment.toWaitlist') }}</button>
                 <button
-                  v-if="e.status === CampEnrollmentStatus.Enrolled && visible(Permissions.CampEnrollments.Complete)"
+                  v-if="e.status === CampEnrollmentStatus.Enrolled && completeEnabled && visible(Permissions.CampEnrollments.Complete)"
                   type="button" :class="[btn, 'text-primary']"
                   @click="rowAction = { action: 'complete', id: e.id, name: e.studentName ?? '' }"
                 >{{ t('camp.enrollment.complete') }}</button>
@@ -236,6 +249,11 @@ const btn = 'text-xs hover:underline'
                   type="button" :class="[btn, 'text-red-600']"
                   @click="rowAction = { action: 'withdraw', id: e.id, name: e.studentName ?? '' }"
                 >{{ t('camp.enrollment.withdraw') }}</button>
+                <button
+                  v-if="e.status === CampEnrollmentStatus.Withdrawn && visible(Permissions.CampEnrollments.Enroll)"
+                  type="button" :class="[btn, 'text-primary']"
+                  @click="reEnroll(e)"
+                >{{ t('camp.enrollment.reEnroll') }}</button>
               </div>
             </td>
           </tr>

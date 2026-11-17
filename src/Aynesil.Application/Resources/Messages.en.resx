@@ -80,6 +80,8 @@
   <data name="Rule.CampInactive" xml:space="preserve"><value>Cannot enroll students in an inactive camp. Activate the camp first.</value></data>
   <data name="Rule.CampPeriodCapacityBelowEnrolled" xml:space="preserve"><value>Period capacity cannot be lower than the current number of enrolled students ({0}).</value></data>
   <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Cannot delete a camp period that has activities. Delete the activities first.</value></data>
+  <data name="Rule.CampEnrollmentCompleteNotStarted" xml:space="preserve"><value>A registration cannot be completed before its period has started.</value></data>
+  <data name="Rule.CampPackageNotStudents" xml:space="preserve"><value>The selected package does not belong to this student.</value></data>
   <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Cannot bulk-complete a period that has not started yet.</value></data>
   <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Only enrolled students can be moved to the waitlist.</value></data>
   <data name="Rule.CampReportNeedsCompleted" xml:space="preserve"><value>An end-of-camp report can only be written for a completed enrollment.</value></data>
