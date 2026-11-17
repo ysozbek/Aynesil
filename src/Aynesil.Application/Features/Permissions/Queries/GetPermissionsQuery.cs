@@ -21,7 +21,9 @@ public sealed class GetPermissionsQueryHandler
 
     public async Task<PaginatedResult<PermissionListItemDto>> Handle(GetPermissionsQuery req, CancellationToken ct)
     {
-        var query = _db.Permissions.AsNoTracking();
+        // Kullanımdan kalkmış izinler listelenmez (D10; rol ekranında seçilemez).
+        var deprecated = Aynesil.Shared.Constants.Permissions.Deprecated.ToArray();
+        var query = _db.Permissions.AsNoTracking().Where(p => !deprecated.Contains(p.Code));
 
         if (!string.IsNullOrWhiteSpace(req.Resource))
             query = query.Where(p => p.Resource == req.Resource.ToLowerInvariant());

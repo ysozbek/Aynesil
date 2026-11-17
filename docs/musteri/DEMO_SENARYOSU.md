@@ -144,7 +144,7 @@ Ayrıca müşterinin kullandığı kelimeleri yazın. "Kayıt", "seans hakkı", 
 ## 6. Demoda yapılmaması gerekenler
 
 - **Menüyü baştan sona gezmeyin.** Kamp, kamera, danışmanlık, KPI: "Bunlar ek modüller, kurumunuz için ayrıca açılıyor" deyip geçin. Demo kurumunda hepsi açıktır, ama yeni bir kurumda kapalı gelirler.
-- **Yarım modülleri vaat etmeyin.** Kamerada **canlı izleme ekranı yok**; kamp ve okul danışmanlığında günlük işlemlerin bir kısmı henüz ekrandan yapılamıyor. Sorulursa "yol haritasında" deyin (ayrıntı: `docs/ekransiz-endpointler.md`).
+- **Olmayanı vaat etmeyin.** Kamerada **canlı izleme ekranı yok**; KPI'da otomatik hesaplama ve rapor/trend ekranı yok; e-posta/SMS bildirimleri henüz gitmiyor. Kamp ve okul danışmanlığının yönetim ve günlük işleri ekranlıdır. Sorulursa "yol haritasında" deyin (ayrıntı: `docs/ekransiz-endpointler.md`, `docs/musteri/KURULUM_KILAVUZU.md` A.10).
 - **"Şifremi unuttum"u göstermeyin.** E-posta sağlayıcısı bağlı olmadığı için bağlantı gitmez.
 - **KPI panosunu açacaksanız** önce **Performans Anlık Görüntüleri → Dönem Hesapla** deyin; değerler kendiliğinden hesaplanmaz.
 - **Teknik terim kullanmayın:** enrollment, student program, recurring schedule, GUID, tenant, RBAC demeyin.

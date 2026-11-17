@@ -154,6 +154,8 @@ public static class MsgKeys
         public static readonly MsgKey CampEnrollmentCompleteNotStarted = new("Rule.CampEnrollmentCompleteNotStarted");
         /// <summary>Kamp kaydına bağlanan paket kaydın öğrencisine ait değil (422; D5).</summary>
         public static readonly MsgKey CampPackageNotStudents = new("Rule.CampPackageNotStudents");
+        /// <summary>Kullanımdan kalkmış izin rollere atanamaz (422; D10). {0}: izin kodu.</summary>
+        public static readonly MsgKey PermissionDeprecated = new("Rule.PermissionDeprecated");
         public static readonly MsgKey CampReportNeedsCompleted = new("Rule.CampReportNeedsCompleted");
         public static readonly MsgKey CampPeriodStillFull = new("Rule.CampPeriodStillFull");
         public static readonly MsgKey CodeAlreadyExists = new("Rule.CodeAlreadyExists");

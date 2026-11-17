@@ -553,18 +553,18 @@ Flyway'in ücretsiz sürümü migration'ları geri almaz. Geri alma yolu:
 
 Ayrıntı: `docs/ekransiz-endpointler.md`. Özet:
 
-**Yarım modüller (yeni kurumda kapalı gelir; açmadan önce müşteriyle konuşun):**
+**İsteğe bağlı modüller (yeni kurumda kapalı gelir; açmadan önce müşteriyle kalan sınırları konuşun):**
 
 | Modül (kod) | Durum |
 |---|---|
-| Kamp (`camps`) | Liste, oluşturma ve kayıt ekranları var. Dönem, etkinlik, katılım, yoklama, eğitmen atama, rapor ve kampı aktif etme/silme işlemleri (26 uç) **ekransız** |
-| Okul danışmanlığı (`consultancy`) | Liste/oluşturma var. Ziyaret ayrıntısı, tamamlama/iptal, gözlem ayrıntısı, raporlama ve silme işlemleri (18 uç) ekransız |
-| Kamera (`camera`) | Kamera, oda ataması, izleme yetkisi ve izleme geçmişi ekranları var. **Canlı izleme (yayın) yok**; "Canlı İzle" düğmesi bu yüzden gizli |
+| Kamp (`camps`) | Ekranlı: kamp ve dönem yönetimi (etkinleştir/pasifleştir/sil), kayıt, bekleme listesi, çekilmiş öğrenciyi yeniden kaydetme, etkinlik ve katılım, günlük yoklama (devamsızlık nedeniyle), tekil/toplu tamamlama, kamp sonu raporu, eğitmen atama ve performans raporu. Kalan tek ekransız uç, dönem listesini ayrıca çeken bir okuma ucu (kamp detayı aynı bilgiyi veriyor) |
+| Okul danışmanlığı (`consultancy`) | Ekranlı: okul, plan, sözleşme, ziyaret ayrıntısı/tamamlama/iptal, gözlem, rapor, takip görevi, silme engelleri ve raporlar sayfası. Ekransız uç kalmadı |
+| Kamera (`camera`) | Kamera, oda ataması, izleme yetkisi ve izleme geçmişi ekranları var. **Canlı izleme (yayın) yok**; "Canlı İzle" düğmesi bu yüzden gizli. Atama/yetki ayrıntısını okuyan 3 uç ekransız |
 | Anketler (`surveys`) | Ekranlar var: anket listesi/oluşturma/düzenleme (sorular ve seçenekler; yanıt gelen anketin soruları kilitlenir), sonuçlar (soru bazında özet), veli geri bildirimi listesi; veli portalında bekleyen anketleri doldurma ve geri bildirim gönderme. Yok: eğitmen/öğrenci hedefli anketleri dolduracak ekran (yalnızca veli hedefli anketler portalda görünür); anket puanları KPI'a girmez (yalnızca veli geri bildirim puanları girer) |
 | Bakım ekibi (`care_team`) | Ekranlar var: öğrenci detayında **Bakım Ekibi** sekmesi (listele, ekle, düzenle, çıkar) ve eğitmen için **Benim Öğrencilerim**. Yok: acil/devredilmiş yetki türü ve kampüs kapsamı ekranı. **Öğrenci bazlı erişim kısıtı arayüzden açılmaz** (B.1.3 sonundaki "Öğrenci bazlı erişim kısıtı") |
-| KPI (`kpi`) | Tanımlar, pano ve anlık görüntüler var. Otomatik hesaplama yok (yalnızca "Dönem Hesapla"); kuruma özel KPI tanımının formülü hesaplamada kullanılmıyor [doğrulanacak]; rapor/trend ekranları yok |
+| KPI (`kpi`) | Tanımlar, pano, anlık görüntüler ve toplu hesaplama ("Dönem Hesapla") var. Yok: otomatik (zamanlanmış) hesaplama, eğitmen bazlı tekil hesaplama ekranı, rapor/trend ekranları (7 okuma ucu ekransız); kuruma özel KPI tanımının formülü hesaplamada kullanılmıyor [doğrulanacak] |
 
-**Diğer ekransız işler (B grubu; modül kullanılırsa gerekir):** değerlendirme önerisini güncelleme; e-posta doğrulama (sağlayıcı yok); hedef özet raporu; eğitmen hiyerarşisini bitirme; toplantı çıktısını güncelleme; bildirim tetikleyicileri; elle kredi tüketme/iade (kredi düzeltme ekranı var); taslak faturaya indirim; burs ayrıntı/güncelleme; ödeme başarısız işaretleme (ödeme sağlayıcısı yok); KPI rapor ve trendleri; portalda BEP özeti sayfası; takvim kayıtları (tatil/etkinlik); oda takvimi; toplu iptal/oda değiştirme/yoklama ve tekrar istisnası; rıza kanıt dosyası yükleme.
+**Diğer ekransız işler (B grubu; ilgili özellik kullanılırsa gerekir):** davet/e-posta doğrulama (e-posta sağlayıcısı yok); bildirim tetikleyicileri (sağlayıcı bağlanınca anlamlı); rıza kanıt dosyası yükleme (dosya yükleme akışı yok); ödeme başarısız işaretleme (ödeme sağlayıcısı yok); elle kredi tüketme/iade (kredi düzeltme ekranı var); promosyon doğrulama; finans ayrıntı/rapor okumaları (3 uç); hedef özet raporu; KPI rapor/trend ve eğitmen bazlı tekil hesaplama. Ekranlı akışlarda zaten bulunan bilgiyi ayrıca okuyan uçlar (veli görünür plan, hedef ilerleme, şablon sürüm geçmişi, ham toplantı listesi) için ekran gerekmiyor.
 
 **Koddan çıkan diğer eksikler:**
 - **Toplu aktarma yok.** Öğrenci, veli, eğitmen listeleri ekrandan tek tek girilir.
@@ -664,10 +664,10 @@ python3 devops/set_modules.py --code ornek --disable kpi           # kapatır
 
 - Değişiklik **hemen** etkili olur; API'yi yeniden başlatmak gerekmez. Kullanıcı sayfayı yenileyince menü değişir.
 - Kurum yöneticisi bu ayarı değiştiremez; `Kurumlar → kurum → Ayarlar` sayfasında yalnızca **görür**.
-- **Ne zaman açmalı?** Yarım modüllerin bazı işlemleri henüz ekrandan yapılamıyor (A.10). Açmadan önce müşteriye neyin çalışıp neyin çalışmadığını gösterin:
-  - **KPI:** açılabilir; ama değerler yalnızca "Dönem Hesapla" ile hesaplanır.
+- **Ne zaman açmalı?** Modüllerin ekranları hazır; bazılarının sınırları var (A.10). Açmadan önce müşteriye neyin çalışıp neyin çalışmadığını gösterin:
+  - **Kamp, okul danışmanlığı:** ekranlar hazır (yönetim ve günlük işletim); açılabilir.
+  - **KPI:** açılabilir; değerler yalnızca "Dönem Hesapla" ile hesaplanır, rapor/trend ekranı yok.
   - **Kamera:** kamera, oda ataması, izleme yetkisi tanımlanabilir; **canlı izleme yok**. Müşteri canlı izleme bekliyorsa açmayın.
-  - **Kamp, okul danışmanlığı:** yalnızca liste/kayıt düzeyinde; günlük işletim (yoklama, etkinlik, ziyaret tamamlama) ekrandan yapılamaz.
   - **Anketler:** ekranlar hazır; açılabilir. Velilere anket göndermek isteyen müşteri için açın (veli rolünde `survey:respond` ve `parent_feedback:create` izinleri hazır gelir).
   - **Bakım ekibi:** ekranlar hazır; açılabilir. Modülü açmak yalnızca ekip yönetimini getirir; öğrencilerin klinik kayıtlarını ekiple sınırlayan **erişim kısıtı ayrı bir ayardır ve varsayılan kapalıdır** (aşağıda).
 

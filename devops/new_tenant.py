@@ -196,7 +196,9 @@ begin
 
   insert into iam.role_permission (role_id, permission_id)
   select v_role, p.id from iam.permission p
-   where p.code not in ('corporation:create', 'corporation:delete');
+   where p.code not in ('corporation:create', 'corporation:delete')
+     -- kullanımdan kalkmış izinler (Permissions.Deprecated, V65) verilmez
+     and p.code not in ('finance:read', 'finance:write', 'session:write', 'refdata:manage');
   get diagnostics v_perms = row_count;
 
   -- ── Guardian (parent portal) role: portal-only permissions (V48) ────────

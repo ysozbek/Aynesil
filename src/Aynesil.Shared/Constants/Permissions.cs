@@ -30,6 +30,20 @@ public static class Permissions
         Corporation.Delete,
     };
 
+    /// <summary>
+    /// Kullanımdan kalkmış izinler (V2/V6'nın kaba izinleri; yerlerini kaynak bazlı izinler aldı). Hiçbir uç bunları
+    /// istemez. V65 bütün rollerden kaldırır; katalog satırı kalır ama izin listesinde (GET /permissions) görünmez,
+    /// AssignRolePermission reddeder, new_tenant.py ve şablon seed vermez (2026-11-17 doğrulaması D10).
+    /// Sabit (const) değil: frontend izin sabitlerine (scripts/gen-permissions.py) üretilmez.
+    /// </summary>
+    public static readonly IReadOnlySet<string> Deprecated = new HashSet<string>
+    {
+        "finance:read",
+        "finance:write",
+        "session:write",
+        "refdata:manage",
+    };
+
     // ── Campus ──────────────────────────────────────────────────────────
     public static class Campus
     {

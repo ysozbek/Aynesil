@@ -5,6 +5,7 @@ using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Features.Permissions.Dtos;
 using Aynesil.Domain.Modules.Iam.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,6 +53,10 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
         // Platform operations (create / activate / suspend corporations) are not tenant permissions (Y1).
         if (Aynesil.Shared.Constants.Permissions.PlatformOnly.Contains(permission.Code))
             throw new ForbiddenAccessException(MsgKeys.Rule.PlatformPermissionNotAssignable, permission.Code);
+
+        // Kullanımdan kalkmış izinler (D10) hiçbir uca yetki vermez; rollere atanmaz.
+        if (Aynesil.Shared.Constants.Permissions.Deprecated.Contains(permission.Code))
+            throw new ValidationException([ValidationFailures.For("permissionId", MsgKeys.Rule.PermissionDeprecated, permission.Code)]);
 
         var alreadyAssigned = await _db.RolePermissions.AnyAsync(
             rp => rp.RoleId == req.RoleId && rp.PermissionId == req.PermissionId, ct);

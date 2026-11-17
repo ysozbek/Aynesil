@@ -82,6 +82,7 @@
   <data name="Rule.CampPeriodHasActivities" xml:space="preserve"><value>Etkinlikleri olan bir kamp dönemi silinemez. Önce etkinlikleri silin.</value></data>
   <data name="Rule.CampEnrollmentCompleteNotStarted" xml:space="preserve"><value>Henüz başlamamış bir dönemde kayıt tamamlanamaz.</value></data>
   <data name="Rule.CampPackageNotStudents" xml:space="preserve"><value>Seçilen paket bu öğrenciye ait değil.</value></data>
+  <data name="Rule.PermissionDeprecated" xml:space="preserve"><value>"{0}" izni kullanımdan kalktı; rollere atanamaz.</value></data>
   <data name="Rule.CampPeriodNotStarted" xml:space="preserve"><value>Henüz başlamamış bir dönemde toplu tamamlama yapılamaz.</value></data>
   <data name="Rule.OnlyEnrolledToWaitlist" xml:space="preserve"><value>Yalnızca kayıtlı öğrenciler bekleme listesine alınabilir.</value></data>
   <data name="Rule.CampReportNeedsCompleted" xml:space="preserve"><value>Kamp sonu raporu yalnızca tamamlanmış kayıt için yazılabilir.</value></data>
