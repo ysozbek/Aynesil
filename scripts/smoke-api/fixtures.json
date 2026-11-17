@@ -68,5 +68,10 @@
     },
     "foreignChildStudentNo": "GK-2603",
     "otherTenantCode": "demo_b"
+  },
+  "firstLogin": {
+    "_comment": "demo-seed'in ilk giriş örneği (must_change_password açık). firstLoginFlow şifresini değiştirir, sonunda SQL ile eski haline döndürür.",
+    "username": "ilkgiris@demo-a.test",
+    "password": "DemoSifre!2026"
   }
 }

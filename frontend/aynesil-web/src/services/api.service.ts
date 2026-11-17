@@ -10,6 +10,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLocaleStore } from '@/stores/locale.store'
+import { returnPathFor } from '@/router/authRedirect'
 import type { ApiResponse, ErrorDetail } from '@/types/api.types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -46,10 +47,10 @@ function forceLoginRedirect() {
   const auth = useAuthStore()
   auth.clearTokens()
   // Hard navigate — avoids circular import with router and guarantees leaving a dead session shell.
-  const redirect = encodeURIComponent(window.location.pathname + window.location.search)
-  if (!window.location.pathname.startsWith('/login')) {
-    window.location.assign(`/login?redirect=${redirect}`)
-  }
+  // Şifre değiştirme ve giriş sayfaları dönüş adresi olarak taşınmaz (yeni girişte ana sayfa açılır).
+  if (window.location.pathname.startsWith('/login')) return
+  const back = returnPathFor(window.location.pathname + window.location.search)
+  window.location.assign(back ? `/login?redirect=${encodeURIComponent(back)}` : '/login')
 }
 
 // ── Request Interceptor — attach Bearer token ──────────────────────────────
@@ -73,6 +74,12 @@ api.interceptors.response.use(
     const auth = useAuthStore()
 
     if (error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    // Çıkış zaten oturumu kapatıyor: 401 (oturum önceden iptal edilmiş) yönlendirme tetiklemez;
+    // auth.logout() yerel durumu her koşulda temizler, çağıran sayfa giriş ekranına kendisi gider.
+    if (originalRequest?.url?.includes('/auth/logout')) {
       return Promise.reject(error)
     }
 

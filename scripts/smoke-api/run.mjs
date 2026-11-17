@@ -215,6 +215,57 @@ async function setup() {
   ctx.leadId = idOf(r.json?.data)
 }
 
+// ── İlk giriş akışı (demo hesabı): ilk giriş → şifre değiştir → çıkış (anonim, ön yüz gibi) → giriş → ana sayfa ──
+// Hata: çıkış [Authorize] olduğu için ön yüzden 401 dönüyor, istemci /login?redirect=/account/password'e atıyordu.
+// Hesabın şifre özeti ve bayrağı akıştan önce alınır, sonunda SQL ile geri yazılır (tekrar çalıştırılabilir).
+function dbSql(query) {
+  return execFileSync('docker', ['exec', '-i', 'aynesil-db', 'psql', '-U', process.env.POSTGRES_USER || 'aynesil_owner',
+    '-d', process.env.POSTGRES_DB || 'aynesil', '-v', 'ON_ERROR_STOP=1', '-Atq'], { input: query, encoding: 'utf8' }).trim()
+}
+const jwtClaims = (t) => { try { return JSON.parse(Buffer.from(String(t).split('.')[1], 'base64url').toString('utf8')) } catch { return {} } }
+
+async function firstLoginFlow() {
+  const phase = 'ilk giriş', adminToken = token
+  const { username, password } = fx.firstLogin
+  const q = username.replace(/'/g, "''")
+  const skip = (note) => record({ phase, id: 'ilk giriş akışı', verb: 'POST', url: '/auth/login', status: null, outcome: 'skip', note, mismatches: [] })
+  let snapshot
+  try { snapshot = dbSql(`select password_hash || '|' || must_change_password from iam.user_account where username = '${q}' and deleted_at is null`) }
+  catch (e) { skip(`veritabanına erişilemedi: ${String(e.message).split('\n')[0]}`); return }
+  if (!snapshot) { skip(`${username} yok (demo-seed çalıştırılmamış)`); return }
+  if (!snapshot.endsWith('|true')) { skip(`${username} must_change_password kapalı (önceki çalıştırma geri yüklenmemiş olabilir)`); return }
+  const hash = snapshot.slice(0, snapshot.lastIndexOf('|')).replace(/'/g, "''")
+  const newPw = `IlkGiris!${RUN}x`
+  try {
+    token = null
+    const l1 = await http('POST', '/auth/login', { username, password })
+    const mcp1 = jwtClaims(l1.json?.data?.accessToken).mcp
+    record({ phase, id: 'auth.login (ilk giriş: mustChangePassword=true, mcp claim)', verb: 'POST', url: '/auth/login', status: l1.status,
+      outcome: l1.status === 200 && l1.json?.data?.mustChangePassword === true && mcp1 === 'true' ? 'ok' : l1.status >= 400 ? classify(l1.status) : 'type',
+      note: `mustChangePassword=${l1.json?.data?.mustChangePassword}, mcp=${mcp1}`, mismatches: [] })
+    if (l1.status !== 200) return
+    token = l1.json.data.accessToken
+    expectStatus(phase, 'auth.changePassword (ilk giriş)', 'POST', '/auth/change-password',
+      await http('POST', '/auth/change-password', { currentPassword: password, newPassword: newPw }), [200, 204])
+    // Ön yüz auth uçlarına erişim token'ı eklemez: çıkış anonim gider ve 200 dönmeli (401 → istemci yanlış yönlendirir).
+    token = null
+    const refreshToken = l1.json.data.refreshToken
+    expectStatus(phase, 'auth.logout (anonim, şifre değişiminden sonra)', 'POST', '/auth/logout', await http('POST', '/auth/logout', { refreshToken }), [200])
+    expectStatus(phase, 'auth.refresh (çıkıştan sonra eski jeton reddedilir)', 'POST', '/auth/refresh', await http('POST', '/auth/refresh', { refreshToken }), [401])
+    const l2 = await http('POST', '/auth/login', { username, password: newPw })
+    const mcp2 = jwtClaims(l2.json?.data?.accessToken).mcp
+    record({ phase, id: 'auth.login (yeni şifre: mustChangePassword=false, mcp yok)', verb: 'POST', url: '/auth/login', status: l2.status,
+      outcome: l2.status === 200 && l2.json?.data?.mustChangePassword === false && mcp2 === undefined ? 'ok' : l2.status >= 400 ? classify(l2.status) : 'type',
+      note: `mustChangePassword=${l2.json?.data?.mustChangePassword}, mcp=${mcp2}`, mismatches: [] })
+    token = l2.json?.data?.accessToken
+    expectStatus(phase, 'ana sayfa verisi (/menus/me) erişilir', 'GET', '/menus/me', await http('GET', '/menus/me'), [200])
+  } finally {
+    // Demo örneği eski haline: ilk giriş şifresi ve bayrak açık.
+    dbSql(`update iam.user_account set password_hash = '${hash}', must_change_password = true where username = '${q}'`)
+    token = adminToken
+  }
+}
+
 // ── Ekransız uçları kapatan akışlar (yazma): must_change_password, şablon sürümleri, rıza, telafi, iade, izin bakiyesi, KPI tanımı, sözleşme ──
 /** Beklenen durum/kod denetimi: sapma `leak` (yetki/koruma delinmesi) ya da 4xx/5xx olarak raporlanır. */
 function expectStatus(phase, id, verb, urlPath, res, statuses, code) {
@@ -1478,6 +1529,7 @@ ctx.adminUserId = me?.userId
 await setup()
 await writeFlows()
 await newFlows()
+await firstLoginFlow()
 await closureFlows()
 await dailyOpsFlows()
 await consultancyFlows()

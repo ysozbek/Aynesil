@@ -2,16 +2,15 @@
 /**
  * Signed-in user changes their own password (POST /api/auth/change-password).
  * Needed after an admin opens an account with a temporary password (educator / guardian records).
- * The backend revokes every session on success, so the user is sent back to the login page.
+ * The backend revokes every session on success, so the user is sent back to the login page. After the next
+ * login the home page opens (never this page again: see router/authRedirect.ts).
  */
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { apiService } from '@/services/api.service'
 import { useAuthStore } from '@/stores/auth.store'
 
 const { t } = useI18n()
-const router = useRouter()
 const auth = useAuthStore()
 
 const form = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -30,7 +29,9 @@ async function submit() {
       newPassword: form.newPassword,
     })
     await auth.logout()
-    router.push({ name: 'login', query: { passwordChanged: '1' } })
+    // Tam sayfa geçiş: bellekteki menü/modül önbellekleri de sıfırlanır; giriş adresinde `redirect` yok,
+    // yeni girişte ana sayfa açılır.
+    window.location.assign('/login?passwordChanged=1')
   } catch (e: unknown) {
     error.value = (e as Error).message
   } finally {

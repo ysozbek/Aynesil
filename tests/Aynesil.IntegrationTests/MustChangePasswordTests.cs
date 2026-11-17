@@ -121,6 +121,55 @@ public sealed class MustChangePasswordTests : IAsyncLifetime, IDisposable
         ok.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Arayüzdeki akışın aynısı: ilk giriş → şifre değiştir → çıkış (ön yüz auth uçlarına erişim token'ı eklemez)
+    /// → yeni şifreyle giriş. Çıkış anonim olarak 200 dönmeli (eskiden [Authorize] yüzünden 401 dönüyor ve ön yüz
+    /// /login?redirect=/account/password'e atıyordu); yeni girişte mcp yok, kısıt kalkmış.
+    /// </summary>
+    [Fact]
+    public async Task First_login_change_password_logout_and_login_again_has_no_mcp()
+    {
+        var first = await LoginDataAsync(Flagged, Password);
+        first.GetProperty("mustChangePassword").GetBoolean().Should().BeTrue();
+        ClaimOf(first.GetProperty("accessToken").GetString()!, "mcp").Should().Be("true");
+
+        using (var change = await Authed(first.GetProperty("accessToken").GetString()!)
+                   .PostAsJsonAsync("/api/auth/change-password", new { currentPassword = Password, newPassword = NewPassword }))
+            change.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var refreshToken = first.GetProperty("refreshToken").GetString();
+        using (var logout = await _factory.CreateClient().PostAsJsonAsync("/api/auth/logout", new { refreshToken }))
+            logout.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var again = await LoginDataAsync(Flagged, NewPassword);
+        again.GetProperty("mustChangePassword").GetBoolean().Should().BeFalse();
+        ClaimOf(again.GetProperty("accessToken").GetString()!, "mcp").Should().BeNull();
+        using var menus = await Authed(again.GetProperty("accessToken").GetString()!).GetAsync("/api/menus/me");
+        menus.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    /// <summary>Anonim çıkış oturumu gerçekten kapatır: aynı yenileme jetonu bir daha kullanılamaz; ikinci çıkış da 200.</summary>
+    [Fact]
+    public async Task Anonymous_logout_revokes_the_refresh_token_and_is_idempotent()
+    {
+        var data = await LoginDataAsync(Normal, Password);
+        var refreshToken = data.GetProperty("refreshToken").GetString();
+        var anonymous = _factory.CreateClient();
+
+        using (var logout = await anonymous.PostAsJsonAsync("/api/auth/logout", new { refreshToken }))
+            logout.StatusCode.Should().Be(HttpStatusCode.OK);
+        using (var refresh = await anonymous.PostAsJsonAsync("/api/auth/refresh", new { refreshToken }))
+            refresh.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        using (var again = await anonymous.PostAsJsonAsync("/api/auth/logout", new { refreshToken }))
+            again.StatusCode.Should().Be(HttpStatusCode.OK);
+        using (var unknown = await anonymous.PostAsJsonAsync("/api/auth/logout", new { refreshToken = "bilinmeyen-jeton" }))
+            unknown.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    private static string? ClaimOf(string jwt, string claim)
+        => new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(jwt)
+            .Claims.FirstOrDefault(c => c.Type == claim)?.Value;
+
     [Fact]
     public async Task Refresh_keeps_the_restriction_while_the_flag_is_on()
     {

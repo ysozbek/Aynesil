@@ -13,6 +13,7 @@ import { Permissions } from '@/constants/permissions'
 import { Modules, type ModuleCode } from '@/constants/modules'
 import { useModulesStore } from '@/stores/modules.store'
 import { moduleRedirect } from './moduleGuard'
+import { passwordChangeRedirect } from './authRedirect'
 
 const routes: RouteRecordRaw[] = [
   // ── Public routes ─────────────────────────────────────────────────────────
@@ -1261,9 +1262,8 @@ router.beforeEach(async (to) => {
   }
 
   // İlk giriş parolası değiştirilene kadar yalnızca şifre değiştirme sayfası (backend de diğer uçları reddeder).
-  if (auth.isAuthenticated && auth.mustChangePassword && to.name !== 'account-password') {
-    return { name: 'account-password' }
-  }
+  const passwordRedirect = passwordChangeRedirect(auth, to.name)
+  if (passwordRedirect) return passwordRedirect
 
   if (to.meta.requiresGuest && auth.isAuthenticated) {
     return { path: '/' }

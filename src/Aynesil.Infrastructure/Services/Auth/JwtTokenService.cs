@@ -158,9 +158,36 @@ public sealed class JwtTokenService : ITokenService
     public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         var tokenHash = Hash(refreshToken);
-        await _db.Database.ExecuteSqlRawAsync(
-            "UPDATE iam.auth_session SET revoked_at = now() WHERE refresh_token_hash = {0} AND revoked_at IS NULL",
-            tokenHash);
+
+        // Çıkış anonimdir (kurum bağlamı yok): oturum SECURITY DEFINER fonksiyonla bulunur, kurum GUC'u ve UPDATE
+        // aynı işlemde/bağlantıda çalışır (RefreshAsync ile aynı gerekçe: aksi halde RLS satırı gizler, 0 satır).
+        // Bilinmeyen ya da zaten iptal edilmiş jeton: sessizce başarılı (idempotent çıkış).
+        var session = await _db.Database
+            .SqlQueryRaw<SessionRow>(
+                @"SELECT id                              AS ""Id"",
+                         corporation_id                  AS ""CorporationId"",
+                         user_id                         AS ""UserId"",
+                         issued_at                       AS ""IssuedAt"",
+                         expires_at                      AS ""ExpiresAt"",
+                         revoked_at                      AS ""RevokedAt"",
+                         refresh_token_hash              AS ""RefreshTokenHash"",
+                         ip_address::text                AS ""IpAddress"",
+                         user_agent                      AS ""UserAgent""
+                  FROM iam.find_session_by_token({0})",
+                tokenHash)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (session is null || session.RevokedAt is not null) return;
+
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await SetTenantGucAsync(session.CorporationId, session.UserId, cancellationToken);
+            await _db.Database.ExecuteSqlRawAsync(
+                "UPDATE iam.auth_session SET revoked_at = now() WHERE id = {0} AND revoked_at IS NULL",
+                [session.Id], cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken = default)

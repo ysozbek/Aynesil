@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useI18n } from 'vue-i18n'
+import { safeLoginRedirect } from '@/router/authRedirect'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -19,8 +20,8 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(form)
-    const redirect = route.query.redirect as string | undefined
-    await router.push(redirect || '/')
+    // Şifre değiştirme/giriş sayfalarına geri dönülmez (ilk girişten sonra ana sayfa açılır).
+    await router.push(safeLoginRedirect(route.query.redirect))
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : t('auth.loginError')
   } finally {

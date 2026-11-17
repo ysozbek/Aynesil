@@ -20,6 +20,12 @@ const modules = useModulesStore()
 const settings = useSettingsStore()
 const sidebarCollapsed = ref(false)
 
+/** Çıkış: sunucu oturumu kapatılır, sonra tam sayfa geçişle giriş ekranı (bellekteki tüm store'lar sıfırlanır). */
+async function signOut() {
+  await auth.logout()
+  window.location.assign('/login')
+}
+
 onMounted(async () => {
   // Parolasını değiştirmesi zorunlu hesapta menü/ayar uçları 403 döner; yalnızca şifre sayfası gösterilir.
   if (auth.mustChangePassword) return
@@ -53,7 +59,7 @@ onMounted(async () => {
       <AppHeader
         :user="auth.user"
         @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
-        @logout="auth.logout()"
+        @logout="signOut"
       />
 
       <!-- Page content -->

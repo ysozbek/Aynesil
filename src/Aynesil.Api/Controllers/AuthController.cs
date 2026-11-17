@@ -51,7 +51,12 @@ public class AuthController : BaseController
         return OkResult(result);
     }
 
-    [Authorize]
+    /// <summary>
+    /// Revokes the session that owns <c>refreshToken</c>. Anonymous on purpose: the refresh token in the body is the
+    /// credential, and the client does not attach an access token to auth endpoints (it may already be expired or,
+    /// after a password change, belong to a revoked session). Idempotent: an unknown or already revoked token is 200.
+    /// </summary>
+    [AllowAnonymous]
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken ct)
