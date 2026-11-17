@@ -19,6 +19,7 @@ create table iam.user_account (
   mfa_enabled       boolean not null default false,
   mfa_secret        text,
   must_change_password boolean not null default false,   -- V50: yönetici açtığı hesapta ilk girişte parola değişimi zorunlu
+  sessions_revoked_at timestamptz,                         -- V63: bu andan önce verilmiş erişim jetonları geçersiz
   last_login_at     timestamptz,
   created_at  timestamptz not null default now(),
   created_by  uuid,

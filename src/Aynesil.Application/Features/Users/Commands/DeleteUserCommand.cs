@@ -28,9 +28,11 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly ITokenService _tokens;
+    private readonly ISessionRevocation _sessions;
 
-    public DeleteUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITokenService tokens)
+    public DeleteUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITokenService tokens, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _currentUser = currentUser;
         _tokens = tokens;
@@ -47,10 +49,12 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
         if (_currentUser.UserId == req.UserId)
             throw new ValidationException([ValidationFailures.For(nameof(req.UserId), MsgKeys.Rule.CannotDeleteSelf)]);
 
+        user.RevokeSessions();   // V63: elde kalan erişim jetonu da geçersiz
         user.SoftDelete(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
 
         // Revoke all active sessions for the deleted user
         await _tokens.RevokeAllAsync(req.UserId, ct);
+        _sessions.Forget(req.UserId);
     }
 }

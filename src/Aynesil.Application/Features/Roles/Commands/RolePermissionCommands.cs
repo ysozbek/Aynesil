@@ -27,9 +27,11 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
 {
     private readonly IAppDbContext _db;
     private readonly ITenantContext _tenantContext;
+    private readonly ISessionRevocation _sessions;
 
-    public AssignRolePermissionCommandHandler(IAppDbContext db, ITenantContext tenantContext)
+    public AssignRolePermissionCommandHandler(IAppDbContext db, ITenantContext tenantContext, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _tenantContext = tenantContext;
     }
@@ -63,6 +65,7 @@ public sealed class AssignRolePermissionCommandHandler : IRequestHandler<AssignR
         });
 
         await _db.SaveChangesAsync(ct);
+        await _sessions.RevokeRoleMembersAsync(req.RoleId, ct);   // rol üyeleri yeni izinleri yenilemede alır (V63)
         return permission.ToListItemDto();
     }
 }
@@ -84,9 +87,11 @@ public sealed class RemoveRolePermissionCommandHandler : IRequestHandler<RemoveR
 {
     private readonly IAppDbContext _db;
     private readonly ITenantContext _tenantContext;
+    private readonly ISessionRevocation _sessions;
 
-    public RemoveRolePermissionCommandHandler(IAppDbContext db, ITenantContext tenantContext)
+    public RemoveRolePermissionCommandHandler(IAppDbContext db, ITenantContext tenantContext, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _tenantContext = tenantContext;
     }
@@ -105,5 +110,6 @@ public sealed class RemoveRolePermissionCommandHandler : IRequestHandler<RemoveR
 
         _db.RolePermissions.Remove(grant);
         await _db.SaveChangesAsync(ct);
+        await _sessions.RevokeRoleMembersAsync(req.RoleId, ct);   // kaldırılan izin eski jetonlarda kalmasın (V63)
     }
 }

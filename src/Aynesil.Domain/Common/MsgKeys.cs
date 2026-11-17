@@ -349,6 +349,8 @@ public static class MsgKeys
         public static readonly MsgKey PasswordChangeRequired = new("Auth.PasswordChangeRequired");
         /// <summary>Kullanıcının kurumu etkin değil (askıya alınmış/kapatılmış): giriş, yenileme ve oturum içi istekler reddedilir (401).</summary>
         public static readonly MsgKey CorporationInactive = new("Auth.CorporationInactive");
+        /// <summary>Oturum iptal edildi (şifre değişimi/sıfırlama, askıya alma, silme, rol/izin değişikliği; V63) ya da kullanıcı artık aktif değil (401).</summary>
+        public static readonly MsgKey SessionRevoked = new("Auth.SessionRevoked");
     }
 
     /// <summary>Başarı yanıtlarının mesajları (<c>message</c>); anahtar aynı zamanda yanıt kodudur (<c>code</c>).</summary>

@@ -21,9 +21,11 @@ public sealed class ActivateUserCommandHandler : IRequestHandler<ActivateUserCom
 {
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly ISessionRevocation _sessions;
 
-    public ActivateUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser)
+    public ActivateUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _currentUser = currentUser;
     }
@@ -35,6 +37,7 @@ public sealed class ActivateUserCommandHandler : IRequestHandler<ActivateUserCom
 
         user.Activate(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
+        _sessions.Forget(req.UserId);   // önbellekteki "askıda" durumu yeni girişi 1 dk engellemesin
     }
 }
 
@@ -52,9 +55,11 @@ public sealed class SuspendUserCommandHandler : IRequestHandler<SuspendUserComma
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly ITokenService _tokens;
+    private readonly ISessionRevocation _sessions;
 
-    public SuspendUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITokenService tokens)
+    public SuspendUserCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITokenService tokens, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _currentUser = currentUser;
         _tokens = tokens;
@@ -71,7 +76,9 @@ public sealed class SuspendUserCommandHandler : IRequestHandler<SuspendUserComma
         user.Suspend(_currentUser.UserId);
         await _db.SaveChangesAsync(ct);
 
-        // Revoke active sessions so the user is kicked out immediately
+        // Yenileme jetonları iptal edilir; erişim jetonu domain'de (Suspend → sessions_revoked_at, V63) geçersiz
+        // sayılır ve önbellek temizlenince bir sonraki istekte 401 alır (önceden süresi dolana kadar geçerliydi).
         await _tokens.RevokeAllAsync(req.UserId, ct);
+        _sessions.Forget(req.UserId);
     }
 }

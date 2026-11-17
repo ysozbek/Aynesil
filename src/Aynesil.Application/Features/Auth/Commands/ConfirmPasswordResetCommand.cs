@@ -38,13 +38,16 @@ public sealed class ConfirmPasswordResetCommandHandler : IRequestHandler<Confirm
     private readonly IPasswordService _passwords;
     private readonly ITokenService _tokens;
     private readonly ICacheService _cache;
+    private readonly ISessionRevocation _sessions;
 
     public ConfirmPasswordResetCommandHandler(
         IAppDbContext db,
         IPasswordService passwords,
         ITokenService tokens,
-        ICacheService cache)
+        ICacheService cache,
+        ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _passwords = passwords;
         _tokens = tokens;
@@ -71,6 +74,7 @@ public sealed class ConfirmPasswordResetCommandHandler : IRequestHandler<Confirm
         await _db.SaveChangesAsync(ct);
 
         await _tokens.RevokeAllAsync(tokenData.UserId, ct);
+        _sessions.Forget(tokenData.UserId);   // erişim jetonları da geçersiz (V63)
         await _cache.RemoveAsync(cacheKey, ct);
     }
 

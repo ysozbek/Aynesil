@@ -33,11 +33,14 @@ public sealed class ResetUserPasswordCommandHandler : IRequestHandler<ResetUserP
     private readonly ICurrentUserService _currentUser;
     private readonly IPasswordService _passwords;
     private readonly ITokenService _tokens;
+    private readonly ISessionRevocation _sessions;
 
     public ResetUserPasswordCommandHandler(
         IAppDbContext db, ITenantContext tenant, ICurrentUserService currentUser,
-        IPasswordService passwords, ITokenService tokens)
+        IPasswordService passwords, ITokenService tokens,
+        ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _tenant = tenant;
         _currentUser = currentUser;
@@ -63,6 +66,7 @@ public sealed class ResetUserPasswordCommandHandler : IRequestHandler<ResetUserP
 
         // Eski şifreyle açılmış oturumlar düşer; kilitli hesap yeni geçici şifreyle hemen girebilir.
         await _tokens.RevokeAllAsync(user.Id, ct);
+        _sessions.Forget(user.Id);   // eski erişim jetonu bir sonraki istekte 401 (V63)
         await _passwords.ResetFailedAttemptsAsync(user.Id, ct);
 
         return new ResetUserPasswordResult(user.Id, user.Username, temporaryPassword);

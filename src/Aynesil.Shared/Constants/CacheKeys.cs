@@ -18,6 +18,12 @@ public static class CacheKeys
     public static string UserPermissions(Guid corporationId, Guid userId) =>
         ForTenant(corporationId, $"perms{Sep}{userId}");
 
+    /// <summary>
+    /// Oturum denetimi için kullanıcı durumu (durum, silinme, sessions_revoked_at; V63). Süreç belleğinde (IMemoryCache)
+    /// tutulur; değeri değiştiren işlemler <c>ISessionRevocation</c> ile temizler.
+    /// </summary>
+    public static string UserSessionState(Guid userId) => ForUser(userId, "session-state");
+
     // ── Menus ────────────────────────────────────────────────────────────
     public static string MenuTree(Guid corporationId, string locale) =>
         ForTenant(corporationId, $"menu{Sep}{locale}");

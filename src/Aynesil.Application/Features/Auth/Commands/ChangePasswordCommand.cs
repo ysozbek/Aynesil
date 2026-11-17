@@ -43,13 +43,16 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
     private readonly IPasswordService _passwords;
     private readonly ITokenService _tokens;
     private readonly ICurrentUserService _currentUser;
+    private readonly ISessionRevocation _sessions;
 
     public ChangePasswordCommandHandler(
         IAppDbContext db,
         IPasswordService passwords,
         ITokenService tokens,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _passwords = passwords;
         _tokens = tokens;
@@ -73,5 +76,6 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
 
         // Revoke all sessions — user must re-login with new password
         await _tokens.RevokeAllAsync(userId, ct);
+        _sessions.Forget(userId);   // erişim jetonları da geçersiz (V63; domain ChangePassword)
     }
 }

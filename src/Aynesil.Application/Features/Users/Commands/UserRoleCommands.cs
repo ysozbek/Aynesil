@@ -39,9 +39,11 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly ITenantContext _tenantContext;
+    private readonly ISessionRevocation _sessions;
 
-    public AssignUserRoleCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenantContext)
+    public AssignUserRoleCommandHandler(IAppDbContext db, ICurrentUserService currentUser, ITenantContext tenantContext, ISessionRevocation sessions)
     {
+        _sessions = sessions;
         _db = db;
         _currentUser = currentUser;
         _tenantContext = tenantContext;
@@ -79,6 +81,7 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
 
         _db.UserRoles.Add(grant);
         await _db.SaveChangesAsync(ct);
+        await _sessions.RevokeAccessTokensAsync([req.UserId], ct);   // yeni izinler bir sonraki yenilemede (V63)
 
         // Reload with Role navigation for DTO mapping
         await _db.UserRoles.Entry(grant).Reference(g => g.Role).LoadAsync(ct);
@@ -99,8 +102,13 @@ public class RemoveUserRoleCommandValidator : AbstractValidator<RemoveUserRoleCo
 public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRoleCommand>
 {
     private readonly IAppDbContext _db;
+    private readonly ISessionRevocation _sessions;
 
-    public RemoveUserRoleCommandHandler(IAppDbContext db) => _db = db;
+    public RemoveUserRoleCommandHandler(IAppDbContext db, ISessionRevocation sessions)
+    {
+        _db = db;
+        _sessions = sessions;
+    }
 
     public async Task Handle(RemoveUserRoleCommand req, CancellationToken ct)
     {
@@ -109,5 +117,6 @@ public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRol
 
         _db.UserRoles.Remove(grant);
         await _db.SaveChangesAsync(ct);
+        await _sessions.RevokeAccessTokensAsync([grant.UserId], ct);   // kaldırılan rolün izinleri eski jetonda kalmasın (V63)
     }
 }

@@ -111,6 +111,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordService, PasswordService>();
         PasswordService.EnsureDummyHash();   // sahte BCrypt hash'i açılışta bir kez üretilir
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<ISessionRevocation, SessionRevocation>();
         services.AddScoped<ILocalizationService, LocalizationService>();
         services.AddScoped<IRefDataService, RefDataService>();
         services.AddScoped<ISettingsService, SettingsService>();

@@ -190,7 +190,7 @@ API, yapılandırmayı `appsettings.json` → `appsettings.{Ortam}.json` → `AY
 |---|---|---|---|
 | `AYNESIL_ConnectionStrings__DefaultConnection` | API'nin veritabanı bağlantısı (uygulama rolüyle). Hangfire da bunu kullanır. | Compose kurar | Yazmayın (şifreler `POSTGRES_*`/`AYNESIL_DB_APP_*`'den gelir) |
 | `AYNESIL_ConnectionStrings__Redis` | Redis bağlantısı. Boşsa bellek içi önbelleğe düşer. | Compose kurar | Yazmayın (`aynesil-redis:6379,password=<AYNESIL_REDIS_PASSWORD>,abortConnect=false`) |
-| `AYNESIL_Jwt__AccessTokenExpiryMinutes` | Erişim jetonu süresi (dk) | Hayır | `60` (Development'ta `120`) |
+| `AYNESIL_Jwt__AccessTokenExpiryMinutes` | Erişim jetonu süresi (dk); süre dolunca istemci yenileme jetonuyla sessizce yeniler. İptal (şifre, askıya alma, rol) bundan bağımsız olarak en geç 1 dk içinde etkilidir (V63) | Hayır | `15` |
 | `AYNESIL_Jwt__RefreshTokenExpiryDays` | Yenileme jetonu süresi (gün) | Hayır | `30` |
 | `Jwt:Algorithm` | `appsettings.json`'da var ama kod her zaman HS256 kullanır | Hayır | Değiştirmeyin |
 | `AYNESIL_ForwardedHeaders__KnownNetworks__0` | Güvenilen vekil ağı (CIDR). Gerçek istemci IP'si `X-Forwarded-For`'dan yalnızca bu ağdan gelen bağlantılarda alınır | Hayır: compose iç ağını verir (`AYNESIL_NETWORK_SUBNET`) | `172.30.0.0/24` |

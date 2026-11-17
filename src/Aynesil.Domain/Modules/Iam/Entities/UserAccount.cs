@@ -45,6 +45,12 @@ public class UserAccount : TenantEntity
     /// </summary>
     public bool MustChangePassword { get; set; }
 
+    /// <summary>
+    /// Bu andan önce verilmiş erişim jetonları (JWT <c>iat</c>) geçersizdir (V63). Şifre değişimi/sıfırlama, askıya alma,
+    /// devre dışı bırakma, silme ve rol/izin değişikliğinde güncellenir; API her istekte denetler. NULL = iptal yok.
+    /// </summary>
+    public DateTimeOffset? SessionsRevokedAt { get; set; }
+
     public ICollection<UserRole> Roles { get; set; } = [];
     public ICollection<AuthSession> Sessions { get; set; } = [];
     public ICollection<UserIdentity> ExternalIdentities { get; set; } = [];
@@ -105,6 +111,7 @@ public class UserAccount : TenantEntity
     {
         var previous = Status;
         Status = "suspended";
+        RevokeSessions();
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy ?? UpdatedBy;
         if (previous != Status)
@@ -116,6 +123,7 @@ public class UserAccount : TenantEntity
     {
         var previous = Status;
         Status = "disabled";
+        RevokeSessions();
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy ?? UpdatedBy;
         if (previous != Status)
@@ -142,11 +150,12 @@ public class UserAccount : TenantEntity
         UpdatedBy = updatedBy ?? UpdatedBy;
     }
 
-    /// <summary>Replaces the password hash. All existing sessions should be revoked after this call.</summary>
+    /// <summary>Replaces the password hash and invalidates issued access tokens; refresh tokens are revoked by the caller.</summary>
     public void ChangePassword(string newPasswordHash, Guid? updatedBy = null)
     {
         PasswordHash = newPasswordHash;
         MustChangePassword = false;
+        RevokeSessions();
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = updatedBy ?? UpdatedBy;
         AddDomainEvent(new UserPasswordChangedEvent(Id, CorporationId));
@@ -160,10 +169,17 @@ public class UserAccount : TenantEntity
     {
         PasswordHash = temporaryPasswordHash;
         MustChangePassword = true;
+        RevokeSessions();
         UpdatedAt = DateTimeOffset.UtcNow;
         UpdatedBy = resetBy ?? UpdatedBy;
         AddDomainEvent(new UserPasswordChangedEvent(Id, CorporationId));
     }
+
+    /// <summary>
+    /// Şu ana kadar verilmiş bütün erişim jetonlarını geçersiz kılar (<see cref="SessionsRevokedAt"/>). Yenileme
+    /// jetonlarının (iam.auth_session) iptali ve API önbelleğinin temizlenmesi çağıranın işidir.
+    /// </summary>
+    public void RevokeSessions() => SessionsRevokedAt = DateTimeOffset.UtcNow;
 
     /// <summary>Updates the last login timestamp. Called by the token service after successful authentication.</summary>
     public void RecordLogin() => LastLoginAt = DateTimeOffset.UtcNow;

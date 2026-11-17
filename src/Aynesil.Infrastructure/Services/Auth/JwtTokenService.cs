@@ -212,9 +212,13 @@ public sealed class JwtTokenService : ITokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opts.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+        var issuedAt = DateTime.UtcNow;
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Iat, EpochTime.GetIntDate(issuedAt).ToString(), ClaimValueTypes.Integer64),
+            // UserSessionMiddleware bunu iam.user_account.sessions_revoked_at ile karşılaştırır (V63; ms çözünürlük).
+            new(AuthClaims.IssuedAtMs, new DateTimeOffset(issuedAt).ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
             new("corporation_id", corporationId.ToString()),
             new("full_name", user.FullName),
@@ -235,7 +239,7 @@ public sealed class JwtTokenService : ITokenService
             issuer: _opts.Issuer,
             audience: _opts.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_opts.AccessTokenExpiryMinutes),
+            expires: issuedAt.AddMinutes(_opts.AccessTokenExpiryMinutes),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

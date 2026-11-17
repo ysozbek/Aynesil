@@ -25,6 +25,7 @@ public class UserAccountConfiguration : IEntityTypeConfiguration<UserAccount>
         builder.Property(x => x.MfaEnabled).HasColumnName("mfa_enabled").HasDefaultValue(false).IsRequired();
         builder.Property(x => x.MfaSecret).HasColumnName("mfa_secret");
         builder.Property(x => x.MustChangePassword).HasColumnName("must_change_password").HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.SessionsRevokedAt).HasColumnName("sessions_revoked_at");
         builder.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()").IsRequired();
         builder.Property(x => x.CreatedBy).HasColumnName("created_by");

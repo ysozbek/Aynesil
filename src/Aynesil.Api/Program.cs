@@ -84,6 +84,8 @@ try
     app.UseCors("AynesilCors");
     app.UseAuthentication();
     app.UseMiddleware<RequestCultureMiddleware>();
+    // İptal edilmiş/askıdaki kullanıcının jetonu (V63): 401 her zaman parola zorunluluğu 403'ünden önce gelir.
+    app.UseMiddleware<UserSessionMiddleware>();
     // Parolasını değiştirmesi zorunlu hesap (JWT "mcp") yalnızca parola değiştirme/çıkış/yenileme uçlarını kullanabilir.
     app.UseMiddleware<PasswordChangeRequiredMiddleware>();
     app.UseMiddleware<StaleTenantMiddleware>();

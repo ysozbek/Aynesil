@@ -68,3 +68,14 @@ test('router, LoginView ve api.service bu kuralları kullanıyor', () => {
   assert.match(api, /returnPathFor\(/)
   assert.match(api, /\/auth\/logout'\)\) \{\s*return Promise\.reject\(error\)/)
 })
+
+// ── Sekmeler arası jeton eşitleme (erişim jetonu 15 dk; yenileme jetonu döner) ──
+import { newerStoredTokens } from '../src/utils/tokenSync.ts'
+
+test('başka sekme yenilediyse depodaki yeni çift kullanılır, aynıysa yenileme yapılır', () => {
+  const mem = { accessToken: 'a1', refreshToken: 'r1' }
+  assert.deepEqual(newerStoredTokens(mem, { accessToken: 'a2', refreshToken: 'r2' }), { accessToken: 'a2', refreshToken: 'r2' })
+  assert.equal(newerStoredTokens(mem, { accessToken: 'a1', refreshToken: 'r1' }), null)
+  assert.equal(newerStoredTokens(mem, { accessToken: null, refreshToken: null }), null)   // çıkış yapılmış
+  assert.equal(newerStoredTokens(mem, { accessToken: 'a2', refreshToken: null }), null)
+})

@@ -26,6 +26,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Auth.PasswordChangeRequired" xml:space="preserve"><value>Devam etmeden önce parolanızı değiştirmeniz gerekiyor.</value></data>
   <data name="Auth.CorporationInactive" xml:space="preserve"><value>Kurumunuzun hesabı etkin değil. Lütfen kurum yöneticinizle ya da destek ekibiyle iletişime geçin.</value></data>
+  <data name="Auth.SessionRevoked" xml:space="preserve"><value>Oturumunuz sonlandırıldı. Lütfen tekrar giriş yapın.</value></data>
   <data name="Auth.AccountDisabled" xml:space="preserve"><value>Hesabınız devre dışı. Lütfen yöneticinizle iletişime geçin.</value></data>
   <data name="Auth.AccountLocked" xml:space="preserve"><value>Hesabınız çok sayıda başarısız deneme nedeniyle geçici olarak kilitlendi. Lütfen daha sonra tekrar deneyin.</value></data>
   <data name="Auth.InvalidCredentials" xml:space="preserve"><value>Kullanıcı adı veya parola hatalı.</value></data>

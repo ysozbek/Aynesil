@@ -125,7 +125,7 @@ services:
       AYNESIL_Jwt__Secret: ${AYNESIL_Jwt__Secret:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_64_CHARACTERS}
       AYNESIL_Jwt__Issuer: ${AYNESIL_Jwt__Issuer:-https://api.aynesil.com}
       AYNESIL_Jwt__Audience: ${AYNESIL_Jwt__Audience:-aynesil-web}
-      AYNESIL_Jwt__AccessTokenExpiryMinutes: ${AYNESIL_Jwt__AccessTokenExpiryMinutes:-60}
+      AYNESIL_Jwt__AccessTokenExpiryMinutes: ${AYNESIL_Jwt__AccessTokenExpiryMinutes:-15}
       AYNESIL_Jwt__RefreshTokenExpiryDays: ${AYNESIL_Jwt__RefreshTokenExpiryDays:-30}
       # ── CORS (boş girişler yok sayılır) ──
       AYNESIL_Cors__AllowedOrigins__0: ${AYNESIL_Cors__AllowedOrigins__0:-http://localhost:${FRONTEND_PORT:-5173}}

@@ -9,6 +9,7 @@ import { ref, computed } from 'vue'
 import { apiService } from '@/services/api.service'
 import { useLocaleStore } from '@/stores/locale.store'
 import type { AuthUser, LoginRequest, LoginResult } from '@/types/auth.types'
+import { newerStoredTokens } from '@/utils/tokenSync'
 
 function parseJwt(token: string): Record<string, unknown> {
   try {
@@ -76,8 +77,18 @@ export const useAuthStore = defineStore('auth', () => {
     if (user.value?.locale) useLocaleStore().setLocale(user.value.locale)
   }
 
-  async function refresh(): Promise<LoginResult> {
+  async function refresh(): Promise<Pick<LoginResult, 'accessToken' | 'refreshToken'>> {
     if (!refreshToken.value) throw new Error('No refresh token available.')
+
+    // Başka sekme az önce yenilediyse onun çiftini kullan (bellekteki yenileme jetonu artık geçersiz).
+    const stored = newerStoredTokens(
+      { accessToken: accessToken.value, refreshToken: refreshToken.value },
+      { accessToken: localStorage.getItem('access_token'), refreshToken: localStorage.getItem('refresh_token') },
+    )
+    if (stored) {
+      setTokens(stored.accessToken, stored.refreshToken)
+      return stored
+    }
 
     const response = await apiService.post<LoginResult>('/auth/refresh', {
       refreshToken: refreshToken.value,

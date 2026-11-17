@@ -13,7 +13,7 @@ public class JwtOptions
     /// <summary>Signing secret. Minimum 32 characters. Source from secret manager in production.</summary>
     public string Secret { get; set; } = string.Empty;
 
-    public int AccessTokenExpiryMinutes { get; set; } = 60;
+    public int AccessTokenExpiryMinutes { get; set; } = 15;
     public int RefreshTokenExpiryDays { get; set; } = 30;
     public string Algorithm { get; set; } = "HS256";
 }
