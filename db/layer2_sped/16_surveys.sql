@@ -87,6 +87,11 @@ create index ix_survey_response_guardian on ops.survey_response(guardian_id, sur
   where guardian_id is not null;
 create index ix_survey_response_student  on ops.survey_response(student_id, survey_id)
   where student_id is not null;
+-- V64: gönderilmiş yanıt tekilliği (veli → guardian_id, personel → respondent_user_id; boşlar eşit sayılır)
+create unique index uq_survey_response_once
+  on ops.survey_response (survey_id, (coalesce(guardian_id, respondent_user_id)), student_id, session_id)
+  nulls not distinct
+  where submitted_at is not null;
 comment on table ops.survey_response is
   'One submitted response per survey × respondent × (optional) session. '
   'submitted_at is null while the guardian is mid-form.';

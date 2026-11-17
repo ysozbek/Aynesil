@@ -38,12 +38,21 @@ function toAnswer(q: SurveyQuestionDto, d: Draft): QuestionAnswerPayload {
   }
 }
 
+/**
+ * Gönderimdeki anket: düğme kilitlenir ve ikinci gönderim (çift tıklama, Enter) yok sayılır. Kilit, bekleyen
+ * anket listesi yenilenene kadar sürer (yanıtlanan anket listeden düşmeden yeniden gönderilemez). Sunucu da
+ * tekrar yanıtı 409 Rule.SurveyAlreadySubmitted ile reddeder (V64 tekil indeksi).
+ */
+const submittingId = ref<string | null>(null)
+
 async function submit(s: PendingSurveyDto) {
+  if (submittingId.value) return
   const d = drafts[s.surveyId]
   error.value = ''
   if (!d.studentId) { error.value = t('surveys.portal.pickChild'); return }
   const missing = s.questions.find((q) => q.isRequired && !isAnswered(q, d))
   if (missing) { error.value = t('surveys.portal.requiredMissing', { question: missing.questionText }); return }
+  submittingId.value = s.surveyId
   try {
     await store.submitResponse({
       surveyId: s.surveyId,
@@ -56,6 +65,8 @@ async function submit(s: PendingSurveyDto) {
     await store.fetchPending()
   } catch (e: unknown) {
     error.value = (e as Error).message
+  } finally {
+    submittingId.value = null
   }
 }
 
@@ -137,10 +148,10 @@ onMounted(() => store.fetchPending())
 
           <div class="flex justify-end">
             <button
-              type="submit" :disabled="store.saving"
+              type="submit" :disabled="store.saving || submittingId !== null"
               class="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
             >
-              {{ store.saving ? t('common.saving') : t('surveys.portal.submit') }}
+              {{ submittingId === s.surveyId ? t('common.saving') : t('surveys.portal.submit') }}
             </button>
           </div>
         </form>

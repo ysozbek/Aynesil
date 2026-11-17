@@ -71,3 +71,10 @@ test('modül dışı rotalara yanlışlıkla modül bayrağı konmamış', () =>
 test('/403 rotası forbidden adıyla tanımlı', () => {
   assert.match(src, /path: '\/403',\s*name: 'forbidden'/)
 })
+
+test('portal anket formu gönderim sırasında kilitli: ikinci gönderim yok sayılır, düğme kapalı (D7)', () => {
+  const view = readFileSync(new URL('../src/views/portal/PortalSurveysView.vue', import.meta.url), 'utf8')
+  assert.match(view, /if \(submittingId\.value\) return/)
+  assert.match(view, /:disabled="store\.saving \|\| submittingId !== null"/)
+  assert.match(view, /finally \{\s*submittingId\.value = null/)
+})

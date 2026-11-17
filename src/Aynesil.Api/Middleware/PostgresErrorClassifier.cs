@@ -48,6 +48,15 @@ public static class PostgresErrorClassifier
         return ForeignKeyViolation.None;
     }
 
+    /// <summary>unique_violation (23505) ise ihlal edilen kısıtın adı; değilse null.</summary>
+    public static string? UniqueViolationConstraint(Exception ex)
+    {
+        for (Exception? e = ex; e is not null; e = e.InnerException)
+            if (Read(e, "SqlState") == "23505")
+                return Read(e, "ConstraintName");
+        return null;
+    }
+
     private static string? Read(Exception e, string property) =>
         e.GetType().GetProperty(property)?.GetValue(e) as string;
 }

@@ -100,6 +100,11 @@ public class ExceptionMiddleware
                 StatusCodes.Status409Conflict,
                 Fail(MsgKeys.Error.Concurrency)),
 
+            // Anlamı bilinen tekil kısıtlar (yarışta handler'ın ön kontrolünü geçen ikinci istek) kendi iş kuralı koduyla.
+            DbUpdateException dbe when KnownUniqueConstraint(dbe) is { } uniqueKey => (
+                StatusCodes.Status409Conflict,
+                Fail(uniqueKey)),
+
             DbUpdateException dbe when IsUniqueViolation(dbe) => (
                 StatusCodes.Status409Conflict,
                 Fail(MsgKeys.Error.DuplicateKey)),
@@ -172,6 +177,19 @@ public class ExceptionMiddleware
             return ApiResponse.Fail(Msg.Get(code, ex.Args), code.Value);
         return Fail(fallbackCode, legacyMessage);
     }
+
+    /// <summary>
+    /// Tekil kısıt adı → iş kuralı kodu. Handler aynı kuralı önceden denetler; kısıt yalnızca eşzamanlı ikinci istekte
+    /// devreye girer ve kullanıcı genel "kayıt zaten var" yerine kuralın kendi mesajını görür.
+    /// </summary>
+    private static readonly Dictionary<string, MsgKey> KnownUniqueConstraints = new(StringComparer.Ordinal)
+    {
+        ["uq_survey_response_once"] = MsgKeys.Rule.SurveyAlreadySubmitted,   // V64
+    };
+
+    private static MsgKey? KnownUniqueConstraint(DbUpdateException ex)
+        => PostgresErrorClassifier.UniqueViolationConstraint(ex) is { } name
+           && KnownUniqueConstraints.TryGetValue(name, out var key) ? key : null;
 
     /// <summary>Postgres unique_violation (23505) surfaced through EF SaveChanges.</summary>
     private static bool IsUniqueViolation(DbUpdateException ex)
