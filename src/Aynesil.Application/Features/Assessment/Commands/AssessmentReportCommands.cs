@@ -1,9 +1,11 @@
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using Aynesil.Domain.Modules.Assessment.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -99,6 +101,8 @@ public sealed class UpdateAssessmentReportCommandHandler
         var report = await _db.AssessmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentReport"));
+        if (report.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         report.Update(req.Summary, req.Findings, req.FileId, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -129,6 +133,8 @@ public sealed class FinalizeAssessmentReportCommandHandler
         var report = await _db.AssessmentReports
             .FirstOrDefaultAsync(r => r.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentReport"));
+        if (report.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (_currentUser.UserId is null)
             throw new BusinessRuleViolationException(MsgKeys.Rule.ReportFinalizeNeedsUser);

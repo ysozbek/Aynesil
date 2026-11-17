@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Legal.Dtos;
 using Aynesil.Domain.Modules.Legal.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -144,6 +145,10 @@ public sealed class UpdateConsentTemplateCommandHandler : IRequestHandler<Update
             .Include(x => x.Translations)
             .FirstOrDefaultAsync(x => x.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "ConsentTemplate"));
+
+        if (template.RowVersion != req.RowVersion)
+
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
         TenantOwnership.EnsureWritable(template.CorporationId, corporationId, "ConsentTemplate");
 
         template.Update(req.ConsentTypeId, req.IsMandatory, req.EffectiveFrom);

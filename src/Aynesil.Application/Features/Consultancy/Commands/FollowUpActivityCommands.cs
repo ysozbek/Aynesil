@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -145,6 +146,8 @@ public sealed class UpdateFollowUpActivityCommandHandler
         var activity = await _db.FollowUpActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "FollowUpActivity"));
+        if (activity.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         activity.Update(req.Title, req.Description, req.DueDate,
             req.AssignedTo, req.Notes, _currentUser.UserId);

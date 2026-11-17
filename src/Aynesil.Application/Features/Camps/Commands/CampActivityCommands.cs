@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -132,6 +133,8 @@ public sealed class UpdateCampActivityCommandHandler : IRequestHandler<UpdateCam
         var activity = await _db.CampActivities
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "CampActivity"));
+        if (activity.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         activity.Update(req.Name, req.ActivityTypeId, req.Description,
             req.StartsAt, req.EndsAt, req.Location, req.Capacity,

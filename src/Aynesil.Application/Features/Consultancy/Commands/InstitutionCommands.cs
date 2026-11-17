@@ -1,9 +1,11 @@
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -119,6 +121,8 @@ public sealed class UpdateInstitutionCommandHandler : IRequestHandler<UpdateInst
         var institution = await _db.Institutions
             .FirstOrDefaultAsync(i => i.Id == req.Id && i.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Institution"));
+        if (institution.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         institution.Update(
             req.Name, req.InstitutionTypeId,

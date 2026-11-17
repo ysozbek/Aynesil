@@ -5,6 +5,7 @@ using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Assessment.Dtos;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,6 +54,8 @@ public sealed class UpdateAssessmentTemplateCommandHandler
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
+        if (template.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         template.Update(req.Name, req.TypeId, req.CategoryId, req.ScoringModel, _currentUser.UserId);
         await _db.SaveChangesAsync(ct);
@@ -84,6 +87,8 @@ public sealed class SetAssessmentTemplateActiveCommandHandler
         var template = await _db.AssessmentTemplates
             .FirstOrDefaultAsync(t => t.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "AssessmentTemplate"));
+        if (template.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (req.IsActive) template.Activate(_currentUser.UserId);
         else              template.Deactivate(_currentUser.UserId);

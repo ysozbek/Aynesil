@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Consultancy.Dtos;
 using Aynesil.Domain.Modules.Consultancy.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -141,6 +142,8 @@ public sealed class UpdateConsultancyAgreementCommandHandler
         var agreement = await _db.ConsultancyAgreements
             .FirstOrDefaultAsync(a => a.Id == req.Id && a.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Agreement"));
+        if (agreement.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         agreement.Update(req.Title, req.AgreementTypeId, req.Description,
             req.StartDate, req.EndDate, _currentUser.UserId);

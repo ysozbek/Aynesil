@@ -1,9 +1,11 @@
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Camps.Dtos;
 using Aynesil.Domain.Modules.Camps.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -118,6 +120,8 @@ public sealed class UpdateCampCommandHandler : IRequestHandler<UpdateCampCommand
         var camp = await _db.Camps
             .FirstOrDefaultAsync(c => c.Id == req.Id && c.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camp"));
+        if (camp.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         camp.Update(req.Name, req.CampTypeId, req.CampusId,
             req.Description, req.Location, req.Capacity, _currentUser.UserId);

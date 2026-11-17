@@ -7,6 +7,7 @@ using Aynesil.Application.Common.Portal;
 using Aynesil.Application.Features.Surveys.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -177,6 +178,8 @@ public sealed class UpdateSurveyDefinitionCommandHandler
             .Include(s => s.Questions).ThenInclude(q => q.AnswerOptions)
             .FirstOrDefaultAsync(s => s.Id == req.Id && s.CorporationId == corporationId && s.DeletedAt == null, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "SurveyDefinition"));
+        if (survey.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         if (req.Questions is not null)
         {

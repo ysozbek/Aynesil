@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Leaves.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -129,6 +130,8 @@ public sealed class UpdateLeaveRequestCommandHandler : IRequestHandler<UpdateLea
         var leave = await _db.LeaveRequests
             .FirstOrDefaultAsync(lr => lr.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "LeaveRequest"));
+        if (leave.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         // Overlap check excluding the current request.
         var overlap = await _db.LeaveRequests

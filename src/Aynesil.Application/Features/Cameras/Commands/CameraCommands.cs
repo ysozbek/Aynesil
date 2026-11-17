@@ -1,8 +1,10 @@
+using Aynesil.Application.Common.Validation;
 using Aynesil.Application.Common.Exceptions;
 using Aynesil.Domain.Common;
 using Aynesil.Application.Common.Interfaces;
 using Aynesil.Domain.Modules.Media.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -101,6 +103,8 @@ public sealed class UpdateCameraCommandHandler : IRequestHandler<UpdateCameraCom
         var camera = await _db.Cameras
             .FirstOrDefaultAsync(c => c.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Camera"));
+        if (camera.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         camera.Update(req.Name, req.CampusId, req.CameraTypeId,
             req.StreamProviderId, req.StreamRef, _currentUser.UserId);

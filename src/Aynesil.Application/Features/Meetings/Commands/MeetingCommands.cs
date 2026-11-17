@@ -6,6 +6,7 @@ using Aynesil.Application.Common.Interfaces;
 using Aynesil.Application.Features.Meetings.Dtos;
 using Aynesil.Domain.Modules.Ops.Entities;
 using FluentValidation;
+using ValidationException = Aynesil.Application.Common.Exceptions.ValidationException;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -134,6 +135,8 @@ public sealed class UpdateMeetingCommandHandler : IRequestHandler<UpdateMeetingC
         var meeting = await _db.Meetings
             .FirstOrDefaultAsync(m => m.Id == req.Id, ct)
             ?? throw new NotFoundException(MsgKeys.Error.NotFound, new EnumValue("Entity", "Meeting"));
+        if (meeting.RowVersion != req.RowVersion)
+            throw new ValidationException([ValidationFailures.For(nameof(req.RowVersion), MsgKeys.Error.Concurrency)]);
 
         meeting.Update(req.Title, req.MeetingTypeId, req.ScheduledAt, req.EndsAt,
             req.Location, req.RoomId, req.CampusId, req.OrganizerId);
