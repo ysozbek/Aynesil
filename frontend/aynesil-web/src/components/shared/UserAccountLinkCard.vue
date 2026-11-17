@@ -50,7 +50,9 @@ const loading = ref(false)
 const loadError = ref('')
 
 const canLink = computed(() => can(props.managePermission) && can(Permissions.Users.Update) && can(Permissions.Users.Read))
-const canCreate = computed(() => can(props.managePermission) && can(Permissions.Users.Create) && can(Permissions.Users.Update))
+// Oluşturma formu rol listesini GET /roles (role:read) ile yükler; izin yoksa liste 403 ile boş kalırdı (D8).
+const canCreate = computed(() =>
+  can(props.managePermission) && can(Permissions.Users.Create) && can(Permissions.Users.Update) && can(Permissions.Roles.Read))
 const kindLabel = computed(() => t(`userLink.kind.${props.resource}`))
 
 async function load() {

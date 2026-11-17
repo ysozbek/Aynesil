@@ -78,3 +78,13 @@ test('portal anket formu gönderim sırasında kilitli: ikinci gönderim yok say
   assert.match(view, /:disabled="store\.saving \|\| submittingId !== null"/)
   assert.match(view, /finally \{\s*submittingId\.value = null/)
 })
+
+test('hesap oluşturma düğmesi rol listesini okuyabilen kullanıcıda açılır (D8)', () => {
+  const card = readFileSync(new URL('../src/components/shared/UserAccountLinkCard.vue', import.meta.url), 'utf8')
+  assert.match(card, /canCreate = computed\(\(\) =>[\s\S]*?can\(Permissions\.Users\.Create\)[\s\S]*?can\(Permissions\.Roles\.Read\)\)/)
+})
+
+test('tsconfig: dosya adı harf tutarlılığı açıkça zorunlu (Linux derlemesi)', () => {
+  const cfg = readFileSync(new URL('../tsconfig.json', import.meta.url), 'utf8')
+  assert.match(cfg, /"forceConsistentCasingInFileNames":\s*true/)
+})
