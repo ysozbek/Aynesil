@@ -146,14 +146,23 @@ async function buildUrl(ep) {
 }
 
 // ── Fazlar ──────────────────────────────────────────────────────────────────
-async function login(username = fx.admin.username, password = fx.admin.password, phase = 'giriş') {
+/**
+ * Ham giriş isteği; 429'da Retry-After kadar bekleyip yeniden dener. Giriş hem IP hem kullanıcı başına 10/dk
+ * sınırlı: duman testinin bütün girişleri aynı IP'den gelir, bu yüzden her giriş bu yardımcıdan geçer
+ * (aksi halde sınıra takılan giriş sessizce başka bir jetonla devam ettirirdi).
+ */
+async function loginRequest(username, password) {
   let res = await http('POST', '/auth/login', { username, password })
-  // Giriş IP + kullanıcı başına hız sınırlı (10/dk); demo-seed hemen önce aynı IP'den giriş yapmış olabilir.
   for (let i = 0; i < 3 && res.status === 429; i++) {
     console.log(`  (giriş hız sınırı: ${res.retryAfter || 60} sn bekleniyor)`)
     await new Promise((ok) => setTimeout(ok, (Number(res.retryAfter) || 60) * 1000 + 250))
     res = await http('POST', '/auth/login', { username, password })
   }
+  return res
+}
+
+async function login(username = fx.admin.username, password = fx.admin.password, phase = 'giriş') {
+  const res = await loginRequest(username, password)
   const ep = byId['post:auth.login'] // auth.service yoksa frontend tipi store'dadır; zarf kontrolü yeterli
   const { mismatches } = checkAgainst(ep, res)
   const d = res.json?.data
@@ -238,7 +247,7 @@ async function firstLoginFlow() {
   const newPw = `IlkGiris!${RUN}x`
   try {
     token = null
-    const l1 = await http('POST', '/auth/login', { username, password })
+    const l1 = await loginRequest(username, password)
     const mcp1 = jwtClaims(l1.json?.data?.accessToken).mcp
     record({ phase, id: 'auth.login (ilk giriş: mustChangePassword=true, mcp claim)', verb: 'POST', url: '/auth/login', status: l1.status,
       outcome: l1.status === 200 && l1.json?.data?.mustChangePassword === true && mcp1 === 'true' ? 'ok' : l1.status >= 400 ? classify(l1.status) : 'type',
@@ -252,7 +261,7 @@ async function firstLoginFlow() {
     const refreshToken = l1.json.data.refreshToken
     expectStatus(phase, 'auth.logout (anonim, şifre değişiminden sonra)', 'POST', '/auth/logout', await http('POST', '/auth/logout', { refreshToken }), [200])
     expectStatus(phase, 'auth.refresh (çıkıştan sonra eski jeton reddedilir)', 'POST', '/auth/refresh', await http('POST', '/auth/refresh', { refreshToken }), [401])
-    const l2 = await http('POST', '/auth/login', { username, password: newPw })
+    const l2 = await loginRequest(username, newPw)
     const mcp2 = jwtClaims(l2.json?.data?.accessToken).mcp
     record({ phase, id: 'auth.login (yeni şifre: mustChangePassword=false, mcp yok)', verb: 'POST', url: '/auth/login', status: l2.status,
       outcome: l2.status === 200 && l2.json?.data?.mustChangePassword === false && mcp2 === undefined ? 'ok' : l2.status >= 400 ? classify(l2.status) : 'type',
@@ -287,7 +296,7 @@ async function newFlows() {
     username: mustUser, fullName: `Smoke İlk Giriş ${RUN}`, email: mustUser, phone: null, password: tempPw, preferredLocale: 'tr',
     primaryCampusId: ctx.campusId ?? null, activateImmediately: true })
   if (r.status && r.status < 300) {
-    const login1 = await http('POST', '/auth/login', { username: mustUser, password: tempPw })
+    const login1 = await loginRequest(mustUser, tempPw)
     const flagged = login1.json?.data?.mustChangePassword === true
     record({ phase: 'yazma', id: 'auth.login (must_change_password bayrağı açık)', verb: 'POST', url: '/auth/login', status: login1.status,
       outcome: login1.status === 200 && flagged ? 'ok' : 'type', note: flagged ? 'beklenen: mustChangePassword=true' : 'mustChangePassword=true bekleniyordu', mismatches: [] })
@@ -296,7 +305,7 @@ async function newFlows() {
       expectStatus('yazma', `must_change_password: ${p.split('?')[0]} reddedilir`, verb, p, await http(verb, p), [403], 'Auth.PasswordChangeRequired')
     expectStatus('yazma', 'auth.changePassword (must_change_password açıkken izinli)', 'POST', '/auth/change-password',
       await http('POST', '/auth/change-password', { currentPassword: tempPw, newPassword: newPw }), [200, 204])
-    const login2 = await http('POST', '/auth/login', { username: mustUser, password: newPw })
+    const login2 = await loginRequest(mustUser, newPw)
     token = login2.json?.data?.accessToken
     record({ phase: 'yazma', id: 'auth.login (parola değişti, bayrak kapandı)', verb: 'POST', url: '/auth/login', status: login2.status,
       outcome: login2.status === 200 && login2.json?.data?.mustChangePassword === false ? 'ok' : 'type', note: 'beklenen: mustChangePassword=false', mismatches: [] })
@@ -1072,7 +1081,7 @@ async function surveyFlows() {
   // yabancı çocuk (aynı kurumda başka velinin çocuğu) → 403
   token = adminToken
   const foreign = ((await http('GET', '/students?page=1&pageSize=100')).json?.data?.items ?? []).find(x => x.studentNo === fx.isolation.foreignChildStudentNo)?.id
-  token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+  token = (await loginRequest(fx.guardian.username, fx.guardian.password)).json?.data?.accessToken ?? token
   if (foreign) expectStatus('izolasyon', 'surveys.responses (veli1 → başkasının çocuğu → 403)', 'POST', '/surveys/responses',
     await http('POST', '/surveys/responses', { surveyId: sid, studentId: foreign, answers: ans() }), [403], 'Rule.GuardianNoActiveAccess')
   const after = (await http('GET', '/surveys/pending')).json?.data ?? []
@@ -1095,12 +1104,12 @@ async function surveyFlows() {
   expectStatus('yazma', 'surveys.parentFeedback.create (puan/yorum yok → reddedilir)', 'POST', '/surveys/parent-feedback', await http('POST', '/surveys/parent-feedback', {}), [400, 422])
   token = adminToken
   if (ctx.educatorId) expectStatus('izolasyon', 'surveys.parentFeedback.create (veli → çocuğuyla ilgisiz eğitmen → 403)', 'POST', '/surveys/parent-feedback', await (async () => {
-    token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+    token = (await loginRequest(fx.guardian.username, fx.guardian.password)).json?.data?.accessToken ?? token
     const r = await http('POST', '/surveys/parent-feedback', { educatorId: ctx.educatorId, rating: 1, comment: 'smoke ilgisiz' })
     token = adminToken
     return r
   })(), [403], 'Rule.GuardianNoActiveAccess')
-  token = (await http('POST', '/auth/login', { username: fx.guardian.username, password: fx.guardian.password })).json?.data?.accessToken ?? token
+  token = (await loginRequest(fx.guardian.username, fx.guardian.password)).json?.data?.accessToken ?? token
   const myFb = (await http('GET', '/surveys/parent-feedback/mine?page=1&pageSize=50&sortDirection=desc')).json?.data
   ok('surveys.parentFeedback.mine (yalnızca kendi kayıtları, ad dolu)', 'GET', '/surveys/parent-feedback/mine',
     (myFb?.items ?? []).some(f => f.comment === `smoke genel ${RUN}`) && (myFb?.items ?? []).every(f => f.guardianName), `${myFb?.totalCount} kayıt`)

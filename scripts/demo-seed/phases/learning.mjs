@@ -93,6 +93,7 @@ async function assessments(ctx) {
     if (flow >= 1) { sdto = await c.post(`/assessment-sessions/${id}/start`, { rowVersion: rv }); rv = sdto.rowVersion }
     if (flow >= 2) {
       await c.post(`/assessment-sessions/${id}/responses`, { responses: tpl.itemIds.map((itemId, i) => ({ itemId, numericValue: 2 + (i % 3), textValue: null, choiceValue: null, note: null })) })
+      rv = (await c.get(`/assessment-sessions/${id}`)).rowVersion   // yanıtlar oturum satırını günceller (row_version artar); ekran da yeniden yükler
       sdto = await c.post(`/assessment-sessions/${id}/complete`, { rowVersion: rv }); rv = sdto.rowVersion
       const rep = await c.post(`/assessment-sessions/${id}/report`, { summary: 'Dil alanında yaş düzeyinin altında, sosyal alanda yaşıtlarına yakın performans.', findings: 'İfade edici dilde 2 sözcüklü cümle; yönerge alma 1 basamak.', fileId: null })
       if (flow >= 3) await step('rapor kesinleştir', () => c.post(`/assessment-sessions/${id}/report/finalize`, { reportId: rep.id, rowVersion: rep.rowVersion }))
